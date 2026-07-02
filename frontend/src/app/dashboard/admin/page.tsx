@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import NextImage from "next/image";
 import {
   Search, Bell, ChevronDown, User, LogOut, Settings, CreditCard,
   Sun, Moon, ShieldCheck, LayoutDashboard, Users, Crown, IndianRupee,
@@ -340,7 +340,7 @@ function AdminTopNav({
       {/* Left */}
       <div style={{ display: "flex", alignItems: "center", gap: "1.4rem" }}>
         <Link href="/dashboard/admin" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
+          <NextImage src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.1rem", color: navBtnColor }}>Adyapan AI</span>
         </Link>
         <div style={{ position: "relative" }}>
