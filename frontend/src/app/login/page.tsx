@@ -1,0 +1,327 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/services/api";
+import { Navbar } from "@/components/layout/Navbar";
+
+type Tab = "login" | "register" | "forgot";
+type ForgotStep = "email" | "otp" | "done";
+
+const GoogleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </svg>
+);
+
+const GitHubIcon = ({ color }: { color: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={color}>
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+  </svg>
+);
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>("login");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const [reg, setReg] = useState({ name: "", email: "", phone: "", college: "", branch: "", year: "", password: "", confirm: "" });
+  const [regError, setRegError] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNew, setForgotNew] = useState("");
+  const [forgotConfirm, setForgotConfirm] = useState("");
+  const [forgotStep, setForgotStep] = useState<ForgotStep>("email");
+  const [forgotMsg, setForgotMsg] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.add("landing");
+    const saved = (localStorage.getItem("adyapan-theme") as "dark" | "light") || "dark";
+    setTheme(saved);
+
+    // Open register tab if ?tab=register in URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "register") setTab("register");
+
+    const observer = new MutationObserver(() => {
+      const t = document.documentElement.getAttribute("data-theme");
+      setTheme(t === "light" ? "light" : "dark");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { document.body.classList.remove("landing"); observer.disconnect(); };
+  }, []);
+
+  const isDark = theme === "dark";
+  const cardBg    = isDark ? "rgba(18,18,30,0.92)"      : "rgba(255,255,255,0.96)";
+  const cardBorder= isDark ? "rgba(255,255,255,0.1)"    : "rgba(0,0,0,0.1)";
+  const cardText  = isDark ? "#ffffff"                   : "#0f172a";
+  const labelClr  = isDark ? "rgba(255,255,255,0.65)"   : "#475569";
+  const mutedClr  = isDark ? "rgba(255,255,255,0.35)"   : "#94a3b8";
+  const inputBg   = isDark ? "rgba(255,255,255,0.06)"   : "rgba(0,0,0,0.04)";
+  const inputBdr  = isDark ? "rgba(255,255,255,0.12)"   : "rgba(0,0,0,0.12)";
+  const socialBg  = isDark ? "rgba(255,255,255,0.06)"   : "rgba(0,0,0,0.04)";
+
+  const inp = (extra = "") =>
+    `w-full rounded-lg border bg-transparent px-3 py-2 pl-9 text-sm outline-none transition placeholder:text-[${mutedClr}] focus:border-amber-500 ${extra}`;
+
+  const inpReg = (extra = "") =>
+    `w-full rounded-md border bg-transparent px-3 py-2 pl-8 text-xs outline-none transition focus:border-amber-500 ${extra}`;
+
+  const inpStyle = { background: inputBg, borderColor: inputBdr, color: cardText };
+  const socialStyle = { background: socialBg, border: `1px solid ${inputBdr}`, color: cardText };
+  const submitStyle = { background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoginError(""); setLoginLoading(true);
+    try {
+      const { data } = await api.post("/auth/login", { email: loginEmail, password: loginPassword });
+      localStorage.setItem("adyapan-token", data.token);
+      localStorage.setItem("adyapan-user", JSON.stringify(data.user));
+      router.push(data.user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+    } catch (err: unknown) {
+      setLoginError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Invalid email or password.");
+    } finally { setLoginLoading(false); }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); setRegError("");
+    if (reg.password !== reg.confirm) { setRegError("Passwords do not match."); return; }
+    setRegLoading(true);
+    try {
+      await api.post("/auth/register", { name: reg.name, email: reg.email, password: reg.password, role: "USER" });
+      setTab("login"); setLoginEmail(reg.email);
+    } catch (err: unknown) {
+      setRegError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Registration failed.");
+    } finally { setRegLoading(false); }
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault(); setForgotError(""); setForgotMsg("");
+    if (forgotStep === "email") {
+      setForgotLoading(true);
+      try { await api.post("/auth/forgot-password", { email: forgotEmail }); setForgotMsg("OTP sent."); setForgotStep("otp"); }
+      catch { setForgotError("Could not send OTP."); }
+      finally { setForgotLoading(false); }
+    } else if (forgotStep === "otp") {
+      if (forgotNew !== forgotConfirm) { setForgotError("Passwords do not match."); return; }
+      setForgotLoading(true);
+      try { await api.post("/auth/reset-password", { email: forgotEmail, otp: forgotOtp, newPassword: forgotNew }); setForgotMsg("Password reset!"); setForgotStep("done"); }
+      catch (err: unknown) { setForgotError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Invalid OTP."); }
+      finally { setForgotLoading(false); }
+    }
+  };
+
+  const switchTab = (t: Tab) => { setTab(t); setLoginError(""); setRegError(""); setForgotError(""); setForgotMsg(""); };
+
+  return (
+    <div className="min-h-screen transition-colors" style={{ background: "var(--bg-dark)" }}>
+      <Navbar />
+
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4 py-6">
+        <div
+          className={`w-full rounded-2xl border shadow-2xl transition-all ${tab === "register" ? "max-w-md" : "max-w-sm"}`}
+          style={{ background: cardBg, borderColor: cardBorder, backdropFilter: "blur(24px)", color: cardText }}
+        >
+          <div className={tab === "register" ? "p-4" : "p-6"}>
+
+            {/* ── LOGIN ── */}
+            {tab === "login" && (
+              <>
+                <div className="mb-5 text-center">
+                  <h1 className="text-xl font-bold">Welcome Back</h1>
+                  <p className="mt-1 text-xs" style={{ color: labelClr }}>Login to resume your Adyapan journey</p>
+                </div>
+                <form onSubmit={handleLogin} className="flex flex-col gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>Email Address</label>
+                    <div className="relative">
+                      <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg></span>
+                      <input type="email" required placeholder="you@university.edu" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className={inp()} style={inpStyle} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>Password</label>
+                    <div className="relative">
+                      <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                      <input type="password" required placeholder="••••••••" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className={inp()} style={inpStyle} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs" style={{ color: labelClr }}>
+                    <label className="flex cursor-pointer items-center gap-1.5">
+                      <input type="checkbox" className="accent-amber-500" /> Remember me
+                    </label>
+                    <button type="button" onClick={() => switchTab("forgot")} className="font-semibold text-amber-500">Forgot password?</button>
+                  </div>
+                  {loginError && <p className="text-xs text-red-400">{loginError}</p>}
+                  <button type="submit" disabled={loginLoading} className="w-full rounded-full py-2.5 text-sm font-bold disabled:opacity-60" style={submitStyle}>
+                    {loginLoading ? "Logging in…" : "Login →"}
+                  </button>
+                  <div className="relative text-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full" style={{ borderTop: `1px solid ${inputBdr}` }} /></div>
+                    <span className="relative px-3 text-xs" style={{ background: cardBg, color: mutedClr }}>OR LOGIN WITH</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GoogleIcon /> Google</button>
+                    <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
+                  </div>
+                  <p className="text-center text-xs" style={{ color: labelClr }}>
+                    Don&apos;t have an account? <button type="button" onClick={() => switchTab("register")} className="font-bold text-amber-500">Register here</button>
+                  </p>
+                </form>
+              </>
+            )}
+
+            {/* ── REGISTER ── */}
+            {tab === "register" && (
+              <>
+                <div className="mb-3 text-center">
+                  <h1 className="text-lg font-bold">Create an Account</h1>
+                  <p className="mt-0.5 text-xs" style={{ color: labelClr }}>Sign up now to start learning with AI</p>
+                </div>
+                <form onSubmit={handleRegister} className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Full Name",     key: "name",    type: "text",  ph: "John Doe",         icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, full: false },
+                    { label: "Email Address", key: "email",   type: "email", ph: "john.doe@college.edu", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>, full: false },
+                    { label: "Phone Number",  key: "phone",   type: "tel",   ph: "9876543210",        icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.6 4.4 2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.11 6.11l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>, full: false },
+                    { label: "College/University", key: "college", type: "text", ph: "State University", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>, full: false },
+                    { label: "Branch/Specialization", key: "branch", type: "text", ph: "Computer Science", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>, full: false },
+                  ].map(({ label, key, type, ph, icon, full }) => (
+                    <div key={key} className={full ? "col-span-2" : "col-span-1"}>
+                      <label className="mb-0.5 block text-xs font-semibold" style={{ color: labelClr }}>{label}</label>
+                      <div className="relative">
+                        <span style={{ position: "absolute", left: "0.6rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}>{icon}</span>
+                        <input type={type} required placeholder={ph} value={reg[key as keyof typeof reg]}
+                          onChange={e => setReg(r => ({ ...r, [key]: e.target.value }))} className={inpReg()} style={inpStyle} />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="col-span-1">
+                    <label className="mb-0.5 block text-xs font-semibold" style={{ color: labelClr }}>Academic Year</label>
+                    <div className="relative">
+                      <span style={{ position: "absolute", left: "0.6rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                      <select required value={reg.year} onChange={e => setReg(r => ({ ...r, year: e.target.value }))}
+                        className={inpReg()} style={{ ...inpStyle, appearance: "none" as const, backgroundColor: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>
+                        <option value="" disabled style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>Select Year</option>
+                        <option value="1"         style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>1st Year</option>
+                        <option value="2"         style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>2nd Year</option>
+                        <option value="3"         style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>3rd Year</option>
+                        <option value="4"         style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>4th Year</option>
+                        <option value="Graduated" style={{ background: isDark ? "#1a1a2e" : "#ffffff", color: cardText }}>Graduated</option>
+                      </select>
+                    </div>
+                  </div>
+                  {[{ label: "Password", key: "password" }, { label: "Confirm Password", key: "confirm" }].map(({ label, key }) => (
+                    <div key={key} className="col-span-1">
+                      <label className="mb-0.5 block text-xs font-semibold" style={{ color: labelClr }}>{label}</label>
+                      <div className="relative">
+                        <span style={{ position: "absolute", left: "0.6rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                        <input type="password" required placeholder="••••••••" value={reg[key as keyof typeof reg]}
+                          onChange={e => setReg(r => ({ ...r, [key]: e.target.value }))} className={inpReg()} style={inpStyle} />
+                      </div>
+                    </div>
+                  ))}
+                  {regError && <p className="col-span-2 text-xs text-red-400">{regError}</p>}
+                  <button type="submit" disabled={regLoading}
+                    className="col-span-2 w-full rounded-full py-2 text-sm font-bold disabled:opacity-60"
+                    style={submitStyle}>
+                    {regLoading ? "Creating…" : "Create Account →"}
+                  </button>
+                  <div className="col-span-2 relative text-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full" style={{ borderTop: `1px solid ${inputBdr}` }} /></div>
+                    <span className="relative px-3 text-xs font-semibold tracking-widest uppercase" style={{ background: cardBg, color: mutedClr }}>OR SIGN UP WITH</span>
+                  </div>
+                  <div className="col-span-2 flex gap-2">
+                    <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GoogleIcon /> Google</button>
+                    <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
+                  </div>
+                  <p className="col-span-2 text-center text-xs" style={{ color: labelClr }}>
+                    Already have an account? <button type="button" onClick={() => switchTab("login")} className="font-bold text-amber-500">Sign in</button>
+                  </p>
+                </form>
+              </>
+            )}
+
+            {/* ── FORGOT PASSWORD ── */}
+            {tab === "forgot" && (
+              <>
+                <div className="mb-5 text-center">
+                  <h1 className="text-xl font-bold">Reset Password</h1>
+                  <p className="mt-1 text-xs" style={{ color: labelClr }}>
+                    {forgotStep === "email" ? "Enter your email to receive an OTP" : forgotStep === "otp" ? "Enter the OTP and your new password" : "Password reset successfully"}
+                  </p>
+                </div>
+                {forgotStep === "done" ? (
+                  <div className="flex flex-col items-center gap-4 py-2">
+                    <div className="text-4xl">✅</div>
+                    <p className="text-center text-sm font-semibold text-green-400">{forgotMsg}</p>
+                    <button onClick={() => { switchTab("login"); setForgotStep("email"); setForgotMsg(""); }}
+                      className="rounded-full px-8 py-2.5 text-sm font-bold" style={submitStyle}>Back to Login</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgot} className="flex flex-col gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>Email Address</label>
+                      <div className="relative">
+                        <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg></span>
+                        <input type="email" required placeholder="you@university.edu" value={forgotEmail}
+                          onChange={e => setForgotEmail(e.target.value)} disabled={forgotStep === "otp"}
+                          className={inp()} style={{ ...inpStyle, opacity: forgotStep === "otp" ? 0.6 : 1 }} />
+                      </div>
+                    </div>
+                    {forgotStep === "otp" && <>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>Email OTP</label>
+                        <div className="relative">
+                          <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                          <input type="text" required placeholder="6-digit OTP" maxLength={6} value={forgotOtp}
+                            onChange={e => setForgotOtp(e.target.value)} className={inp()} style={inpStyle} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>New Password</label>
+                        <div className="relative">
+                          <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                          <input type="password" required placeholder="New password" value={forgotNew}
+                            onChange={e => setForgotNew(e.target.value)} className={inp()} style={inpStyle} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold" style={{ color: labelClr }}>Confirm Password</label>
+                        <div className="relative">
+                          <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: mutedClr, display: "flex" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                          <input type="password" required placeholder="Confirm password" value={forgotConfirm}
+                            onChange={e => setForgotConfirm(e.target.value)} className={inp()} style={inpStyle} />
+                        </div>
+                      </div>
+                    </>}
+                    {forgotMsg   && <p className="text-xs font-semibold text-green-400">{forgotMsg}</p>}
+                    {forgotError && <p className="text-xs font-semibold text-red-400">{forgotError}</p>}
+                    <button type="submit" disabled={forgotLoading} className="w-full rounded-full py-2.5 text-sm font-bold disabled:opacity-60" style={submitStyle}>
+                      {forgotLoading ? "Please wait…" : forgotStep === "email" ? "Send OTP →" : "Reset Password →"}
+                    </button>
+                    <p className="text-center text-xs" style={{ color: labelClr }}>
+                      Remember your password? <button type="button" onClick={() => { switchTab("login"); setForgotStep("email"); }} className="font-bold text-amber-500">Sign in</button>
+                    </p>
+                  </form>
+                )}
+              </>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+/* ── CSS Variables ── */
+:root {
+  --bg-dark: #080710;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --primary: #f59e0b;
+  --primary-dark: #d97706;
+  --gradient-main: linear-gradient(135deg, #f59e0b, #d97706);
+  --shadow-glow: 0 0 30px rgba(245, 158, 11, 0.2);
+  --shadow-glow-strong: 0 0 50px rgba(245, 158, 11, 0.45);
+  --glass-blur: blur(12px);
+  --transition: all 0.3s ease;
+  --background: #f7f8f4;
+  --foreground: #17211c;
+}
+
+/* ── Light mode ── */
+[data-theme="light"] {
+  --bg-dark: #f0f4ff;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.2);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --glass-blur: blur(12px);
+  --dash-sidebar-bg: rgba(240,244,255,0.95);
+}
+
+/* Apply dark bg to body when data-theme is set */
+[data-theme="dark"] body,
+[data-theme="dark"] body.landing {
+  background-color: #080710;
+  color: #ffffff;
+}
+
+[data-theme="light"] body,
+[data-theme="light"] body.landing {
+  background-color: #f0f4ff;
+  color: #0f172a;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body.landing {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+body.dashboard-body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+.text-gradient {
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+.glass {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 24px;
+}
+
+.glass:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card-hover);
+}
+
+.testimonial-wrapper {
+  display: flex;
+  transition: transform 0.4s ease;
+}
+
+.testimonial-slide {
+  min-width: 100%;
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.faq-answer.open {
+  max-height: 300px;
+}
+
+::selection {
+  background: #c6f6d5;
+  color: #17211c;
+}
+
+/* ── Dashboard sidebar expand ── */
+.dash-sidebar {
+  width: 80px;
+  height: calc(100vh - 70px);
+  position: fixed;
+  top: 70px;
+  left: 0;
+  background: var(--dash-sidebar-bg, rgba(8,7,16,0.85));
+  border-right: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.4rem;
+  z-index: 99;
+  transition: width 0.3s ease, background 0.3s ease;
+  overflow: hidden;
+}
+.dash-sidebar:hover {
+  width: 280px;
+  overflow-y: auto;
+  padding: 1rem 0.6rem;
+}
+.dash-sidebar::-webkit-scrollbar { display: none; }
+.dash-sidebar { scrollbar-width: none; }
+.dash-sidebar .sb-label { display: none; white-space: nowrap; }
+.dash-sidebar:hover .sb-label { display: inline; }
+.dash-sidebar .sb-arrow { display: none; }
+.dash-sidebar:hover .sb-arrow { display: inline-flex; }
+.dash-sidebar .sb-submenu { display: none; }
+.dash-sidebar:hover .sb-item.open .sb-submenu { display: block; }
+.dash-main {
+  margin-left: 80px;
+  margin-top: 70px;
+  min-height: calc(100vh - 70px);
+  padding: 1.25rem;
+  transition: margin-left 0.3s ease;
+  background: var(--bg-dark);
+}
+.dash-sidebar:hover ~ .dash-main { margin-left: 280px; }

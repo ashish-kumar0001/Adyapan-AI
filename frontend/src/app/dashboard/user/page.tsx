@@ -1,0 +1,929 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Search, Crown, Bell, ChevronDown,
+  User, LogOut, Settings, CreditCard, TrendingUp, Award,
+  BookOpen, Code2, Compass, FileText, Mic,
+  Briefcase, UserCircle, BarChart3, Wand2, GraduationCap,
+  LayoutDashboard, Sun, Moon, TrendingDown, ArrowUpRight,
+  BookMarked, ClipboardList,
+  Star, Zap,
+  LineChart, Trophy,
+} from "lucide-react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface AdyapanUser {
+  name: string;
+  email: string;
+  role?: string;
+}
+
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  href?: string;
+  submenu?: { label: string; href: string }[];
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: "fixed", bottom: 24, right: 24, zIndex: 9999,
+        background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+        color: "#fff", padding: "12px 22px", borderRadius: 12,
+        boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+        fontSize: "0.88rem", fontWeight: 600,
+        animation: "fadeInUp 0.3s ease",
+      }}
+    >
+      {message}
+    </div>
+  );
+}
+
+// ─── Sidebar Data ─────────────────────────────────────────────────────────────
+const sidebarItems: SidebarItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/dashboard/user" },
+  {
+    id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
+    submenu: [
+      { label: "Study Assistant", href: "#" }, { label: "Notes Generator", href: "#" },
+      { label: "PPT Generator", href: "#" }, { label: "Assignment Generator", href: "#" },
+      { label: "MCQ Generator", href: "#" }, { label: "PDF Summarizer", href: "#" },
+      { label: "Flashcards", href: "#" }, { label: "Mind Maps", href: "#" },
+      { label: "Topic Explainer", href: "#" },
+    ],
+  },
+  {
+    id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
+    submenu: [
+      { label: "Coding Assistant", href: "#" }, { label: "Code Generator", href: "#" },
+      { label: "Code Debugger", href: "#" }, { label: "DSA Practice", href: "#" },
+      { label: "Coding Challenges", href: "#" }, { label: "Project Ideas", href: "#" },
+      { label: "GitHub Portfolio Builder", href: "#" },
+    ],
+  },
+  {
+    id: "career", label: "Career Hub", icon: <Compass size={18} />,
+    submenu: [
+      { label: "Career Guide", href: "#" }, { label: "Career Roadmap", href: "#" },
+      { label: "Skill Gap Analysis", href: "#" }, { label: "Domain Recommendation", href: "#" },
+      { label: "Learning Path Generator", href: "#" },
+    ],
+  },
+  {
+    id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
+    submenu: [
+      { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
+      { label: "Resume Analyzer", href: "#" }, { label: "Cover Letter Generator", href: "#" },
+      { label: "LinkedIn Optimizer", href: "#" },
+    ],
+  },
+  {
+    id: "interview", label: "Interview Hub", icon: <Mic size={18} />,
+    submenu: [
+      { label: "AI HR Interview", href: "#" }, { label: "AI Technical Interview", href: "#" },
+      { label: "Mock Interviews", href: "#" }, { label: "Voice Interview", href: "#" },
+      { label: "Company-wise Prep", href: "#" },
+    ],
+  },
+  {
+    id: "research", label: "Research Hub", icon: <BookOpen size={18} />,
+    submenu: [
+      { label: "Research Paper AI", href: "#" }, { label: "Research Topic Generator", href: "#" },
+      { label: "Literature Review Gen", href: "#" }, { label: "Citation Generator", href: "#" },
+      { label: "Plagiarism Checker", href: "#" },
+    ],
+  },
+  {
+    id: "internship", label: "Internship Hub", icon: <Briefcase size={18} />,
+    submenu: [
+      { label: "Internship Finder", href: "#" }, { label: "Recommendations", href: "#" },
+      { label: "Internship Tracker", href: "#" },
+    ],
+  },
+  {
+    id: "job", label: "Job Hub", icon: <UserCircle size={18} />,
+    submenu: [
+      { label: "Job Matching", href: "#" }, { label: "Resume vs JD Match", href: "#" },
+      { label: "Job Referrals", href: "#" }, { label: "Hiring Challenges", href: "#" },
+    ],
+  },
+  {
+    id: "placement", label: "Placement Hub", icon: <Trophy size={18} />,
+    submenu: [
+      { label: "Aptitude Practice", href: "#" }, { label: "Logical Reasoning", href: "#" },
+      { label: "Technical MCQs", href: "#" }, { label: "Mock Tests", href: "#" },
+      { label: "Readiness Score", href: "#" },
+    ],
+  },
+  {
+    id: "productivity", label: "AI Productivity", icon: <Wand2 size={18} />,
+    submenu: [
+      { label: "AI Chat Assistant", href: "#" }, { label: "Email Writer", href: "#" },
+      { label: "SOP Generator", href: "#" }, { label: "LinkedIn Post Gen", href: "#" },
+      { label: "Content Writer", href: "#" },
+    ],
+  },
+  {
+    id: "analytics", label: "Analytics", icon: <LineChart size={18} />,
+    submenu: [
+      { label: "Learning Progress", href: "#" }, { label: "Interview Progress", href: "#" },
+      { label: "Resume Score", href: "#" }, { label: "Skill Growth", href: "#" },
+    ],
+  },
+];
+
+// ─── Sidebar Component ────────────────────────────────────────────────────────
+function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashboard }: {
+  onComingSoon: () => void;
+  activeView: "dashboard" | "profile";
+  onViewProfile: () => void;
+  onViewDashboard: () => void;
+}) {
+  const [openItem, setOpenItem] = useState<string | null>(null);
+
+  const toggleItem = (id: string) => {
+    setOpenItem((prev) => (prev === id ? null : id));
+  };
+
+  return (
+    <aside className="dash-sidebar">
+      {sidebarItems.map((item) => {
+        const isActive = item.id === "dashboard";
+        const isOpen = openItem === item.id;
+        const hasSubmenu = !!item.submenu;
+
+        return (
+          <div key={item.id}>
+            {!hasSubmenu ? (
+              <Link
+                href={item.href ?? "#"}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.75rem",
+                  padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
+                  color: isActive ? "var(--primary)" : "var(--text-secondary)",
+                  background: isActive ? "rgba(245,158,11,0.1)" : "transparent",
+                  border: isActive ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+                  fontWeight: 500, fontSize: "0.82rem", textDecoration: "none",
+                  transition: "all 0.2s ease", whiteSpace: "nowrap",
+                }}
+              >
+                <span style={{ flexShrink: 0 }}>{item.icon}</span>
+                <span className="sb-label">{item.label}</span>
+              </Link>
+            ) : (
+              <div>
+                <button
+                  onClick={() => toggleItem(item.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
+                    color: "var(--text-secondary)", background: "transparent",
+                    border: "1px solid transparent", fontWeight: 500,
+                    fontSize: "0.82rem", cursor: "pointer", width: "100%",
+                    transition: "all 0.2s ease", whiteSpace: "nowrap",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                    (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                    (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                  }}
+                >
+                  <span style={{ flexShrink: 0 }}>{item.icon}</span>
+                  <span className="sb-label" style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
+                  <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                    <ChevronDown size={13} />
+                  </span>
+                </button>
+                <div className="sb-submenu" style={{ paddingLeft: "1.2rem" }}>
+                  {isOpen && item.submenu?.map((sub) => (
+                    <a
+                      key={sub.label}
+                      href={sub.href}
+                      onClick={(e) => { e.preventDefault(); onComingSoon(); }}
+                      style={{
+                        display: "block", padding: "0.28rem 0.5rem", fontSize: "0.76rem",
+                        color: "var(--text-secondary)", borderRadius: 8, marginBottom: 1,
+                        textDecoration: "none", transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.color = "var(--primary)";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(245,158,11,0.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }}
+                    >
+                      {sub.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </aside>
+  );
+}
+
+// ─── TopNav Component ─────────────────────────────────────────────────────────
+function DashboardTopNav({
+  user, theme, onThemeToggle, onComingSoon, onViewProfile,
+}: {
+  user: AdyapanUser | null;
+  theme: string;
+  onThemeToggle: () => void;
+  onComingSoon: () => void;
+  onViewProfile: () => void;
+}) {
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [evaluateOpen, setEvaluateOpen] = useState(false);
+
+  const isDarkTheme = theme === "dark";
+  const navBg = isDarkTheme ? "#060b0e" : "#ffffff";
+  const navBtnBg = isDarkTheme ? "#0d151c" : "rgba(0,0,0,0.04)";
+  const navBtnColor = isDarkTheme ? "#fff" : "#0f172a";
+  const navInputBg = isDarkTheme ? "#0d151c" : "rgba(0,0,0,0.05)";
+  const navInputColor = isDarkTheme ? "#fff" : "#0f172a";
+  const navBorder = isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)";
+  const dropdownBg = isDarkTheme ? "#0d151c" : "#ffffff";
+
+  const navBtnBase: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "0.5rem 0.9rem", borderRadius: 8, fontWeight: 600,
+    fontSize: "0.8rem", cursor: "pointer", border: `1px solid ${navBorder}`,
+    background: navBtnBg, color: navBtnColor, transition: "all 0.2s ease",
+  };
+
+  const genItems = ["Notes", "Assignment", "PPT", "MCQs", "Research Paper", "Resume"];
+  const evalItems = ["ATS Score", "Resume Analysis", "Skill Assessment", "Placement Readiness"];
+
+  return (
+    <header style={{
+      position: "fixed", top: 0, left: 0, width: "100%", height: 70,
+      background: navBg, borderBottom: `1px solid ${navBorder}`,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 1.5rem", zIndex: 105, boxSizing: "border-box",
+      transition: "background 0.3s ease",
+    }}>
+      {/* Left */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+        <Link href="/dashboard/user" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <Image src="/assets/images/logo.png" alt="Adyapan AI" width={30} height={30} style={{ objectFit: "contain" }} />
+          <span style={{ fontWeight: 700, fontSize: "1.15rem", color: navBtnColor }}>Adyapan AI</span>
+        </Link>
+        <div style={{ position: "relative" }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <input
+            type="text" placeholder="Search tools, notes, jobs..."
+            style={{
+              width: 230, padding: "0.5rem 1rem 0.5rem 2rem",
+              background: navInputBg, border: `1px solid ${navBorder}`,
+              borderRadius: 8, color: navInputColor, fontSize: "0.83rem", outline: "none",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Center */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {/* Generate dropdown */}
+        <div style={{ position: "relative" }}
+          onMouseEnter={() => setGenerateOpen(true)}
+          onMouseLeave={() => setGenerateOpen(false)}
+        >
+          <button style={navBtnBase}>
+            <Zap size={13} /> Generate <ChevronDown size={12} />
+          </button>
+          {generateOpen && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, marginTop: 4, minWidth: 170,
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 10, padding: "0.4rem", zIndex: 200,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            }}>
+              {genItems.map((item) => (
+                <button key={item} onClick={onComingSoon} style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",
+                  background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
+                }}>
+                  {item}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button onClick={onComingSoon} style={navBtnBase}>
+          <Mic size={13} /> AI Interview
+        </button>
+
+        {/* Evaluate dropdown */}
+        <div style={{ position: "relative" }}
+          onMouseEnter={() => setEvaluateOpen(true)}
+          onMouseLeave={() => setEvaluateOpen(false)}
+        >
+          <button style={navBtnBase}>
+            <Star size={13} /> Evaluate <ChevronDown size={12} />
+          </button>
+          {evaluateOpen && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, marginTop: 4, minWidth: 180,
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 10, padding: "0.4rem", zIndex: 200,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            }}>
+              {evalItems.map((item) => (
+                <button key={item} onClick={onComingSoon} style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",
+                  background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
+                }}>
+                  {item}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
+        <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</button>
+        <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</button>
+      </div>
+
+      {/* Right */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <button onClick={onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+          <Crown size={13} /> Premium
+        </button>
+
+        {/* Theme toggle */}
+        <button onClick={onThemeToggle} aria-label="Toggle theme" style={{
+          background: navBtnBg, border: `1px solid ${navBorder}`, borderRadius: 8,
+          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", color: "var(--text-secondary)",
+        }}>
+          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
+
+        {/* Notification bell */}
+        <div style={{ position: "relative", cursor: "pointer" }}>
+          <Bell size={19} style={{ color: "var(--text-secondary)" }} />
+          <span style={{
+            position: "absolute", top: -5, right: -6, background: "#ef4444",
+            color: "#fff", fontSize: "0.6rem", fontWeight: 800, width: 14, height: 14,
+            borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>2</span>
+        </div>
+
+        {/* Profile dropdown */}
+        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} />
+      </div>
+    </header>
+  );
+}
+
+// ─── Profile Dropdown ─────────────────────────────────────────────────────────
+function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isDarkTheme = theme === "dark";
+  const dropdownBg = isDarkTheme ? "#0f0f19" : "#ffffff";
+  const dropdownBorder = isDarkTheme ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const menuItems = [
+    { icon: <User size={15} />, label: "My Profile", href: "#", onClickFn: onViewProfile },
+    { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", cs: true },
+    { icon: <Award size={15} />, label: "Certificates", href: "#", cs: true },
+    null,
+    { icon: <Settings size={15} />, label: "Settings", href: "#", cs: true },
+    { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
+    null,
+    { icon: <LogOut size={15} />, label: "Logout", href: "/login" },
+  ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean; onClickFn?: () => void } | null>;
+
+  const initials = user?.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "U";
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: "50%", border: "2px solid var(--primary)",
+        background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
+        justifyContent: "center", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem",
+        color: "var(--primary)",
+      }}>
+        {initials}
+      </div>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 8px)", right: 0, width: 280,
+          borderRadius: 18, padding: "1.1rem 0.7rem", zIndex: 300,
+          background: dropdownBg,
+          backdropFilter: "blur(40px) saturate(180%)",
+          border: `1px solid ${dropdownBorder}`,
+          boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+        }}>
+          {/* User header */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "0 0.4rem", marginBottom: "0.9rem" }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%", border: "2px solid var(--primary)",
+              background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
+              justifyContent: "center", fontWeight: 700, fontSize: "1rem", color: "var(--primary)", flexShrink: 0,
+            }}>
+              {initials}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {user?.name ?? "User"}
+              </div>
+              <div style={{ fontSize: "0.73rem", color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {user?.email ?? "user@email.com"}
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.9rem" }}>
+            {["View Community Profile", "Manage Account"].map((label) => (
+              <button key={label} onClick={onComingSoon} style={{
+                background: "#0d151c", color: "#fff", border: "1px solid rgba(255,255,255,0.1)",
+                padding: "0.5rem", borderRadius: 20, fontSize: "0.8rem", fontWeight: 600,
+                cursor: "pointer", transition: "all 0.2s",
+              }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: "0.7rem" }} />
+
+          {/* Menu items */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {menuItems.map((item, i) =>
+              item === null ? (
+                <div key={i} style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "4px 0" }} />
+              ) : (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={item.onClickFn ? (e) => { e.preventDefault(); setOpen(false); item.onClickFn!(); } : item.cs ? (e) => { e.preventDefault(); onComingSoon(); } : undefined}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "0.5rem 0.6rem", borderRadius: 8, color: "rgba(255,255,255,0.7)",
+                    fontSize: "0.84rem", fontWeight: 500, textDecoration: "none",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                    (e.currentTarget as HTMLElement).style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                    (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                  }}
+                >
+                  <span style={{ color: "var(--primary)" }}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Stat Widget Card ─────────────────────────────────────────────────────────
+function StatCard({
+  icon, iconBg, iconColor, value, label, trend, trendUp,
+}: {
+  icon: React.ReactNode; iconBg: string; iconColor: string;
+  value: string; label: string; trend: string; trendUp?: boolean;
+}) {
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border-color)",
+      borderRadius: 16, padding: "1rem", transition: "all 0.3s ease",
+    }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-3px) scale(1.01)";
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,158,11,0.2)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = "none";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-color)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 8, background: iconBg, color: iconColor,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {icon}
+        </div>
+        <span style={{
+          fontSize: "0.72rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 3,
+          color: trendUp === false ? "#ef4444" : trendUp ? "#10b981" : "var(--text-muted)",
+        }}>
+          {trendUp === true && <ArrowUpRight size={11} />}
+          {trendUp === false && <TrendingDown size={11} />}
+          {trend}
+        </span>
+      </div>
+      <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 2 }}>{value}</div>
+      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</div>
+    </div>
+  );
+}
+
+// ─── Panel Card ───────────────────────────────────────────────────────────────
+function PanelCard({ title, children, flagStyle }: { title: string; children: React.ReactNode; flagStyle?: boolean }) {
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: `1px solid ${flagStyle ? "rgba(245,158,11,0.15)" : "var(--border-color)"}`,
+      borderRadius: 16, padding: "1.2rem", transition: "all 0.25s ease",
+      boxShadow: flagStyle ? "0 4px 20px rgba(245,158,11,0.05)" : "none",
+    }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = "none";
+        (e.currentTarget as HTMLElement).style.boxShadow = flagStyle ? "0 4px 20px rgba(245,158,11,0.05)" : "none";
+      }}
+    >
+      <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.9rem" }}>
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Progress Bar ─────────────────────────────────────────────────────────────
+function ProgressBar({ value, color = "var(--primary)", height = 5 }: { value: number; color?: string; height?: number }) {
+  return (
+    <div style={{ height, width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
+      <div style={{ height: "100%", width: `${value}%`, background: color, borderRadius: 3, transition: "width 1s ease" }} />
+    </div>
+  );
+}
+
+// ─── Compact List Item ────────────────────────────────────────────────────────
+function CompactItem({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      fontSize: "0.78rem", color: "var(--text-secondary)",
+      borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "0.42rem", marginBottom: "0.42rem",
+    }}>
+      <span>{label}</span>
+      <strong style={{ color: highlight ? "var(--primary)" : "var(--text-primary)" }}>{value}</strong>
+    </div>
+  );
+}
+
+// ─── Welcome Banner ───────────────────────────────────────────────────────────
+function WelcomeBanner({ user, onComingSoon }: { user: AdyapanUser | null; onComingSoon: () => void }) {
+  const [greeting, setGreeting] = useState("Good Morning");
+  useEffect(() => {
+    const hr = new Date().getHours();
+    if (hr < 12) setGreeting("Good Morning");
+    else if (hr < 17) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
+  }, []);
+
+  const btnBase: React.CSSProperties = {
+    padding: "0.52rem 1rem", borderRadius: 10, fontSize: "0.8rem", fontWeight: 700,
+    cursor: "pointer", transition: "all 0.2s ease",
+  };
+
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(139,92,246,0.1))",
+      border: "1px solid var(--border-color)", borderRadius: 18, padding: "1.5rem",
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      gap: "1.5rem", marginBottom: "1.2rem", flexWrap: "wrap",
+    }}>
+      <div>
+        <h1 style={{ fontSize: "1.55rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "0.3rem" }}>
+          {greeting}, {user?.name ?? "User"} 👋
+        </h1>
+        <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
+          Continue your learning journey and track your placement readiness.
+        </p>
+        <div style={{ maxWidth: 280 }}>
+          <div style={{ fontSize: "0.77rem", fontWeight: 700, color: "var(--primary)", marginBottom: "0.35rem" }}>
+            Profile Completion: 85%
+          </div>
+          <ProgressBar value={85} />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
+        <button onClick={onComingSoon} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
+          Continue Learning
+        </button>
+        <button onClick={onComingSoon} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+          Resume Analysis
+        </button>
+        <button onClick={onComingSoon} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+          Start Interview
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Stat Cards Grid ──────────────────────────────────────────────────────────
+function StatCardsGrid() {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(6, 1fr)",
+      gap: "0.85rem", marginBottom: "1.2rem",
+    }}
+      className="stat-grid-responsive"
+    >
+      <StatCard icon={<GraduationCap size={17} />} iconBg="rgba(139,92,246,0.1)" iconColor="#8b5cf6" value="82%" label="Learning Score" trend="+8%" trendUp={true} />
+      <StatCard icon={<FileText size={17} />} iconBg="rgba(59,130,246,0.1)" iconColor="#3b82f6" value="78/100" label="Resume Score" trend="+5" trendUp={true} />
+      <StatCard icon={<Mic size={17} />} iconBg="rgba(16,185,129,0.1)" iconColor="#10b981" value="74%" label="Interview Score" trend="+12%" trendUp={true} />
+      <StatCard icon={<Trophy size={17} />} iconBg="rgba(245,158,11,0.1)" iconColor="var(--primary)" value="80%" label="Placement Readiness" trend="+6%" trendUp={true} />
+      <StatCard icon={<ClipboardList size={17} />} iconBg="rgba(6,182,212,0.1)" iconColor="#06b6d4" value="24" label="Assignments Created" trend="This Term" />
+      <StatCard icon={<BookMarked size={17} />} iconBg="rgba(236,72,153,0.1)" iconColor="#ec4899" value="6" label="Research Papers" trend="+1" trendUp={true} />
+    </div>
+  );
+}
+
+// ─── 3-Column Panel Grid ──────────────────────────────────────────────────────
+function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
+  const activityItems = [
+    { label: "Completed Notes Generator session", time: "2 mins ago", color: "var(--primary)" },
+    { label: "New Internship Match found", time: "1 hour ago", color: "#10b981" },
+    { label: "Resume Score updated to 78/100", time: "3 hours ago", color: "#3b82f6" },
+    { label: "Mock Interview completed", time: "Yesterday", color: "#8b5cf6" },
+    { label: "DSA Challenge — 5 problems solved", time: "2 days ago", color: "#ec4899" },
+  ];
+
+  const quickActions = [
+    { label: "Resume Builder", icon: <FileText size={16} />, color: "#3b82f6" },
+    { label: "Interview Prep", icon: <Mic size={16} />, color: "#10b981" },
+    { label: "Job Match", icon: <Briefcase size={16} />, color: "var(--primary)" },
+    { label: "ATS Score", icon: <BarChart3 size={16} />, color: "#8b5cf6" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.2rem", alignItems: "start" }}
+      className="panel-grid-responsive"
+    >
+      {/* Column 1 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+        <PanelCard title="Learning Progress">
+          <div style={{ marginBottom: "0.8rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "var(--text-secondary)", marginBottom: 4 }}>
+              <span>Overall Learning Progress</span><span style={{ color: "var(--primary)", fontWeight: 700 }}>72%</span>
+            </div>
+            <ProgressBar value={72} />
+          </div>
+          <div style={{ marginTop: "0.9rem" }}>
+            <CompactItem label="Notes Generated" value={56} />
+            <CompactItem label="MCQs Practiced" value={420} />
+            <CompactItem label="Assignments Created" value={18} />
+            <CompactItem label="PPTs Generated" value={12} />
+            <CompactItem label="Coding Problems Solved" value={134} />
+          </div>
+        </PanelCard>
+
+        <PanelCard title="Coding Performance">
+          <CompactItem label="DSA Questions Solved" value={145} />
+          <CompactItem label="Coding Assignments" value={28} />
+          <CompactItem label="Projects Completed" value={6} />
+          <CompactItem label="GitHub Portfolio Score" value="80%" highlight />
+        </PanelCard>
+      </div>
+
+      {/* Column 2 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+        <PanelCard title="Career Roadmap" flagStyle>
+          <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0" }}>
+            <div style={{
+              width: 120, height: 120, borderRadius: "50%",
+              background: "conic-gradient(var(--primary) 80%, rgba(255,255,255,0.06) 0)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.25)",
+            }}>
+              <div style={{
+                width: 100, height: 100, borderRadius: "50%", background: "var(--bg-dark)",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              }}>
+                <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--primary)", lineHeight: 1.1 }}>80%</span>
+                <span style={{ fontSize: "0.6rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: 0.5 }}>Readiness</span>
+              </div>
+            </div>
+          </div>
+
+          {[
+            { label: "Resume", value: 78 }, { label: "Interview", value: 74 },
+            { label: "Skills", value: 82 }, { label: "Aptitude", value: 68 },
+          ].map((item) => (
+            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.76rem", marginBottom: "0.55rem" }}>
+              <span style={{ width: 64, color: "var(--text-secondary)" }}>{item.label}</span>
+              <div style={{ flex: 1, height: 5, background: "rgba(255,255,255,0.05)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${item.value}%`, background: "linear-gradient(90deg,#f59e0b,#d97706)", borderRadius: 3 }} />
+              </div>
+              <strong style={{ width: 32, textAlign: "right", color: "var(--text-primary)" }}>{item.value}%</strong>
+            </div>
+          ))}
+        </PanelCard>
+
+        <PanelCard title="Active Courses">
+          {[
+            { name: "Deep Learning Specialization", val: 64, color: "#8b5cf6", next: "Neural Networks Basics" },
+            { name: "Data Structures & Algorithms", val: 82, color: "#10b981", next: "Graph Algorithms" },
+            { name: "Database Management Systems", val: 45, color: "#3b82f6", next: "SQL Joins & Indexing" },
+          ].map((course) => (
+            <div key={course.name} style={{ marginBottom: "0.9rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", marginBottom: 4 }}>
+                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{course.name}</span>
+                <span style={{ color: course.color, fontWeight: 700 }}>{course.val}%</span>
+              </div>
+              <ProgressBar value={course.val} color={course.color} />
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 3 }}>Next: {course.next}</div>
+            </div>
+          ))}
+        </PanelCard>
+      </div>
+
+      {/* Column 3 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+        <PanelCard title="Recent Activity">
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {activityItems.map((item) => (
+              <div key={item.label} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
+                <div style={{
+                  width: 7, height: 7, borderRadius: "50%", background: item.color,
+                  boxShadow: `0 0 5px ${item.color}`, marginTop: 5, flexShrink: 0,
+                }} />
+                <div>
+                  <p style={{ fontSize: "0.77rem", fontWeight: 500, color: "var(--text-primary)" }}>{item.label}</p>
+                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>{item.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </PanelCard>
+
+        <PanelCard title="Quick Actions">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+            {quickActions.map((action) => (
+              <button
+                key={action.label}
+                onClick={onComingSoon}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.5rem",
+                  padding: "0.6rem", border: "1px solid var(--border-color)",
+                  borderRadius: 8, background: "transparent", color: "var(--text-secondary)",
+                  fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = action.color;
+                  (e.currentTarget as HTMLElement).style.color = action.color;
+                  (e.currentTarget as HTMLElement).style.background = `${action.color}0d`;
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--border-color)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                  (e.currentTarget as HTMLElement).style.transform = "none";
+                }}
+              >
+                <span style={{ color: action.color }}>{action.icon}</span>
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </PanelCard>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function UserDashboardPage() {
+  const [user, setUser] = useState<AdyapanUser | null>(null);
+  const [theme, setTheme] = useState("dark");
+  const [toast, setToast] = useState(false);
+  const [view, setView] = useState<"dashboard" | "profile">("dashboard");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("adyapan-user");
+      if (raw) setUser(JSON.parse(raw) as AdyapanUser);
+    } catch { /* ignore */ }
+
+    const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
+    setTheme(savedTheme);
+    document.documentElement.setAttribute("data-theme", savedTheme);
+
+    const observer = new MutationObserver(() => {
+      const t = document.documentElement.getAttribute("data-theme") ?? "dark";
+      setTheme(t);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const handleThemeToggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("adyapan-theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
+
+  const showComingSoon = () => setToast(true);
+  const handleViewProfile = () => setView("profile");
+  const handleViewDashboard = () => setView("dashboard");
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView={view} onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
+
+      <main className="dash-main">
+        {view === "dashboard" ? (
+          <>
+            <WelcomeBanner user={user} onComingSoon={showComingSoon} />
+            <StatCardsGrid />
+            <PanelGrid onComingSoon={showComingSoon} />
+          </>
+        ) : (
+          <ProfileView user={user} onComingSoon={showComingSoon} onBack={handleViewDashboard} />
+        )}
+      </main>
+
+      {toast && (
+        <Toast message="🚀 Coming Soon! This feature will be available in the next release." onClose={() => setToast(false)} />
+      )}
+
+      {/* Inline responsive styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .stat-grid-responsive {
+          grid-template-columns: repeat(6, 1fr);
+        }
+        .panel-grid-responsive {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        @media (max-width: 1200px) {
+          .stat-grid-responsive { grid-template-columns: repeat(3, 1fr) !important; }
+          .panel-grid-responsive { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 768px) {
+          .stat-grid-responsive { grid-template-columns: repeat(2, 1fr) !important; }
+          .panel-grid-responsive { grid-template-columns: 1fr !important; }
+          .dash-main { margin-left: 0 !important; }
+        }
+        .dash-sidebar input:focus {
+          border-color: var(--primary);
+        }
+      `}</style>
+    </div>
+  );
+}
