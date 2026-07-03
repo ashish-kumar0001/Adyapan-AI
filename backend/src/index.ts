@@ -24,7 +24,8 @@ app.use(
       // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`CORS blocked: ${origin}`));
+      // Return 403 instead of throwing — prevents 500 errors
+      return callback(null, false);
     },
     credentials: true,
   }),
