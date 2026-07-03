@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
@@ -14,6 +16,8 @@ const allowedOrigins = [
   "http://localhost:3001",
 ];
 
+app.use(helmet());
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -24,6 +28,16 @@ app.use(
     },
     credentials: true,
   }),
+);
+
+// Rate limiting
+app.use(
+  "/api/auth",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false }),
+);
+app.use(
+  "/api",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }),
 );
 
 app.use(express.json());
