@@ -50,6 +50,6 @@ app.get("/", (_req, res) => {
 app.use("/api", apiRouter);
 app.use(errorHandler);
 
-app.listen(env.port, () => {
-  console.log(`Adyapan AI API running on http://localhost:${env.port}`);
+app.listen(env.port, "0.0.0.0", () => {
+  console.log(`Adyapan AI API running on http://0.0.0.0:${env.port}`);
 });
