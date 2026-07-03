@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import path from "path";
-import fs from "fs";
+import { cloudinary } from "../config/cloudinary";
 import { getProfile, upsertProfile, clearResume } from "../services/profile.service";
 
 export async function getMyProfile(req: Request, res: Response, next: NextFunction) {
@@ -28,14 +27,11 @@ export async function uploadResume(req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    const resumeUrl = `/uploads/${req.file.filename}`;
+    // Cloudinary puts the full URL in req.file.path and public_id in req.file.filename
+    const resumeUrl = (req.file as Express.Multer.File & { path: string }).path;
     const resumeName = req.file.originalname;
 
-    const profile = await upsertProfile(req.user?.userId ?? "", {
-      resumeUrl,
-      resumeName,
-    });
-
+    const profile = await upsertProfile(req.user?.userId ?? "", { resumeUrl, resumeName });
     res.json({ success: true, profile });
   } catch (error) {
     next(error);
@@ -45,9 +41,21 @@ export async function uploadResume(req: Request, res: Response, next: NextFuncti
 export async function removeResume(req: Request, res: Response, next: NextFunction) {
   try {
     const existing = await getProfile(req.user?.userId ?? "");
+
+    // Delete from Cloudinary if we have a URL
     if (existing?.resumeUrl) {
-      const filePath = path.join(process.cwd(), "uploads", path.basename(existing.resumeUrl));
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      try {
+        // Extract public_id from the Cloudinary URL
+        // URL format: https://res.cloudinary.com/<cloud>/raw/upload/v.../adyapan-resumes/<publicId>
+        const urlParts = existing.resumeUrl.split("/");
+        const folderIndex = urlParts.indexOf("adyapan-resumes");
+        if (folderIndex !== -1) {
+          const publicId = `adyapan-resumes/${urlParts.slice(folderIndex + 1).join("/").split(".")[0]}`;
+          await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+        }
+      } catch {
+        // Don't fail the request if Cloudinary delete fails
+      }
     }
 
     const profile = await clearResume(req.user?.userId ?? "");

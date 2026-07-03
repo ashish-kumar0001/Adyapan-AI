@@ -891,14 +891,23 @@ export default function UserDashboardPage() {
   const [toast, setToast] = useState(false);
 
   useEffect(() => {
+    // Load theme immediately
+    const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
+    setTheme(savedTheme);
+    document.documentElement.setAttribute("data-theme", savedTheme);
+
+    // Seed from localStorage first (instant display), then refresh from API
     try {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) setUser(JSON.parse(raw) as AdyapanUser);
     } catch { /* ignore */ }
 
-    const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(savedTheme);
-    document.documentElement.setAttribute("data-theme", savedTheme);
+    // Fetch fresh user data from server
+    api.get("/auth/me").then(res => {
+      const fresh = (res.data as { user: AdyapanUser }).user;
+      setUser(fresh);
+      localStorage.setItem("adyapan-user", JSON.stringify(fresh));
+    }).catch(() => { /* token invalid — interceptor will redirect */ });
 
     const observer = new MutationObserver(() => {
       const t = document.documentElement.getAttribute("data-theme") ?? "dark";

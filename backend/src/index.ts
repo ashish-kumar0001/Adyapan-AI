@@ -1,27 +1,36 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import path from "path";
 import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
+// Allow both local dev and production frontend URLs
+const allowedOrigins = [
+  env.frontendUrl,
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
+
 app.use(
   cors({
-    origin: env.frontendUrl,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
   }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (_req, res) => {
-  res.json({
-    success: true,
-    service: "Adyapan AI API",
-  });
+  res.json({ success: true, service: "Adyapan AI API", version: "1.0.0" });
 });
 
 app.use("/api", apiRouter);

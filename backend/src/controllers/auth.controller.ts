@@ -3,6 +3,7 @@ import { loginUser, registerUser } from "../services/auth.service";
 import { requireString } from "../utils/request";
 import { env } from "../config/env";
 import { httpError } from "../utils/httpError";
+import { prisma } from "../config/prisma";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -61,11 +62,16 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export function me(req: Request, res: Response) {
-  res.json({
-    success: true,
-    user: req.user,
-  });
+export async function me(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user?.userId },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    });
+    res.json({ success: true, user });
+  } catch (error) {
+    next(error);
+  }
 }
 
 export function logout(_req: Request, res: Response) {

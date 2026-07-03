@@ -1096,14 +1096,22 @@ export default function AdminDashboardPage() {
 
   // ── Bootstrap: theme + user ──────────────────────────────────────────────────
   useEffect(() => {
+    const saved = localStorage.getItem("adyapan-theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+
+    // Seed from localStorage first (instant display), then refresh from API
     try {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) setUser(JSON.parse(raw) as AdminUser);
     } catch { /* ignore */ }
 
-    const saved = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-theme", saved);
+    // Fetch fresh user data from server
+    api.get("/auth/me").then(res => {
+      const fresh = (res.data as { user: AdminUser }).user;
+      setUser(fresh);
+      localStorage.setItem("adyapan-user", JSON.stringify(fresh));
+    }).catch(() => { /* token invalid — interceptor will redirect */ });
 
     // Watch for external theme changes
     const observer = new MutationObserver(() => {
