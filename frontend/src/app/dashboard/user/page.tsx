@@ -69,11 +69,12 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
-      { label: "Study Assistant", href: "#" }, { label: "Notes Generator", href: "#" },
-      { label: "PPT Generator", href: "#" }, { label: "Assignment Generator", href: "#" },
-      { label: "MCQ Generator", href: "#" }, { label: "PDF Summarizer", href: "#" },
-      { label: "Flashcards", href: "#" }, { label: "Mind Maps", href: "#" },
-      { label: "Topic Explainer", href: "#" },
+      { label: "Study Assistant", href: "#" },
+      { label: "Notes Generator", href: "#" },
+      { label: "Quiz Generator", href: "#" },
+      { label: "Assignment Generator", href: "#" },
+      { label: "PPT Generator", href: "#" },
+      { label: "Mind Maps", href: "#" },
     ],
   },
   {
