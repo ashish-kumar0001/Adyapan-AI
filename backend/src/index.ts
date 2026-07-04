@@ -39,11 +39,23 @@ app.use(
 // Rate limiting
 app.use(
   "/api/auth",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false }),
+  rateLimit({ 
+    windowMs: 15 * 60 * 1000, 
+    max: 20, 
+    standardHeaders: true, 
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false, trustProxy: false }
+  }),
 );
 app.use(
   "/api",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }),
+  rateLimit({ 
+    windowMs: 15 * 60 * 1000, 
+    max: 200, 
+    standardHeaders: true, 
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false, trustProxy: false }
+  }),
 );
 
 app.use(express.json());
