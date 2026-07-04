@@ -6,6 +6,7 @@ export const env = {
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:3000",
   jwtSecret: process.env.JWT_SECRET ?? "replace-this-local-secret-before-production",
   adminRegisterSecret: process.env.ADMIN_REGISTER_SECRET ?? "adyapan-admin-2024",
+  geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
     apiKey: process.env.CLOUDINARY_API_KEY ?? "",

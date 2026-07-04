@@ -18,6 +18,8 @@ import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
 import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGeneratorView";
 import { PptGeneratorView } from "@/components/learning-hub/PptGeneratorView";
 import { MindMapsView } from "@/components/learning-hub/MindMapsView";
+import { CodingAssistantView } from "@/components/coding-hub/CodingAssistantView";
+import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -270,6 +272,8 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Assignment Generator") onViewTool("assignment-generator");
                       else if (sub.label === "PPT Generator") onViewTool("ppt-generator");
                       else if (sub.label === "Mind Maps") onViewTool("mind-maps");
+                      else if (sub.label === "Coding Assistant") onViewTool("coding-assistant");
+                      else if (sub.label === "DSA Practice") onViewTool("dsa-practice");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -1151,6 +1155,10 @@ export default function UserDashboardPage() {
           <PptGeneratorView />
         ) : activeView === "mind-maps" ? (
           <MindMapsView />
+        ) : activeView === "coding-assistant" ? (
+          <CodingAssistantView />
+        ) : activeView === "dsa-practice" ? (
+          <DsaPracticeView />
         ) : (
           <>
             <WelcomeBanner user={user} onComingSoon={showComingSoon} />

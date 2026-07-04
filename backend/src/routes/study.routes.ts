@@ -1,9 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateStudyResponse } from "../lib/ai/gemini";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../config/prisma";
 export const studyRouter = Router();
 
 studyRouter.use(requireAuth);

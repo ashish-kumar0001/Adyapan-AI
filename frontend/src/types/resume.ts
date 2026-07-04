@@ -12,7 +12,9 @@ export type ResumeHubViewType =
   | "quiz-generator"
   | "assignment-generator"
   | "ppt-generator"
-  | "mind-maps";
+  | "mind-maps"
+  | "coding-assistant"
+  | "dsa-practice";
 
 export interface PersonalInfo {
   fullName: string;

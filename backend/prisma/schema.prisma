@@ -38,6 +38,11 @@ model User {
   presentations   Presentation[]
   mindMaps        MindMap[]
 
+  // Coding Hub Relations
+  codingSessions  CodingSession[]
+  submissions     Submission[]
+  dsaProgress     DSAProgress[]
+
   @@map("users")
 }
 
@@ -293,4 +298,90 @@ model MindMap {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("mind_maps")
+}
+
+// ==========================================
+// Coding Hub Models
+// ==========================================
+
+model CodingSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  language  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  messages  CodingMessage[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coding_sessions")
+}
+
+model CodingMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  role      String   // "user" or "model"
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("coding_messages")
+}
+
+// ------------------------------------------
+// DSA Practice Models
+// ------------------------------------------
+
+model Problem {
+  id          String   @id @default(cuid())
+  title       String
+  difficulty  String   // "Easy", "Medium", "Hard"
+  category    String   // e.g., "Arrays", "DP"
+  companies   String[] // e.g., ["Google", "Amazon"]
+  statement   String
+  constraints String
+  examples    Json
+  hints       String[]
+  editorial   String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  submissions Submission[]
+
+  @@map("problems")
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  problemId String   @map("problem_id")
+  code      String
+  language  String
+  status    String   // "Accepted", "Wrong Answer", "Time Limit Exceeded"
+  timeMs    Int?
+  memoryKb  Int?
+  aiReview  Json?    // Stores Time/Space Complexity & Optimization Tips
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
+}
+
+model DSAProgress {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  solved    Int      @default(0)
+  accuracy  Float    @default(0)
+  streak    Int      @default(0)
+  ranking   Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dsa_progress")
 }
