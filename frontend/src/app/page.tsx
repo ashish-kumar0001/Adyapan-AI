@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import {
@@ -34,14 +34,10 @@ export default function LandingPage() {
   const promptString = "Build a microservices-based Netflix Clone using React...";
 
   // 3D Parallax and scroll progress
-  const targetRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ["start start", "end end"]
-  });
+  const { scrollY } = useScroll();
 
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.92]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 500], [1, 0.92]);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
 
   // Handle auto-typing for Coding Hub terminal
   useEffect(() => {
