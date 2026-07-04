@@ -331,7 +331,7 @@ function DashboardTopNav({
     background: navBtnBg, color: navBtnColor, transition: "all 0.2s ease",
   };
 
-  const genItems = ["Notes", "Assignment", "PPT", "MCQs", "Research Paper", "Resume"];
+  const genItems = ["Notes", "Assignment", "PPT", "Quiz", "Research Paper", "Resume"];
   const evalItems = ["ATS Score", "Resume Analysis", "Skill Assessment", "Placement Readiness"];
 
   return (
@@ -394,6 +394,10 @@ function DashboardTopNav({
               {genItems.map((item) => (
                 <button key={item} onClick={() => {
                   if (item === "Resume") onViewTool("resume-builder");
+                  else if (item === "Notes") onViewTool("notes-generator");
+                  else if (item === "Assignment") onViewTool("assignment-generator");
+                  else if (item === "PPT") onViewTool("ppt-generator");
+                  else if (item === "Quiz") onViewTool("quiz-generator");
                   else onComingSoon();
                 }} style={{
                   display: "block", width: "100%", textAlign: "left",
