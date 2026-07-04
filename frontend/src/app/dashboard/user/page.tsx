@@ -87,14 +87,6 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   {
-    id: "career", label: "Career Hub", icon: <Compass size={18} />,
-    submenu: [
-      { label: "Career Guide", href: "#" }, { label: "Career Roadmap", href: "#" },
-      { label: "Skill Gap Analysis", href: "#" }, { label: "Domain Recommendation", href: "#" },
-      { label: "Learning Path Generator", href: "#" },
-    ],
-  },
-  {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
       { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
