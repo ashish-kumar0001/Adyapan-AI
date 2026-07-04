@@ -9,6 +9,9 @@ import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
+// Trust Railway's proxy so rate-limit reads the real client IP
+app.set("trust proxy", 1);
+
 // Trust proxy for deployment platforms like Railway (required for express-rate-limit)
 app.set("trust proxy", 1);
 
