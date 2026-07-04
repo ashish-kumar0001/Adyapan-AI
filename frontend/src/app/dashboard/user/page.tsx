@@ -47,9 +47,13 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     <div
       style={{
         position: "fixed", bottom: 24, right: 24, zIndex: 9999,
-        background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
-        color: "#fff", padding: "12px 22px", borderRadius: 12,
-        boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+        background: "rgba(245,158,11,0.15)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        color: "#f59e0b",
+        border: "1px solid rgba(245,158,11,0.35)",
+        padding: "12px 22px", borderRadius: 14,
+        boxShadow: "0 8px 32px rgba(245,158,11,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
         fontSize: "0.88rem", fontWeight: 600,
         animation: "fadeInUp 0.3s ease",
       }}
