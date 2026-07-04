@@ -80,9 +80,9 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
     submenu: [
-      { label: "Coding Assistant", href: "#" }, { label: "Code Generator", href: "#" },
-      { label: "Code Debugger", href: "#" }, { label: "DSA Practice", href: "#" },
-      { label: "Coding Challenges", href: "#" }, { label: "Project Ideas", href: "#" },
+      { label: "Coding Assistant", href: "#" },
+      { label: "DSA Practice", href: "#" },
+      { label: "Coding Challenges", href: "#" },
       { label: "GitHub Portfolio Builder", href: "#" },
     ],
   },
