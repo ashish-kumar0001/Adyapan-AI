@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/requireAuth";
+import { requireAuth } from "../middleware/auth";
 import { analyzeGithubProfile, generateReadme, generatePortfolio } from "../lib/ai/github";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../config/prisma";
 
 const router = Router();
 router.use(requireAuth);

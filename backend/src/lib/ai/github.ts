@@ -1,4 +1,11 @@
-import { getGeminiModel } from "./gemini";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { env } from "../../config/env";
+
+const genAI = new GoogleGenerativeAI(env.geminiApiKey);
+
+function getGeminiModel() {
+  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+}
 
 // Helper for structured JSON output
 async function parseGeminiJson(prompt: string, fallback: any = {}) {
