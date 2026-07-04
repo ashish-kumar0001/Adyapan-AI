@@ -40,7 +40,7 @@ export default function LandingPage() {
     offset: ["start start", "end end"]
   });
 
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.9]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.92]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
   // Handle auto-typing for Coding Hub terminal
@@ -118,8 +118,6 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-
-
   // Add landing class to body
   useEffect(() => {
     document.body.classList.add("landing");
@@ -133,14 +131,22 @@ export default function LandingPage() {
       faq.answer.toLowerCase().includes(faqSearch.toLowerCase())
   );
 
+  // 3D Scroll transition setting
+  const scroll3DVariant = {
+    initial: { rotateX: 12, y: 60, opacity: 0 },
+    whileInView: { rotateX: 0, y: 0, opacity: 1 },
+    viewport: { once: false, margin: "-120px" },
+    transition: { duration: 0.75, ease: "easeOut" as const }
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: "#030712", color: "#f3f4f6" }} className="overflow-x-hidden font-sans">
+    <div style={{ minHeight: "100vh", background: "#03060b", color: "#f3f4f6" }} className="overflow-x-hidden font-sans">
       <Navbar />
 
-      {/* Background Glows */}
+      {/* Background Glows (Matched with Amber/Orange Logo) */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[20%] w-[350px] h-[350px] rounded-full bg-purple-500/10 blur-[120px] animate-pulse" />
-        <div className="absolute top-[20%] right-[15%] w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-[140px] animate-pulse" style={{ animationDuration: "8s" }} />
+        <div className="absolute top-[-10%] left-[20%] w-[350px] h-[350px] rounded-full bg-amber-500/10 blur-[120px] animate-pulse" />
+        <div className="absolute top-[20%] right-[15%] w-[400px] h-[400px] rounded-full bg-orange-500/10 blur-[140px] animate-pulse" style={{ animationDuration: "8s" }} />
       </div>
 
       {/* SECTION 1: HERO */}
@@ -152,11 +158,11 @@ export default function LandingPage() {
         <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Content */}
           <div className="lg:col-span-6 text-left space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-xs font-semibold text-purple-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <Sparkles size={12} className="animate-spin" /> The Future of Learning is Agentic AI
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
-              One AI <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">Operating System</span> For Careers
+              One AI <span className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">Operating System</span> For Careers
             </h1>
             <p className="text-sm sm:text-base text-gray-400 leading-relaxed max-w-lg">
               One central system for learning, smart coding, automated resume building, AI behavioral interviews, and placement channels.
@@ -169,7 +175,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 font-semibold text-white transition-all transform hover:-translate-y-0.5 shadow-lg shadow-purple-500/20"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-6 py-3 font-semibold text-black transition-all transform hover:-translate-y-0.5 shadow-lg shadow-amber-500/20"
               >
                 Start Free Today <ArrowRight size={16} />
               </Link>
@@ -184,7 +190,7 @@ export default function LandingPage() {
 
           {/* Interactive Floating 3D Dashboard Mockup */}
           <div className="lg:col-span-6 flex justify-center relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl opacity-10 blur-xl animate-pulse" />
+            <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl opacity-10 blur-xl animate-pulse" />
             <motion.div
               style={{ transformStyle: "preserve-3d" }}
               whileHover={{ rotateY: 10, rotateX: -5 }}
@@ -204,22 +210,22 @@ export default function LandingPage() {
                 <div className="col-span-2 space-y-4">
                   <div className="p-3 bg-white/3 border border-white/5 rounded-xl space-y-1">
                     <div className="text-[9px] uppercase tracking-wider text-gray-500">Learning Speed</div>
-                    <div className="text-xl font-bold text-purple-400">9.4x Faster</div>
+                    <div className="text-xl font-bold text-amber-400">9.4x Faster</div>
                   </div>
                   <div className="p-3 bg-white/3 border border-white/5 rounded-xl space-y-2">
                     <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">AI Agent Action Graph</div>
                     <div className="h-16 flex items-end gap-1 pt-2">
-                      <div className="w-full bg-purple-500/40 rounded-t h-[40%] animate-pulse" />
-                      <div className="w-full bg-blue-500/60 rounded-t h-[75%] animate-pulse" style={{ animationDelay: "0.2s" }} />
-                      <div className="w-full bg-cyan-400/80 rounded-t h-[60%] animate-pulse" style={{ animationDelay: "0.4s" }} />
-                      <div className="w-full bg-purple-500 rounded-t h-[90%] animate-pulse" style={{ animationDelay: "0.6s" }} />
+                      <div className="w-full bg-amber-500/40 rounded-t h-[40%] animate-pulse" />
+                      <div className="w-full bg-orange-500/60 rounded-t h-[75%] animate-pulse" style={{ animationDelay: "0.2s" }} />
+                      <div className="w-full bg-yellow-400/80 rounded-t h-[60%] animate-pulse" style={{ animationDelay: "0.4s" }} />
+                      <div className="w-full bg-amber-500 rounded-t h-[90%] animate-pulse" style={{ animationDelay: "0.6s" }} />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center space-y-1">
-                    <Brain className="w-6 h-6 text-purple-400 mx-auto" />
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center space-y-1">
+                    <Brain className="w-6 h-6 text-amber-400 mx-auto animate-pulse" />
                     <span className="block text-[8px] text-gray-400">Skills Verified</span>
                     <span className="block text-xs font-bold text-white">18 Mastered</span>
                   </div>
@@ -236,7 +242,7 @@ export default function LandingPage() {
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" /> Study Assistant
               </div>
               <div className="absolute bottom-1/4 left-[-15px] px-3 py-1.5 bg-[#0d0f17] border border-white/10 rounded-lg text-[9px] text-white flex items-center gap-1.5 shadow-lg shadow-black/40">
-                <Terminal className="w-3.5 h-3.5 text-blue-400" /> Coding Copilot
+                <Terminal className="w-3.5 h-3.5 text-amber-400" /> Coding Copilot
               </div>
             </motion.div>
           </div>
@@ -244,7 +250,11 @@ export default function LandingPage() {
       </motion.section>
 
       {/* SECTION 2: SCROLL STORY */}
-      <section className="py-24 relative z-10 border-t border-white/5 bg-[#05070c]">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 border-t border-white/5 bg-[#05070c]"
+      >
         <div className="max-w-4xl mx-auto px-4 text-center space-y-16">
           <div className="space-y-4">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -257,37 +267,26 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left items-stretch">
             {/* Step 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between"
-            >
-              <div className="text-xs uppercase text-purple-400 font-bold tracking-wider">Goal Selection</div>
-              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center space-y-1">
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between">
+              <div className="text-xs uppercase text-amber-400 font-bold tracking-wider">Goal Selection</div>
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center space-y-1">
                 <div className="text-[10px] text-gray-400">Target Role</div>
                 <div className="text-sm font-bold text-white">Machine Learning Engineer</div>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Define your primary goals, and our platform tunes your syllabus automatically.
               </p>
-            </motion.div>
+            </div>
 
             {/* Step 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between"
-            >
-              <div className="text-xs uppercase text-blue-400 font-bold tracking-wider">Roadmap Node</div>
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between">
+              <div className="text-xs uppercase text-orange-400 font-bold tracking-wider">Roadmap Node</div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs font-semibold text-gray-300">
-                  <CheckCircle size={12} className="text-green-400" /> Learn Core ML
+                  <CheckCircle size={12} className="text-amber-400" /> Learn Core ML
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-gray-300">
-                  <CheckCircle size={12} className="text-green-400" /> Build Projects
+                  <CheckCircle size={12} className="text-amber-400" /> Build Projects
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
                   <div className="w-3 h-3 rounded-full border border-gray-600" /> Practice Interviews
@@ -296,31 +295,29 @@ export default function LandingPage() {
               <p className="text-xs text-gray-500 leading-relaxed">
                 A custom timeline is drawn, mapping skill acquisitions, builds, and recruiter preparation.
               </p>
-            </motion.div>
+            </div>
 
             {/* Step 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
-              className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between"
-            >
-              <div className="text-xs uppercase text-cyan-400 font-bold tracking-wider">Career Launch</div>
-              <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-center">
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 flex flex-col justify-between">
+              <div className="text-xs uppercase text-yellow-400 font-bold tracking-wider">Career Launch</div>
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center">
                 <div className="text-xs font-bold text-white">Fast-tracked Screen</div>
-                <div className="text-[9px] text-cyan-400">Direct Partner Hiring</div>
+                <div className="text-[9px] text-amber-400">Direct Partner Hiring</div>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Match automatically with micro-internships and placement drives based on verified data.
               </p>
-            </motion.div>
+            </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 3: AGENT ECOSYSTEM */}
-      <section className="py-24 relative z-10 bg-[#030712] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#030712] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-5 text-left space-y-6">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -337,7 +334,7 @@ export default function LandingPage() {
                 "Coaching score feeds direct placement matches"
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-3 text-xs text-gray-300">
-                  <Check size={14} className="text-purple-400" />
+                  <Check size={14} className="text-amber-400" />
                   {text}
                 </div>
               ))}
@@ -345,12 +342,11 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-7 flex justify-center relative">
-            {/* Pulsing Neural Graph Placeholder */}
             <svg viewBox="0 0 400 400" className="w-full max-w-[420px] aspect-square overflow-visible">
               <defs>
                 <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#a855f7" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.8" />
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#ea580c" stopOpacity="0.8" />
                 </linearGradient>
               </defs>
               <line x1="200" y1="200" x2="80" y2="100" stroke="url(#lineGrad)" strokeWidth="1.5" strokeDasharray="5,5" className="animate-pulse" />
@@ -359,31 +355,36 @@ export default function LandingPage() {
               <line x1="200" y1="200" x2="320" y2="300" stroke="url(#lineGrad)" strokeWidth="1.5" />
 
               {/* Center Node */}
-              <circle cx="200" cy="200" r="28" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <circle cx="200" cy="200" r="28" fill="#1c160c" stroke="#f59e0b" strokeWidth="2" />
               <text x="200" y="204" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="bold" fontFamily="sans-serif">Adyapan AI</text>
 
               {/* Connected Nodes */}
-              <circle cx="80" cy="100" r="22" fill="#0c1020" stroke="#3b82f6" strokeWidth="1.5" />
-              <text x="80" y="103" textAnchor="middle" fill="#93c5fd" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Learning</text>
+              <circle cx="80" cy="100" r="22" fill="#0d0d0d" stroke="#f59e0b" strokeWidth="1.5" />
+              <text x="80" y="103" textAnchor="middle" fill="#fde047" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Learning</text>
 
-              <circle cx="320" cy="100" r="22" fill="#0c1020" stroke="#06b6d4" strokeWidth="1.5" />
-              <text x="320" y="103" textAnchor="middle" fill="#67e8f9" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Coding</text>
+              <circle cx="320" cy="100" r="22" fill="#0d0d0d" stroke="#ea580c" strokeWidth="1.5" />
+              <text x="320" y="103" textAnchor="middle" fill="#fdba74" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Coding</text>
 
-              <circle cx="80" cy="300" r="22" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-              <text x="80" y="303" textAnchor="middle" fill="#d8b4fe" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Resume Hub</text>
+              <circle cx="80" cy="300" r="22" fill="#0d0d0d" stroke="#f59e0b" strokeWidth="1.5" />
+              <text x="80" y="303" textAnchor="middle" fill="#fde047" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Resume Hub</text>
 
-              <circle cx="320" cy="300" r="22" fill="#0c1020" stroke="#f59e0b" strokeWidth="1.5" />
-              <text x="320" y="303" textAnchor="middle" fill="#fde047" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Placement</text>
+              <circle cx="320" cy="300" r="22" fill="#0d0d0d" stroke="#ea580c" strokeWidth="1.5" />
+              <text x="320" y="303" textAnchor="middle" fill="#fdba74" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Placement</text>
             </svg>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 4: LEARNING HUB */}
-      <section id="features" className="py-24 relative z-10 bg-[#05070c] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        id="features"
+        className="py-24 relative z-10 bg-[#05070c] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 space-y-16">
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-semibold text-blue-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <Brain size={12} /> Personalized Academy
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -395,22 +396,22 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-purple-500/35 transition-colors">
-              <BookOpen className="w-8 h-8 text-purple-400" />
+            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-amber-500/35 transition-colors">
+              <BookOpen className="w-8 h-8 text-amber-400" />
               <h3 className="text-xl font-bold text-white">Notes Generator</h3>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Upload PDFs or slides, and get beautifully structured summaries, key takeaways, and flashcards instantly.
               </p>
             </div>
-            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-blue-500/35 transition-colors">
-              <Brain className="w-8 h-8 text-blue-400" />
+            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-orange-500/35 transition-colors">
+              <Brain className="w-8 h-8 text-orange-400" />
               <h3 className="text-xl font-bold text-white">Quiz Creator</h3>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Test yourself with conceptual questions generated straight from your syllabus to check validation scores.
               </p>
             </div>
-            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-cyan-500/35 transition-colors">
-              <Layers className="w-8 h-8 text-cyan-400" />
+            <div className="p-8 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-yellow-500/35 transition-colors">
+              <Layers className="w-8 h-8 text-yellow-400" />
               <h3 className="text-xl font-bold text-white">Mind Map builder</h3>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Unlock tree mind-maps generated from raw topic inputs to link connected academic definitions logically.
@@ -418,13 +419,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 5: CODING HUB */}
-      <section className="py-24 relative z-10 bg-[#030712] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#030712] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-xs font-semibold text-cyan-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <Terminal size={12} /> Tech & Execution
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -446,7 +451,6 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-6">
-            {/* Interactive Terminal Screen */}
             <div className="w-full max-w-[480px] aspect-[4/3] rounded-2xl border border-white/10 bg-[#090b11]/90 font-mono text-[11px] overflow-hidden flex flex-col shadow-2xl">
               <div className="bg-white/5 px-4 py-3 flex items-center justify-between border-b border-white/10">
                 <div className="flex items-center gap-1.5">
@@ -458,39 +462,41 @@ export default function LandingPage() {
               </div>
               <div className="p-5 flex-1 space-y-4 overflow-y-auto">
                 <div className="flex items-center gap-2">
-                  <span className="text-purple-400">~</span>
+                  <span className="text-amber-400">~</span>
                   <span className="text-white">{terminalText}</span>
                 </div>
                 {terminalStep >= 1 && (
                   <div className="text-gray-400 space-y-1 animate-fadeIn">
-                    <span className="text-cyan-400 block font-bold">🚀 Initializing AI Build Agent...</span>
-                    <span className="block">✓ Setting up Tech Stack: Next.js + NestJS + Docker</span>
+                    <span className="text-amber-400 block font-bold">🚀 Initializing AI Build Agent...</span>
+                    <span className="block font-bold">✓ Setting up Tech Stack: Next.js + NestJS + Docker</span>
                     <span className="block">✓ Assembling architecture structures...</span>
                   </div>
                 )}
                 {terminalStep >= 2 && (
                   <div className="text-gray-400 space-y-1 animate-fadeIn">
                     <span className="text-green-400 block font-bold">📦 Generated Files:</span>
-                    <span className="block text-yellow-400 font-bold">├── gateway/src/main.ts (Gateway Service)</span>
-                    <span className="block text-yellow-400 font-bold">├── auth-service/src/auth.controller.ts (JWT Auth)</span>
-                    <span className="block text-yellow-400 font-bold">└── billing-service/prisma/schema.prisma (Neon DB)</span>
+                    <span className="block text-amber-400 font-bold">├── gateway/src/main.ts (Gateway Service)</span>
+                    <span className="block text-amber-400 font-bold">├── auth-service/src/auth.controller.ts (JWT Auth)</span>
+                    <span className="block text-amber-400 font-bold">└── billing-service/prisma/schema.prisma (Neon DB)</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 6: RESUME HUB (ATS SCANNER) */}
-      <section className="py-24 relative z-10 bg-[#05070c] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#05070c] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 relative flex justify-center">
-            {/* Rotating / Scanning Resume */}
             <div className="relative w-full max-w-[360px] aspect-[1/1.4] bg-white border border-gray-200 rounded-xl p-6 shadow-2xl flex flex-col justify-between overflow-hidden">
-              {/* Scan Laser effect */}
               {atsScanning && (
-                <div className="absolute left-0 w-full h-1 bg-red-500/80 shadow-[0_0_10px_#ef4444] animate-scan" style={{ top: "40%" }} />
+                <div className="absolute left-0 w-full h-1 bg-amber-500/80 shadow-[0_0_10px_#f59e0b] animate-scan" style={{ top: "40%" }} />
               )}
 
               <div className="space-y-4">
@@ -525,7 +531,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Score Ring Badge */}
             <div className="absolute bottom-10 right-4 p-4 bg-[#090b11] border border-white/10 rounded-2xl flex items-center gap-3 shadow-xl">
               <div className="w-12 h-12 relative flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
@@ -542,7 +547,7 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-xs font-semibold text-yellow-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <FileText size={12} /> Conversion & Profile
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -559,7 +564,7 @@ export default function LandingPage() {
                 "Cover Letter Generator aligning with target JDs"
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-3 text-xs text-gray-300">
-                  <Check size={14} className="text-yellow-400" />
+                  <Check size={14} className="text-amber-400" />
                   {text}
                 </div>
               ))}
@@ -571,13 +576,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 7: INTERVIEW COACH */}
-      <section className="py-24 relative z-10 bg-[#030712] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#030712] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-xs font-semibold text-purple-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <MessageSquare size={12} /> Behavioral Drills
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -593,7 +602,7 @@ export default function LandingPage() {
                   <span className="text-white font-bold">88%</span>
                 </div>
                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-500 rounded-full" style={{ width: "88%" }} />
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: "88%" }} />
                 </div>
               </div>
               <div className="space-y-1">
@@ -602,17 +611,16 @@ export default function LandingPage() {
                   <span className="text-white font-bold">92%</span>
                 </div>
                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: "92%" }} />
+                  <div className="h-full bg-orange-500 rounded-full" style={{ width: "92%" }} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Interactive Chat bubble screen */}
           <div className="lg:col-span-6 flex justify-center">
-            <div className="w-full max-w-[480px] bg-white/2 border border-white/5 rounded-2xl p-6 space-y-4 backdrop-blur-xl">
+            <div className="w-full max-w-[480px] bg-[#0c0d15] border border-white/5 rounded-2xl p-6 space-y-4 backdrop-blur-xl">
               <div className="flex items-center gap-3 border-b border-white/5 pb-3">
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
                   <Brain size={16} />
                 </div>
                 <div>
@@ -621,9 +629,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Chat bubbles */}
               <div className="space-y-3 text-[11px] leading-relaxed">
-                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-300 max-w-[85%]">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 max-w-[85%]">
                   &quot;Tell me about a time you handled a difficult conflict inside a technical engineering team.&quot;
                 </div>
                 <div className="p-3 bg-white/5 border border-white/5 rounded-xl text-gray-300 max-w-[85%] ml-auto text-right">
@@ -633,13 +640,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 8: PLACEMENT HUB */}
-      <section className="py-24 relative z-10 bg-[#05070c] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#05070c] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 space-y-12">
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-xs font-semibold text-cyan-400">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-400">
               <Trophy size={12} /> Opportunities
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -651,32 +662,37 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-cyan-400/30 transition-colors">
-              <Briefcase className="w-8 h-8 text-cyan-400" />
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-amber-400/30 transition-colors">
+              <Briefcase className="w-8 h-8 text-amber-400" />
               <h3 className="text-lg font-bold text-white">Micro-Internships</h3>
               <p className="text-xs text-gray-500">Short-term remote engineering positions.</p>
             </div>
-            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-purple-400/30 transition-colors">
-              <Trophy className="w-8 h-8 text-purple-400" />
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-orange-400/30 transition-colors">
+              <Trophy className="w-8 h-8 text-orange-400" />
               <h3 className="text-lg font-bold text-white">Hiring Drives</h3>
               <p className="text-xs text-gray-500">Direct hiring partnership opportunities.</p>
             </div>
-            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-blue-400/30 transition-colors">
-              <Calendar className="w-8 h-8 text-blue-400" />
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-yellow-400/30 transition-colors">
+              <Calendar className="w-8 h-8 text-yellow-400" />
               <h3 className="text-lg font-bold text-white">Hackathons</h3>
               <p className="text-xs text-gray-500">Compete globally and verify skill sets.</p>
             </div>
-            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-yellow-400/30 transition-colors">
-              <Star className="w-8 h-8 text-yellow-400" />
+            <div className="p-6 bg-white/2 border border-white/5 rounded-2xl space-y-4 hover:border-amber-500/30 transition-colors">
+              <Star className="w-8 h-8 text-amber-400" />
               <h3 className="text-lg font-bold text-white">Job Referrals</h3>
               <p className="text-xs text-gray-500">Connect with alumni and hiring mentors.</p>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 9: LIVE DASHBOARD EXPERIENCE */}
-      <section id="live-dashboard" className="py-24 relative z-10 bg-[#030712] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        id="live-dashboard"
+        className="py-24 relative z-10 bg-[#030712] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-4 text-left space-y-6">
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -689,27 +705,31 @@ export default function LandingPage() {
 
           <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-purple-400">{statLearned}+</span>
+              <span className="block text-3xl font-extrabold text-amber-455 text-amber-400">{statLearned}+</span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Hours Learned</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-blue-400">{statNotes}+</span>
+              <span className="block text-3xl font-extrabold text-orange-400">{statNotes}+</span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Notes Generated</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-cyan-400">{statResumes}%</span>
+              <span className="block text-3xl font-extrabold text-yellow-400">{statResumes}%</span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Resume Score</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-yellow-400">{statInterviews}/100</span>
+              <span className="block text-3xl font-extrabold text-amber-400">{statInterviews}/100</span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Interview Score</span>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 10: PRICING */}
-      <section className="py-24 relative z-10 bg-[#05070c] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="py-24 relative z-10 bg-[#05070c] border-t border-white/5"
+      >
         <div className="max-w-6xl mx-auto px-4 space-y-12">
           <div className="text-center space-y-4">
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -724,7 +744,7 @@ export default function LandingPage() {
               <button
                 onClick={() => setPricingPeriod("monthly")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  pricingPeriod === "monthly" ? "bg-purple-500 text-white" : "text-gray-400"
+                  pricingPeriod === "monthly" ? "bg-amber-500 text-black" : "text-gray-400"
                 }`}
               >
                 Monthly
@@ -732,7 +752,7 @@ export default function LandingPage() {
               <button
                 onClick={() => setPricingPeriod("annually")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  pricingPeriod === "annually" ? "bg-purple-500 text-white" : "text-gray-400"
+                  pricingPeriod === "annually" ? "bg-amber-500 text-black" : "text-gray-400"
                 }`}
               >
                 Annually (Save 20%)
@@ -759,12 +779,12 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="p-8 bg-[#090a12] border-2 border-purple-500/40 rounded-2xl flex flex-col justify-between space-y-6 relative">
-              <div className="absolute top-4 right-4 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[9px] font-bold text-purple-300 uppercase">
+            <div className="p-8 bg-[#0f0e09] border-2 border-amber-500/40 rounded-2xl flex flex-col justify-between space-y-6 relative">
+              <div className="absolute top-4 right-4 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[9px] font-bold text-amber-300 uppercase">
                 Most Popular
               </div>
               <div className="space-y-2">
-                <span className="text-sm font-bold text-purple-400">Pro Plan</span>
+                <span className="text-sm font-bold text-amber-400 font-bold">Pro Plan</span>
                 <div className="text-4xl font-extrabold text-white">
                   {pricingPeriod === "annually" ? "$12" : "$15"}{" "}
                   <span className="text-xs text-gray-500">/ mo</span>
@@ -777,7 +797,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2"><Check size={12} className="text-green-400" /> Direct LinkedIn Profile Optimizer</li>
                 <li className="flex items-center gap-2"><Check size={12} className="text-green-400" /> Micro-internships matching channels</li>
               </ul>
-              <Link href="/login" className="w-full text-center py-2 text-xs font-bold rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors">
+              <Link href="/login" className="w-full text-center py-2 text-xs font-bold rounded-lg bg-amber-500 text-black hover:bg-amber-600 transition-colors">
                 Upgrade to Pro
               </Link>
             </div>
@@ -800,10 +820,15 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 11: FAQ */}
-      <section id="faq" className="py-24 relative z-10 bg-[#030712] border-t border-white/5">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        id="faq"
+        className="py-24 relative z-10 bg-[#030712] border-t border-white/5"
+      >
         <div className="max-w-4xl mx-auto px-4 space-y-12">
           <div className="text-center space-y-4">
             <h2 className="text-3xl md:text-5xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -821,7 +846,7 @@ export default function LandingPage() {
                 placeholder="Search FAQs..."
                 value={faqSearch}
                 onChange={(e) => setFaqSearch(e.target.value)}
-                className="w-full bg-white/5 border border-white/5 focus:border-purple-500 focus:outline-none rounded-xl py-2.5 pl-10 pr-4 text-xs text-white"
+                className="w-full bg-white/5 border border-white/5 focus:border-amber-500 focus:outline-none rounded-xl py-2.5 pl-10 pr-4 text-xs text-white"
               />
             </div>
           </div>
@@ -849,27 +874,31 @@ export default function LandingPage() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* SECTION 12: FINAL CTA */}
-      <section className="relative py-28 overflow-hidden z-10 border-t border-white/5 bg-[#05070c] text-center flex flex-col items-center justify-center">
+      <motion.section
+        {...scroll3DVariant}
+        style={{ perspective: 1000, transformStyle: "preserve-3d" }}
+        className="relative py-28 overflow-hidden z-10 border-t border-white/5 bg-[#05070c] text-center flex flex-col items-center justify-center"
+      >
         {/* Animated Particles background */}
         <div className="absolute inset-0 pointer-events-none opacity-20">
-          <div className="absolute top-[20%] left-[10%] w-2.5 h-2.5 rounded-full bg-purple-500 animate-float" />
-          <div className="absolute top-[50%] right-[15%] w-1.5 h-1.5 rounded-full bg-blue-400 animate-float" style={{ animationDelay: "2s" }} />
-          <div className="absolute bottom-[30%] left-[30%] w-2 h-2 rounded-full bg-cyan-400 animate-float" style={{ animationDelay: "4s" }} />
+          <div className="absolute top-[20%] left-[10%] w-2.5 h-2.5 rounded-full bg-amber-500 animate-float" />
+          <div className="absolute top-[50%] right-[15%] w-1.5 h-1.5 rounded-full bg-orange-400 animate-float" style={{ animationDelay: "2s" }} />
+          <div className="absolute bottom-[30%] left-[30%] w-2 h-2 rounded-full bg-yellow-400 animate-float" style={{ animationDelay: "4s" }} />
         </div>
 
         <div className="max-w-3xl px-4 space-y-8 relative">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-cyan-400 flex items-center justify-center p-[2px] shadow-lg shadow-purple-500/20">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center p-[2px] shadow-lg shadow-amber-500/20">
             <div className="w-full h-full bg-[#05070c] rounded-full flex items-center justify-center">
-              <Brain className="w-8 h-8 text-purple-400" />
+              <Brain className="w-8 h-8 text-amber-400" />
             </div>
           </div>
 
           <h2 className="text-4xl md:text-6xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
             Your Learning. Your Skills.<br />
-            <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">Your Future. Powered by AI.</span>
+            <span className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">Your Future. Powered by AI.</span>
           </h2>
 
           <p className="text-gray-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
@@ -879,7 +908,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-8 py-3.5 font-bold text-white transition-all transform hover:-translate-y-0.5 shadow-lg shadow-purple-500/25 text-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-8 py-3.5 font-bold text-black transition-all transform hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 text-sm"
             >
               Launch Adyapan AI
             </Link>
@@ -891,7 +920,7 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       <Footer />
 
