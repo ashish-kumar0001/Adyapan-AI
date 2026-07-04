@@ -15,7 +15,7 @@ quizRouter.post("/generate", async (req, res) => {
     
     const quiz = await prisma.quiz.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         topic,
         difficulty,
         questions: result.questions as any,
@@ -26,7 +26,7 @@ quizRouter.post("/generate", async (req, res) => {
     for (const fc of result.flashcards) {
       await prisma.flashcard.create({
         data: {
-          userId: req.user!.id,
+          userId: req.user!.userId,
           quizId: quiz.id,
           topic,
           front: fc.front,
@@ -44,7 +44,7 @@ quizRouter.post("/generate", async (req, res) => {
 quizRouter.get("/history", async (req, res) => {
   try {
     const quizzes = await prisma.quiz.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       include: { attempts: true, flashcards: true },
       orderBy: { createdAt: "desc" },
     });

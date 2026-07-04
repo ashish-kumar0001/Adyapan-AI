@@ -15,7 +15,7 @@ mindMapRouter.post("/generate", async (req, res) => {
     
     const mindmap = await prisma.mindMap.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         topic,
         nodes: result.nodes as any,
         edges: result.edges as any,
@@ -30,7 +30,7 @@ mindMapRouter.post("/generate", async (req, res) => {
 mindMapRouter.get("/history", async (req, res) => {
   try {
     const mindmaps = await prisma.mindMap.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, mindmaps });

@@ -15,7 +15,7 @@ assignmentRouter.post("/generate", async (req, res) => {
     
     const assignment = await prisma.assignment.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         topic,
         academicLevel,
         wordCount: parseInt(wordCount),
@@ -31,7 +31,7 @@ assignmentRouter.post("/generate", async (req, res) => {
 assignmentRouter.get("/history", async (req, res) => {
   try {
     const assignments = await prisma.assignment.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, assignments });

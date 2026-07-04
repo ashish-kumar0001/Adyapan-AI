@@ -15,7 +15,7 @@ notesRouter.post("/generate", async (req, res) => {
     
     const note = await prisma.generatedNote.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         topic,
         difficulty,
         type,
@@ -31,7 +31,7 @@ notesRouter.post("/generate", async (req, res) => {
 notesRouter.get("/history", async (req, res) => {
   try {
     const notes = await prisma.generatedNote.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, notes });

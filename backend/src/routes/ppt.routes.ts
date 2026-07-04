@@ -15,7 +15,7 @@ pptRouter.post("/generate", async (req, res) => {
     
     const ppt = await prisma.presentation.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         topic,
         slideCount: parseInt(slideCount),
         audience,
@@ -32,7 +32,7 @@ pptRouter.post("/generate", async (req, res) => {
 pptRouter.get("/history", async (req, res) => {
   try {
     const ppts = await prisma.presentation.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, presentations: ppts });

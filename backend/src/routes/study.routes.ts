@@ -14,7 +14,7 @@ studyRouter.post("/upload", async (req, res) => {
     const { fileName, fileType, fileUrl } = req.body;
     const doc = await prisma.uploadedDocument.create({
       data: {
-        userId: req.user!.id,
+        userId: req.user!.userId,
         fileName,
         fileType,
         fileUrl,
@@ -39,7 +39,7 @@ studyRouter.post("/chat", async (req, res) => {
 studyRouter.get("/history", async (req, res) => {
   try {
     const sessions = await prisma.studySession.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.userId },
       include: { messages: true },
     });
     res.json({ success: true, sessions });
