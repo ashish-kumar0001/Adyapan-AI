@@ -14,7 +14,9 @@ export type ResumeHubViewType =
   | "ppt-generator"
   | "mind-maps"
   | "coding-assistant"
-  | "dsa-practice";
+  | "dsa-practice"
+  | "coding-challenges"
+  | "github-portfolio";
 
 export interface PersonalInfo {
   fullName: string;

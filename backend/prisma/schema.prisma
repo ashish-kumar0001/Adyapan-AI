@@ -39,9 +39,14 @@ model User {
   mindMaps        MindMap[]
 
   // Coding Hub Relations
-  codingSessions  CodingSession[]
-  submissions     Submission[]
-  dsaProgress     DSAProgress[]
+  codingSessions      CodingSession[]
+  submissions         Submission[]
+  dsaProgress         DSAProgress[]
+  challengeSubmissions ChallengeSubmission[]
+  leaderboards        Leaderboard[]
+  portfolios          Portfolio[]
+  githubProfiles      GithubProfile[]
+  generatedReadmes    GeneratedReadme[]
 
   @@map("users")
 }
@@ -384,4 +389,98 @@ model DSAProgress {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("dsa_progress")
+}
+
+// ------------------------------------------
+// Coding Challenges Models
+// ------------------------------------------
+
+model Challenge {
+  id          String   @id @default(cuid())
+  title       String
+  difficulty  String   // "Easy", "Medium", "Hard"
+  points      Int
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  submissions ChallengeSubmission[]
+
+  @@map("challenges")
+}
+
+model ChallengeSubmission {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  challengeId String   @map("challenge_id")
+  code        String
+  language    String
+  score       Int      @default(0)
+  status      String   // "Accepted", "Failed"
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("challenge_submissions")
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  score     Int      @default(0)
+  rank      Int?
+  badges    String[]
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("leaderboards")
+}
+
+// ------------------------------------------
+// GitHub Portfolio Builder Models
+// ------------------------------------------
+
+model GithubProfile {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  username    String
+  repos       Json     // Processed repo data
+  languages   Json     // Language stats
+  stars       Int      @default(0)
+  commits     Int      @default(0)
+  lastSynced  DateTime @default(now()) @map("last_synced")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("github_profiles")
+}
+
+model GeneratedReadme {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  projectName String
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("generated_readmes")
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  theme       String   @default("default")
+  content     Json     // Configured sections (Home, About, Projects)
+  isPublished Boolean  @default(false)
+  url         String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("portfolios")
 }

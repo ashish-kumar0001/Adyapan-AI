@@ -20,6 +20,8 @@ import { PptGeneratorView } from "@/components/learning-hub/PptGeneratorView";
 import { MindMapsView } from "@/components/learning-hub/MindMapsView";
 import { CodingAssistantView } from "@/components/coding-hub/CodingAssistantView";
 import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
+import { CodingChallengesView } from "@/components/coding-hub/CodingChallengesView";
+import { GithubPortfolioView } from "@/components/coding-hub/GithubPortfolioView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -274,6 +276,8 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Mind Maps") onViewTool("mind-maps");
                       else if (sub.label === "Coding Assistant") onViewTool("coding-assistant");
                       else if (sub.label === "DSA Practice") onViewTool("dsa-practice");
+                      else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
+                      else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -1159,6 +1163,10 @@ export default function UserDashboardPage() {
           <CodingAssistantView />
         ) : activeView === "dsa-practice" ? (
           <DsaPracticeView />
+        ) : activeView === "coding-challenges" ? (
+          <CodingChallengesView />
+        ) : activeView === "github-portfolio" ? (
+          <GithubPortfolioView />
         ) : (
           <>
             <WelcomeBanner user={user} onComingSoon={showComingSoon} />

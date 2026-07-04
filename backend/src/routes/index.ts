@@ -16,6 +16,8 @@ import { pptRouter } from "./ppt.routes";
 import { mindMapRouter } from "./mindmap.routes";
 import { codingRouter } from "./coding.routes";
 import { dsaRouter } from "./dsa.routes";
+import { challengesRouter } from "./challenges.routes";
+import { githubRouter } from "./github.routes";
 
 export const apiRouter = Router();
 
@@ -38,3 +40,5 @@ apiRouter.use("/ppt", pptRouter);
 apiRouter.use("/mindmap", mindMapRouter);
 apiRouter.use("/coding", codingRouter);
 apiRouter.use("/dsa", dsaRouter);
+apiRouter.use("/challenges", challengesRouter);
+apiRouter.use("/github", githubRouter);
