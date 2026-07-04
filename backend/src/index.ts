@@ -9,6 +9,9 @@ import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
+// Trust proxy for deployment platforms like Railway (required for express-rate-limit)
+app.set("trust proxy", 1);
+
 // Allow both local dev and production frontend URLs
 const allowedOrigins = [
   env.frontendUrl,
