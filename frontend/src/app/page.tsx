@@ -142,11 +142,14 @@ export default function LandingPage() {
 
           {/* Interactive Floating 3D Dashboard Mockup */}
           <div className="lg:col-span-6 flex justify-center relative">
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+              <Scene />
+            </div>
             <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl opacity-10 blur-xl animate-pulse" />
             <motion.div
               style={{ transformStyle: "preserve-3d" }}
               whileHover={{ rotateY: 10, rotateX: -5 }}
-              className="relative w-full max-w-[480px] aspect-[4/3] rounded-2xl border border-white/10 bg-[#090b11]/80 backdrop-blur-xl p-6 shadow-2xl transition-all cursor-pointer overflow-hidden"
+              className="relative w-full max-w-[480px] aspect-[4/3] rounded-2xl border border-white/10 bg-[#090b11]/80 backdrop-blur-xl p-6 shadow-2xl transition-all cursor-pointer overflow-hidden z-10"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
                 <div className="flex items-center gap-2">
@@ -657,19 +660,27 @@ export default function LandingPage() {
 
           <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-amber-455 text-amber-400">{statLearned}+</span>
+              <span className="block text-3xl font-extrabold text-amber-400">
+                <CountUp end={1248} enableScrollSpy scrollSpyOnce />+
+              </span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Hours Learned</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-orange-400">{statNotes}+</span>
+              <span className="block text-3xl font-extrabold text-orange-400">
+                <CountUp end={412} enableScrollSpy scrollSpyOnce />+
+              </span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Notes Generated</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-yellow-400">{statResumes}%</span>
+              <span className="block text-3xl font-extrabold text-yellow-400">
+                <CountUp end={85} enableScrollSpy scrollSpyOnce />%
+              </span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Resume Score</span>
             </div>
             <div className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2">
-              <span className="block text-3xl font-extrabold text-amber-400">{statInterviews}/100</span>
+              <span className="block text-3xl font-extrabold text-amber-400">
+                <CountUp end={94} enableScrollSpy scrollSpyOnce />/100
+              </span>
               <span className="block text-[10px] text-gray-500 uppercase tracking-wider">Interview Score</span>
             </div>
           </div>
