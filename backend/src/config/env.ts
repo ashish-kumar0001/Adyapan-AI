@@ -12,7 +12,6 @@ export const env = {
     apiKey: process.env.CLOUDINARY_API_KEY ?? "",
     apiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
   },
-  geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   nodeEnv: process.env.NODE_ENV ?? "development",
 };
 
