@@ -34,7 +34,7 @@ import {
   Star, Zap,
   LineChart, Trophy, MessageCircle,
   Target, Globe, Edit3, Save, X,
-  Upload, Download, Trash2,
+  Upload, Download, Trash2, RefreshCw,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -742,9 +742,22 @@ function CompactItem({ label, value, highlight }: { label: string; value: string
     </div>
   );
 }
-
 // ─── Welcome Banner ───────────────────────────────────────────────────────────
-function WelcomeBanner({ user, onComingSoon }: { user: AdyapanUser | null; onComingSoon: () => void }) {
+function WelcomeBanner({
+  user,
+  targetRole,
+  profileCompletion,
+  onStartStudy,
+  onBuildResume,
+  onPracticeDsa
+}: {
+  user: AdyapanUser | null;
+  targetRole: string;
+  profileCompletion: number;
+  onStartStudy: () => void;
+  onBuildResume: () => void;
+  onPracticeDsa: () => void;
+}) {
   const [greeting, setGreeting] = useState("Good Morning");
   useEffect(() => {
     const hr = new Date().getHours();
@@ -770,24 +783,28 @@ function WelcomeBanner({ user, onComingSoon }: { user: AdyapanUser | null; onCom
           {greeting}, {user?.name ?? "User"} 👋
         </h1>
         <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
-          Continue your learning journey and track your placement readiness.
+          {targetRole ? (
+            <>Continue your learning journey as a <strong style={{ color: "var(--primary)" }}>{targetRole}</strong>.</>
+          ) : (
+            "Continue your learning journey and build your professional profile."
+          )}
         </p>
         <div style={{ maxWidth: 280 }}>
           <div style={{ fontSize: "0.77rem", fontWeight: 700, color: "var(--primary)", marginBottom: "0.35rem" }}>
-            Profile Completion: 85%
+            Profile Completion: {profileCompletion}%
           </div>
-          <ProgressBar value={85} />
+          <ProgressBar value={profileCompletion} />
         </div>
       </div>
       <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-        <button onClick={onComingSoon} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
-          Continue Learning
+        <button onClick={onStartStudy} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
+          Start Study Session
         </button>
-        <button onClick={onComingSoon} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
-          Resume Analysis
+        <button onClick={onBuildResume} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+          Build Resume
         </button>
-        <button onClick={onComingSoon} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
-          Start Interview
+        <button onClick={onPracticeDsa} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+          Practice DSA
         </button>
       </div>
     </div>
@@ -795,140 +812,85 @@ function WelcomeBanner({ user, onComingSoon }: { user: AdyapanUser | null; onCom
 }
 
 // ─── Stat Cards Grid ──────────────────────────────────────────────────────────
-function StatCardsGrid() {
+function StatCardsGrid({ stats }: { stats: any }) {
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(6, 1fr)",
+      gridTemplateColumns: "repeat(4, 1fr)",
       gap: "0.85rem", marginBottom: "1.2rem",
     }}
       className="stat-grid-responsive"
     >
-      <StatCard icon={<GraduationCap size={17} />} iconBg="rgba(139,92,246,0.1)" iconColor="#8b5cf6" value="82%" label="Learning Score" trend="+8%" trendUp={true} />
-      <StatCard icon={<FileText size={17} />} iconBg="rgba(59,130,246,0.1)" iconColor="#3b82f6" value="78/100" label="Resume Score" trend="+5" trendUp={true} />
-      <StatCard icon={<Mic size={17} />} iconBg="rgba(16,185,129,0.1)" iconColor="#10b981" value="74%" label="Interview Score" trend="+12%" trendUp={true} />
-      <StatCard icon={<Trophy size={17} />} iconBg="rgba(245,158,11,0.1)" iconColor="var(--primary)" value="80%" label="Placement Readiness" trend="+6%" trendUp={true} />
-      <StatCard icon={<ClipboardList size={17} />} iconBg="rgba(6,182,212,0.1)" iconColor="#06b6d4" value="24" label="Assignments Created" trend="This Term" />
-      <StatCard icon={<BookMarked size={17} />} iconBg="rgba(236,72,153,0.1)" iconColor="#ec4899" value="6" label="Research Papers" trend="+1" trendUp={true} />
+      <StatCard icon={<FileText size={17} />} iconBg="rgba(59,130,246,0.1)" iconColor="#3b82f6" value={`${stats.avgAtsScore}%`} label="Avg Resume ATS" trend={stats.resumesCount > 0 ? `${stats.resumesCount} Resumes` : "No resumes"} />
+      <StatCard icon={<BarChart3 size={17} />} iconBg="rgba(236,72,153,0.1)" iconColor="#ec4899" value={`${stats.avgLinkedinScore}%`} label="Avg LinkedIn Score" trend={stats.avgLinkedinScore > 0 ? "Optimized" : "Not optimized"} />
+      <StatCard icon={<Code2 size={17} />} iconBg="rgba(245,158,11,0.1)" iconColor="var(--primary)" value={String(stats.dsaSolved)} label="DSA Problems Solved" trend={stats.dsaStreak > 0 ? `${stats.dsaStreak} Day Streak 🔥` : "No active streak"} trendUp={stats.dsaStreak > 0} />
+      <StatCard icon={<GraduationCap size={17} />} iconBg="rgba(139,92,246,0.1)" iconColor="#8b5cf6" value={String(stats.studySessionsCount)} label="Study Sessions" trend={`${stats.notesCount + stats.quizzesCount} Assets Gen`} />
     </div>
   );
 }
-
 // ─── 3-Column Panel Grid ──────────────────────────────────────────────────────
-function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
-  const activityItems = [
-    { label: "Completed Notes Generator session", time: "2 mins ago", color: "var(--primary)" },
-    { label: "New Internship Match found", time: "1 hour ago", color: "#10b981" },
-    { label: "Resume Score updated to 78/100", time: "3 hours ago", color: "#3b82f6" },
-    { label: "Mock Interview completed", time: "Yesterday", color: "#8b5cf6" },
-    { label: "DSA Challenge — 5 problems solved", time: "2 days ago", color: "#ec4899" },
-  ];
-
+function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => void }) {
   const quickActions = [
-    { label: "Resume Builder", icon: <FileText size={16} />, color: "#3b82f6" },
-    { label: "Interview Prep", icon: <Mic size={16} />, color: "#10b981" },
-    { label: "Job Match", icon: <Briefcase size={16} />, color: "var(--primary)" },
-    { label: "ATS Score", icon: <BarChart3 size={16} />, color: "#8b5cf6" },
+    { label: "Study Assistant", icon: <GraduationCap size={16} />, color: "#8b5cf6", target: "study-assistant" },
+    { label: "DSA Practice", icon: <Code2 size={16} />, color: "var(--primary)", target: "dsa-practice" },
+    { label: "Resume Builder", icon: <FileText size={16} />, color: "#3b82f6", target: "resume-hub" },
+    { label: "ATS Checker", icon: <BarChart3 size={16} />, color: "#10b981", target: "ats-checker" },
   ];
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.2rem", alignItems: "start" }}
       className="panel-grid-responsive"
     >
-      {/* Column 1 */}
+      {/* Column 1: Learning Hub */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-        <PanelCard title="Learning Progress">
+        <PanelCard title="Learning Hub Performance">
           <div style={{ marginBottom: "0.8rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "var(--text-secondary)", marginBottom: 4 }}>
-              <span>Overall Learning Progress</span><span style={{ color: "var(--primary)", fontWeight: 700 }}>72%</span>
+              <span>Learning Progress</span>
+              <span style={{ color: "var(--primary)", fontWeight: 700 }}>
+                {stats.studySessionsCount > 0 ? "Active" : "Not Started"}
+              </span>
             </div>
-            <ProgressBar value={72} />
+            <ProgressBar value={stats.studySessionsCount > 0 ? 100 : 0} color="#8b5cf6" />
           </div>
           <div style={{ marginTop: "0.9rem" }}>
-            <CompactItem label="Notes Generated" value={56} />
-            <CompactItem label="MCQs Practiced" value={420} />
-            <CompactItem label="Assignments Created" value={18} />
-            <CompactItem label="PPTs Generated" value={12} />
-            <CompactItem label="Coding Problems Solved" value={134} />
+            <CompactItem label="Study Sessions" value={stats.studySessionsCount} />
+            <CompactItem label="Notes Generated" value={stats.notesCount} />
+            <CompactItem label="Quizzes Created" value={stats.quizzesCount} />
+            <CompactItem label="Assignments Created" value={stats.assignmentsCount} />
+            <CompactItem label="PPTs Generated" value={stats.pptsCount} />
+            <CompactItem label="Mind Maps Built" value={stats.mindmapsCount} />
           </div>
-        </PanelCard>
-
-        <PanelCard title="Coding Performance">
-          <CompactItem label="DSA Questions Solved" value={145} />
-          <CompactItem label="Coding Assignments" value={28} />
-          <CompactItem label="Projects Completed" value={6} />
-          <CompactItem label="GitHub Portfolio Score" value="80%" highlight />
         </PanelCard>
       </div>
 
-      {/* Column 2 */}
+      {/* Column 2: Coding Hub */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-        <PanelCard title="Career Roadmap" flagStyle>
-          <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0" }}>
-            <div style={{
-              width: 120, height: 120, borderRadius: "50%",
-              background: "conic-gradient(var(--primary) 80%, rgba(255,255,255,0.06) 0)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 15px rgba(0,0,0,0.25)",
-            }}>
-              <div style={{
-                width: 100, height: 100, borderRadius: "50%", background: "var(--bg-dark)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              }}>
-                <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--primary)", lineHeight: 1.1 }}>80%</span>
-                <span style={{ fontSize: "0.6rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: 0.5 }}>Readiness</span>
-              </div>
+        <PanelCard title="Coding Hub Performance">
+          <div style={{ marginBottom: "0.8rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "var(--text-secondary)", marginBottom: 4 }}>
+              <span>DSA Accuracy</span>
+              <span style={{ color: "var(--primary)", fontWeight: 700 }}>{Math.round(stats.dsaAccuracy * 100)}%</span>
             </div>
+            <ProgressBar value={Math.round(stats.dsaAccuracy * 100)} color="var(--primary)" />
           </div>
-
-          {[
-            { label: "Resume", value: 78 }, { label: "Interview", value: 74 },
-            { label: "Skills", value: 82 }, { label: "Aptitude", value: 68 },
-          ].map((item) => (
-            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.76rem", marginBottom: "0.55rem" }}>
-              <span style={{ width: 64, color: "var(--text-secondary)" }}>{item.label}</span>
-              <div style={{ flex: 1, height: 5, background: "rgba(255,255,255,0.05)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${item.value}%`, background: "linear-gradient(90deg,#f59e0b,#d97706)", borderRadius: 3 }} />
-              </div>
-              <strong style={{ width: 32, textAlign: "right", color: "var(--text-primary)" }}>{item.value}%</strong>
-            </div>
-          ))}
-        </PanelCard>
-
-        <PanelCard title="Active Courses">
-          {[
-            { name: "Deep Learning Specialization", val: 64, color: "#8b5cf6", next: "Neural Networks Basics" },
-            { name: "Data Structures & Algorithms", val: 82, color: "#10b981", next: "Graph Algorithms" },
-            { name: "Database Management Systems", val: 45, color: "#3b82f6", next: "SQL Joins & Indexing" },
-          ].map((course) => (
-            <div key={course.name} style={{ marginBottom: "0.9rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", marginBottom: 4 }}>
-                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{course.name}</span>
-                <span style={{ color: course.color, fontWeight: 700 }}>{course.val}%</span>
-              </div>
-              <ProgressBar value={course.val} color={course.color} />
-              <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 3 }}>Next: {course.next}</div>
-            </div>
-          ))}
+          <div style={{ marginTop: "0.9rem" }}>
+            <CompactItem label="DSA Problems Solved" value={stats.dsaSolved} highlight />
+            <CompactItem label="Current Streak" value={`${stats.dsaStreak} days`} />
+            <CompactItem label="AI Coding Chats" value={stats.codingSessionsCount} />
+            <CompactItem label="Coding Challenges" value={stats.challengesCount} />
+          </div>
         </PanelCard>
       </div>
 
-      {/* Column 3 */}
+      {/* Column 3: Resume Hub & Quick Actions */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-        <PanelCard title="Recent Activity">
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {activityItems.map((item) => (
-              <div key={item.label} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
-                <div style={{
-                  width: 7, height: 7, borderRadius: "50%", background: item.color,
-                  boxShadow: `0 0 5px ${item.color}`, marginTop: 5, flexShrink: 0,
-                }} />
-                <div>
-                  <p style={{ fontSize: "0.77rem", fontWeight: 500, color: "var(--text-primary)" }}>{item.label}</p>
-                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>{item.time}</span>
-                </div>
-              </div>
-            ))}
+        <PanelCard title="Resume Hub Performance">
+          <div style={{ marginTop: "0.4rem" }}>
+            <CompactItem label="Resumes Created" value={stats.resumesCount} />
+            <CompactItem label="Cover Letters" value={stats.coverLettersCount} />
+            <CompactItem label="Average ATS Score" value={`${stats.avgAtsScore}%`} highlight />
+            <CompactItem label="Average LinkedIn Score" value={`${stats.avgLinkedinScore}%`} highlight />
           </div>
         </PanelCard>
 
@@ -937,7 +899,7 @@ function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
             {quickActions.map((action) => (
               <button
                 key={action.label}
-                onClick={onComingSoon}
+                onClick={() => onViewTool(action.target as any)}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.5rem",
                   padding: "0.6rem", border: "1px solid var(--border-color)",
@@ -967,7 +929,6 @@ function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
     </div>
   );
 }
-
 // ─── Profile Types & Helpers ──────────────────────────────────────────────────
 interface ProfileData {
   user: { id: string; name: string; email: string; role: string; };
@@ -1098,6 +1059,27 @@ function UserDashboardContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("Modern");
 
+  const [dashboardStats, setDashboardStats] = useState({
+    resumesCount: 0,
+    avgAtsScore: 0,
+    avgLinkedinScore: 0,
+    coverLettersCount: 0,
+    notesCount: 0,
+    quizzesCount: 0,
+    assignmentsCount: 0,
+    pptsCount: 0,
+    mindmapsCount: 0,
+    studySessionsCount: 0,
+    codingSessionsCount: 0,
+    dsaSolved: 0,
+    dsaAccuracy: 0,
+    dsaStreak: 0,
+    challengesCount: 0,
+    profileCompletion: 0,
+    targetRole: ""
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
   useEffect(() => {
     // Load theme immediately
     const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
@@ -1124,6 +1106,101 @@ function UserDashboardContent() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (activeView !== "dashboard") return;
+
+    async function fetchDashboardStats() {
+      setStatsLoading(true);
+      try {
+        const [
+          profileRes,
+          resumesRes,
+          atsRes,
+          linkedinRes,
+          lettersRes,
+          notesRes,
+          quizRes,
+          assignRes,
+          pptRes,
+          mindmapRes,
+          studyRes,
+          codingRes,
+          dsaRes,
+          challengesRes
+        ] = await Promise.allSettled([
+          api.get("/profile/me"),
+          api.get("/resume/list"),
+          api.get("/ats/history"),
+          api.get("/linkedin/history"),
+          api.get("/cover-letter/history"),
+          api.get("/notes/history"),
+          api.get("/quiz/history"),
+          api.get("/assignment/history"),
+          api.get("/ppt/history"),
+          api.get("/mindmap/history"),
+          api.get("/study/history"),
+          api.get("/coding/history"),
+          api.get("/dsa/progress"),
+          api.get("/challenges/")
+        ]);
+
+        const profileData = profileRes.status === "fulfilled" ? profileRes.value.data.profile : null;
+        const completion = profileData ? calcCompletion(profileData) : 0;
+        const targetRole = profileData?.targetRole || "";
+
+        const resumes = resumesRes.status === "fulfilled" ? (resumesRes.value.data.resumes || []) : [];
+        const atsReports = atsRes.status === "fulfilled" ? (atsRes.value.data.reports || []) : [];
+        const linkedinReports = linkedinRes.status === "fulfilled" ? (linkedinRes.value.data.reports || []) : [];
+        const coverLetters = lettersRes.status === "fulfilled" ? (lettersRes.value.data.coverLetters || []) : [];
+
+        const notes = notesRes.status === "fulfilled" ? (notesRes.value.data.notes || []) : [];
+        const quizzes = quizRes.status === "fulfilled" ? (quizRes.value.data.quizzes || []) : [];
+        const assignments = assignRes.status === "fulfilled" ? (assignRes.value.data.assignments || []) : [];
+        const ppts = pptRes.status === "fulfilled" ? (pptRes.value.data.presentations || []) : [];
+        const mindmaps = mindmapRes.status === "fulfilled" ? (mindmapRes.value.data.mindmaps || []) : [];
+        const studySessions = studyRes.status === "fulfilled" ? (studyRes.value.data.sessions || []) : [];
+
+        const codingSessions = codingRes.status === "fulfilled" ? (codingRes.value.data.sessions || []) : [];
+        const dsaProgress = dsaRes.status === "fulfilled" ? (dsaRes.value.data.progress || null) : null;
+        const challenges = challengesRes.status === "fulfilled" ? (challengesRes.value.data || []) : [];
+
+        const avgAtsScore = atsReports.length
+          ? Math.round(atsReports.reduce((sum: number, r: any) => sum + r.score, 0) / atsReports.length)
+          : 0;
+
+        const avgLinkedinScore = linkedinReports.length
+          ? Math.round(linkedinReports.reduce((sum: number, r: any) => sum + r.score, 0) / linkedinReports.length)
+          : 0;
+
+        setDashboardStats({
+          resumesCount: resumes.length,
+          avgAtsScore,
+          avgLinkedinScore,
+          coverLettersCount: coverLetters.length,
+          notesCount: notes.length,
+          quizzesCount: quizzes.length,
+          assignmentsCount: assignments.length,
+          pptsCount: ppts.length,
+          mindmapsCount: mindmaps.length,
+          studySessionsCount: studySessions.length,
+          codingSessionsCount: codingSessions.length,
+          dsaSolved: dsaProgress?.solved || 0,
+          dsaAccuracy: dsaProgress?.accuracy || 0,
+          dsaStreak: dsaProgress?.streak || 0,
+          challengesCount: challenges.length,
+          profileCompletion: completion,
+          targetRole
+        });
+      } catch (err) {
+        console.error("Error fetching dashboard statistics:", err);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+
+    fetchDashboardStats();
+  }, [activeView]);
 
   const handleThemeToggle = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -1183,11 +1260,25 @@ function UserDashboardContent() {
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
         ) : (
-          <>
-            <WelcomeBanner user={user} onComingSoon={showComingSoon} />
-            <StatCardsGrid />
-            <PanelGrid onComingSoon={showComingSoon} />
-          </>
+          statsLoading ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "400px", color: "var(--text-secondary)", gap: "0.75rem" }}>
+              <RefreshCw className="animate-spin text-amber-500" size={24} />
+              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Loading your dashboard statistics...</span>
+            </div>
+          ) : (
+            <>
+              <WelcomeBanner
+                user={user}
+                targetRole={dashboardStats.targetRole}
+                profileCompletion={dashboardStats.profileCompletion}
+                onStartStudy={() => setActiveView("study-assistant")}
+                onBuildResume={() => setActiveView("resume-hub")}
+                onPracticeDsa={() => setActiveView("dsa-practice")}
+              />
+              <StatCardsGrid stats={dashboardStats} />
+              <PanelGrid stats={dashboardStats} onViewTool={setActiveView} />
+            </>
+          )
         )}
       </main>
 
@@ -1202,17 +1293,17 @@ function UserDashboardContent() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .stat-grid-responsive {
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(4, 1fr);
         }
         .panel-grid-responsive {
           grid-template-columns: 1fr 1fr 1fr;
         }
         @media (max-width: 1200px) {
-          .stat-grid-responsive { grid-template-columns: repeat(3, 1fr) !important; }
+          .stat-grid-responsive { grid-template-columns: repeat(2, 1fr) !important; }
           .panel-grid-responsive { grid-template-columns: 1fr 1fr !important; }
         }
         @media (max-width: 768px) {
-          .stat-grid-responsive { grid-template-columns: repeat(2, 1fr) !important; }
+          .stat-grid-responsive { grid-template-columns: 1fr !important; }
           .panel-grid-responsive { grid-template-columns: 1fr !important; }
           .dash-main { margin-left: 0 !important; }
         }
