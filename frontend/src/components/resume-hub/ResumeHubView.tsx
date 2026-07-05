@@ -104,14 +104,6 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
       target: "ats-checker",
     },
     {
-      id: "analyzer",
-      title: "Resume Analyzer",
-      description: "Evaluate your resume against target Job Descriptions using Gemini AI to compute match percentages.",
-      icon: <LineChart className="w-6 h-6 text-[#3b82f6]" />,
-      actionLabel: "Analyze Profile",
-      target: "resume-analyzer",
-    },
-    {
       id: "cover-letter",
       title: "Cover Letter Generator",
       description: "Generate highly-tailored cover letters for target roles and companies, customized to different professional tones.",

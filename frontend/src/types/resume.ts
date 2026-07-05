@@ -6,7 +6,6 @@ export type ResumeHubViewType =
   | "resume-hub"
   | "resume-builder"
   | "ats-checker"
-  | "resume-analyzer"
   | "cover-letter"
   | "linkedin-optimizer"
   | "study-assistant"

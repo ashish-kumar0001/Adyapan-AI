@@ -10,7 +10,6 @@ import Image from "next/image";
 import { ResumeTemplateMarketplace } from "@/components/resume-hub/ResumeTemplateMarketplace";
 import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
 import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
-import { ResumeAnalyzerView } from "@/components/resume-hub/ResumeAnalyzerView";
 import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
 import { LinkedInView } from "@/components/resume-hub/LinkedInView";
 import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
@@ -104,8 +103,7 @@ const sidebarItems: SidebarItem[] = [
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
       { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
-      { label: "Resume Analyzer", href: "#" }, { label: "Cover Letter Generator", href: "#" },
-      { label: "LinkedIn Optimizer", href: "#" },
+      { label: "Cover Letter Generator", href: "#" }, { label: "LinkedIn Optimizer", href: "#" },
     ],
   },
   {
@@ -264,7 +262,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       e.preventDefault();
                       if (sub.label === "Resume Builder") onViewTool("resume-hub");
                       else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
-                      else if (sub.label === "Resume Analyzer") onViewTool("resume-analyzer");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
                       else if (sub.label === "Study Assistant") onViewTool("study-assistant");
@@ -352,10 +349,8 @@ function DashboardTopNav({
     fontSize: "0.8rem", cursor: "pointer", border: `1px solid ${navBorder}`,
     background: navBtnBg, color: navBtnColor, transition: "all 0.2s ease",
   };
-
   const genItems = ["Notes", "Assignment", "PPT", "Quiz", "Research Paper", "Resume"];
-  const evalItems = ["ATS Score", "Resume Analysis", "Skill Assessment", "Placement Readiness"];
-
+  const evalItems = ["ATS Score", "Skill Assessment", "Placement Readiness"];
   return (
     <header style={{
       position: "fixed", top: 0, left: 0, width: "100%", height: 70,
@@ -455,7 +450,6 @@ function DashboardTopNav({
               {evalItems.map((item) => (
                 <button key={item} onClick={() => {
                   if (item === "ATS Score") onViewTool("ats-checker");
-                  else if (item === "Resume Analysis") onViewTool("resume-analyzer");
                   else onComingSoon();
                 }} style={{
                   display: "block", width: "100%", textAlign: "left",
@@ -1458,8 +1452,6 @@ function UserDashboardContent() {
           <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
-        ) : activeView === "resume-analyzer" ? (
-          <ResumeAnalyzerView setView={setActiveView} />
         ) : activeView === "cover-letter" ? (
           <CoverLetterView setView={setActiveView} />
         ) : activeView === "linkedin-optimizer" ? (
