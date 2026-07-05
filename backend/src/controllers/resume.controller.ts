@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
-import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent } from "../lib/ai/gemini";
+import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent, resumeAIChat } from "../lib/ai/gemini";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 
@@ -198,7 +198,20 @@ export async function optimizeResume(req: Request, res: Response, next: NextFunc
 }
 
 /**
- * 7. Export Resume as PDF
+ * 7. Resume AI Chat - Understands user intent and updates resume sections
+ */
+export async function resumeChat(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { resumeData, message } = req.body;
+    const result = await resumeAIChat(resumeData, message);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 8. Export Resume as PDF
  */
 export async function exportResumePdf(req: Request, res: Response, next: NextFunction) {
   try {

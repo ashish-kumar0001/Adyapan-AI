@@ -500,6 +500,47 @@ Output a JSON object matching this schema:
   return generateJSON<unknown>(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED }, resumeJson);
 }
 
+/**
+ * 19. Resume AI Chat - Understands user intent and updates resume sections
+ */
+export async function resumeAIChat(
+  resumeData: any,
+  message: string
+): Promise<{ summary?: string; experience?: any[]; projects?: any[]; skills?: string[] }> {
+  const prompt = `You are an AI resume assistant embedded in a resume builder. The user sent: "${message}"
+
+Current Resume Data:
+${JSON.stringify(resumeData, null, 2)}
+
+Interpret the user's request and return ONLY the sections that need to change as JSON.
+Examples of what users might ask:
+- "Optimize for Amazon" → rewrite summary, experience bullets, and skills for Amazon
+- "Improve my summary" → return just the summary field
+- "Add stronger action verbs" → rewrite experience descriptions with action verbs
+- "Reduce to one page" → condense all sections
+- "Make it more ATS friendly" → add keywords, improve formatting
+- "Improve project descriptions" → rewrite project descriptions with metrics
+
+Return format:
+{
+  "summary": "updated summary or omit if unchanged",
+  "experience": [updated array or omit if unchanged],
+  "projects": [updated array or omit if unchanged],
+  "skills": ["updated array or omit if unchanged"]
+}
+
+Only include fields that actually changed. Omit unchanged fields entirely.`;
+
+  const defaultResult = { } as any;
+  try {
+    return await generateJSON<{ summary?: string; experience?: any[]; projects?: any[]; skills?: string[] }>(
+      RESUME_SYSTEM, prompt, { model: MODELS.POWERFUL }, defaultResult
+    );
+  } catch {
+    return {};
+  }
+}
+
 // ============================================================================
 // INTERVIEW HUB AI SERVICES
 // ============================================================================
