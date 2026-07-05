@@ -323,6 +323,23 @@ function DashboardTopNav({
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "Resume ATS Score updated to 78%", time: "3 hours ago", read: false },
+    { id: 2, text: "New DSA Practice question is available", time: "5 hours ago", read: false },
+    { id: 3, text: "Assignment Generator completed successfully", time: "Yesterday", read: true },
+  ]);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const isDarkTheme = theme === "dark";
   const navBg = isDarkTheme ? "#060b0e" : "#ffffff";
@@ -489,17 +506,82 @@ function DashboardTopNav({
         }}>
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
         </button>
-
         {/* Notification bell */}
-        <div style={{ position: "relative", cursor: "pointer" }}>
-          <Bell size={19} style={{ color: "var(--text-secondary)" }} />
-          <span style={{
-            position: "absolute", top: -5, right: -6, background: "#ef4444",
-            color: "#fff", fontSize: "0.6rem", fontWeight: 800, width: 14, height: 14,
-            borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-          }}>2</span>
-        </div>
+        <div ref={notificationsRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setNotificationsOpen(prev => !prev)}
+            aria-label="Notifications"
+            style={{
+              background: "transparent", border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 4, position: "relative", color: "var(--text-secondary)",
+              outline: "none",
+            }}
+          >
+            <Bell size={19} />
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span style={{
+                position: "absolute", top: 0, right: 0, background: "#ef4444",
+                color: "#fff", fontSize: "0.6rem", fontWeight: 800, width: 14, height: 14,
+                borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {notifications.filter(n => !n.read).length}
+              </span>
+            )}
+          </button>
 
+          {notificationsOpen && (
+            <div style={{
+              position: "absolute", top: "100%", right: 0, marginTop: 10, minWidth: 280,
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 12, padding: "0.8rem", zIndex: 200,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem", borderBottom: `1px solid ${navBorder}`, paddingBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: navBtnColor }}>Notifications</span>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <button
+                    onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                    style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "240px", overflowY: "auto" }}>
+                {notifications.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--text-muted)", fontSize: "0.78rem" }}>
+                    No notifications
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div key={n.id} style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", padding: "0.45rem", borderRadius: 8, background: n.read ? "transparent" : "rgba(245,158,11,0.05)", border: `1px solid ${n.read ? "transparent" : "rgba(245,158,11,0.15)"}` }}>
+                      {!n.read && (
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)", marginTop: 6, flexShrink: 0 }} />
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-primary)", fontWeight: n.read ? 500 : 600, lineHeight: 1.3 }}>{n.text}</p>
+                        <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>{n.time}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {notifications.length > 0 && (
+                <div style={{ borderTop: `1px solid ${navBorder}`, paddingTop: "0.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => setNotifications([])}
+                    style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         {/* Profile dropdown */}
         <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} />
       </div>
