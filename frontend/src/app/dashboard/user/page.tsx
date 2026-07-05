@@ -2,6 +2,7 @@
 
 import { SocketProvider } from "@/context/SocketContext";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
@@ -300,7 +301,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
   user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
-  notifications, setNotifications,
+  notifications, setNotifications, onPremium,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -311,6 +312,7 @@ function DashboardTopNav({
   onViewTool: (tool: ResumeHubViewType) => void;
   onMenuToggle: () => void;
   notifications: any[];
+  onPremium?: () => void;
   setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
@@ -478,7 +480,7 @@ function DashboardTopNav({
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <button className="desktop-premium" onClick={onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+        <button className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
           <Crown size={13} /> Premium
         </button>
 
@@ -1422,14 +1424,16 @@ function UserDashboardContent() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
+  const router = useRouter();
   const showComingSoon = () => setToast(true);
   const handleViewProfile = () => setActiveView("profile");
+  const handlePremium = () => router.push("/#pricing");
   const handleViewDashboard = () => setActiveView("dashboard");
   const handleAdyChat = () => { window.open("/chat", "_blank"); };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} onPremium={handlePremium} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">

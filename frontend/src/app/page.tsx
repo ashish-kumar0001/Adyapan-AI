@@ -1082,7 +1082,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ════════════════ PRICING ════════════════ */}
-      <Section bg="bg-[#05070c]" variant="section3D">
+      <Section id="pricing" bg="bg-[#05070c]" variant="section3D">
         <div className="max-w-6xl mx-auto px-4 space-y-12">
           <motion.div
             className="text-center space-y-4"
