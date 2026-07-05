@@ -86,7 +86,7 @@ export function ResumeTemplateMarketplace({ onSelectTemplate }: ResumeTemplateMa
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {filteredTemplates.map((template, idx) => (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -96,53 +96,53 @@ export function ResumeTemplateMarketplace({ onSelectTemplate }: ResumeTemplateMa
             className="flex flex-col bg-white/3 border border-white/5 hover:border-amber-500/30 rounded-2xl overflow-hidden group hover:shadow-xl hover:shadow-amber-500/5 transition-all"
           >
             {/* Visual preview layout simulating Canva */}
-            <div className="relative aspect-[3/4] bg-[#0c0c12] border-b border-white/5 p-6 flex flex-col justify-between group-hover:bg-[#08080d] transition-colors">
-              <div className="space-y-4 opacity-40 group-hover:opacity-60 transition-opacity">
+            <div className="relative aspect-[3/4] bg-[#0c0c12] border-b border-white/5 p-4 flex flex-col justify-between group-hover:bg-[#08080d] transition-colors">
+              <div className="space-y-3 opacity-40 group-hover:opacity-60 transition-opacity">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                  <div className="w-16 h-2 bg-white/40 rounded" />
-                  <div className="w-8 h-2 bg-white/20 rounded" />
+                  <div className="w-12 h-1.5 bg-white/40 rounded" />
+                  <div className="w-6 h-1.5 bg-white/20 rounded" />
                 </div>
                 {/* Lines */}
-                <div className="space-y-2">
-                  <div className="w-full h-1.5 bg-white/10 rounded" />
-                  <div className="w-5/6 h-1.5 bg-white/10 rounded" />
-                  <div className="w-4/6 h-1.5 bg-white/10 rounded" />
+                <div className="space-y-1.5">
+                  <div className="w-full h-1 bg-white/10 rounded" />
+                  <div className="w-5/6 h-1 bg-white/10 rounded" />
+                  <div className="w-4/6 h-1 bg-white/10 rounded" />
                 </div>
                 <div className="h-px bg-white/10 w-full" />
                 {/* Section */}
-                <div className="space-y-2">
-                  <div className="w-12 h-2 bg-white/30 rounded" />
-                  <div className="w-full h-1.5 bg-white/10 rounded" />
-                  <div className="w-5/6 h-1.5 bg-white/10 rounded" />
+                <div className="space-y-1.5">
+                  <div className="w-10 h-1.5 bg-white/30 rounded" />
+                  <div className="w-full h-1 bg-white/10 rounded" />
+                  <div className="w-5/6 h-1 bg-white/10 rounded" />
                 </div>
               </div>
 
               {/* Action Overlays */}
-              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity">
+              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity p-2">
                 <button
                   onClick={() => onSelectTemplate(template.name)}
-                  className="px-6 py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl shadow-lg hover:bg-amber-400 transition-colors flex items-center gap-1.5"
+                  className="w-full max-w-[120px] py-2 bg-amber-500 text-black font-bold text-[10px] rounded-lg shadow-lg hover:bg-amber-400 transition-colors flex items-center justify-center gap-1"
                 >
-                  <Play size={14} fill="currentColor" /> Use Template
+                  <Play size={12} fill="currentColor" /> Use Template
                 </button>
-                <button className="px-5 py-2 bg-white/10 text-white font-bold text-xs rounded-xl hover:bg-white/20 transition-colors flex items-center gap-1.5 border border-white/10">
-                  <Eye size={14} /> Full Preview
+                <button className="w-full max-w-[120px] py-1.5 bg-white/10 text-white font-bold text-[10px] rounded-lg hover:bg-white/20 transition-colors flex items-center justify-center gap-1 border border-white/10">
+                  <Eye size={12} /> Preview
                 </button>
               </div>
 
-              <div className="flex justify-between items-center text-[10px] text-amber-500/80 font-bold">
-                <span className="flex items-center gap-1"><Star size={11} fill="currentColor"/> Premium Layout</span>
+              <div className="flex justify-between items-center text-[9px] text-amber-500/80 font-bold">
+                <span className="flex items-center gap-0.5"><Star size={10} fill="currentColor"/> Premium</span>
                 <span>ATS {template.atsScore}%</span>
               </div>
             </div>
 
             {/* Info Footer */}
-            <div className="p-4 space-y-2">
-              <h3 className="font-bold text-sm text-white group-hover:text-amber-500 transition-colors">{template.name}</h3>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="p-3 space-y-1.5">
+              <h3 className="font-bold text-xs text-white group-hover:text-amber-500 truncate transition-colors" title={template.name}>{template.name}</h3>
+              <div className="flex flex-wrap gap-1">
                 {template.tags.map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 bg-white/5 text-gray-400 text-[10px] font-medium rounded-md">
+                  <span key={tag} className="px-1.5 py-0.5 bg-white/5 text-gray-400 text-[9px] font-medium rounded">
                     {tag}
                   </span>
                 ))}

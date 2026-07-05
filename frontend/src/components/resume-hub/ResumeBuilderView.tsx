@@ -24,7 +24,7 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
   
   // Custom Preview Controls
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(75);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Form Fields
