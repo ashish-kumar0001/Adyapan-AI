@@ -221,10 +221,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
             <button
               onClick={() => {
                 toggleItem(item.id);
-                if (item.id === "resume") {
-                  onViewTool("resume-hub");
-                  setSidebarOpen(false);
-                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",

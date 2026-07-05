@@ -148,7 +148,8 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className={`w-full rounded-2xl border shadow-2xl ${tab === "register" ? "max-w-md" : "max-w-sm"}`}
+          whileHover={{ scale: 1.02, boxShadow: "0 0 60px rgba(245,158,11,0.15), 0 20px 60px rgba(0,0,0,0.3)", borderColor: "rgba(245,158,11,0.3)" }}
+          className={`w-full rounded-2xl border shadow-2xl transition-shadow duration-300 ${tab === "register" ? "max-w-md" : "max-w-sm"}`}
           style={{ background: cardBg, borderColor: cardBorder, backdropFilter: "blur(24px)", color: cardText }}
         >
           <div className={tab === "register" ? "p-4" : "p-6"}>
