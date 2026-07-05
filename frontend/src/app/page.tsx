@@ -881,26 +881,41 @@ export default function LandingPage() {
               {[
                 { label: "Confidence", value: 88, color: "amber" },
                 { label: "Communication", value: 92, color: "orange" },
-              ].map((bar) => (
+              ].map((bar, i) => (
                 <div key={bar.label} className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-400">{bar.label}</span>
                     <motion.span
                       className="text-white font-bold"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
+                      initial={{ opacity: 0, x: 10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.6 + i * 0.3 }}
                     >
-                      {bar.value}%
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                      >
+                        {bar.value}%
+                      </motion.span>
                     </motion.span>
                   </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden relative">
                     <motion.div
-                      className={`h-full bg-${bar.color}-500 rounded-full`}
+                      className={`h-full bg-${bar.color}-500 rounded-full relative overflow-hidden`}
                       initial={{ width: 0 }}
                       whileInView={{ width: `${bar.value}%` }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-                    />
+                      transition={{ duration: 1, delay: 0.6 + i * 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 w-full h-full"
+                        style={{
+                          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
+                        }}
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: 1.5 + i * 0.3 }}
+                      />
+                    </motion.div>
                   </div>
                 </div>
               ))}
