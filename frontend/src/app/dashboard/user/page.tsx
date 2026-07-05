@@ -344,8 +344,10 @@ function DashboardTopNav({
     display: "inline-flex", alignItems: "center", gap: 6,
     padding: "0.5rem 0.9rem", borderRadius: 8, fontWeight: 600,
     fontSize: "0.8rem", cursor: "pointer", border: `1px solid ${navBorder}`,
-    background: navBtnBg, color: navBtnColor, transition: "all 0.2s ease",
+    background: navBtnBg, color: navBtnColor,
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, color 0.3s ease",
   };
+  const btnGlow = "0 0 12px rgba(245,158,11,0.25), 0 0 30px rgba(245,158,11,0.1)";
   const genItems = ["Notes", "Assignment", "PPT", "Quiz", "Research Paper", "Resume"];
   const evalItems = ["ATS Score", "Skill Assessment", "Placement Readiness"];
   return (
@@ -395,7 +397,7 @@ function DashboardTopNav({
           onMouseEnter={() => setGenerateOpen(true)}
           onMouseLeave={() => setGenerateOpen(false)}
         >
-          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} style={navBtnBase}>
+          <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} style={navBtnBase}>
             <Zap size={13} /> Generate <ChevronDown size={12} />
           </motion.button>
           {generateOpen && (
@@ -425,7 +427,7 @@ function DashboardTopNav({
           )}
         </div>
 
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={navBtnBase}>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} onClick={onComingSoon} style={navBtnBase}>
           <Mic size={13} /> AI Interview
         </motion.button>
 
@@ -434,7 +436,7 @@ function DashboardTopNav({
           onMouseEnter={() => setEvaluateOpen(true)}
           onMouseLeave={() => setEvaluateOpen(false)}
         >
-          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} style={navBtnBase}>
+          <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} style={navBtnBase}>
             <Star size={13} /> Evaluate <ChevronDown size={12} />
           </motion.button>
           {evaluateOpen && (
@@ -461,10 +463,10 @@ function DashboardTopNav({
         </div>
 
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</motion.button>
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</motion.button>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</motion.button>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</motion.button>
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+        <motion.button whileHover={{scale:1.02, borderColor: "#a78bfa", boxShadow: "0 0 16px rgba(139,92,246,0.3)"}} whileTap={{scale:0.97}}
           onClick={onAdyChat}
           style={{
             ...navBtnBase,
@@ -481,28 +483,41 @@ function DashboardTopNav({
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+        <motion.button
+          whileHover={{scale:1.04, borderColor: "#f59e0b", boxShadow: "0 0 20px rgba(245,158,11,0.4)"}}
+          whileTap={{scale:0.95}}
+          animate={{borderColor: ["rgba(245,158,11,0.3)", "rgba(245,158,11,0.6)", "rgba(245,158,11,0.3)"]}}
+          transition={{borderColor: {duration: 2, repeat: Infinity, ease: "easeInOut"}}}
+          className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
           <Crown size={13} /> Premium
         </motion.button>
 
         {/* Theme toggle */}
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onThemeToggle} aria-label="Toggle theme" style={{
-          background: navBtnBg, border: `1px solid ${navBorder}`, borderRadius: 8,
-          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", color: "var(--text-secondary)",
-        }}>
-          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        <motion.button
+          whileHover={{scale:1.06, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}}
+          whileTap={{scale:0.9}}
+          onClick={onThemeToggle} aria-label="Toggle theme"
+          style={{
+            background: navBtnBg, border: `1px solid ${navBorder}`, borderRadius: 8,
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "var(--text-secondary)",
+          }}>
+          <motion.span key={theme} initial={{rotate: -90, opacity: 0}} animate={{rotate: 0, opacity: 1}} transition={{duration: 0.3}}>
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </motion.span>
         </motion.button>
         {/* Notification bell */}
         <div ref={notificationsRef} style={{ position: "relative" }}>
-          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+          <motion.button
+            whileHover={{scale:1.1, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 10px rgba(245,158,11,0.12)"}}
+            whileTap={{scale:0.9}}
             onClick={() => setNotificationsOpen(prev => !prev)}
             aria-label="Notifications"
             style={{
-              background: "transparent", border: "none", cursor: "pointer",
+              background: "transparent", border: "1px solid transparent", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              padding: 4, position: "relative", color: "var(--text-secondary)",
-              outline: "none",
+              padding: 6, position: "relative", color: "var(--text-secondary)",
+              borderRadius: 8, transition: "border-color 0.3s ease, box-shadow 0.3s ease",
             }}
           >
             <Bell size={19} />
@@ -630,14 +645,18 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div style={{
-        width: 36, height: 36, borderRadius: "50%", border: "2px solid var(--primary)",
-        background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
-        justifyContent: "center", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem",
-        color: "var(--primary)",
-      }}>
+      <motion.button
+        whileHover={{scale:1.08, boxShadow: "0 0 16px rgba(245,158,11,0.35)"}}
+        whileTap={{scale:0.92}}
+        transition={{duration: 0.2}}
+        style={{
+          width: 36, height: 36, borderRadius: "50%", border: "2px solid var(--primary)",
+          background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem",
+          color: "var(--primary)", padding: 0,
+        }}>
         {initials}
-      </div>
+      </motion.button>
 
       {open && (
         <div style={{
