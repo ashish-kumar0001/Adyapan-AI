@@ -50,39 +50,39 @@ interface PlacementHubViewProps {
 }
 
 const APTITUDE_TOPICS = [
-  { name: "Number System", icon: "🔢" },
-  { name: "Percentages", icon: "📈" },
-  { name: "Profit & Loss", icon: "💰" },
-  { name: "Time & Work", icon: "⏳" },
-  { name: "Time, Speed & Distance", icon: "🚀" },
-  { name: "Simple & Compound Interest", icon: "🏦" },
-  { name: "Ratio & Proportion", icon: "⚖️" },
-  { name: "Probability", icon: "🎲" },
-  { name: "Permutations & Combinations", icon: "🔀" },
-  { name: "Data Interpretation", icon: "📊" }
+  { name: "Number System", icon: null },
+  { name: "Percentages", icon: null },
+  { name: "Profit & Loss", icon: null },
+  { name: "Time & Work", icon: null },
+  { name: "Time, Speed & Distance", icon: null },
+  { name: "Simple & Compound Interest", icon: null },
+  { name: "Ratio & Proportion", icon: null },
+  { name: "Probability", icon: null },
+  { name: "Permutations & Combinations", icon: null },
+  { name: "Data Interpretation", icon: null }
 ];
 
 const REASONING_TOPICS = [
-  { name: "Puzzles", icon: "🧩" },
-  { name: "Seating Arrangement", icon: "🪑" },
-  { name: "Blood Relations", icon: "👪" },
-  { name: "Coding-Decoding", icon: "🔐" },
-  { name: "Direction Sense", icon: "🧭" },
-  { name: "Syllogisms", icon: "🕵️" },
-  { name: "Number Series", icon: "🧮" },
-  { name: "Analogy", icon: "🤝" },
-  { name: "Statement & Conclusion", icon: "📣" },
-  { name: "Logical Deduction", icon: "🧠" }
+  { name: "Puzzles", icon: null },
+  { name: "Seating Arrangement", icon: null },
+  { name: "Blood Relations", icon: null },
+  { name: "Coding-Decoding", icon: null },
+  { name: "Direction Sense", icon: null },
+  { name: "Syllogisms", icon: null },
+  { name: "Number Series", icon: null },
+  { name: "Analogy", icon: null },
+  { name: "Statement & Conclusion", icon: null },
+  { name: "Logical Deduction", icon: null }
 ];
 
 const TECHNICAL_TOPICS = [
-  { name: "Programming Fundamentals", icon: "💻" },
-  { name: "OOP Concepts", icon: "🧱" },
-  { name: "Data Structures", icon: "🌲" },
-  { name: "Algorithms", icon: "⚡" },
-  { name: "DBMS & SQL", icon: "🗄️" },
-  { name: "Operating Systems", icon: "⚙️" },
-  { name: "Computer Networks", icon: "🌐" }
+  { name: "Programming Fundamentals", icon: null },
+  { name: "OOP Concepts", icon: null },
+  { name: "Data Structures", icon: null },
+  { name: "Algorithms", icon: null },
+  { name: "DBMS & SQL", icon: null },
+  { name: "Operating Systems", icon: null },
+  { name: "Computer Networks", icon: null }
 ];
 
 const MOCK_MOCK_TESTS: MockTest[] = [

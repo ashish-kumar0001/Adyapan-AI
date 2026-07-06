@@ -7,6 +7,7 @@ import { api } from "@/services/api";
 import { saveAuthSession } from "@/hooks/useAuth";
 import { Navbar } from "@/components/layout/Navbar";
 import ParticleBackground from "@/components/ui/ParticleBackground";
+import { AnimatedCheckCircle } from "@/components/ui/AnimatedIcons";
 
 type Tab = "login" | "register" | "forgot";
 type ForgotStep = "email" | "otp" | "done";
@@ -289,7 +290,7 @@ export default function LoginPage() {
                   </div>
                   {forgotStep === "done" ? (
                     <motion.div className="flex flex-col items-center gap-4 py-2" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                      <motion.div className="text-4xl" initial={{ rotate: -180, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 200 }}>✅</motion.div>
+                      <AnimatedCheckCircle size={36} />
                       <p className="text-center text-sm font-semibold text-green-400">{forgotMsg}</p>
                       <motion.button onClick={() => { switchTab("login"); setForgotStep("email"); setForgotMsg(""); }}
                         className="rounded-full px-8 py-2.5 text-sm font-bold" style={submitStyle} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Back to Login</motion.button>

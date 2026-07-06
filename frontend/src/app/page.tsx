@@ -12,6 +12,7 @@ import {
   Calendar, Star, Check, Layers,
   Search, Briefcase,
 } from "lucide-react";
+import { AnimatedRocket, AnimatedSparkles, AnimatedCheck, AnimatedCode, AnimatedZap } from "@/components/ui/AnimatedIcons";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { landingFAQs } from "@/data/platform";
@@ -264,7 +265,7 @@ export default function LandingPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.5 }}
             >
-              {["✨ Learn Faster", "💻 Build Smarter", "🚀 Get Hired"].map((tag, i) => (
+              {["Learn Faster", "Build Smarter", "Get Hired"].map((tag, i) => (
                 <motion.span
                   key={tag}
                   className="px-2.5 py-1 bg-white/5 border border-white/5 rounded-full"
@@ -706,9 +707,9 @@ export default function LandingPage() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.4 }}
                     >
-                      <span className="text-amber-400 block font-bold">🚀 Initializing AI Build Agent...</span>
-                      <span className="block font-bold">✓ Setting up Tech Stack: Next.js + NestJS + Docker</span>
-                      <span className="block">✓ Assembling architecture structures...</span>
+                      <span className="text-amber-400 block font-bold"><AnimatedRocket size={14} className="inline mr-1.5" /> Initializing AI Build Agent...</span>
+                      <span className="block font-bold"><AnimatedCheck size={14} className="inline mr-1.5" /> Setting up Tech Stack: Next.js + NestJS + Docker</span>
+                      <span className="block"><AnimatedCheck size={14} className="inline mr-1.5" /> Assembling architecture structures...</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -721,7 +722,7 @@ export default function LandingPage() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.4 }}
                     >
-                      <span className="text-green-400 block font-bold">📦 Generated Files:</span>
+                      <span className="text-green-400 block font-bold">Generated Files:</span>
                       <span className="block text-amber-400 font-bold">├── gateway/src/main.ts (Gateway Service)</span>
                       <span className="block text-amber-400 font-bold">├── auth-service/src/auth.controller.ts (JWT Auth)</span>
                       <span className="block text-amber-400 font-bold">└── billing-service/prisma/schema.prisma (Neon DB)</span>

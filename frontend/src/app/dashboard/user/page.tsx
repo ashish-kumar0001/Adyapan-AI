@@ -45,6 +45,7 @@ import {
   Target, Globe, Edit3, Save, X,
   Upload, Download, Trash2, RefreshCw, ArrowLeft, Lock, Shield,
 } from "lucide-react";
+
 interface AdyapanUser {
   name: string;
   email: string;
@@ -932,7 +933,7 @@ function WelcomeBanner({
     }}>
       <div>
         <h1 style={{ fontSize: "1.55rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "0.3rem" }}>
-          {greeting}, {user?.name ?? "User"} 👋
+          {greeting}, {user?.name ?? "User"}
         </h1>
         <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
           {targetRole ? (
@@ -975,7 +976,7 @@ function StatCardsGrid({ stats }: { stats: any }) {
     >
       <StatCard icon={<FileText size={17} />} iconBg="rgba(59,130,246,0.1)" iconColor="#3b82f6" value={`${stats.avgAtsScore}%`} label="Avg Resume ATS" trend={stats.resumesCount > 0 ? `${stats.resumesCount} Resumes` : "No resumes"} />
       <StatCard icon={<BarChart3 size={17} />} iconBg="rgba(236,72,153,0.1)" iconColor="#ec4899" value={`${stats.avgLinkedinScore}%`} label="Avg LinkedIn Score" trend={stats.avgLinkedinScore > 0 ? "Optimized" : "Not optimized"} />
-      <StatCard icon={<Code2 size={17} />} iconBg="rgba(245,158,11,0.1)" iconColor="var(--primary)" value={String(stats.dsaSolved)} label="DSA Problems Solved" trend={stats.dsaStreak > 0 ? `${stats.dsaStreak} Day Streak 🔥` : "No active streak"} trendUp={stats.dsaStreak > 0} />
+      <StatCard icon={<Code2 size={17} />} iconBg="rgba(245,158,11,0.1)" iconColor="var(--primary)" value={String(stats.dsaSolved)} label="DSA Problems Solved" trend={stats.dsaStreak > 0 ? `${stats.dsaStreak} Day Streak` : "No active streak"} trendUp={stats.dsaStreak > 0} />
       <StatCard icon={<GraduationCap size={17} />} iconBg="rgba(139,92,246,0.1)" iconColor="#8b5cf6" value={String(stats.studySessionsCount)} label="Study Sessions" trend={`${stats.notesCount + stats.quizzesCount} Assets Gen`} />
     </div>
   );
@@ -1156,7 +1157,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
           </div>
           <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.1rem",marginBottom:"1rem"}}>
             <div style={{fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",marginBottom:"0.75rem"}}>Quick Actions</div>
-            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("🚀 Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</motion.button>))}
+            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</motion.button>))}
           </div>
         </div>
         <div>
@@ -1406,7 +1407,7 @@ function SettingsView({ user, onViewDashboard }: { user: AdyapanUser | null; onV
           </div>
         </div>
         <button onClick={handleSave} style={{ padding: "0.52rem 1.2rem", background: saved ? "#10b981" : "var(--primary)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", transition: "background 0.3s" }}>
-          {saved ? "✓ Saved" : "Save Changes"}
+          {saved ? "Saved" : "Save Changes"}
         </button>
       </div>
 
@@ -1800,7 +1801,7 @@ function UserDashboardContent() {
       </main>
 
       {toast && (
-        <Toast message="🚀 Coming Soon! This feature will be available in the next release." onClose={() => setToast(false)} />
+        <Toast message="Coming Soon! This feature will be available in the next release." onClose={() => setToast(false)} />
       )}
 
       {/* Inline responsive styles */}

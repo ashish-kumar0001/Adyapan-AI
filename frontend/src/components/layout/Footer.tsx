@@ -109,7 +109,7 @@ export function Footer() {
           style={{ borderColor: "var(--border-color)", color: "var(--text-muted)" }}
         >
           <p>&copy; 2026 Adyapan AI. All rights reserved.</p>
-          <p>Built with ❤️ for users globally.</p>
+          <p>Built for users globally.</p>
         </div>
       </div>
     </footer>
