@@ -230,10 +230,11 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
 
       // Generate suggestions in background
       generateSuggestions(res.data.analysis);
-    } catch (err) {
+    } catch (err: any) {
       clearInterval(stepInterval);
       console.error(err);
-      alert("Failed to analyze resume. Please try again.");
+      const msg = err?.response?.data?.message || err?.message || "Please try again.";
+      alert(`Failed to analyze resume. ${msg}`);
     } finally {
       setLoading(false);
     }

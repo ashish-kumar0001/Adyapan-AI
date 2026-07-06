@@ -85,10 +85,7 @@ export async function generateJSON<T>(
       { role: "system", content: `${systemPrompt}\nYou MUST respond with valid JSON only, no markdown.` },
       { role: "user", content: userPrompt },
     ];
-    const text = await callOpenRouter(messages, {
-      ...options,
-      responseFormat: { type: "json_object" },
-    });
+    const text = await callOpenRouter(messages, options);
     return JSON.parse(stripMarkdownJson(text)) as T;
   } catch (error) {
     console.error(`OpenRouter JSON error (${options.model}):`, error);
