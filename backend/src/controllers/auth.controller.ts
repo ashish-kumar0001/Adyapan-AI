@@ -51,6 +51,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     const result = await loginUser({
       email: requireString(req.body.email, "email"),
       password: requireString(req.body.password, "password"),
+      rememberMe: Boolean(req.body.rememberMe),
     });
 
     res.json({

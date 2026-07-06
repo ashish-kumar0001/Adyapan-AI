@@ -36,6 +36,7 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [reg, setReg] = useState({ name: "", email: "", phone: "", college: "", branch: "", year: "", password: "", confirm: "" });
   const [regError, setRegError] = useState("");
@@ -64,6 +65,17 @@ export default function LoginPage() {
       setTheme(t === "light" ? "light" : "dark");
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    // Auto-redirect if already logged in
+    const existingToken = localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
+    const existingUser = localStorage.getItem("adyapan-user") || sessionStorage.getItem("adyapan-user");
+    if (existingToken && existingUser) {
+      try {
+        const u = JSON.parse(existingUser) as { role?: string };
+        router.replace(u.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+      } catch { /* ignore */ }
+    }
+
     return () => { document.body.classList.remove("landing"); observer.disconnect(); };
   }, []);
 
@@ -90,8 +102,8 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError(""); setLoginLoading(true);
     try {
-      const { data } = await api.post("/auth/login", { email: loginEmail, password: loginPassword });
-      saveAuthSession(data.token, data.user);
+      const { data } = await api.post("/auth/login", { email: loginEmail, password: loginPassword, rememberMe });
+      saveAuthSession(data.token, data.user, rememberMe);
       router.push(data.user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
     } catch (err: unknown) {
       setLoginError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Invalid email or password.");
@@ -188,7 +200,7 @@ export default function LoginPage() {
                     ))}
                     <motion.div className="flex items-center justify-between text-xs" style={{ color: labelClr }} custom={2} variants={staggerItem} initial="hidden" animate="visible">
                       <label className="flex cursor-pointer items-center gap-1.5">
-                        <input type="checkbox" className="accent-amber-500" /> Remember me
+                        <input type="checkbox" className="accent-amber-500" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} /> Remember me
                       </label>
                       <button type="button" onClick={() => switchTab("forgot")} className="font-semibold text-amber-500">Forgot password?</button>
                     </motion.div>

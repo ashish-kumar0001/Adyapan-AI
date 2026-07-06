@@ -4,10 +4,10 @@ export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api",
 });
 
-// Attach JWT token to every request if present
+// Attach JWT token to every request if present (check both storages)
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("adyapan-token");
+    const token = localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,6 +24,8 @@ api.interceptors.response.use(
       if (!path.startsWith("/login")) {
         localStorage.removeItem("adyapan-token");
         localStorage.removeItem("adyapan-user");
+        sessionStorage.removeItem("adyapan-token");
+        sessionStorage.removeItem("adyapan-user");
         window.location.href = "/login";
       }
     }

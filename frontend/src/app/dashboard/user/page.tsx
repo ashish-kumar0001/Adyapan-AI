@@ -1581,9 +1581,9 @@ function UserDashboardContent() {
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
 
-    // Seed from localStorage first (instant display), then refresh from API
+    // Seed from localStorage/sessionStorage first (instant display), then refresh from API
     try {
-      const raw = localStorage.getItem("adyapan-user");
+      const raw = localStorage.getItem("adyapan-user") || sessionStorage.getItem("adyapan-user");
       if (raw) setUser(JSON.parse(raw) as AdyapanUser);
     } catch { /* ignore */ }
 
@@ -1591,7 +1591,12 @@ function UserDashboardContent() {
     api.get("/auth/me").then(res => {
       const fresh = (res.data as { user: AdyapanUser }).user;
       setUser(fresh);
-      localStorage.setItem("adyapan-user", JSON.stringify(fresh));
+      // Persist in whichever storage already has the token
+      if (localStorage.getItem("adyapan-token")) {
+        localStorage.setItem("adyapan-user", JSON.stringify(fresh));
+      } else {
+        sessionStorage.setItem("adyapan-user", JSON.stringify(fresh));
+      }
     }).catch(() => { /* token invalid — interceptor will redirect */ });
 
     const observer = new MutationObserver(() => {

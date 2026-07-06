@@ -15,31 +15,62 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
 }
 
-export function saveAuthSession(token: string, user: PlatformUser) {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-  setCookie(TOKEN_KEY, token);
-  setCookie(USER_KEY, JSON.stringify(user));
+/**
+ * Save auth session.
+ * When rememberMe is true → persists in localStorage + cookie (survives browser close).
+ * When false → persists in sessionStorage only (cleared on browser close).
+ */
+export function saveAuthSession(token: string, user: PlatformUser, rememberMe = true) {
+  if (rememberMe) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setCookie(TOKEN_KEY, token, 30);
+    setCookie(USER_KEY, JSON.stringify(user), 30);
+  } else {
+    // Clear any old persistent data
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    deleteCookie(TOKEN_KEY);
+    deleteCookie(USER_KEY);
+    // Use session storage (clears when browser closes)
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
 }
 
 export function clearAuthSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
   deleteCookie(TOKEN_KEY);
   deleteCookie(USER_KEY);
 }
 
+/**
+ * Get the token from either localStorage or sessionStorage.
+ */
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Get the user from either localStorage or sessionStorage.
+ */
+export function getAuthUser(): PlatformUser | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PlatformUser;
+  } catch {
+    return null;
+  }
+}
+
 export function useAuth() {
-  const [user, setUser] = useState<PlatformUser | null>(() => {
-    if (typeof window === "undefined") return null;
-    const stored = window.localStorage.getItem(USER_KEY);
-    if (!stored) return null;
-    try {
-      return JSON.parse(stored) as PlatformUser;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<PlatformUser | null>(() => getAuthUser());
 
   const logout = useCallback(() => {
     clearAuthSession();

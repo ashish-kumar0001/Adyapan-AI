@@ -18,9 +18,12 @@ type LoginInput = {
   password: string;
 };
 
-const tokenOptions: SignOptions = {
-  expiresIn: "7d",
-};
+const TOKEN_SHORT = "1d";
+const TOKEN_LONG = "30d";
+
+function getTokenOptions(rememberMe?: boolean): SignOptions {
+  return { expiresIn: rememberMe ? TOKEN_LONG : TOKEN_SHORT };
+}
 
 function normalizeRole(role?: string): AuthRole {
   return role?.toUpperCase() === "ADMIN" ? "ADMIN" : "USER";
@@ -36,7 +39,7 @@ function publicUser(user: User) {
   };
 }
 
-function signToken(user: Pick<User, "id" | "email" | "role">) {
+function signToken(user: Pick<User, "id" | "email" | "role">, rememberMe?: boolean) {
   return jwt.sign(
     {
       userId: user.id,
@@ -44,7 +47,7 @@ function signToken(user: Pick<User, "id" | "email" | "role">) {
       role: user.role,
     },
     env.jwtSecret,
-    tokenOptions,
+    getTokenOptions(rememberMe),
   );
 }
 
@@ -71,11 +74,11 @@ export async function registerUser(input: RegisterInput) {
 
   return {
     user: publicUser(user),
-    token: signToken(user),
+    token: signToken(user, false),
   };
 }
 
-export async function loginUser(input: LoginInput) {
+export async function loginUser(input: LoginInput & { rememberMe?: boolean }) {
   const email = input.email.toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -91,6 +94,6 @@ export async function loginUser(input: LoginInput) {
 
   return {
     user: publicUser(user),
-    token: signToken(user),
+    token: signToken(user, input.rememberMe),
   };
 }

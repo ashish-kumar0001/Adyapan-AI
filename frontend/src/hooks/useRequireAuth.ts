@@ -13,8 +13,8 @@ export function useRequireAuth(requiredRole?: "USER" | "ADMIN") {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("adyapan-token");
-    const raw = localStorage.getItem("adyapan-user");
+    const token = localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
+    const raw = localStorage.getItem("adyapan-user") || sessionStorage.getItem("adyapan-user");
 
     if (!token || !raw) {
       router.replace(`/login?from=${encodeURIComponent(window.location.pathname)}`);
