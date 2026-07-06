@@ -443,27 +443,90 @@ Return ONLY the improved content. Be concise and professional.`;
   }
 }
 
+interface CoverLetterResult {
+  greeting: string;
+  introduction: string;
+  body: string;
+  closing: string;
+}
+
+const COVER_LETTER_SYSTEM = `You are an expert cover letter writer and career coach. You write personalized, ATS-friendly cover letters that align a candidate's resume with the target company and role. Return ONLY valid JSON.`;
+
 /**
  * 8. Cover Letter Generator
  */
 export async function generateCoverLetterText(
+  resumeText: string,
   companyName: string,
   role: string,
   jobDescription: string,
-  tone: string
-): Promise<string> {
-  const prompt = `Write a highly tailored Cover Letter.
-Company: ${companyName}
-Role: ${role}
-Job Description: ${jobDescription}
-Tone: ${tone}
+  tone: string,
+  letterType: string
+): Promise<CoverLetterResult> {
+  const prompt = `Generate a cover letter using the candidate's actual resume data below.
 
-Write with: engaging introduction, strong body highlighting achievements matching the role, polite closing. Use clean letter layout. Return ONLY the cover letter text.`;
-  try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
-  } catch {
-    return `Dear Hiring Manager,\n\nI am writing to express my enthusiastic interest in the ${role} position at ${companyName}. With a strong background in software engineering and hands-on project experience, I am confident in my ability to deliver substantial value to your team.\n\nThank you for your time and consideration.\n\nSincerely,\n[Your Name]`;
-  }
+RESUME:
+"""
+${resumeText}
+"""
+
+TARGET COMPANY: ${companyName}
+TARGET ROLE: ${role}
+JOB DESCRIPTION: ${jobDescription || "Not provided — use resume to infer relevant skills"}
+TONE: ${tone}
+LETTER TYPE: ${letterType}
+
+Write a tailored cover letter that:
+- References specific projects, skills, and experience from the resume
+- Matches the candidate's background to the company/role requirements
+- Uses the specified tone
+- Is appropriate for the letter type (Internship, Full-Time, Referral, Career Switch, General Application)
+
+Return JSON with exactly these fields:
+{
+  "greeting": "Opening salutation (e.g. Dear Hiring Manager,)",
+  "introduction": "First paragraph — who you are, which role, and your enthusiasm",
+  "body": "1-2 paragraphs highlighting relevant experience, projects, skills from the resume that match the role",
+  "closing": "Final paragraph — thank you, call to action, and sign-off"
+}`;
+
+  const fallback: CoverLetterResult = {
+    greeting: `Dear Hiring Manager,`,
+    introduction: `I am writing to express my enthusiastic interest in the ${role} position at ${companyName}. With my background in software engineering and hands-on project experience, I am confident I can contribute meaningfully to your team.`,
+    body: `In my previous experience, I have worked on projects that align closely with the requirements for this role. My technical expertise spans modern development frameworks, cloud platforms, and scalable system architecture. I am particularly drawn to ${companyName}'s mission and would be thrilled to bring my skills to your organization.`,
+    closing: `Thank you for considering my application. I look forward to the opportunity to discuss how my experience aligns with ${companyName}'s goals.`,
+  };
+
+  return generateJSON<CoverLetterResult>(COVER_LETTER_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+/**
+ * 8b. Cover Letter AI Chat — refine existing letter
+ */
+export async function generateCoverLetterChat(
+  resumeText: string,
+  currentLetter: CoverLetterResult,
+  message: string
+): Promise<CoverLetterResult> {
+  const prompt = `You are helping the user refine their cover letter.
+
+CURRENT LETTER:
+- Greeting: ${currentLetter.greeting}
+- Introduction: ${currentLetter.introduction}
+- Body: ${currentLetter.body}
+- Closing: ${currentLetter.closing}
+
+USER REQUEST: "${message}"
+
+RESUME CONTEXT:
+"""
+${resumeText}
+"""
+
+Return the updated cover letter as JSON with fields: greeting, introduction, body, closing.`;
+
+  const fallback = currentLetter;
+  return generateJSON<CoverLetterResult>(COVER_LETTER_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
