@@ -48,7 +48,7 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   { id: "overview", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
   {
-    id: "users-section", label: "Users", icon: <Users size={18} />,
+    id: "users-section", label: "Users", icon: <UserCircle size={18} />,
     submenu: [
       { id: "users", label: "All Users", section: "users" },
       { id: "security", label: "Security", section: "security" },
@@ -449,7 +449,7 @@ export default function AdminDashboard() {
         {activeSection === "overview" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-5 space-y-6 max-w-7xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              <StatCard icon={<Users className="w-5 h-5" />} label="Total Users" value={stats?.users?.total ?? 0} color="#3b82f6" delay={0} />
+              <StatCard icon={<UserCircle className="w-5 h-5" />} label="Total Users" value={stats?.users?.total ?? 0} color="#3b82f6" delay={0} />
               <StatCard icon={<Activity className="w-5 h-5" />} label="AI Requests" value={stats?.totalAiRequests ?? 0} color="var(--primary)" delay={0.05} />
               <StatCard icon={<Crown className="w-5 h-5" />} label="Premium Users" value={stats?.users?.premium ?? 0} color="var(--primary)" delay={0.1} />
               <StatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue (Month)" value={`₹${(stats?.revenue?.month ?? 0) / 100}`} color="#10b981" delay={0.15} />
@@ -546,7 +546,7 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 max-w-6xl mx-auto">
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <h2 className="text-lg font-extrabold flex items-center gap-2">
-                <Users className="w-5 h-5" style={{ color: "var(--primary)" }} />
+                <UserCircle className="w-5 h-5" style={{ color: "var(--primary)" }} />
                 User Management
               </h2>
               <div className="flex-1" />
@@ -911,7 +911,7 @@ export default function AdminDashboard() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard icon={<Shield className="w-5 h-5" />} label="Security Status" value="Secure" color="#10b981" />
-              <StatCard icon={<Users className="w-5 h-5" />} label="Total Admins" value={stats?.users?.admin ?? 1} color="#3b82f6" />
+              <StatCard icon={<UserCircle className="w-5 h-5" />} label="Total Admins" value={stats?.users?.admin ?? 1} color="#3b82f6" />
               <StatCard icon={<Lock className="w-5 h-5" />} label="Failed Logins" value="0" color="#ef4444" />
               <StatCard icon={<Ban className="w-5 h-5" />} label="Blocked IPs" value="0" color="var(--text-muted)" />
             </div>
