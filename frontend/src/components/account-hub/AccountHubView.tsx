@@ -199,27 +199,16 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
           ))}
         </div>
 
-        {/* ==================== 2. NAVIGATION TABS ==================== */}
-        <div className="flex justify-between items-center border-b shrink-0" style={{ borderColor: c.border }}>
-          <div className="flex gap-2">
-            {[
-              { id: "profile" as const, label: "View Community Profile" },
-              { id: "settings" as const, label: "Manage Account" },
-              { id: "learning" as const, label: "Learning Progress" },
-              { id: "billing" as const, label: "Billing & Plans" }
-            ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`py-2.5 px-4 font-bold text-xs border-b-2 transition-colors -mb-[1px]`}
-                style={{
-                  color: tab === t.id ? c.primary : c.textSec,
-                  borderColor: tab === t.id ? c.primary : "transparent"
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
+        {/* ==================== 2. HEADER TITLE & AI ASSISTANT ==================== */}
+        <div className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Account Workspace</p>
+            <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              {tab === "profile" && "View Community Profile"}
+              {tab === "settings" && "Manage Account"}
+              {tab === "learning" && "Learning Progress"}
+              {tab === "billing" && "Billing & Plans"}
+            </h2>
           </div>
           <button
             onClick={() => setAssistantOpen(!assistantOpen)}

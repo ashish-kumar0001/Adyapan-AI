@@ -31,6 +31,7 @@ import { PlacementHubView } from "@/components/placement-hub/PlacementHubView";
 import { ProductivityHubView } from "@/components/productivity-hub/ProductivityHubView";
 import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
 import { AccountHubView } from "@/components/account-hub/AccountHubView";
+import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -281,6 +282,8 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "AI HR Interview") onViewTool("interview-hr");
                       else if (sub.label === "AI Technical Interview") onViewTool("interview-technical");
                       else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
+                      else if (sub.label === "Research Paper AI") onViewTool("research-paper-ai");
+                      else if (sub.label === "Plagiarism Checker") onViewTool("research-plagiarism");
                       else if (sub.label === "Internship Finder") onViewTool("internship-finder");
                       else if (sub.label === "Recommendations") onViewTool("internship-recommendations");
                       else if (sub.label === "Internship Tracker") onViewTool("internship-tracker");
@@ -1678,6 +1681,8 @@ function UserDashboardContent() {
           <ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "analytics-hub" || activeView === "analytics-learning" || activeView === "analytics-interview" || activeView === "analytics-resume" || activeView === "analytics-skills" ? (
           <AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "research-hub" || activeView === "research-paper-ai" || activeView === "research-plagiarism" ? (
+          <ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
         ) : activeView === "notifications" ? (

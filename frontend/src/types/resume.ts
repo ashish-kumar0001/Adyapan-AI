@@ -53,7 +53,10 @@ export type ResumeHubViewType =
   | "profile"
   | "settings"
   | "profile-learning"
-  | "billing";
+  | "billing"
+  | "research-hub"
+  | "research-paper-ai"
+  | "research-plagiarism";
 
 export interface PersonalInfo {
   fullName: string;
