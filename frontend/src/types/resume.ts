@@ -20,7 +20,11 @@ export type ResumeHubViewType =
   | "coding-challenges"
   | "github-portfolio"
   | "notifications"
-  | "ady-chat";
+  | "ady-chat"
+  | "interview-hub"
+  | "interview-hr"
+  | "interview-technical"
+  | "interview-mock";
 
 export interface PersonalInfo {
   fullName: string;

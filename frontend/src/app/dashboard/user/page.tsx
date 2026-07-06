@@ -24,6 +24,7 @@ import { CodingAssistantView } from "@/components/coding-hub/CodingAssistantView
 import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
 import { CodingChallengesView } from "@/components/coding-hub/CodingChallengesView";
 import { GithubPortfolioView } from "@/components/coding-hub/GithubPortfolioView";
+import { InterviewHubView } from "@/components/interview-hub/InterviewHubView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -166,7 +167,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
   onComingSoon: () => void;
   activeView: string;
   onViewDashboard: () => void;
-  onViewTool: (tool: ResumeHubViewType) => void;
+  onViewTool: (tool: any) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }) {
@@ -271,6 +272,9 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
                       else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
                       else if (sub.label === "AI Chat Assistant") onViewTool("ady-chat");
+                      else if (sub.label === "AI HR Interview") onViewTool("interview-hr");
+                      else if (sub.label === "AI Technical Interview") onViewTool("interview-technical");
+                      else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -311,7 +315,7 @@ function DashboardTopNav({
   onComingSoon: () => void;
   onViewProfile: () => void;
   onAdyChat: () => void;
-  onViewTool: (tool: ResumeHubViewType) => void;
+  onViewTool: (tool: any) => void;
   onMenuToggle: () => void;
   notifications: any[];
   onPremium?: () => void;
@@ -444,7 +448,7 @@ function DashboardTopNav({
           )}
         </div>
 
-        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onComingSoon} style={navBtnBase}>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={() => onViewTool("interview-hub")} style={navBtnBase}>
           <Mic size={13} /> AI Interview
         </motion.button>
 
@@ -1638,6 +1642,8 @@ function UserDashboardContent() {
           <CodingChallengesView />
         ) : activeView === "ady-chat" ? (
           <AdyChatView setView={setActiveView} />
+        ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
+          <InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
         ) : activeView === "notifications" ? (
