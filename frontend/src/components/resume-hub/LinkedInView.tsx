@@ -225,7 +225,7 @@ export function LinkedInView({ setView }: LinkedInViewProps) {
               <button
                 disabled={loading}
                 onClick={handleAudit}
-                className="w-full inline-flex items-center justify-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-black font-bold text-xs p-3 rounded-xl transition-colors disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-black font-bold text-xs py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
               >
                 {loading ? (
                   <>

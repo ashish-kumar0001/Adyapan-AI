@@ -324,7 +324,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                         <select
                           value={field.value}
                           onChange={(e) => field.onChange(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                          className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
                         >
                           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
                         </select>
@@ -336,7 +336,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     whileHover={{ scale: canContinue(1) ? 1.02 : 1 }} whileTap={{ scale: canContinue(1) ? 0.98 : 1 }}
                     onClick={() => canContinue(1) && setScreen(2)}
                     disabled={!canContinue(1)}
-                    className="w-full py-3.5 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all"
+                    className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
                     style={{
                       background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
                       color: canContinue(1) ? "#000" : t.textDim,
@@ -471,12 +471,12 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
                 {/* Navigation */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
-                  <button onClick={() => { setView("resume-hub"); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
+                  <button onClick={() => { setView("resume-hub"); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
                     <ArrowLeft size={14} /> Back
                   </button>
                   <motion.button whileHover={{ scale: canContinue(2) ? 1.02 : 1 }} whileTap={{ scale: canContinue(2) ? 0.98 : 1 }}
                     onClick={() => { if (canContinue(2)) { setScreen(3); handleGenerate(); } }} disabled={!canContinue(2)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all"
                     style={{
                       background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
                       color: canContinue(2) ? "#000" : t.textDim,
@@ -598,10 +598,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
                   {/* Bottom Nav */}
                   <div className="flex items-center justify-between">
-                    <button onClick={() => setScreen(2)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 text-white/70 text-[10px] font-bold border border-white/5 hover:bg-white/10 transition-colors">
+                    <button onClick={() => setScreen(2)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 text-white/70 text-[10px] font-bold border border-white/5 hover:bg-white/10 transition-colors">
                       <ChevronLeft size={13} /> Back
                     </button>
-                    <button onClick={() => setScreen(6)} className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-black text-[10px] font-extrabold hover:from-amber-400 hover:to-amber-500 transition-all">
+                    <button onClick={() => setScreen(6)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-black text-[10px] font-bold hover:from-amber-400 hover:to-amber-500 transition-all">
                       Review &amp; Export <ChevronRight size={13} />
                     </button>
                   </div>
@@ -657,10 +657,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </div>
 
                   <div className="flex gap-3">
-                    <button onClick={() => setScreen(4)} className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
+                    <button onClick={() => setScreen(4)} className="flex-1 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
                       Back to Editor
                     </button>
-                    <button onClick={() => setView("resume-hub")} className="flex-1 py-2.5 rounded-xl bg-amber-500 text-black text-xs font-extrabold hover:bg-amber-400 transition-colors">
+                    <button onClick={() => setView("resume-hub")} className="flex-1 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 transition-colors">
                       Done
                     </button>
                   </div>

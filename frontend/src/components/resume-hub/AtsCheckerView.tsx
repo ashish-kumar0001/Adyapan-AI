@@ -457,7 +457,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               disabled={!file && !selectedResumeId}
               onClick={() => setScreen("jd")}
-              className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
+              className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
               style={{
                 background: !file && !selectedResumeId ? c.surface : "linear-gradient(135deg, #f59e0b, #d97706)",
                 color: !file && !selectedResumeId ? c.textMuted : "#000",
@@ -487,7 +487,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 <motion.button
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                   onClick={() => { setIncludeJD("yes"); }}
-                  className="px-8 py-3 rounded-xl font-bold text-sm"
+                  className="px-6 py-2 rounded-lg font-bold text-xs"
                   style={{
                     background: includeJD === "yes" ? c.primary : c.surface,
                     color: includeJD === "yes" ? "#000" : c.text,
@@ -499,7 +499,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 <motion.button
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                   onClick={() => { setIncludeJD("skip"); }}
-                  className="px-8 py-3 rounded-xl font-bold text-sm"
+                  className="px-6 py-2 rounded-lg font-bold text-xs"
                   style={{
                     background: includeJD === "skip" ? c.surface : c.surface,
                     color: c.text,
@@ -569,7 +569,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setScreen("home")}
-                className="flex-1 py-3 rounded-xl font-bold text-sm"
+                className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 Back
@@ -578,7 +578,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 disabled={includeJD === null}
                 onClick={startAnalysis}
-                className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{
                   background: includeJD === null ? c.surface : "linear-gradient(135deg, #f59e0b, #d97706)",
                   color: includeJD === null ? c.textMuted : "#000",
@@ -927,7 +927,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setView("resume-hub")}
-                className="flex-1 py-3 rounded-xl font-bold text-sm"
+                className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 Back to Resume Hub
@@ -935,7 +935,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setScreen("suggestions")}
-                className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
               >
                 <Sparkles size={16} /> AI Suggestions
@@ -1058,7 +1058,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setScreen("dashboard")}
-                className="flex-1 py-3 rounded-xl font-bold text-sm"
+                className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 Back to Dashboard
@@ -1066,7 +1066,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setScreen("final")}
-                className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
               >
                 <CheckCircle size={16} /> View Final Score
@@ -1136,21 +1136,21 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             <div className="grid grid-cols-2 gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Save size={16} /> Save Resume
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Download size={16} /> Download PDF
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Download size={16} /> Download DOCX
@@ -1158,7 +1158,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => setView("resume-hub")}
-                className="py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.primary, color: "#000" }}
               >
                 <FileText size={16} /> Open Resume Builder
