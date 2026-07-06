@@ -148,18 +148,80 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
     setChatInput("");
     setChatMessages((prev) => [...prev, { role: "user", text: message }]);
     setChatLoading(true);
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("adyapan-token") : null;
+
+    // Add a streaming placeholder message
+    const aiMsgIndex = chatMessages.length + 1; // after user msg
+    setChatMessages((prev) => [...prev, { role: "ai", text: "" }]);
+
     try {
-      const res = await api.post("/resume/ai-chat", { resumeData: resumeJSON, message });
-      if (res.data.success) {
-        const d = res.data;
-        if (d.summary) setSummary(d.summary);
-        if (d.experience) setExperience(d.experience);
-        if (d.projects) setProjects(d.projects);
-        if (d.skills) setSkills(d.skills);
-        setChatMessages((prev) => [...prev, { role: "ai", text: `✅ Updated: ${Object.keys({ summary: d.summary, experience: d.experience, projects: d.projects, skills: d.skills }).filter(k => d[k]).join(", ")}` }]);
+      const res = await fetch(`${api.defaults.baseURL}/resume/ai-chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ resumeData: resumeJSON, message }),
+      });
+
+      if (!res.ok) throw new Error("Stream request failed");
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulatedText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+
+            if (data.type === "chunk") {
+              accumulatedText += data.text;
+              setChatMessages((prev) => {
+                const next = [...prev];
+                next[next.length - 1] = { role: "ai", text: accumulatedText };
+                return next;
+              });
+            } else if (data.type === "result") {
+              if (data.summary) setSummary(data.summary);
+              if (data.experience) setExperience(data.experience);
+              if (data.projects) setProjects(data.projects);
+              if (data.skills) setSkills(data.skills);
+              const updated = Object.keys({ summary: data.summary, experience: data.experience, projects: data.projects, skills: data.skills })
+                .filter(k => data[k]).join(", ");
+              if (updated) {
+                accumulatedText += `\n\n✅ Updated: ${updated}`;
+                setChatMessages((prev) => {
+                  const next = [...prev];
+                  next[next.length - 1] = { role: "ai", text: accumulatedText };
+                  return next;
+                });
+              }
+            } else if (data.type === "error") {
+              throw new Error(data.message || "Stream error");
+            }
+          } catch { /* skip unparseable lines */ }
+        }
       }
     } catch {
-      setChatMessages((prev) => [...prev, { role: "ai", text: "Sorry, something went wrong. Try again." }]);
+      setChatMessages((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { role: "ai", text: "Sorry, something went wrong. Try again." };
+        return next;
+      });
     } finally { setChatLoading(false); }
   };
 

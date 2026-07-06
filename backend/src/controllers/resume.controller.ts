@@ -3,8 +3,12 @@ import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent, resumeAIChat } from "../lib/ai/gemini";
 import { groqGenerateResumeSummary, groqEnhanceProjectDescription, groqEnhanceExperienceDescription, groqOptimizeResumeContent, groqResumeAIChat } from "../lib/ai/groq";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { env } from "../config/env";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+
+const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null;
 
 // AI wrapper — tries Gemini first, falls back to Groq
 async function aiResumeSummary(p: object, e: object[], ex: object[], s: string[]) {
@@ -230,6 +234,79 @@ export async function resumeChat(req: Request, res: Response, next: NextFunction
     res.json({ success: true, ...result });
   } catch (error) {
     next(error);
+  }
+}
+
+/**
+ * 7b. Resume AI Chat Streaming - uses Gemini directly for real-time streaming
+ */
+export async function resumeChatStream(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { resumeData, message } = req.body;
+    if (!message) throw httpError(400, "Message is required");
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    if (!genAI) {
+      const result = await aiResumeChat(resumeData, message);
+      const text = `I've processed your request to "${message}". Here's what I updated.`;
+      for (const word of text.split(" ")) {
+        res.write(`data: ${JSON.stringify({ type: "chunk", text: word + " " })}\n\n`);
+      }
+      const updated = Object.keys(result).length > 0 ? result : {};
+      res.write(`data: ${JSON.stringify({ type: "result", ...updated })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+      res.end();
+      return;
+    }
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    const prompt = `You are an AI resume assistant embedded in a resume builder. The user sent: "${message}"
+
+Current Resume Data:
+${JSON.stringify(resumeData, null, 2)}
+
+First, explain briefly what you're doing to help the user.
+Then, on the very last line, output a JSON block with ONLY the sections that changed.
+Format: SUMMARY=<<<{"summary":"...","experience":[...],"projects":[...],"skills":[...]}>>>
+Only include fields that actually changed. Omit unchanged fields.`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContentStream(prompt);
+
+    let fullText = "";
+
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      if (text) {
+        fullText += text;
+        res.write(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`);
+      }
+    }
+
+    const jsonMatch = fullText.match(/SUMMARY=<<<(\{.*\})>>>/s);
+    let updates: Record<string, any> = {};
+    if (jsonMatch) {
+      try {
+        updates = JSON.parse(jsonMatch[1]);
+      } catch { /* ignore parse errors */ }
+    }
+
+    res.write(`data: ${JSON.stringify({ type: "result", ...updates })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    res.end();
+  } catch (error) {
+    if (!res.headersSent) {
+      next(error);
+    } else {
+      res.write(`data: ${JSON.stringify({ type: "error", message: "Stream failed" })}\n\n`);
+      res.end();
+    }
   }
 }
 

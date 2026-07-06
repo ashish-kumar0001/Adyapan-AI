@@ -12,6 +12,7 @@ import {
   enhanceExperience,
   optimizeResume,
   resumeChat,
+  resumeChatStream,
 } from "../controllers/resume.controller";
 import { analyzeSWOT, matchJob } from "../controllers/resume-analyzer.controller";
 import { requireAuth } from "../middleware/auth";
@@ -30,5 +31,6 @@ resumeRouter.post("/enhance-project", requireAuth, enhanceProject);
 resumeRouter.post("/enhance-experience", requireAuth, enhanceExperience);
 resumeRouter.post("/optimize-resume", requireAuth, optimizeResume);
 resumeRouter.post("/ai-chat", requireAuth, resumeChat);
+resumeRouter.post("/ai-chat/stream", requireAuth, resumeChatStream);
 resumeRouter.post("/analyze", requireAuth, analyzeSWOT);
 resumeRouter.post("/job-match", requireAuth, matchJob);
