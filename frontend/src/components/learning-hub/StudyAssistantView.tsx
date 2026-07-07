@@ -436,9 +436,7 @@ export function StudyAssistantView() {
                 <p className="text-sm mb-1" style={{ color: c.textSec }}>
                   Drag & Drop or <span style={{ color: c.amber }} className="font-semibold">Browse Files</span>
                 </p>
-                <p className="text-xs" style={{ color: c.textMuted }}>Supports PDF, DOCX, PPTX, TXT, MD · Max 100 MB</p>
-
-                <div className="flex flex-wrap justify-center gap-2 mt-5">
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
                   {["PDF", "DOCX", "PPTX", "TXT", "Markdown"].map((fmt, i) => (
                     <motion.span
                       key={fmt}
