@@ -253,7 +253,7 @@ export function StudyAssistantView() {
       {/* 1. PAGE HEADER */}
       <div className="mb-6 shrink-0 border-b pb-4 border-white/5">
         <h1 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-          <BookOpen className="text-amber-500" size={20} /> AI Study Assistant
+          <BookOpen className="text-amber-500" size={20} /> Study Assistant
         </h1>
         <p className="text-xs text-gray-400 mt-1">
           Upload your study materials and get structured, topic-wise summaries in seconds.
