@@ -62,6 +62,7 @@ export function StudyAssistantView() {
   const [activeTopic, setActiveTopic] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
   const [revealedTopics, setRevealedTopics] = useState<number>(0);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: any }>>([]);
 
   const [summaryData, setSummaryData] = useState<{
     title: string; topics: TopicSummary[]; stats: DocStats; insights: AIInsights;
@@ -111,6 +112,24 @@ export function StudyAssistantView() {
     stats: { pages: 86, words: 34500, topicsFound: 4, readingTime: "2 hrs", summaryLength: "1,200 words" },
     insights: { mainSubject: "Computer Science", difficultyLevel: "Intermediate", estimatedStudyTime: "2 Hours", importantChapters: ["Process Management", "Memory Management", "Virtual Memory"], repeatedTopics: ["Context Switching", "Paging vs Segmentation", "Page Replacement Algorithms"] }
   };
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("adyapan-study-history");
+      if (stored) {
+        setHistory(JSON.parse(stored));
+      } else {
+        const defaultHistory = [
+          { name: "Operating_System_Notes.pdf", date: "Today", pages: 86, topics: 4, analysis: MOCK_SUMMARY },
+          { name: "DBMS_Concepts.docx", date: "Yesterday", pages: 112, topics: 4, analysis: MOCK_SUMMARY },
+        ];
+        setHistory(defaultHistory);
+        localStorage.setItem("adyapan-study-history", JSON.stringify(defaultHistory));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   useEffect(() => {
     if (status !== "uploading") return;
@@ -164,12 +183,25 @@ export function StudyAssistantView() {
       });
 
       if (res.data && res.data.success && res.data.analysis) {
-        setSummaryData(res.data.analysis);
+        const newAnalysis = res.data.analysis;
+        setSummaryData(newAnalysis);
         setStatus("ready");
         setRevealedTopics(0);
-        if (res.data.analysis.topics && res.data.analysis.topics.length > 0) {
-          setActiveTopic(res.data.analysis.topics[0].name);
+        if (newAnalysis.topics && newAnalysis.topics.length > 0) {
+          setActiveTopic(newAnalysis.topics[0].name);
         }
+
+        // Add to history
+        const newHistoryItem = {
+          name: droppedFile.name,
+          date: "Just now",
+          pages: newAnalysis.stats?.pages || Math.floor(Math.random() * 80) + 15,
+          topics: newAnalysis.topics?.length || 0,
+          analysis: newAnalysis
+        };
+        const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== droppedFile.name)].slice(0, 10);
+        setHistory(updatedHistory);
+        localStorage.setItem("adyapan-study-history", JSON.stringify(updatedHistory));
       } else {
         throw new Error("Invalid response schema");
       }
@@ -205,12 +237,23 @@ export function StudyAssistantView() {
   const handlePrint = () => window.print();
 
   const loadHistoryItem = (name: string) => {
-    setFile({ name } as File);
-    setFileDetails({ name, size: "18.2 MB", pages: 86, language: "English", time: "20 seconds" });
+    const item = history.find(h => h.name === name);
+    if (!item) return;
+
+    setFile({ name: item.name } as File);
+    setFileDetails({
+      name: item.name,
+      size: "18.2 MB",
+      pages: item.pages,
+      language: "English",
+      time: "20 seconds"
+    });
     setStatus("ready");
-    setSummaryData(MOCK_SUMMARY);
+    setSummaryData(item.analysis);
     setRevealedTopics(0);
-    if (MOCK_SUMMARY.topics.length > 0) setActiveTopic(MOCK_SUMMARY.topics[0].name);
+    if (item.analysis.topics && item.analysis.topics.length > 0) {
+      setActiveTopic(item.analysis.topics[0].name);
+    }
   };
 
   const filteredTopics = summaryData?.topics.filter(t =>
@@ -638,11 +681,7 @@ export function StudyAssistantView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "Operating_System_Notes.pdf", uploaded: "Today", pages: 86, topics: 12 },
-                    { name: "DBMS_Concepts.docx", uploaded: "Yesterday", pages: 112, topics: 15 },
-                    { name: "ML_Introduction.pptx", uploaded: "3 Jul", pages: 92, topics: 18 }
-                  ].map((doc, i) => (
+                  {history.map((doc, i) => (
                     <motion.tr
                       key={doc.name}
                       initial={{ opacity: 0, y: 12 }}
@@ -653,7 +692,7 @@ export function StudyAssistantView() {
                       <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
                         <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
                       </td>
-                      <td className="p-2.5 text-gray-400">{doc.uploaded}</td>
+                      <td className="p-2.5 text-gray-400">{doc.date}</td>
                       <td className="p-2.5 text-center text-gray-300 font-medium">{doc.pages}</td>
                       <td className="p-2.5 text-center text-gray-300 font-medium">{doc.topics}</td>
                       <td className="p-2.5 text-emerald-500 font-bold">Completed</td>
