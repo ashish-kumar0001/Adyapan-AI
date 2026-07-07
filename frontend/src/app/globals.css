@@ -49,6 +49,15 @@
   color: #0f172a;
 }
 
+/* ── Hide Scrollbars Globally ── */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+*::-webkit-scrollbar {
+  display: none;          /* Chrome, Safari, Opera */
+}
+
 /* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
