@@ -394,7 +394,7 @@ export function AssignmentGeneratorView() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="p-3 rounded-2xl shrink-0 space-y-2" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                   <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.textMuted }}>Actions</span>
                   <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => { const txt = `# ${topic}\n\n## Introduction\n${result.introduction}\n\n## Main Body\n${result.body}\n\n## Conclusion\n${result.conclusion}\n\n## References\n${result.references.map(r => `- ${r}`).join("\n")}"; navigator.clipboard.writeText(txt); toast.success("Assignment copied to clipboard!"); }}
+                    onClick={() => { const txt = `# ${topic}\n\n## Introduction\n${result.introduction}\n\n## Main Body\n${result.body}\n\n## Conclusion\n${result.conclusion}\n\n## References\n${result.references.map(r => `- ${r}`).join("\n")}`; navigator.clipboard.writeText(txt); toast.success("Assignment copied to clipboard!"); }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
                     <span style={{ color: c.amber }} className="shrink-0"><Copy size={13} /></span> Copy Assignment
                   </motion.button>

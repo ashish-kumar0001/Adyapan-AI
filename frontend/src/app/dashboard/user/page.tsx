@@ -30,7 +30,10 @@ import { JobHubView } from "@/components/job-hub/JobHubView";
 import { PlacementHubView } from "@/components/placement-hub/PlacementHubView";
 import { ProductivityHubView } from "@/components/productivity-hub/ProductivityHubView";
 import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
-import { AccountHubView } from "@/components/account-hub/AccountHubView";
+import { CommunityProfileView } from "@/components/account-hub/CommunityProfileView";
+import { ManageAccountView } from "@/components/account-hub/ManageAccountView";
+import { LearningProgressView } from "@/components/account-hub/LearningProgressView";
+import { BillingView } from "@/components/account-hub/BillingView";
 import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
@@ -1724,8 +1727,14 @@ function UserDashboardContent() {
       <main className="dash-main resume-hub-theme">
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
-        ) : activeView === "community-profile" || activeView === "settings" || activeView === "profile-learning" || activeView === "billing" ? (
-          <AccountHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "community-profile" ? (
+          <CommunityProfileView />
+        ) : activeView === "settings" ? (
+          <ManageAccountView />
+        ) : activeView === "profile-learning" ? (
+          <LearningProgressView />
+        ) : activeView === "billing" ? (
+          <BillingView />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
           <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
         ) : activeView === "ats-checker" ? (

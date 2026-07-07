@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
 import {
   CheckSquare, ArrowRight, PlayCircle, Trophy, RefreshCw, ChevronRight, Search, Plus, History,
-  CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, HelpCircle, Layers
+  CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, HelpCircle, Layers, BookOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
@@ -123,7 +123,7 @@ export function QuizGeneratorView() {
   };
 
   const getOptionStyle = (opt: string) => {
-    if (!selectedAnswer) return "";
+    if (!selectedAnswer) return undefined;
     if (opt === questions[currentQ]?.correctAnswer) return { background: c.greenBg, border: `1px solid ${c.green}`, color: c.text };
     if (opt === selectedAnswer) return { background: c.redBg, border: `1px solid ${c.red}`, color: c.text };
     return { background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted, opacity: 0.5 };
