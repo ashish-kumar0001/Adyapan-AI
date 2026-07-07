@@ -102,7 +102,7 @@ export function MindMapsView() {
   const getEdgesForNode = (nodeId: string) => mapData?.edges.filter(e => e.source === nodeId) || [];
 
   return (
-    <div className="flex flex-col gap-4 p-4 antialiased text-white max-w-6xl mx-auto w-full text-xs">
+    <div className="flex flex-col gap-3 p-1 antialiased text-white w-full text-xs">
       {/* SECTION 1 — HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div>
