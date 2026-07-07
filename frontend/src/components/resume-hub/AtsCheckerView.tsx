@@ -133,7 +133,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
     visible: (custom: number = 0) => ({
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, delay: custom * 0.08, ease: "easeOut" },
+      transition: { duration: 0.4, delay: custom * 0.08, ease: "easeOut" as const },
     }),
   };
 
@@ -142,7 +142,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
     visible: (custom: number = 0) => ({
       opacity: 1,
       scale: 1,
-      transition: { duration: 0.3, delay: custom * 0.08, ease: "easeOut" },
+      transition: { duration: 0.3, delay: custom * 0.08, ease: "easeOut" as const },
     }),
   };
 
@@ -164,7 +164,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
     visible: {
       scale: 1,
       rotate: 0,
-      transition: { type: "spring", stiffness: 200, damping: 12 },
+      transition: { type: "spring" as const, stiffness: 200, damping: 12 },
     },
   };
 

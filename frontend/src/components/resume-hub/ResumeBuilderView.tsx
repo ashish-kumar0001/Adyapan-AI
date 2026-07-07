@@ -33,7 +33,7 @@ const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.06, duration: 0.3, ease: "easeOut" },
+    transition: { delay: i * 0.06, duration: 0.3, ease: "easeOut" as const },
   }),
 };
 
@@ -41,7 +41,7 @@ const scaleIn = {
   hidden: { opacity: 0, scale: 0.85 },
   visible: (i = 0) => ({
     opacity: 1, scale: 1,
-    transition: { delay: i * 0.06, type: "spring", stiffness: 200, damping: 15 },
+    transition: { delay: i * 0.06, type: "spring" as const, stiffness: 200, damping: 15 },
   }),
 };
 
@@ -856,7 +856,7 @@ function Section({ title, children, onAdd, custom: customDelay = 0 }: { title: s
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
