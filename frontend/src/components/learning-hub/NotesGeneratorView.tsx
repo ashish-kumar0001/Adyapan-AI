@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BookOpen, Download, CheckCircle2, Cpu, Loader2 } from "lucide-react";
 import { useSocket } from "@/context/SocketContext";
 
@@ -7,7 +7,18 @@ export function NotesGeneratorView() {
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
   const [notes, setNotes] = useState<string | null>(null);
+  const [topic, setTopic] = useState("Operating Systems");
+  const [difficulty, setDifficulty] = useState("Intermediate");
+  const [noteType, setNoteType] = useState("Detailed Notes");
   const { socket, isConnected } = useSocket();
+  const userIdRef = useRef<string>("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("adyapan-user");
+      if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
+    } catch { /* */ }
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -17,14 +28,14 @@ export function NotesGeneratorView() {
       setStatusMsg(statusMessage);
     });
 
-    socket.on("generate:complete", () => {
-      setNotes("# Advanced Placement Readiness\n\n## 1. Core Principles\n- System Design requires scalability.\n- Database indexing reduces query latency.\n\n## 2. Algorithms\n- Dynamic programming optimizes overlapping subproblems.\n- Graph traversals (BFS/DFS) are fundamental for networks.");
+    socket.on("generate:complete", ({ content }: { content: string }) => {
+      setNotes(content);
       setGenerating(false);
     });
 
     socket.on("generate:error", ({ error }: { error: string }) => {
       setGenerating(false);
-      alert(`Pipeline error: ${error}`);
+      alert(`Generation error: ${error}`);
     });
 
     return () => {
@@ -38,11 +49,11 @@ export function NotesGeneratorView() {
     if (!socket) return;
     setGenerating(true);
     setProgress(0);
-    setStatusMsg("Connecting to generation pipeline...");
+    setStatusMsg("Starting generation...");
 
     socket.emit("generate:start", {
       moduleName: "notes",
-      payload: { topic: "Operating Systems" }
+      payload: { topic, difficulty, type: noteType, userId: userIdRef.current }
     });
   };
 
@@ -75,13 +86,13 @@ export function NotesGeneratorView() {
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-w-2xl mx-auto w-full space-y-6 mt-10">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-300">Topic or Subject</label>
-            <input type="text" placeholder="e.g. Operating Systems, Advanced Data Structures" className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500/50" />
+            <input type="text" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Operating Systems, Advanced Data Structures" className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500/50" />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-300">Difficulty</label>
-              <select className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none">
+              <select value={difficulty} onChange={e => setDifficulty(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none">
                 <option>Beginner</option>
                 <option>Intermediate</option>
                 <option>Advanced</option>
@@ -89,7 +100,7 @@ export function NotesGeneratorView() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-300">Note Type</label>
-              <select className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none">
+              <select value={noteType} onChange={e => setNoteType(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none">
                 <option>Detailed Notes</option>
                 <option>Short Revision</option>
                 <option>Formulas Only</option>
