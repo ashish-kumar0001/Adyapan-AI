@@ -227,9 +227,8 @@ export function StudyAssistantView() {
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) handleFileDrop(e.target.files[0]); };
 
   const handleScrollToTopic = (topicName: string) => {
-    setActiveTopic(topicName);
-    const el = document.getElementById(`topic-${topicName.replace(/\s+/g, "-")}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Toggle: if already open, close it; otherwise open the new one
+    setActiveTopic(prev => (prev === topicName ? "" : topicName));
   };
 
   const handleCopySummary = () => {
@@ -570,8 +569,8 @@ export function StudyAssistantView() {
               key="ready"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex gap-0 h-full"
-              style={{ height: "calc(100vh - 220px)", minHeight: "500px" }}
+              className="flex gap-0"
+              style={{ height: "calc(100vh - 210px)", minHeight: "480px", overflow: "hidden" }}
             >
               {/* ── LEFT PANEL 30% ── */}
               <motion.div
@@ -579,7 +578,7 @@ export function StudyAssistantView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className="flex flex-col gap-3 overflow-y-auto pr-3"
-                style={{ width: "30%", minWidth: "220px" }}
+                style={{ width: "30%", minWidth: "200px", height: "100%" }}
               >
                 {/* File info */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-2xl shrink-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -644,7 +643,12 @@ export function StudyAssistantView() {
                           <div className="w-1.5 h-1.5 rounded-full shrink-0 transition-colors" style={{ background: activeTopic === t.name ? c.amber : c.border }} />
                           <span className="text-sm font-semibold truncate" style={{ color: activeTopic === t.name ? c.amber : c.textSec }}>{t.name}</span>
                         </div>
-                        <ChevronRight size={12} style={{ color: activeTopic === t.name ? c.amber : c.textMuted }} className="shrink-0" />
+                        <motion.div
+                          animate={{ rotate: activeTopic === t.name ? 90 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronRight size={12} style={{ color: activeTopic === t.name ? c.amber : c.textMuted }} />
+                        </motion.div>
                       </motion.button>
                     ))}
                   </div>
@@ -715,7 +719,8 @@ export function StudyAssistantView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.15 }}
                 ref={contentRef}
-                className="flex-1 flex flex-col min-w-0 overflow-y-auto pl-4"
+                className="flex-1 flex flex-col min-w-0 pl-4"
+                style={{ height: "100%", overflowY: "auto" }}
               >
                 {/* Search Bar */}
                 <div className="sticky top-0 z-10 pb-3" style={{ background: c.isDark ? "rgba(10,10,20,0.9)" : "rgba(248,250,252,0.95)", backdropFilter: "blur(10px)" }}>
@@ -747,106 +752,135 @@ export function StudyAssistantView() {
                   )}
                 </div>
 
-                {/* Topic Cards */}
-                <div className="space-y-5 pb-4">
-                  {(searchQuery ? filteredTopics : filteredTopics.slice(0, revealedTopics)).map((t, idx) => (
-                    <motion.div
-                      key={t.name}
-                      id={`topic-${t.name.replace(/\s+/g, "-")}`}
-                      custom={idx}
-                      variants={scaleIn}
-                      initial="hidden"
-                      animate="visible"
-                      className="rounded-2xl overflow-hidden"
-                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-                    >
-                      {/* Topic Header */}
-                      <div
-                        className="flex items-center justify-between px-5 py-4 border-b"
-                        style={{
-                          borderColor: c.divider,
-                          background: activeTopic === t.name ? c.amberBg : c.surface
-                        }}
+                {/* Accordion Topic Cards */}
+                <div className="space-y-3 pb-4">
+                  {(searchQuery ? filteredTopics : filteredTopics.slice(0, revealedTopics)).map((t, idx) => {
+                    const isOpen = activeTopic === t.name;
+                    return (
+                      <motion.div
+                        key={t.name}
+                        id={`topic-${t.name.replace(/\s+/g, "-")}`}
+                        custom={idx}
+                        variants={scaleIn}
+                        initial="hidden"
+                        animate="visible"
+                        className="rounded-2xl overflow-hidden"
+                        style={{ background: c.cardBg, border: `1px solid ${isOpen ? c.amberBorder : c.border}` }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
-                            <BookOpen size={14} style={{ color: c.amber }} />
+                        {/* Accordion Header — clickable */}
+                        <motion.button
+                          onClick={() => handleScrollToTopic(t.name)}
+                          whileHover={{ background: isOpen ? c.amberBg : c.bgHover }}
+                          whileTap={{ scale: 0.995 }}
+                          className="w-full flex items-center justify-between px-5 py-4 text-left transition-all"
+                          style={{
+                            background: isOpen ? c.amberBg : c.surface,
+                            borderBottom: isOpen ? `1px solid ${c.divider}` : "none",
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: isOpen ? "rgba(245,158,11,0.2)" : c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                              <BookOpen size={14} style={{ color: c.amber }} />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{t.name}</h3>
+                              {!isOpen && (
+                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: c.textMuted }}>{t.overview.slice(0, 80)}…</p>
+                              )}
+                            </div>
                           </div>
-                          <h3 className="text-base font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{t.name}</h3>
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}>
-                          MODULE {String(idx + 1).padStart(2, "0")}
-                        </span>
-                      </div>
-
-                      <div className="p-5 space-y-5">
-                        {/* Overview */}
-                        <div>
-                          <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>Overview</span>
-                          <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{t.overview}</p>
-                        </div>
-
-                        {/* Key Concepts + Important Points */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="p-4 rounded-xl" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}` }}>
-                            <span className="text-[10px] uppercase tracking-widest font-black block mb-3 flex items-center gap-1.5" style={{ color: "#a78bfa" }}>
-                              <Layers size={11} /> Key Concepts
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full hidden sm:block" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}>
+                              {String(idx + 1).padStart(2, "0")}
                             </span>
-                            <ul className="space-y-1.5">
-                              {t.keyConcepts.map((item, i) => (
-                                <li key={i} className="flex items-start gap-2 text-[14px] leading-snug" style={{ color: c.textSec }}>
-                                  <span style={{ color: "#a78bfa" }} className="mt-1 shrink-0">▸</span>
-                                  {item}
-                                </li>
-                              ))}
-                            </ul>
+                            <motion.div
+                              animate={{ rotate: isOpen ? 90 : 0 }}
+                              transition={{ duration: 0.25 }}
+                            >
+                              <ChevronRight size={16} style={{ color: isOpen ? c.amber : c.textMuted }} />
+                            </motion.div>
                           </div>
+                        </motion.button>
 
-                          <div className="p-4 rounded-xl" style={{ background: c.cyanBg, border: `1px solid ${c.cyanBorder}` }}>
-                            <span className="text-[10px] uppercase tracking-widest font-black block mb-3 flex items-center gap-1.5" style={{ color: "#22d3ee" }}>
-                              <Star size={11} /> Important Points
-                            </span>
-                            <ul className="space-y-1.5">
-                              {t.importantPoints.map((item, i) => (
-                                <li key={i} className="flex items-start gap-2 text-[14px] leading-snug" style={{ color: c.textSec }}>
-                                  <span style={{ color: "#22d3ee" }} className="mt-1 shrink-0">▸</span>
-                                  {item}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
+                        {/* Accordion Body — animated open/close */}
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <motion.div
+                              key="body"
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: "easeInOut" }}
+                              style={{ overflow: "hidden" }}
+                            >
+                              <div className="p-5 space-y-5">
+                                {/* Overview */}
+                                <div>
+                                  <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>Overview</span>
+                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{t.overview}</p>
+                                </div>
 
-                        {/* Quick Revision */}
-                        <div className="p-4 rounded-xl relative overflow-hidden" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
-                          <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none" style={{ opacity: 0.04, background: "radial-gradient(circle, #f59e0b, transparent)", transform: "translate(30%, -30%)" }} />
-                          <span className="text-[10px] uppercase tracking-widest font-black block mb-2 flex items-center gap-1.5" style={{ color: c.amber }}>
-                            <Zap size={11} /> Quick Revision
-                          </span>
-                          <p className="text-[15px] leading-[1.75] italic" style={{ color: c.textSec }}>&ldquo;{t.quickRevision}&rdquo;</p>
-                        </div>
+                                {/* Key Concepts + Important Points */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="p-4 rounded-xl" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}` }}>
+                                    <span className="text-[10px] uppercase tracking-widest font-black block mb-3" style={{ color: "#a78bfa" }}>
+                                      ✦ Key Concepts
+                                    </span>
+                                    <ul className="space-y-1.5">
+                                      {t.keyConcepts.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-[14px] leading-snug" style={{ color: c.textSec }}>
+                                          <span style={{ color: "#a78bfa" }} className="mt-1 shrink-0">▸</span>
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
 
-                        {/* Keywords */}
-                        <div>
-                          <span className="text-[10px] uppercase tracking-widest font-black block mb-2.5 flex items-center gap-1.5" style={{ color: c.textMuted }}>
-                            <Hash size={11} /> Keywords
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {t.keywords.map(kw => (
-                              <motion.span
-                                key={kw}
-                                whileHover={{ scale: 1.06, y: -1 }}
-                                className="px-3 py-1 rounded-full text-sm font-semibold cursor-default"
-                                style={{ background: c.pill, border: `1px solid ${c.pillBorder}`, color: c.textSec }}
-                              >
-                                {kw}
-                              </motion.span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                                  <div className="p-4 rounded-xl" style={{ background: c.cyanBg, border: `1px solid ${c.cyanBorder}` }}>
+                                    <span className="text-[10px] uppercase tracking-widest font-black block mb-3" style={{ color: "#22d3ee" }}>
+                                      ★ Important Points
+                                    </span>
+                                    <ul className="space-y-1.5">
+                                      {t.importantPoints.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-[14px] leading-snug" style={{ color: c.textSec }}>
+                                          <span style={{ color: "#22d3ee" }} className="mt-1 shrink-0">▸</span>
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+
+                                {/* Quick Revision */}
+                                <div className="p-4 rounded-xl relative overflow-hidden" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                                  <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none" style={{ opacity: 0.04, background: "radial-gradient(circle, #f59e0b, transparent)", transform: "translate(30%, -30%)" }} />
+                                  <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>⚡ Quick Revision</span>
+                                  <p className="text-[15px] leading-[1.75] italic" style={{ color: c.textSec }}>&ldquo;{t.quickRevision}&rdquo;</p>
+                                </div>
+
+                                {/* Keywords */}
+                                <div>
+                                  <span className="text-[10px] uppercase tracking-widest font-black block mb-2.5" style={{ color: c.textMuted }}># Keywords</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {t.keywords.map(kw => (
+                                      <motion.span
+                                        key={kw}
+                                        whileHover={{ scale: 1.06, y: -1 }}
+                                        className="px-3 py-1 rounded-full text-sm font-semibold cursor-default"
+                                        style={{ background: c.pill, border: `1px solid ${c.pillBorder}`, color: c.textSec }}
+                                      >
+                                        {kw}
+                                      </motion.span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
 
                   {/* Loading indicator */}
                   {!searchQuery && summaryData && revealedTopics < summaryData.topics.length && (
