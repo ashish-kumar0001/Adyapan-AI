@@ -102,114 +102,98 @@ export function MindMapsView() {
   const getEdgesForNode = (nodeId: string) => mapData?.edges.filter(e => e.source === nodeId) || [];
 
   return (
-    <div className="flex flex-col gap-6 p-6 antialiased text-white max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-4 p-4 antialiased text-white max-w-6xl mx-auto w-full text-xs">
       {/* SECTION 1 — HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div>
-          <h1 className="text-[30px] font-extrabold tracking-tight text-white flex items-center gap-2">
-            <GitMerge className="text-amber-500" size={24} /> Mind Maps
+          <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+            <GitMerge className="text-amber-500" size={20} /> Mind Maps
           </h1>
-          <p className="text-[14px] text-gray-400 mt-1 max-w-2xl">
+          <p className="text-[11px] text-gray-400 mt-0.5 max-w-xl">
             Generate AI-powered visual knowledge graphs to brainstorm core concepts.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => { setMapData(null); setGenerating(false); }}
-            className="h-11 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black text-sm font-extrabold flex items-center gap-1.5 transition-colors"
+            className="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition-all"
           >
-            <Plus size={20} /> Create New
+            <Plus size={16} /> Create New
           </button>
           <button
             onClick={() => {
               const el = document.getElementById("recent-maps-section");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            className="h-11 px-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold flex items-center gap-1.5 transition-colors text-white"
+            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
           >
-            <History size={20} /> History
+            <History size={16} /> History
           </button>
           <button
             onClick={() => setActiveView(activeView === "help" ? "dashboard" : "help")}
-            className="h-11 px-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold flex items-center gap-1.5 transition-colors text-white"
+            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
           >
-            <HelpCircle size={20} /> Help
+            <HelpCircle size={16} /> Help
           </button>
         </div>
       </div>
 
       {activeView === "help" ? (
-        <div className="p-6 border border-white/5 bg-white/[0.01] rounded-2xl space-y-4">
-          <h2 className="text-[20px] font-bold text-white">Mind Maps Help</h2>
-          <p className="text-[15px] text-gray-300">
+        <div className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-2.5">
+          <h2 className="text-sm font-bold text-white">Mind Maps Help</h2>
+          <p className="text-xs text-gray-300 leading-relaxed">
             State the topic you would like to map. The visual graphs partition core theoretical blocks, link relative nodes together, and write brief context statements.
           </p>
-          <button onClick={() => setActiveView("dashboard")} className="h-11 px-4 rounded-2xl bg-amber-500 text-black font-extrabold text-sm hover:bg-amber-400 transition-colors">
+          <button onClick={() => setActiveView("dashboard")} className="h-8 px-3 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">
             Back to Dashboard
           </button>
         </div>
       ) : (
         <>
-          {/* SECTION 2 — QUICK STATS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { title: "Maps Drawn", value: "12", desc: "+3 This Month" },
-              { title: "Nodes Connected", value: "84 nodes", desc: "Detailed tree connections" },
-              { title: "Core Concepts", value: "32 targets", desc: "For different syllabus items" },
-              { title: "Total Hours Saved", value: "14 Hours", desc: "Premium Efficiency Available" }
-            ].map(stat => (
-              <div key={stat.title} className="h-[170px] p-6 rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col justify-between">
-                <span className="text-[14px] text-gray-400 font-medium">{stat.title}</span>
-                <span className="text-3xl font-extrabold text-white">{stat.value}</span>
-                <span className="text-[14px] text-amber-500 font-semibold">{stat.desc}</span>
-              </div>
-            ))}
-          </div>
-
           {generating ? (
-            <div className="flex flex-col items-center justify-center p-8 border border-white/5 bg-white/[0.01] rounded-2xl space-y-6 max-w-2xl mx-auto w-full">
-              <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 animate-pulse">
-                <Cpu size={32} />
+            <div className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/[0.01] rounded-xl space-y-4 max-w-xl mx-auto w-full text-center">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 animate-pulse">
+                <Cpu size={24} />
               </div>
-              <div className="text-center">
-                <h3 className="text-[18px] font-bold text-white">Generating Map Nodes via AI Pipeline</h3>
-                <p className="text-[14px] text-gray-400 mt-1">{statusMsg}</p>
+              <div>
+                <h3 className="text-xs font-bold text-white">Generating Map Nodes via AI Pipeline</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">{statusMsg}</p>
               </div>
-              <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
                 <div className="bg-amber-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
-              <div className="text-[14px] font-bold text-amber-500 flex items-center gap-2">
-                <Loader2 className="animate-spin" size={14} /> {progress}% Complete
+              <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5 justify-center">
+                <Loader2 className="animate-spin" size={12} /> {progress}% Complete
               </div>
             </div>
           ) : !mapData ? (
-            <div className="space-y-6">
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* SECTION 3 — CONFIGURATION WORKSPACE */}
-              <div className="p-6 border border-white/5 bg-white/[0.01] rounded-2xl max-w-3xl mx-auto w-full space-y-6">
-                <h3 className="text-[18px] font-bold text-white">Configure Mind Map</h3>
-                <div className="space-y-4">
+              <div className="p-4 border border-white/5 bg-white/[0.01] rounded-xl max-w-2xl mx-auto w-full space-y-4">
+                <h3 className="text-xs font-bold text-white">Configure Mind Map</h3>
+                <div className="space-y-3">
                   <div className="space-y-1">
-                    <label className="text-[14px] font-semibold text-gray-300">Topic to Visualize</label>
+                    <label className="text-[11px] font-semibold text-gray-300">Topic to Visualize</label>
                     <input
                       type="text"
                       value={topic}
                       onChange={e => setTopic(e.target.value)}
                       placeholder="e.g. Cellular Respiration, React Lifecycle"
-                      className="w-full h-12 bg-black/20 border border-white/10 rounded-xl px-4 text-[15px] text-white focus:outline-none focus:border-amber-500/50"
+                      className="w-full h-9 bg-black/20 border border-white/10 rounded-lg px-3 text-xs text-white focus:outline-none focus:border-amber-500/50"
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={handleGenerate}
-                    className="h-11 flex-1 rounded-xl bg-amber-500 text-black font-extrabold text-sm hover:bg-amber-400 transition-colors flex items-center justify-center gap-2"
+                    className="h-8 flex-1 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1"
                   >
-                    <GitMerge size={20} /> Generate Mind Map
+                    <GitMerge size={16} /> Generate Mind Map
                   </button>
                   <button
                     onClick={() => setTopic("")}
-                    className="h-11 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold transition-colors"
+                    className="h-8 px-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold transition-all"
                   >
                     Clear
                   </button>
@@ -217,9 +201,9 @@ export function MindMapsView() {
               </div>
 
               {/* SECTION 4 — PRESETS SECTION */}
-              <div className="space-y-3">
-                <h2 className="text-[20px] font-bold text-white">Choose Preset Concepts</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-sm font-bold text-white">Choose Preset Concepts</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
                     { title: "Cellular Respiration map", desc: "Visualizes glycolysis, Krebs cycle, and electron transport chain nodes connections." },
                     { title: "React Components Lifecycle", desc: "Outlines mounting stages, updating loops, and unmounting methods in functional structures." },
@@ -228,54 +212,36 @@ export function MindMapsView() {
                     <div
                       key={tpl.title}
                       onClick={() => setTopic(tpl.title)}
-                      className="p-6 border border-white/5 rounded-2xl bg-white/[0.01] hover:bg-amber-500/[0.01] hover:border-amber-500/30 transition-all cursor-pointer space-y-2"
+                      className="p-4 border border-white/5 rounded-xl bg-white/[0.01] hover:bg-amber-500/[0.01] hover:border-amber-500/30 transition-all cursor-pointer space-y-1"
                     >
-                      <h4 className="text-[18px] font-bold text-white">{tpl.title}</h4>
-                      <p className="text-[14px] text-gray-400 leading-relaxed">{tpl.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SECTION 12 — HOW IT WORKS */}
-              <div className="space-y-3">
-                <h2 className="text-[20px] font-bold text-white">How It Works</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[
-                    { step: "Brief Concept Topic", desc: "Specify any subject or syllabus concept you want to map visually." },
-                    { step: "Generate Tree Nodes", desc: "AI builds relational coordinates linking parent topics with sub-concepts." },
-                    { step: "View & Export", desc: "Analyze the interactive node outline, copy details, or export graphs." }
-                  ].map((item, idx) => (
-                    <div key={item.step} className="p-6 border border-white/5 rounded-2xl bg-white/[0.01] space-y-2">
-                      <div className="text-[14px] font-black text-amber-500 uppercase tracking-widest">Step 0{idx + 1}</div>
-                      <h4 className="text-[18px] font-bold text-white">{item.step}</h4>
-                      <p className="text-[15px] text-gray-300 leading-relaxed">{item.desc}</p>
+                      <h4 className="text-xs font-bold text-white">{tpl.title}</h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">{tpl.desc}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start animate-in fade-in duration-200">
               {/* LEFT SIDEBAR (3 Cols) */}
-              <div className="md:col-span-3 space-y-4">
-                <div className="p-4 border border-white/5 rounded-2xl bg-white/[0.01] space-y-3">
-                  <span className="text-[14px] font-black uppercase tracking-wider text-amber-500 block">
+              <div className="md:col-span-3 space-y-3">
+                <div className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
                     Map Outlines
                   </span>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {mapData.nodes.map(n => (
                       <button
                         key={n.id}
                         onClick={() => setActiveNode(n.id)}
-                        className={`w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors ${
+                        className={`w-full text-left py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
                           activeNode === n.id
                             ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                             : "text-gray-400 hover:bg-white/5 hover:text-white"
                         }`}
                       >
-                        <span className="truncate text-[14px]">{n.data.label}</span>
-                        <ChevronRight size={14} className={activeNode === n.id ? "text-amber-500" : "text-gray-600"} />
+                        <span className="truncate text-[12px]">{n.data.label}</span>
+                        <ChevronRight size={12} className={activeNode === n.id ? "text-amber-500" : "text-gray-600"} />
                       </button>
                     ))}
                   </div>
@@ -283,27 +249,27 @@ export function MindMapsView() {
               </div>
 
               {/* MAIN CONTENT VISUAL CANVAS (6 Cols) */}
-              <div className="md:col-span-6 space-y-6">
-                <div className="aspect-video relative bg-[#0a0a0f] border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center p-8">
-                  <div className="absolute inset-0 z-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+              <div className="md:col-span-6 space-y-4">
+                <div className="aspect-video relative bg-[#0a0a0f] border border-white/10 rounded-xl overflow-hidden flex items-center justify-center p-4">
+                  <div className="absolute inset-0 z-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 0.5px, transparent 0)', backgroundSize: '16px 16px' }} />
                   <div className="relative z-10 flex flex-col items-center">
                     {rootNode && (
                       <>
-                        <div className="px-6 py-3 bg-amber-500 text-black font-extrabold rounded-xl shadow-lg shadow-amber-500/20 z-20 text-[15px]">
+                        <div className="px-4 py-2 bg-amber-500 text-black font-extrabold rounded-lg shadow-lg shadow-amber-500/20 z-20 text-[12px]">
                           {rootNode.data.label}
                         </div>
-                        <div className="w-0.5 h-12 bg-white/20" />
-                        <div className="flex gap-4 relative justify-center flex-wrap">
+                        <div className="w-0.5 h-6 bg-white/20" />
+                        <div className="flex gap-2.5 relative justify-center flex-wrap">
                           {childNodes.slice(0, 3).map(node => {
                             const childEdges = getEdgesForNode(node.id);
                             const grandChildren = mapData.nodes.filter(n => childEdges.some(e => e.target === n.id));
                             return (
-                              <div key={node.id} className="flex flex-col items-center border border-white/10 bg-white/5 p-3 rounded-xl min-w-[120px]">
-                                <div className="text-[14px] font-bold text-white text-center">{node.data.label}</div>
+                              <div key={node.id} className="flex flex-col items-center border border-white/10 bg-white/5 p-2 rounded-lg min-w-[100px]">
+                                <div className="text-[11px] font-bold text-white text-center">{node.data.label}</div>
                                 {grandChildren.length > 0 && (
-                                  <div className="mt-2 space-y-1 w-full text-center">
+                                  <div className="mt-1 space-y-0.5 w-full text-center">
                                     {grandChildren.slice(0, 2).map(gc => (
-                                      <div key={gc.id} className="px-2 py-1 bg-black/40 border border-white/5 rounded text-[14px] text-gray-400">
+                                      <div key={gc.id} className="px-1.5 py-0.5 bg-black/40 border border-white/5 rounded text-[10px] text-gray-400">
                                         {gc.data.label}
                                       </div>
                                     ))}
@@ -319,24 +285,24 @@ export function MindMapsView() {
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-2xl flex flex-wrap gap-2 justify-between items-center">
-                  <div className="flex gap-2">
+                <div className="p-2 border border-white/5 bg-white/[0.01] rounded-xl flex flex-wrap gap-1.5 justify-between items-center">
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => alert("📋 Copied map details.")}
-                      className="h-11 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                      className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all"
                     >
-                      <Copy size={20} /> Copy Details
+                      <Copy size={14} /> Copy Details
                     </button>
                     <button
                       onClick={() => alert("📥 Exported Mind Map image successfully.")}
-                      className="h-11 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                      className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all"
                     >
-                      <FileDown size={20} /> Export PNG
+                      <FileDown size={14} /> Export PNG
                     </button>
                   </div>
                   <button
                     onClick={() => setMapData(null)}
-                    className="h-11 px-4 rounded-xl bg-amber-500 text-black font-extrabold text-sm hover:bg-amber-400 transition-colors"
+                    className="h-8 px-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all"
                   >
                     Start New Map
                   </button>
@@ -344,21 +310,21 @@ export function MindMapsView() {
               </div>
 
               {/* RIGHT SIDEBAR STATS (3 Cols) */}
-              <div className="md:col-span-3 space-y-4">
-                <div className="p-4 border border-white/5 rounded-2xl bg-white/[0.01] space-y-3">
-                  <span className="text-[14px] font-black uppercase tracking-wider text-amber-500 block">
+              <div className="md:col-span-3 space-y-3">
+                <div className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
                     Map Details
                   </span>
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-1 text-xs">
                     {[
                       { label: "Target Topic", val: topic },
                       { label: "Total Nodes", val: mapData.nodes.length },
                       { label: "Child Branches", val: childNodes.length },
                       { label: "Format Model", val: "Relational Node Map" }
                     ].map(stat => (
-                      <div key={stat.label} className="flex justify-between items-center py-1 border-b border-white/[0.03]">
-                        <span className="text-gray-400 text-[14px]">{stat.label}</span>
-                        <span className="font-extrabold text-white text-[15px]">{stat.val}</span>
+                      <div key={stat.label} className="flex justify-between items-center py-0.5 border-b border-white/[0.03]">
+                        <span className="text-gray-400 text-[11px]">{stat.label}</span>
+                        <span className="font-extrabold text-white text-[12px]">{stat.val}</span>
                       </div>
                     ))}
                   </div>
@@ -368,16 +334,16 @@ export function MindMapsView() {
           )}
 
           {/* SECTION 11 — RECENT MAPS TABLE */}
-          <div id="recent-maps-section" className="space-y-3 pt-6 border-t border-white/5">
-            <h2 className="text-[20px] font-bold text-white">Recent Mind Maps</h2>
-            <div className="border border-white/5 rounded-2xl overflow-hidden bg-white/[0.01]">
-              <table className="w-full text-left border-collapse text-[15px]">
+          <div id="recent-maps-section" className="space-y-2.5 pt-4 border-t border-white/5">
+            <h2 className="text-sm font-bold text-white">Recent Mind Maps</h2>
+            <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02] text-gray-400 font-bold text-xs uppercase tracking-wider">
-                    <th className="p-4">Topic</th>
-                    <th className="p-4">Date Completed</th>
-                    <th className="p-4 text-center">Nodes count</th>
-                    <th className="p-4 text-right">Action</th>
+                  <tr className="border-b border-white/5 bg-white/[0.02] text-gray-400 font-bold text-[10px] uppercase tracking-wider">
+                    <th className="p-2.5">Topic</th>
+                    <th className="p-2.5">Date Completed</th>
+                    <th className="p-2.5 text-center">Nodes count</th>
+                    <th className="p-2.5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -387,15 +353,15 @@ export function MindMapsView() {
                     { name: "Binary Search Tree Visual", date: "6 Jul", count: 15 }
                   ].map(map => (
                     <tr key={map.name} className="hover:bg-white/[0.01] transition-colors">
-                      <td className="p-4 font-semibold text-white flex items-center gap-2">
-                        <FileText size={16} className="text-amber-500" /> {map.name}
+                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                        <FileText size={14} className="text-amber-500 shrink-0" /> {map.name}
                       </td>
-                      <td className="p-4 text-gray-400">{map.date}</td>
-                      <td className="p-4 text-center text-gray-300 font-medium">{map.count} nodes</td>
-                      <td className="p-4 text-right">
+                      <td className="p-2.5 text-gray-400">{map.date}</td>
+                      <td className="p-2.5 text-center text-gray-300 font-medium">{map.count} nodes</td>
+                      <td className="p-2.5 text-right">
                         <button
                           onClick={() => loadHistoryItem(map.name)}
-                          className="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-xs transition-all"
+                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
                         >
                           Open
                         </button>

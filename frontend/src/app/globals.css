@@ -144,7 +144,7 @@ button, input, select, textarea {
 
 /* ── Dashboard sidebar expand ── */
 .dash-sidebar {
-  width: 80px;
+  width: 60px;
   height: calc(100vh - 70px);
   position: fixed;
   top: 70px;
@@ -155,15 +155,15 @@ button, input, select, textarea {
   -webkit-backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  padding: 1rem 0.4rem;
+  padding: 1rem 0.3rem;
   z-index: 99;
   transition: width 0.3s ease, background 0.3s ease;
   overflow: hidden;
 }
 .dash-sidebar:hover {
-  width: 280px;
+  width: 220px;
   overflow-y: auto;
-  padding: 1rem 0.6rem;
+  padding: 1rem 0.5rem;
 }
 .dash-sidebar::-webkit-scrollbar { display: none; }
 .dash-sidebar { scrollbar-width: none; }
@@ -174,14 +174,14 @@ button, input, select, textarea {
 .dash-sidebar .sb-submenu { display: none; }
 .dash-sidebar:hover .sb-item.open .sb-submenu { display: block; }
 .dash-main {
-  margin-left: 80px;
+  margin-left: 60px;
   margin-top: 70px;
   min-height: calc(100vh - 70px);
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
   background: var(--bg-dark);
 }
-.dash-sidebar:hover ~ .dash-main { margin-left: 280px; }
+.dash-sidebar:hover ~ .dash-main { margin-left: 220px; }
 
 /* ── Resume Hub Light Theme Overrides ── */
 [data-theme="light"] .resume-hub-theme {
@@ -308,7 +308,7 @@ button, input, select, textarea {
 @media (max-width: 768px) {
   .dash-sidebar {
     transform: translateX(-100%);
-    width: 260px !important;
+    width: 220px !important;
     transition: transform 0.3s ease-in-out;
     z-index: 120 !important;
     height: 100vh !important;
@@ -317,7 +317,7 @@ button, input, select, textarea {
     box-shadow: 4px 0 24px rgba(0,0,0,0.3);
   }
   .dash-sidebar:hover {
-    width: 260px !important;
+    width: 220px !important;
   }
   .dash-sidebar.open {
     transform: translateX(0) !important;
