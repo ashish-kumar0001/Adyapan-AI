@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
 import {
-  Upload, FileText, Copy, Printer,
+  Upload, FileText, Copy,
   RefreshCw, Search, CheckCircle2, ChevronRight, BookOpen,
   FileDown, Layers, History, Plus, Sparkles, Brain,
   Zap, Star, X, Hash
@@ -692,7 +692,6 @@ export function StudyAssistantView() {
                   {[
                     { icon: <Copy size={13} />, label: "Copy Summary", fn: handleCopySummary },
                     { icon: <FileDown size={13} />, label: "Download PDF", fn: () => {} },
-                    { icon: <Printer size={13} />, label: "Print", fn: () => window.print() },
                   ].map((action) => (
                     <motion.button
                       key={action.label}
