@@ -188,37 +188,50 @@ button, input, select, textarea {
   /* text colors */
   .text-white,
   .text-white\/90,
-  .text-white\/80 {
+  .text-white\/80,
+  .text-gray-100,
+  .text-gray-200 {
     color: var(--text-primary) !important;
   }
   .text-white\/70,
-  .text-white\/60 {
+  .text-white\/60,
+  .text-gray-300,
+  .text-gray-400 {
     color: var(--text-secondary) !important;
   }
   .text-white\/50,
   .text-white\/40,
   .text-white\/35,
-  .text-white\/30 {
+  .text-white\/30,
+  .text-gray-500 {
     color: var(--text-muted) !important;
   }
   
   /* background colors */
-  .bg-white\/5 {
+  .bg-white\/5,
+  .bg-white\/\[0\.05\] {
     background-color: var(--bg-card-hover) !important;
   }
   .bg-white\/3,
   .bg-white\/2,
   .bg-white\/1,
+  .bg-white\/\[0\.01\],
+  .bg-white\/\[0\.02\],
   .bg-white\/\[0\.03\] {
     background-color: var(--bg-card) !important;
   }
   .bg-black\/20,
   .bg-black\/30,
-  .bg-\[\#0d0d19\] {
+  .bg-\[\#0d0d19\],
+  .bg-\[\#0a0a0f\] {
     background-color: var(--bg-dark) !important;
   }
   .bg-black\/40 {
     background-color: #ffffff !important;
+  }
+  .from-\[\#1a1c29\] {
+    background-image: none !important;
+    background-color: var(--bg-card) !important;
   }
 
   /* border colors */
