@@ -24,6 +24,7 @@ export function PptGeneratorView() {
   const [statusMsg, setStatusMsg] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
   const [activeSlide, setActiveSlide] = useState(0);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; count: number; data: Slide[] }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -78,6 +79,11 @@ export function PptGeneratorView() {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
     } catch { /* */ }
+
+    try {
+      const stored = localStorage.getItem("adyapan-ppt-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -92,6 +98,16 @@ export function PptGeneratorView() {
       setGenerating(false);
       setSlides(slideList);
       setActiveSlide(0);
+
+      const newHistoryItem = {
+        name: topic,
+        date: "Just now",
+        count: slideList.length,
+        data: slideList
+      };
+      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("adyapan-ppt-history", JSON.stringify(updatedHistory));
     };
 
     const handleError = ({ error }: { error: string }) => {
@@ -108,7 +124,7 @@ export function PptGeneratorView() {
       socket.off("generate:complete", handleComplete);
       socket.off("generate:error", handleError);
     };
-  }, [socket, topic, slideCount]);
+  }, [socket, topic, slideCount, history]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -149,8 +165,11 @@ export function PptGeneratorView() {
   };
 
   const loadHistoryItem = (topicName: string) => {
-    setTopic(topicName);
-    setSlides(MOCK_SLIDES);
+    const item = history.find(h => h.name === topicName);
+    if (!item) return;
+    setTopic(item.name);
+    setSlideCount(`${item.count} Slides`);
+    setSlides(item.data);
     setActiveSlide(0);
   };
 
@@ -484,33 +503,37 @@ export function PptGeneratorView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "EdTech Pitch Deck", date: "Today", count: 5 },
-                    { name: "Syllabus Review Slides", date: "Yesterday", count: 10 },
-                    { name: "Computer Networking PPT", date: "5 Jul", count: 15 }
-                  ].map((ppt, i) => (
-                    <motion.tr
-                      key={ppt.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {ppt.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No presentations generated yet. Submit a topic above to create your first slides.
                       </td>
-                      <td className="p-2.5 text-gray-400">{ppt.date}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{ppt.count} slides</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(ppt.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >
-                          Open
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((ppt, i) => (
+                      <motion.tr
+                        key={ppt.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {ppt.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{ppt.date}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{ppt.count} slides</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(ppt.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >
+                            Open
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

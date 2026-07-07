@@ -26,6 +26,7 @@ export function AssignmentGeneratorView() {
   const [statusMsg, setStatusMsg] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
   const [activeSection, setActiveSection] = useState("Introduction");
+  const [history, setHistory] = useState<Array<{ name: string; date: string; level: string; words: string; data: string }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -60,6 +61,11 @@ export function AssignmentGeneratorView() {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
     } catch { /* */ }
+
+    try {
+      const stored = localStorage.getItem("adyapan-assign-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -75,6 +81,17 @@ export function AssignmentGeneratorView() {
       const text = `# ${topic}\n\n## Introduction\n${assignment.introduction}\n\n## Main Body\n${assignment.body}\n\n## Conclusion\n${assignment.conclusion}\n\n## References\n${assignment.references.map(r => `- ${r}`).join("\n")}`;
       setResult(text);
       setActiveSection("Introduction");
+
+      const newHistoryItem = {
+        name: topic,
+        date: "Just now",
+        level,
+        words: wordCount,
+        data: text
+      };
+      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("adyapan-assign-history", JSON.stringify(updatedHistory));
     };
 
     const handleError = ({ error }: { error: string }) => {
@@ -91,7 +108,7 @@ export function AssignmentGeneratorView() {
       socket.off("generate:complete", handleComplete);
       socket.off("generate:error", handleError);
     };
-  }, [socket, topic, level, wordCount]);
+  }, [socket, topic, level, wordCount, history]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -142,9 +159,12 @@ export function AssignmentGeneratorView() {
   };
 
   const loadHistoryItem = (topicName: string) => {
-    setTopic(topicName);
-    const text = `# ${topicName}\n\n## Introduction\n${MOCK_ASSIGNMENT.introduction}\n\n## Main Body\n${MOCK_ASSIGNMENT.body}\n\n## Conclusion\n${MOCK_ASSIGNMENT.conclusion}\n\n## References\n${MOCK_ASSIGNMENT.references.map(r => `- ${r}`).join("\n")}`;
-    setResult(text);
+    const item = history.find(h => h.name === topicName);
+    if (!item) return;
+    setTopic(item.name);
+    setLevel(item.level);
+    setWordCount(item.words);
+    setResult(item.data);
     setActiveSection("Introduction");
   };
 
@@ -494,34 +514,38 @@ export function AssignmentGeneratorView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "Impact of Quantum Computing on Cryptography", date: "Today", level: "Undergraduate", words: "1000 words" },
-                    { name: "Evaluating Neural Network Security", date: "Yesterday", level: "Master's", words: "2000 words" },
-                    { name: "A Study on Clean Water Access Models", date: "3 Jul", level: "High School", words: "500 words" }
-                  ].map((doc, i) => (
-                    <motion.tr
-                      key={doc.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No assignments generated yet. Submit a topic above to create your first outline.
                       </td>
-                      <td className="p-2.5 text-gray-400">{doc.date}</td>
-                      <td className="p-2.5 text-gray-300 font-medium">{doc.level}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{doc.words}</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(doc.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >
-                          Open
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((doc, i) => (
+                      <motion.tr
+                        key={doc.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{doc.date}</td>
+                        <td className="p-2.5 text-gray-300 font-medium">{doc.level}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.words}</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(doc.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >
+                            Open
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

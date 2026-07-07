@@ -31,6 +31,7 @@ export function QuizGeneratorView() {
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
+  const [history, setHistory] = useState<Array<{ name: string; date: string; difficulty: string; score: string; data: Question[] }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -76,6 +77,11 @@ export function QuizGeneratorView() {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
     } catch { /* */ }
+
+    try {
+      const stored = localStorage.getItem("adyapan-quiz-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -94,6 +100,17 @@ export function QuizGeneratorView() {
       setScore(0);
       setSelectedAnswer(null);
       setShowResult(false);
+
+      const newHistoryItem = {
+        name: topic,
+        date: "Just now",
+        difficulty,
+        score: `0/${qList.length}`, // score starts at 0 upon generation
+        data: qList
+      };
+      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("adyapan-quiz-history", JSON.stringify(updatedHistory));
     };
 
     const handleError = ({ error }: { error: string }) => {
@@ -110,7 +127,7 @@ export function QuizGeneratorView() {
       socket.off("generate:complete", handleComplete);
       socket.off("generate:error", handleError);
     };
-  }, [socket, topic, count, difficulty]);
+  }, [socket, topic, count, difficulty, history]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -173,8 +190,11 @@ export function QuizGeneratorView() {
   };
 
   const loadHistoryItem = (topicName: string) => {
-    setTopic(topicName);
-    setQuestions(MOCK_QUESTIONS);
+    const item = history.find(h => h.name === topicName);
+    if (!item) return;
+    setTopic(item.name);
+    setDifficulty(item.difficulty);
+    setQuestions(item.data);
     setStep(2);
     setCurrentQ(0);
     setScore(0);
@@ -570,34 +590,38 @@ export function QuizGeneratorView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "React Hooks Challenge", date: "Today", difficulty: "Intermediate", score: "4/5" },
-                    { name: "AWS VPC Architecture", date: "Yesterday", difficulty: "Advanced", score: "8/10" },
-                    { name: "Compiler Lexer Stages", date: "4 Jul", difficulty: "Beginner", score: "5/5" }
-                  ].map((quiz, i) => (
-                    <motion.tr
-                      key={quiz.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {quiz.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No quizzes generated yet. Submit a topic above to create your first quiz.
                       </td>
-                      <td className="p-2.5 text-gray-400">{quiz.date}</td>
-                      <td className="p-2.5 text-gray-300 font-medium">{quiz.difficulty}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{quiz.score}</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(quiz.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >
-                          Open
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((quiz, i) => (
+                      <motion.tr
+                        key={quiz.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {quiz.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{quiz.date}</td>
+                        <td className="p-2.5 text-gray-300 font-medium">{quiz.difficulty}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{quiz.score}</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(quiz.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >
+                            Open
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

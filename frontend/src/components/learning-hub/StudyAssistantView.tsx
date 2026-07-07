@@ -119,12 +119,8 @@ export function StudyAssistantView() {
       if (stored) {
         setHistory(JSON.parse(stored));
       } else {
-        const defaultHistory = [
-          { name: "Operating_System_Notes.pdf", date: "Today", pages: 86, topics: 4, analysis: MOCK_SUMMARY },
-          { name: "DBMS_Concepts.docx", date: "Yesterday", pages: 112, topics: 4, analysis: MOCK_SUMMARY },
-        ];
-        setHistory(defaultHistory);
-        localStorage.setItem("adyapan-study-history", JSON.stringify(defaultHistory));
+        setHistory([]);
+        localStorage.setItem("adyapan-study-history", JSON.stringify([]));
       }
     } catch (e) {
       console.error(e);
@@ -681,29 +677,37 @@ export function StudyAssistantView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {history.map((doc, i) => (
-                    <motion.tr
-                      key={doc.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No documents analyzed yet. Upload a study file above to get started.
                       </td>
-                      <td className="p-2.5 text-gray-400">{doc.date}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{doc.pages}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{doc.topics}</td>
-                      <td className="p-2.5 text-emerald-500 font-bold">Completed</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(doc.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >Open</motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((doc, i) => (
+                      <motion.tr
+                        key={doc.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{doc.date}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.pages}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.topics}</td>
+                        <td className="p-2.5 text-emerald-500 font-bold">Completed</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(doc.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >Open</motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

@@ -33,6 +33,7 @@ export function NotesGeneratorView() {
   const [activeSection, setActiveSection] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
+  const [history, setHistory] = useState<Array<{ name: string; date: string; type: string; sections: number; data: any }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -132,6 +133,11 @@ export function NotesGeneratorView() {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
     } catch { /* */ }
+
+    try {
+      const stored = localStorage.getItem("adyapan-notes-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -145,16 +151,28 @@ export function NotesGeneratorView() {
     const handleComplete = ({ content }: { content: string }) => {
       setGenerating(false);
       const parsedSections = parseMarkdownToSections(content);
-      setNotesData({
+      const newNotes = {
         topic,
         sections: parsedSections,
         wordCount: content.split(/\s+/).length,
         studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`,
         difficulty
-      });
+      };
+      setNotesData(newNotes);
       if (parsedSections.length > 0) {
         setActiveSection(parsedSections[0].title);
       }
+
+      const newHistoryItem = {
+        name: topic,
+        date: "Just now",
+        type: noteType,
+        sections: parsedSections.length,
+        data: newNotes
+      };
+      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("adyapan-notes-history", JSON.stringify(updatedHistory));
     };
 
     const handleError = ({ error }: { error: string }) => {
@@ -171,7 +189,7 @@ export function NotesGeneratorView() {
       socket.off("generate:complete", handleComplete);
       socket.off("generate:error", handleError);
     };
-  }, [socket, topic, difficulty]);
+  }, [socket, topic, difficulty, noteType, history]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -224,10 +242,13 @@ export function NotesGeneratorView() {
   };
 
   const loadHistoryItem = (topicName: string) => {
-    setTopic(topicName);
-    setNotesData(MOCK_NOTES);
-    if (MOCK_NOTES.sections.length > 0) {
-      setActiveSection(MOCK_NOTES.sections[0].title);
+    const item = history.find(h => h.name === topicName);
+    if (!item) return;
+    setTopic(item.name);
+    setNoteType(item.type);
+    setNotesData(item.data);
+    if (item.data.sections.length > 0) {
+      setActiveSection(item.data.sections[0].title);
     }
   };
 
@@ -600,34 +621,38 @@ export function NotesGeneratorView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "Database Management Systems", date: "Today", type: "Detailed Notes", sections: 3 },
-                    { name: "Data Structures & Algorithms", date: "Yesterday", type: "Short Revision", sections: 5 },
-                    { name: "Compiler Design Guide", date: "4 Jul", type: "Exam Cheat Sheet", sections: 4 }
-                  ].map((note, i) => (
-                    <motion.tr
-                      key={note.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {note.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No notes generated yet. Submit a topic above to create your first notes.
                       </td>
-                      <td className="p-2.5 text-gray-400">{note.date}</td>
-                      <td className="p-2.5 text-gray-300 font-medium">{note.type}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{note.sections}</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(note.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >
-                          Open
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((note, i) => (
+                      <motion.tr
+                        key={note.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {note.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{note.date}</td>
+                        <td className="p-2.5 text-gray-300 font-medium">{note.type}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{note.sections}</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(note.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >
+                            Open
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

@@ -30,6 +30,7 @@ export function MindMapsView() {
   const [statusMsg, setStatusMsg] = useState("");
   const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
   const [activeNode, setActiveNode] = useState("1");
+  const [history, setHistory] = useState<Array<{ name: string; date: string; count: number; data: { nodes: MindMapNode[]; edges: MindMapEdge[] } }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -78,6 +79,11 @@ export function MindMapsView() {
       const raw = localStorage.getItem("adyapan-user");
       if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
     } catch { /* */ }
+
+    try {
+      const stored = localStorage.getItem("adyapan-map-history");
+      if (stored) setHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -90,8 +96,19 @@ export function MindMapsView() {
 
     const handleComplete = ({ nodes: nodeList, edges: edgeList }: { nodes: MindMapNode[]; edges: MindMapEdge[] }) => {
       setGenerating(false);
-      setMapData({ nodes: nodeList, edges: edgeList });
+      const newMap = { nodes: nodeList, edges: edgeList };
+      setMapData(newMap);
       setActiveNode("1");
+
+      const newHistoryItem = {
+        name: topic,
+        date: "Just now",
+        count: nodeList.length,
+        data: newMap
+      };
+      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("adyapan-map-history", JSON.stringify(updatedHistory));
     };
 
     const handleError = ({ error }: { error: string }) => {
@@ -108,7 +125,7 @@ export function MindMapsView() {
       socket.off("generate:complete", handleComplete);
       socket.off("generate:error", handleError);
     };
-  }, [socket, topic]);
+  }, [socket, topic, history]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -148,8 +165,10 @@ export function MindMapsView() {
   };
 
   const loadHistoryItem = (topicName: string) => {
-    setTopic(topicName);
-    setMapData(MOCK_MAP);
+    const item = history.find(h => h.name === topicName);
+    if (!item) return;
+    setTopic(item.name);
+    setMapData(item.data);
     setActiveNode("1");
   };
 
@@ -471,33 +490,37 @@ export function MindMapsView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {[
-                    { name: "Cellular Respiration map", date: "Today", count: 9 },
-                    { name: "React Components Lifecycle", date: "Yesterday", count: 12 },
-                    { name: "Binary Search Tree Visual", date: "6 Jul", count: 15 }
-                  ].map((map, i) => (
-                    <motion.tr
-                      key={map.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3 }}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                        <FileText size={14} className="text-amber-500 shrink-0" /> {map.name}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-6 text-center text-gray-500 font-semibold text-xs">
+                        No mind maps generated yet. Submit a topic above to create your first mind map.
                       </td>
-                      <td className="p-2.5 text-gray-400">{map.date}</td>
-                      <td className="p-2.5 text-center text-gray-300 font-medium">{map.count} nodes</td>
-                      <td className="p-2.5 text-right">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => loadHistoryItem(map.name)}
-                          className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                        >
-                          Open
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    history.map((map, i) => (
+                      <motion.tr
+                        key={map.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08, duration: 0.3 }}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
+                          <FileText size={14} className="text-amber-500 shrink-0" /> {map.name}
+                        </td>
+                        <td className="p-2.5 text-gray-400">{map.date}</td>
+                        <td className="p-2.5 text-center text-gray-300 font-medium">{map.count} nodes</td>
+                        <td className="p-2.5 text-right">
+                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                            onClick={() => loadHistoryItem(map.name)}
+                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
+                          >
+                            Open
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
