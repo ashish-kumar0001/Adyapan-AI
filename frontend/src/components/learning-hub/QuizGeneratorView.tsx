@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import CountUp from "react-countup";
 import {
   CheckSquare, ArrowRight, PlayCircle, Trophy, Loader2, RefreshCw,
   Plus, History, HelpCircle, ChevronRight, Search, CheckCircle2, FileText, Cpu
 } from "lucide-react";
+import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
 
 interface Question {
@@ -32,6 +34,21 @@ export function QuizGeneratorView() {
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
+  const scaleInVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.35 } }
+  };
 
   const MOCK_QUESTIONS = [
     {
@@ -61,35 +78,81 @@ export function QuizGeneratorView() {
     } catch { /* */ }
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => {
+      setProgress(p);
+      setStatusMsg(statusMessage);
+    };
+
+    const handleComplete = ({ questions: qList }: { questions: Question[] }) => {
+      setGenerating(false);
+      setQuestions(qList);
+      setStep(2);
+      setCurrentQ(0);
+      setScore(0);
+      setSelectedAnswer(null);
+      setShowResult(false);
+    };
+
+    const handleError = ({ error }: { error: string }) => {
+      setGenerating(false);
+      toast.error(`Generation error: ${error}`);
+    };
+
+    socket.on("generate:progress", handleProgress);
+    socket.on("generate:complete", handleComplete);
+    socket.on("generate:error", handleError);
+
+    return () => {
+      socket.off("generate:progress", handleProgress);
+      socket.off("generate:complete", handleComplete);
+      socket.off("generate:error", handleError);
+    };
+  }, [socket, topic, count, difficulty]);
+
   const handleGenerate = () => {
     setGenerating(true);
     setProgress(0);
     setStatusMsg("Starting Quiz Generator pipeline...");
 
-    const stages = [
-      { msg: "Extracting sample questions...", prg: 30 },
-      { msg: "Formulating difficulty bounds...", prg: 60 },
-      { msg: "Writing answer explanations...", prg: 90 },
-      { msg: "Complete!", prg: 100 }
-    ];
+    if (socket && isConnected) {
+      socket.emit("generate:start", {
+        moduleName: "quiz",
+        payload: {
+          topic,
+          count: count.split(" ")[0],
+          difficulty,
+          userId: userIdRef.current
+        }
+      });
+    } else {
+      const stages = [
+        { msg: "Extracting sample questions...", prg: 30 },
+        { msg: "Formulating difficulty bounds...", prg: 60 },
+        { msg: "Writing answer explanations...", prg: 90 },
+        { msg: "Complete (Offline Demo Mode)...", prg: 100 }
+      ];
 
-    let currentIdx = 0;
-    const timer = setInterval(() => {
-      if (currentIdx < stages.length) {
-        setStatusMsg(stages[currentIdx].msg);
-        setProgress(stages[currentIdx].prg);
-        currentIdx++;
-      } else {
-        clearInterval(timer);
-        setGenerating(false);
-        setQuestions(MOCK_QUESTIONS);
-        setStep(2);
-        setCurrentQ(0);
-        setScore(0);
-        setSelectedAnswer(null);
-        setShowResult(false);
-      }
-    }, 1000);
+      let currentIdx = 0;
+      const timer = setInterval(() => {
+        if (currentIdx < stages.length) {
+          setStatusMsg(stages[currentIdx].msg);
+          setProgress(stages[currentIdx].prg);
+          currentIdx++;
+        } else {
+          clearInterval(timer);
+          setGenerating(false);
+          setQuestions(MOCK_QUESTIONS);
+          setStep(2);
+          setCurrentQ(0);
+          setScore(0);
+          setSelectedAnswer(null);
+          setShowResult(false);
+        }
+      }, 600);
+    }
   };
 
   const handleAnswer = (option: string) => {
@@ -127,25 +190,30 @@ export function QuizGeneratorView() {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-1 antialiased text-white w-full text-xs">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col gap-3 p-1 antialiased text-white w-full text-xs"
+    >
       {/* SECTION 1 — HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }} className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
             <CheckSquare className="text-amber-500" size={20} /> Quiz Generator
-          </h1>
-          <p className="text-[11px] text-gray-400 mt-0.5 max-w-xl">
+          </motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.35 }} className="text-[11px] text-gray-400 mt-0.5 max-w-xl">
             Generate targeted MCQ mock tests and check your revision correctness.
-          </p>
+          </motion.p>
         </div>
         <div className="flex items-center gap-1.5">
-          <button
+          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
             onClick={() => { setStep(1); setQuestions([]); setShowResult(false); }}
             className="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition-all"
           >
             <Plus size={16} /> Create New
-          </button>
-          <button
+          </motion.button>
+          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
             onClick={() => {
               const el = document.getElementById("recent-quizzes-section");
               if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -153,48 +221,54 @@ export function QuizGeneratorView() {
             className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
           >
             <History size={16} /> History
-          </button>
-          <button
+          </motion.button>
+          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
             onClick={() => setActiveView(activeView === "help" ? "dashboard" : "help")}
             className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
           >
             <HelpCircle size={16} /> Help
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {activeView === "help" ? (
-        <div className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-2.5">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-2.5">
           <h2 className="text-sm font-bold text-white">Quiz Generator Help</h2>
           <p className="text-xs text-gray-300 leading-relaxed">
             Specify a topic, count of questions, and difficulty target. The AI engine designs single-select multiple choice queries along with concise logical explanations for each correct answer choice.
           </p>
-          <button onClick={() => setActiveView("dashboard")} className="h-8 px-3 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">
+          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={() => setActiveView("dashboard")} className="h-8 px-3 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">
             Back to Dashboard
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       ) : (
         <>
           {generating ? (
-            <div className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/[0.01] rounded-xl space-y-4 max-w-xl mx-auto w-full text-center">
-              <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 animate-pulse">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}
+              className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/[0.01] rounded-xl space-y-4 max-w-xl mx-auto w-full text-center"
+            >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500"
+              >
                 <Cpu size={24} />
-              </div>
+              </motion.div>
               <div>
                 <h3 className="text-xs font-bold text-white">Generating Quiz via AI Pipeline</h3>
                 <p className="text-[11px] text-gray-400 mt-0.5">{statusMsg}</p>
               </div>
               <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.5 }}
+                  className="bg-amber-500 h-full"
+                />
               </div>
               <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5 justify-center">
                 <Loader2 className="animate-spin" size={12} /> {progress}% Complete
               </div>
-            </div>
+            </motion.div>
           ) : step === 1 ? (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
               {/* SECTION 3 — CONFIGURATION WORKSPACE */}
-              <div className="p-4 border border-white/5 bg-white/[0.01] rounded-xl max-w-2xl mx-auto w-full space-y-4">
+              <motion.div variants={itemVariants} className="p-4 border border-white/5 bg-white/[0.01] rounded-xl max-w-2xl mx-auto w-full space-y-4">
                 <h3 className="text-xs font-bold text-white">Configure Quiz Outline</h3>
                 <div className="space-y-3">
                   <div className="space-y-1">
@@ -238,55 +312,71 @@ export function QuizGeneratorView() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
+                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                     onClick={handleGenerate}
                     className="h-8 flex-1 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1"
                   >
                     <PlayCircle size={16} /> Generate & Start Quiz
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                     onClick={() => setTopic("")}
                     className="h-8 px-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold transition-all"
                   >
                     Clear
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
 
               {/* SECTION 4 — PRESETS SECTION */}
-              <div className="space-y-2">
+              <motion.div variants={itemVariants} className="space-y-2">
                 <h2 className="text-sm font-bold text-white">Choose Preset Challenges</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
                     { title: "React Hooks Challenge", desc: "Isolate questions surrounding useEffect triggers, dependency lists, and custom hooks bindings." },
                     { title: "AWS Architecture Test", desc: "Filters quiz formulations to VPC setups, ELB nodes configurations, and DynamoDB indexes." },
                     { title: "Compiler Design Quiz", desc: "Formulates lexical analyzes steps, parse tree connections, and code optimizers stages queries." }
                   ].map(tpl => (
-                    <div
+                    <motion.div
                       key={tpl.title}
+                      variants={itemVariants}
+                      whileHover={{ y: -3, scale: 1.01 }}
                       onClick={() => setTopic(tpl.title)}
                       className="p-4 border border-white/5 rounded-xl bg-white/[0.01] hover:bg-amber-500/[0.01] hover:border-amber-500/30 transition-all cursor-pointer space-y-1"
                     >
                       <h4 className="text-xs font-bold text-white">{tpl.title}</h4>
                       <p className="text-[11px] text-gray-400 leading-relaxed">{tpl.desc}</p>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
-              </div>
-            </div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
           ) : !showResult ? (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start animate-in fade-in duration-200">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
+            >
               {/* LEFT SIDEBAR Outline (3 Cols) */}
               <div className="md:col-span-3 space-y-3">
-                <div className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
+                >
                   <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
                     Questions List
                   </span>
                   <div className="space-y-0.5">
                     {questions.map((q, idx) => (
-                      <button
+                      <motion.button
                         key={idx}
+                        initial={{ opacity: 0, x: -15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 + idx * 0.08, duration: 0.3 }}
                         onClick={() => setCurrentQ(idx)}
+                        whileHover={{ x: 3 }}
                         className={`w-full text-left py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
                           currentQ === idx
                             ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
@@ -295,61 +385,100 @@ export function QuizGeneratorView() {
                       >
                         <span className="truncate text-[12px]">Question 0{idx + 1}</span>
                         <ChevronRight size={12} className={currentQ === idx ? "text-amber-500" : "text-gray-600"} />
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               {/* MAIN CONTENT MCQ PANEL (6 Cols) */}
-              <div className="md:col-span-6 space-y-4">
-                <div className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="md:col-span-6 space-y-4"
+              >
+                <motion.div
+                  variants={scaleInVariants}
+                  className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-4"
+                >
                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-[11px] text-gray-400 font-semibold">Question {currentQ + 1} of {questions.length}</span>
-                    <span className="text-amber-500 font-extrabold flex items-center gap-1"><Trophy size={12} /> Score: {score}</span>
+                    <span className="text-amber-500 font-extrabold flex items-center gap-1"><Trophy size={12} /> Score: <CountUp start={0} end={score} duration={0.5} /></span>
                   </div>
 
-                  <h3 className="text-xs font-bold text-white leading-relaxed">
+                  <motion.h3
+                    key={currentQ}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-xs font-bold text-white leading-relaxed"
+                  >
                     {questions[currentQ]?.question}
-                  </h3>
+                  </motion.h3>
 
-                  <div className="grid grid-cols-1 gap-2.5">
+                  <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-2.5">
                     {questions[currentQ]?.options.map((opt, i) => (
-                      <button
+                      <motion.button
                         key={i}
+                        variants={itemVariants}
                         onClick={() => handleAnswer(opt)}
+                        whileHover={selectedAnswer ? {} : { scale: 1.01, x: 2 }}
                         className={`p-3 rounded-lg text-left font-semibold text-xs transition-all ${getOptionStyle(opt)}`}
                       >
                         {opt}
-                      </button>
+                      </motion.button>
                     ))}
-                  </div>
+                  </motion.div>
 
-                  {selectedAnswer && (
-                    <div className="space-y-3 pt-3 border-t border-white/5 animate-in fade-in duration-200">
-                      <div className="p-3 bg-white/5 border border-white/10 rounded-lg space-y-1">
-                        <span className="text-[9px] uppercase tracking-wider font-bold block text-amber-500">
-                          AI Reason Explanation
-                        </span>
-                        <p className="text-xs text-gray-300 leading-relaxed">
-                          {questions[currentQ]?.explanation}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={handleNext}
-                        className="h-8 w-full bg-amber-500 text-black font-extrabold text-xs rounded-lg hover:bg-amber-400 transition-all flex items-center justify-center gap-1"
+                  <AnimatePresence>
+                    {selectedAnswer && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.35 }}
+                        className="space-y-3 pt-3 border-t border-white/5 overflow-hidden"
                       >
-                        {currentQ < questions.length - 1 ? <>Next Question <ArrowRight size={14} /></> : "View Results"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                          className="p-3 bg-white/5 border border-white/10 rounded-lg space-y-1"
+                        >
+                          <span className="text-[9px] uppercase tracking-wider font-bold block text-amber-500">
+                            AI Reason Explanation
+                          </span>
+                          <p className="text-xs text-gray-300 leading-relaxed">
+                            {questions[currentQ]?.explanation}
+                          </p>
+                        </motion.div>
+
+                        <motion.button
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleNext}
+                          className="h-8 w-full bg-amber-500 text-black font-extrabold text-xs rounded-lg hover:bg-amber-400 transition-all flex items-center justify-center gap-1"
+                        >
+                          {currentQ < questions.length - 1 ? <>Next Question <ArrowRight size={14} /></> : "View Results"}
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
 
               {/* RIGHT SIDEBAR STATS (3 Cols) */}
               <div className="md:col-span-3 space-y-3">
-                <div className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                  className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
+                >
                   <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
                     Quiz Performance
                   </span>
@@ -359,46 +488,75 @@ export function QuizGeneratorView() {
                       { label: "Difficulty", val: difficulty },
                       { label: "Answered", val: `${currentQ + (selectedAnswer ? 1 : 0)} / ${questions.length}` },
                       { label: "Correct Answers", val: score }
-                    ].map(stat => (
-                      <div key={stat.label} className="flex justify-between items-center py-1 border-b border-white/[0.03]">
+                    ].map((stat, i) => (
+                      <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + i * 0.08 }}
+                        className="flex justify-between items-center py-1 border-b border-white/[0.03]"
+                      >
                         <span className="text-gray-400 text-[11px]">{stat.label}</span>
                         <span className="font-extrabold text-white text-[12px]">{stat.val}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           ) : (
-            <div className="flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-xl p-6 max-w-xl mx-auto w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
-              <div className="w-12 h-12 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, type: "spring", stiffness: 200, damping: 20 }}
+              className="flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-xl p-6 max-w-xl mx-auto w-full text-center space-y-4"
+            >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="w-12 h-12 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center">
                 <CheckSquare size={24} />
-              </div>
+              </motion.div>
               <div>
                 <h3 className="text-sm font-bold text-white">Quiz Completed!</h3>
-                <p className="text-xs text-gray-400 mt-0.5">You scored {score}/{questions.length} ({Math.round((score / questions.length) * 100)}% Accuracy)</p>
+                <p className="text-xs text-gray-400 mt-0.5">You scored <CountUp start={0} end={score} duration={0.8} />/{questions.length} (<CountUp start={0} end={Math.round((score / questions.length) * 100)} duration={0.8} suffix="%" /> Accuracy)</p>
               </div>
 
-              <div className="w-full bg-black/20 border border-white/5 rounded-lg p-3 text-left text-xs space-y-1.5">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="w-full bg-black/20 border border-white/5 rounded-lg p-3 text-left text-xs space-y-1.5"
+              >
                 <div className="text-xs font-semibold text-gray-400">
                   Strong Topics: <span className="text-green-400">{topic}</span>
                 </div>
                 <div className="text-xs font-semibold text-gray-400">
                   Target Accuracy: <span className={score / questions.length >= 0.7 ? "text-green-400" : "text-amber-400"}>{Math.round((score / questions.length) * 100)}%</span>
                 </div>
-              </div>
+              </motion.div>
 
-              <button
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => { setStep(1); setShowResult(false); setQuestions([]); setCurrentQ(0); setScore(0); setSelectedAnswer(null); }}
                 className="h-8 px-4 bg-amber-500 text-black font-extrabold text-xs rounded-lg hover:bg-amber-400 transition-all flex items-center gap-1.5"
               >
                 Try Again <ArrowRight size={14} />
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
 
           {/* SECTION 11 — RECENT QUIZZES TABLE */}
-          <div id="recent-quizzes-section" className="space-y-2.5 pt-4 border-t border-white/5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5 }}
+            id="recent-quizzes-section"
+            className="space-y-2.5 pt-4 border-t border-white/5"
+          >
             <h2 className="text-sm font-bold text-white">Recent Quizzes</h2>
             <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
               <table className="w-full text-left border-collapse text-xs">
@@ -416,8 +574,14 @@ export function QuizGeneratorView() {
                     { name: "React Hooks Challenge", date: "Today", difficulty: "Intermediate", score: "4/5" },
                     { name: "AWS VPC Architecture", date: "Yesterday", difficulty: "Advanced", score: "8/10" },
                     { name: "Compiler Lexer Stages", date: "4 Jul", difficulty: "Beginner", score: "5/5" }
-                  ].map(quiz => (
-                    <tr key={quiz.name} className="hover:bg-white/[0.01] transition-colors">
+                  ].map((quiz, i) => (
+                    <motion.tr
+                      key={quiz.name}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3 }}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
                       <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
                         <FileText size={14} className="text-amber-500 shrink-0" /> {quiz.name}
                       </td>
@@ -425,21 +589,21 @@ export function QuizGeneratorView() {
                       <td className="p-2.5 text-gray-300 font-medium">{quiz.difficulty}</td>
                       <td className="p-2.5 text-center text-gray-300 font-medium">{quiz.score}</td>
                       <td className="p-2.5 text-right">
-                        <button
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                           onClick={() => loadHistoryItem(quiz.name)}
                           className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
                         >
                           Open
-                        </button>
+                        </motion.button>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </motion.div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
