@@ -517,8 +517,8 @@ function DashboardTopNav({
         </div>
 
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
-        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</motion.button>
-        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</motion.button>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={() => onViewTool("job-hub")} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</motion.button>
+        <motion.button whileHover={{scale:1.02, borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 12px rgba(245,158,11,0.15)"}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={() => onViewTool("internship-hub")} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</motion.button>
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
         <motion.button whileHover={{scale:1.02, borderColor: "#a78bfa", boxShadow: "0 0 16px rgba(139,92,246,0.3)"}} whileTap={{scale:0.97}} transition={{duration:0.12}}
           onClick={onAdyChat}
