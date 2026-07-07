@@ -508,7 +508,6 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-extrabold mb-4 flex items-center gap-2">
               <Activity className="w-5 h-5" style={{ color: "var(--primary)" }} />
               Live Activity Feed
-              <Pill color="#10b981">Real-time</Pill>
             </h2>
             <div className="rounded-2xl overflow-hidden border" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
               <div className="divide-y" style={{ borderColor: "var(--border-color)" }}>

@@ -62,7 +62,7 @@ export function NotesGeneratorView() {
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Notes Generator</h2>
         <p className="text-sm text-gray-400">
-          Status: {isConnected ? <span className="text-green-400 font-bold">● Realtime Connected</span> : <span className="text-red-400">● Reconnecting...</span>}
+          Generate comprehensive study notes with AI
         </p>
       </div>
 

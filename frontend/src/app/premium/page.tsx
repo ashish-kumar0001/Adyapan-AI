@@ -316,7 +316,7 @@ export default function PremiumPage() {
               { icon: <Sparkles className="w-4 h-4" />, title: "All AI Models", desc: "GPT-4o, Claude Sonnet 4, Gemini 2.5, DeepSeek, Llama 3.3, Mistral Large" },
               { icon: <Crown className="w-4 h-4" />, title: "Unlimited Resumes", desc: "Create and manage unlimited professional resumes" },
               { icon: <Shield className="w-4 h-4" />, title: "Advanced ATS", desc: "Deep keyword analysis with personalized optimization" },
-              { icon: <Zap className="w-4 h-4" />, title: "Interview Hub", desc: "AI mock interviews with real-time feedback" },
+              { icon: <Zap className="w-4 h-4" />, title: "Interview Hub", desc: "AI mock interviews with personalized feedback" },
               { icon: <Crown className="w-4 h-4" />, title: "Cover Letters", desc: "Unlimited AI-generated cover letters" },
               { icon: <Sparkles className="w-4 h-4" />, title: "Priority Support", desc: "Get help within 24 hours" },
             ].map((feature, i) => (

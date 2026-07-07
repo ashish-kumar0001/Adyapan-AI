@@ -148,7 +148,7 @@ export function StudyAssistantView() {
         overview: "Your uploaded document has been processed. Use the chat feature below to ask questions about the content.",
         keyConcepts: ["Ask questions", "Get explanations", "Review key points"],
         importantPoints: ["The AI is ready to help you understand the material"],
-        quickRevision: "Use the chat to interact with your document content in real-time.",
+        quickRevision: "Use the chat to interact with your document content.",
         keywords: ["Study", "AI", "Learning"]
       }
     ],
@@ -202,10 +202,7 @@ export function StudyAssistantView() {
             <BookOpen className="text-amber-500" size={20} /> Study Assistant
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            {isConnected
-              ? <span className="text-green-400 font-bold">● Realtime Connected</span>
-              : <span className="text-red-400">● Reconnecting...</span>}
-            {summaryData && ` · ${summaryData.topics.length} topics`}
+            {summaryData && `${summaryData.topics.length} topics`}
           </p>
         </div>
         {summaryData && (
@@ -243,7 +240,7 @@ export function StudyAssistantView() {
               ))}
             </div>
             <div className="text-[10px] text-gray-400 flex items-center gap-1 pt-1.5 border-t border-white/5">
-              <AlertCircle size={10} className="text-amber-500/80" /> Upload any document and chat with AI about it in real-time
+              <AlertCircle size={10} className="text-amber-500/80" /> Upload any document and chat with AI about it
             </div>
           </div>
         </div>
@@ -381,7 +378,7 @@ export function StudyAssistantView() {
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <Bot size={40} className="text-amber-500 mb-3" />
                 <p className="text-sm font-semibold text-white">Ask questions about your document</p>
-                <p className="text-xs text-gray-500 mt-1">The AI will respond in real-time with streaming answers</p>
+                <p className="text-xs text-gray-500 mt-1">The AI will respond with streaming answers</p>
               </div>
             )}
             {messages.map(msg => (

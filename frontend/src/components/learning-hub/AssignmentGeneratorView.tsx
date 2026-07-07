@@ -69,8 +69,7 @@ export function AssignmentGeneratorView() {
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Assignment Generator</h2>
         <p className="text-sm text-gray-400">
-          {isConnected ? <span className="text-green-400 font-bold">● Realtime Connected</span> : <span className="text-red-400">● Reconnecting...</span>}
-          {' · '} Generate AI-powered academic assignments
+          Generate AI-powered academic assignments
         </p>
       </div>
 

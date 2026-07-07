@@ -975,7 +975,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <div>
                 <div className="font-bold text-sm" style={{ color: c.text }}>AI Suggestions</div>
                 <p className="text-xs" style={{ color: c.textSec }}>
-                  Apply improvements to boost your ATS score. Each suggestion updates the score in real-time.
+                  Apply improvements to boost your ATS score.
                 </p>
               </div>
             </div>

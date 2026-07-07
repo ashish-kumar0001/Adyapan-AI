@@ -51,7 +51,7 @@ export function CodingAssistantView() {
           architecture: "Client-Server architecture using Next.js and Express.",
           techStack: ["Next.js", "Tailwind", "Node.js", "Prisma"],
           folderStructure: "project/\\n  ├── frontend/\\n  └── backend/",
-          features: ["Auth", "Dashboard", "Real-time Chat"],
+          features: ["Auth", "Dashboard", "Live Chat"],
           roadmap: ["Setup Repository", "Build DB Schema", "Develop API"]
         });
       }

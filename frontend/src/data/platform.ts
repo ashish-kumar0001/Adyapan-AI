@@ -19,7 +19,7 @@ export const landingFeatures = [
   },
   {
     title: "AI Resume Builder",
-    description: "Generate highly-optimized ATS resumes. Receive real-time grading, skills gap analysis, and tailored bullet point enhancements for your dream jobs.",
+    description: "Generate highly-optimized ATS resumes. Receive instant grading, skills gap analysis, and tailored bullet point enhancements for your dream jobs.",
     image: "/assets/resume-builder.png",
   },
   {
@@ -58,7 +58,7 @@ export const landingSteps = [
   {
     step: "04",
     title: "Prepare for Interviews",
-    description: "Solve mock coding challenges, build targeted resumes, and run real-time behavioral drills with the Interview Coach.",
+    description: "Solve mock coding challenges, build targeted resumes, and run behavioral drills with the Interview Coach.",
   },
   {
     step: "05",

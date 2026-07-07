@@ -72,8 +72,7 @@ export function MindMapsView() {
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Mind Maps</h2>
         <p className="text-sm text-gray-400">
-          {isConnected ? <span className="text-green-400 font-bold">● Realtime Connected</span> : <span className="text-red-400">● Reconnecting...</span>}
-          {' · '} Generate AI-powered visual knowledge graphs
+          Generate AI-powered visual knowledge graphs
         </p>
       </div>
 
