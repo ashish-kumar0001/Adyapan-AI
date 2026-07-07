@@ -4,10 +4,34 @@ import { generateStudyResponse } from "../lib/ai/gemini";
 import { prisma } from "../config/prisma";
 import { generateJSON } from "../lib/ai/openrouter";
 import { env } from "../config/env";
+import multer from "multer";
+const pdfParse = require("pdf-parse");
+import mammoth from "mammoth";
+
+const uploadMemory = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 export const studyRouter = Router();
 
 studyRouter.use(requireAuth);
+
+async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  const mimeType = file.mimetype;
+  if (mimeType === "application/pdf") {
+    const parsed = await pdfParse(file.buffer);
+    return parsed.text;
+  } else if (
+    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType === "application/msword"
+  ) {
+    const parsed = await mammoth.extractRawText({ buffer: file.buffer });
+    return parsed.value;
+  } else {
+    return file.buffer.toString("utf-8");
+  }
+}
 
 studyRouter.post("/upload", async (req, res) => {
   try {
@@ -37,18 +61,24 @@ studyRouter.post("/chat", async (req, res) => {
 });
 
 // Analyze uploaded document using Gemini - returns structured summary
-studyRouter.post("/analyze", async (req, res) => {
+studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
   try {
-    const { documentId, documentText } = req.body;
+    let documentText = req.body.documentText as string | undefined;
+
+    // If a file was uploaded, extract text from it
+    if (!documentText && req.file) {
+      documentText = await extractTextFromFile(req.file);
+    }
+
     if (!documentText) {
-      return res.status(400).json({ error: "Document text is required" });
+      return res.status(400).json({ error: "Document text or file is required" });
     }
 
     const prompt = `You are an expert academic tutor. Analyze the following document text and return a structured JSON summary.
 
 Document Text:
 """
-${documentText.slice(0, 30000)}
+${documentText.slice(0, 100000)}
 """
 
 Return a JSON object with this exact structure:
@@ -73,7 +103,7 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
     const analysis = await generateJSON(
       "You are an expert academic tutor. Analyze the document and return a structured JSON summary.",
       prompt,
-      { model: "google/gemini-2.5-flash" },
+      { model: "google/gemini-2.5-flash", maxTokens: 8192 },
       null
     );
 

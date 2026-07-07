@@ -163,20 +163,21 @@ export function StudyAssistantView() {
     setStatus("uploading");
 
     try {
-      let fileText = "";
-      if (droppedFile.name.endsWith(".txt") || droppedFile.name.endsWith(".md")) {
+      const isBinary = /\.(pdf|docx|doc|pptx|ppt)$/i.test(droppedFile.name);
+      let res;
+
+      if (isBinary) {
+        const formData = new FormData();
+        formData.append("file", droppedFile);
+        res = await api.post("/study/analyze", formData);
+      } else {
         const reader = new FileReader();
-        fileText = await new Promise<string>((resolve) => {
+        const fileText = await new Promise<string>((resolve) => {
           reader.onload = (e) => resolve(e.target?.result as string || "");
           reader.readAsText(droppedFile);
         });
-      } else {
-        fileText = `This is a study document containing content on the topic of "${droppedFile.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ")}". Please generate detailed topic summaries, key concepts, important points, and keywords related to this study topic.`;
+        res = await api.post("/study/analyze", { documentText: fileText });
       }
-
-      const res = await api.post("/study/analyze", {
-        documentText: fileText
-      });
 
       if (res.data && res.data.success && res.data.analysis) {
         const newAnalysis = res.data.analysis;
