@@ -86,13 +86,13 @@ export default function PremiumPage() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("adyapan-token");
+    const token = localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
     if (!token) {
       router.replace("/login");
       return;
     }
     try {
-      const u = JSON.parse(localStorage.getItem("adyapan-user") || "{}");
+      const u = JSON.parse(localStorage.getItem("adyapan-user") || sessionStorage.getItem("adyapan-user") || "{}");
       setUser(u);
     } catch { /* ignore */ }
 
