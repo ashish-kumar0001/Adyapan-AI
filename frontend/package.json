@@ -39,7 +39,6 @@
     "@types/three": "^0.185.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
-    "png-to-ico": "^3.0.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

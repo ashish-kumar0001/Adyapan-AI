@@ -16,7 +16,9 @@ function useTheme() {
   useEffect(() => {
     const t = document.documentElement.getAttribute("data-theme") || "dark";
     setTheme(t);
-    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
+    const obs = new MutationObserver(() => {
+      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
+    });
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => obs.disconnect();
   }, []);
@@ -26,17 +28,44 @@ function useTheme() {
 const mkColors = (theme: string) => {
   const isDark = theme === "dark";
   return {
-    isDark, text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8",
-    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-    inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9", cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", cardBgAlt: isDark ? "rgba(0,0,0,0.25)" : "#f8fafc",
-    stickyBg: isDark ? "rgba(10,10,20,0.88)" : "rgba(248,250,252,0.92)",
-    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)", amberActive: isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.1)",
-    purpleBg: isDark ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)", purpleBorder: isDark ? "rgba(139,92,246,0.14)" : "rgba(139,92,246,0.15)",
-    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)", red: "#ef4444", redBg: isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.08)",
-    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
-    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    isDark,
+    text:         isDark ? "#e5e7eb"              : "#0f172a",
+    textSec:      isDark ? "#9ca3af"              : "#475569",
+    textMuted:    isDark ? "#6b7280"              : "#94a3b8",
+    textOnAmber:  isDark ? "#000000"              : "#000000",
+    bg:           isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+    bgHover:      isDark ? "rgba(255,255,255,0.04)"  : "#f8fafc",
+    surface:      isDark ? "rgba(255,255,255,0.03)"  : "rgba(0,0,0,0.02)",
+    surfaceHover: isDark ? "rgba(255,255,255,0.06)"  : "rgba(0,0,0,0.04)",
+    border:       isDark ? "rgba(255,255,255,0.07)"  : "rgba(0,0,0,0.08)",
+    borderHover:  isDark ? "rgba(255,255,255,0.15)"  : "rgba(0,0,0,0.18)",
+    borderFocus:  isDark ? "rgba(245,158,11,0.45)"   : "rgba(245,158,11,0.5)",
+    inputBg:      isDark ? "rgba(0,0,0,0.35)"        : "#f1f5f9",
+    cardBg:       isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+    cardBgAlt:    isDark ? "rgba(0,0,0,0.25)"        : "#f8fafc",
+    stickyBg:     isDark ? "rgba(10,10,20,0.88)"     : "rgba(248,250,252,0.92)",
+    amber:        "#f59e0b",
+    amberBg:      isDark ? "rgba(245,158,11,0.07)"   : "rgba(245,158,11,0.08)",
+    amberBorder:  isDark ? "rgba(245,158,11,0.18)"   : "rgba(245,158,11,0.25)",
+    amberActive:  isDark ? "rgba(245,158,11,0.12)"   : "rgba(245,158,11,0.1)",
+    emerald:      "#10b981",
+    emeraldBg:    isDark ? "rgba(16,185,129,0.08)"   : "rgba(16,185,129,0.06)",
+    emeraldBorder: isDark ? "rgba(16,185,129,0.18)"  : "rgba(16,185,129,0.25)",
+    violet:       "#8b5cf6",
+    violetBg:     isDark ? "rgba(139,92,246,0.08)"   : "rgba(139,92,246,0.06)",
+    violetBorder: isDark ? "rgba(139,92,246,0.18)"   : "rgba(139,92,246,0.2)",
+    rose:         "#f43f5e",
+    roseBg:       isDark ? "rgba(244,63,94,0.07)"    : "rgba(244,63,94,0.06)",
+    roseBorder:   isDark ? "rgba(244,63,94,0.18)"    : "rgba(244,63,94,0.2)",
+    purpleBg:     isDark ? "rgba(139,92,246,0.06)"   : "rgba(139,92,246,0.05)",
+    purpleBorder: isDark ? "rgba(139,92,246,0.14)"   : "rgba(139,92,246,0.15)",
+    cyanBg:       isDark ? "rgba(6,182,212,0.06)"    : "rgba(6,182,212,0.05)",
+    cyanBorder:   isDark ? "rgba(6,182,212,0.14)"    : "rgba(6,182,212,0.15)",
+    green:        "#10b981",
+    greenBg:      isDark ? "rgba(16,185,129,0.1)"    : "rgba(16,185,129,0.08)",
+    divider:      isDark ? "rgba(255,255,255,0.06)"  : "rgba(0,0,0,0.07)",
+    pill:         isDark ? "rgba(255,255,255,0.05)"  : "rgba(0,0,0,0.05)",
+    pillBorder:   isDark ? "rgba(255,255,255,0.1)"   : "rgba(0,0,0,0.1)",
   };
 };
 
@@ -390,7 +419,7 @@ export function FlashcardsView() {
                   </div>
 
                   {error && (
-                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl flex gap-2 items-center text-xs" style={{ background: c.redBg, border: `1px solid ${c.red}20`, color: c.red }}>
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl flex gap-2 items-center text-xs" style={{ background: c.roseBg, border: `1px solid ${c.rose}20`, color: c.rose }}>
                       <AlertCircle size={14} className="shrink-0" />
                       <span>{error}</span>
                     </motion.div>
@@ -706,7 +735,7 @@ export function FlashcardsView() {
                         handleNext();
                       }}
                       className="py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex flex-col items-center gap-0.5"
-                      style={{ background: c.redBg, border: `1px solid ${c.red}40`, color: c.red }}
+                      style={{ background: c.roseBg, border: `1px solid ${c.rose}40`, color: c.rose }}
                     >
                       <span>Hard</span>
                       <span className="text-[8px] font-semibold" style={{ opacity: 0.7 }}>Flag for Review</span>
@@ -771,7 +800,7 @@ export function FlashcardsView() {
                     {[
                       { label: "Easy", count: easyCount, color: c.green, bg: c.greenBg },
                       { label: "Medium", count: mediumCount, color: "#a78bfa", bg: c.purpleBg },
-                      { label: "Hard", count: hardCount, color: c.red, bg: c.redBg },
+                      { label: "Hard", count: hardCount, color: c.rose, bg: c.roseBg },
                     ].map((item) => (
                       <div key={item.label} className="space-y-1">
                         <div className="flex justify-between text-[10px] font-bold">
@@ -816,7 +845,7 @@ export function FlashcardsView() {
                     </ul>
                   </div>
                   <div className="space-y-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider block" style={{ color: c.red }}>Focus Areas</span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider block" style={{ color: c.rose }}>Focus Areas</span>
                     <ul className="list-disc pl-4 space-y-1" style={{ color: c.textSec }}>
                       {focusAreas.map((f, i) => <li key={i}>{f}</li>)}
                     </ul>
@@ -1052,7 +1081,7 @@ function CardFace({
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); onRate("hard"); onNext(); }}
                 className="px-2.5 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
-                style={{ background: c.redBg, border: `1px solid ${c.red}30`, color: c.red }}
+                style={{ background: c.roseBg, border: `1px solid ${c.rose}30`, color: c.rose }}
               >
                 No, review
               </button>

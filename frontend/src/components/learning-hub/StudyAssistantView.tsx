@@ -53,12 +53,6 @@ const mkColors = (theme: string) => {
     amberBg:      isDark ? "rgba(245,158,11,0.07)"   : "rgba(245,158,11,0.08)",
     amberBorder:  isDark ? "rgba(245,158,11,0.18)"   : "rgba(245,158,11,0.25)",
     amberActive:  isDark ? "rgba(245,158,11,0.12)"   : "rgba(245,158,11,0.1)",
-    emerald:      "#10b981",
-    emeraldBg:    isDark ? "rgba(16,185,129,0.08)"   : "rgba(16,185,129,0.06)",
-    emeraldBorder: isDark ? "rgba(16,185,129,0.18)"  : "rgba(16,185,129,0.25)",
-    violet:       "#8b5cf6",
-    violetBg:     isDark ? "rgba(139,92,246,0.08)"   : "rgba(139,92,246,0.06)",
-    violetBorder: isDark ? "rgba(139,92,246,0.18)"   : "rgba(139,92,246,0.2)",
     rose:         "#f43f5e",
     roseBg:       isDark ? "rgba(244,63,94,0.07)"    : "rgba(244,63,94,0.06)",
     roseBorder:   isDark ? "rgba(244,63,94,0.18)"    : "rgba(244,63,94,0.2)",
@@ -109,10 +103,10 @@ const loadingSteps = [
 ];
 
 const modeConfig = {
-  beginner: { borderColor: "border-emerald-500/15", textColor: "text-emerald-400", accentBg: "bg-emerald-500/10", glowColor: "from-emerald-500/20 to-teal-500/20", icon: BookOpen },
-  intermediate: { borderColor: "border-violet-500/15", textColor: "text-violet-400", accentBg: "bg-violet-500/10", glowColor: "from-violet-500/20 to-purple-500/20", icon: Cpu },
+  beginner: { borderColor: "border-amber-500/15", textColor: "text-amber-400", accentBg: "bg-amber-500/10", glowColor: "from-amber-500/20 to-yellow-500/20", icon: BookOpen },
+  intermediate: { borderColor: "border-amber-500/15", textColor: "text-amber-400", accentBg: "bg-amber-500/10", glowColor: "from-amber-500/20 to-yellow-500/20", icon: Cpu },
   interview: { borderColor: "border-amber-500/15", textColor: "text-amber-400", accentBg: "bg-amber-500/10", glowColor: "from-amber-500/20 to-yellow-500/20", icon: Award },
-  revision: { borderColor: "border-rose-500/15", textColor: "text-rose-400", accentBg: "bg-rose-500/10", glowColor: "from-rose-500/20 to-red-500/20", icon: Zap }
+  revision: { borderColor: "border-amber-500/15", textColor: "text-amber-400", accentBg: "bg-amber-500/10", glowColor: "from-amber-500/20 to-red-500/20", icon: Zap }
 };
 
 function parseMarkdown(text: string): React.ReactNode {
@@ -138,7 +132,7 @@ function parseMarkdown(text: string): React.ReactNode {
             {inlineParts.map((part, inlineIdx) => {
               if (part.startsWith("**") && part.endsWith("**")) return <strong key={inlineIdx} className="font-extrabold" style={{ color: "rgba(255,255,255,0.95)" }}>{part.slice(2, -2)}</strong>;
               if (part.startsWith("*") && part.endsWith("*")) return <em key={inlineIdx} className="italic" style={{ color: "rgba(255,255,255,0.7)" }}>{part.slice(1, -1)}</em>;
-              if (part.startsWith("`") && part.endsWith("`")) return <code key={inlineIdx} className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ background: "rgba(139,92,246,0.1)", borderColor: "rgba(139,92,246,0.2)", color: "#a78bfa" }}>{part.slice(1, -1)}</code>;
+              if (part.startsWith("`") && part.endsWith("`")) return <code key={inlineIdx} className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ background: "rgba(245,158,11,0.1)", borderColor: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>{part.slice(1, -1)}</code>;
               if (part === "\n") return <br key={inlineIdx} />;
               return <span key={inlineIdx}>{part}</span>;
             })}
@@ -445,9 +439,9 @@ export function StudyAssistantView() {
   const renderBeginner = (data: UnifiedLesson) => (
     <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.emeraldBorder}` }}>
+        <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.amberBorder}` }}>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.emerald }}>
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <BookOpen size={14} /> Simple Overview
             </div>
             <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.overview)}</div>
@@ -455,9 +449,9 @@ export function StudyAssistantView() {
         </div>
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <div className="p-6 rounded-2xl" style={{ background: c.emeraldBg, border: `1px solid ${c.emeraldBorder}` }}>
+        <div className="p-6 rounded-2xl" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.emerald }}>
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Lightbulb size={14} /> Why This Matters
             </div>
             <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.why_matters || "")}</div>
@@ -467,7 +461,7 @@ export function StudyAssistantView() {
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.emerald }}>
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Sparkles size={14} /> Simple Explanation
             </div>
             <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: c.textSec }}>{parseMarkdown(data.simple_explanation || "")}</div>
@@ -475,9 +469,9 @@ export function StudyAssistantView() {
         </div>
       </motion.div>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
-        <div className="p-6 rounded-2xl" style={{ background: c.cardBgAlt, border: `1px solid ${c.emeraldBorder}` }}>
+        <div className="p-6 rounded-2xl" style={{ background: c.cardBgAlt, border: `1px solid ${c.amberBorder}` }}>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.emerald }}>
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Layers size={14} /> Real-Life Analogy
             </div>
             <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.real_life_analogy || "")}</div>
@@ -487,7 +481,7 @@ export function StudyAssistantView() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
           <div className="space-y-3">
-            <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: c.emerald }}>A Simple Example</div>
+            <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>A Simple Example</div>
             <div className="text-sm leading-relaxed" style={{ color: c.textMuted }}>{parseMarkdown(data.example || "")}</div>
           </div>
         </div>
@@ -499,10 +493,10 @@ export function StudyAssistantView() {
             {data.key_takeaways.map((takeaway, idx) => (
               <motion.div key={idx} whileHover={{ y: -3, scale: 1.01 }}
                 className="p-5 rounded-xl relative overflow-hidden flex flex-col justify-between"
-                style={{ background: c.emeraldBg, border: `1px solid ${c.emeraldBorder}` }}>
+                style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle size={14} style={{ color: c.emerald }} />
+                    <CheckCircle size={14} style={{ color: c.amber }} />
                     <span className="text-[10px] font-mono" style={{ color: c.textMuted }}>RULE {idx + 1}</span>
                   </div>
                   <p className="text-xs font-medium leading-relaxed" style={{ color: c.textSec }}>{takeaway}</p>
@@ -511,7 +505,7 @@ export function StudyAssistantView() {
                   <div className="pt-3 mt-3 border-t flex justify-end" style={{ borderColor: c.divider }}>
                     <button onClick={() => handleImportTakeaway(takeaway)}
                       className="px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                      style={{ background: c.emeraldBg, border: `1px solid ${c.emeraldBorder}`, color: c.emerald }}>
+                      style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
                       <Plus size={8} /> Copy to Notes
                     </button>
                   </div>
@@ -524,14 +518,14 @@ export function StudyAssistantView() {
       {data.mini_quiz && data.mini_quiz.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xs uppercase font-extrabold tracking-wider flex items-center gap-1.5" style={{ color: c.textMuted }}>
-            <BookOpenCheck size={13} style={{ color: c.emerald }} /> Comprehension Checkpoint Quiz
+            <BookOpenCheck size={13} style={{ color: c.amber }} /> Comprehension Checkpoint Quiz
           </h3>
           <div className="space-y-6">
             {data.mini_quiz.map((quiz, qIdx) => {
               const userAns = quizAnswers[qIdx];
               const isSubmitted = quizSubmitted[qIdx];
               return (
-                <div key={qIdx} className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.emeraldBorder}` }}>
+                <div key={qIdx} className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.amberBorder}` }}>
                   <div className="space-y-5">
                     <div className="pb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
                       <span className="text-[10px] font-mono" style={{ color: c.textMuted }}>QUESTION {qIdx + 1} OF {data.mini_quiz!.length}</span>
@@ -543,10 +537,10 @@ export function StudyAssistantView() {
                         const isCorrect = opt === quiz.answer;
                         let optionStyle: React.CSSProperties = { background: "rgba(0,0,0,0.35)", borderColor: c.border };
                         if (isSelected && !isSubmitted) {
-                          optionStyle = { background: c.emeraldBg, borderColor: c.emerald, color: c.emerald };
+                          optionStyle = { background: c.amberBg, borderColor: c.amber, color: c.amber };
                         } else if (isSubmitted) {
                           if (isCorrect) {
-                            optionStyle = { background: "rgba(16,185,129,0.15)", borderColor: c.emerald, color: c.emerald };
+                            optionStyle = { background: "rgba(16,185,129,0.15)", borderColor: c.amber, color: c.amber };
                           } else if (isSelected) {
                             optionStyle = { background: "rgba(244,63,94,0.15)", borderColor: c.rose, color: c.rose };
                           } else {
@@ -558,7 +552,7 @@ export function StudyAssistantView() {
                             className="w-full text-left p-3.5 rounded-xl border text-xs font-semibold transition-all duration-200 cursor-pointer flex justify-between items-center"
                             style={optionStyle}>
                             <span>{opt}</span>
-                            {isSubmitted && isCorrect && <CheckCircle size={15} style={{ color: c.emerald }} />}
+                            {isSubmitted && isCorrect && <CheckCircle size={15} style={{ color: c.amber }} />}
                             {isSubmitted && isSelected && !isCorrect && <AlertTriangle size={15} style={{ color: c.rose }} />}
                           </button>
                         );
@@ -568,7 +562,7 @@ export function StudyAssistantView() {
                       {!isSubmitted ? (
                         <button disabled={!userAns} onClick={() => handleQuizSubmit(qIdx)}
                           className="w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-40"
-                          style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#000", border: "none" }}>
+                          style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
                           Submit Answer
                         </button>
                       ) : (
@@ -577,7 +571,7 @@ export function StudyAssistantView() {
                           style={{ background: c.cardBgAlt, border: `1px solid ${c.border}` }}>
                           <div className="font-extrabold flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
                             {userAns === quiz.answer
-                              ? <span style={{ color: c.emerald }}>✔ Correct Answer</span>
+                              ? <span style={{ color: c.amber }}>✔ Correct Answer</span>
                               : <span style={{ color: c.rose }}>✘ Incorrect</span>}
                           </div>
                           <p className="leading-relaxed" style={{ color: c.textMuted }}>{quiz.explanation}</p>
@@ -660,7 +654,7 @@ export function StudyAssistantView() {
                           <div className="flex justify-end pt-2">
                             <button onClick={(e) => { e.stopPropagation(); handleImportConcept(concept); }}
                               className="px-2.5 py-1 rounded text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                              style={{ background: c.violetBg, border: `1px solid ${c.violetBorder}`, color: c.violet }}>
+                              style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
                               <Plus size={8} /> Copy to Scratchpad
                             </button>
                           </div>
@@ -721,9 +715,9 @@ export function StudyAssistantView() {
                       <button onClick={() => setPracticeRevealed(prev => ({ ...prev, [idx]: !isAnswerRevealed }))}
                         className="px-3 py-1.5 rounded-lg text-[10px] font-bold h-8 border transition-all cursor-pointer"
                         style={{
-                          background: isAnswerRevealed ? c.surfaceHover : c.violetBg,
+                          background: isAnswerRevealed ? c.surfaceHover : c.amberBg,
                           borderColor: c.borderHover,
-                          color: isAnswerRevealed ? c.text : c.violet
+                          color: isAnswerRevealed ? c.text : c.amber
                         }}>
                         {isAnswerRevealed ? "Hide Solution" : "Reveal Model Answer"}
                       </button>
@@ -734,8 +728,8 @@ export function StudyAssistantView() {
                           className="space-y-3 pt-3 border-t overflow-hidden" style={{ borderColor: c.divider }}>
                           {pr.expected_answer && (
                             <div className="space-y-1">
-                              <span className="text-[9px] uppercase tracking-widest font-extrabold block" style={{ color: c.emerald }}>Ideal Model Answer</span>
-                              <div className="text-xs leading-relaxed p-3.5 rounded-xl" style={{ background: c.emeraldBg, border: `1px solid ${c.emeraldBorder}`, color: c.textSec }}>
+                              <span className="text-[9px] uppercase tracking-widest font-extrabold block" style={{ color: c.amber }}>Ideal Model Answer</span>
+                              <div className="text-xs leading-relaxed p-3.5 rounded-xl" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.textSec }}>
                                 {parseMarkdown(pr.expected_answer)}
                               </div>
                             </div>
@@ -782,7 +776,7 @@ export function StudyAssistantView() {
                             optionStyle = { background: c.cardBgAlt, borderColor: c.borderHover, color: c.text };
                           } else if (isSubmitted) {
                             if (isCorrect) {
-                              optionStyle = { background: "rgba(16,185,129,0.15)", borderColor: c.emerald, color: c.emerald };
+                              optionStyle = { background: "rgba(16,185,129,0.15)", borderColor: c.amber, color: c.amber };
                             } else if (isSelected) {
                               optionStyle = { background: "rgba(244,63,94,0.15)", borderColor: c.rose, color: c.rose };
                             } else {
@@ -794,7 +788,7 @@ export function StudyAssistantView() {
                               className="w-full text-left p-3.5 rounded-xl border text-xs font-semibold transition-all duration-200 cursor-pointer flex justify-between items-center"
                               style={optionStyle}>
                               <span>{opt}</span>
-                              {isSubmitted && isCorrect && <CheckCircle size={15} style={{ color: c.emerald }} />}
+                              {isSubmitted && isCorrect && <CheckCircle size={15} style={{ color: c.amber }} />}
                               {isSubmitted && isSelected && !isCorrect && <AlertTriangle size={15} style={{ color: c.rose }} />}
                             </button>
                           );
@@ -804,13 +798,13 @@ export function StudyAssistantView() {
                         {!isSubmitted ? (
                           <button disabled={!userAns} onClick={() => handleQuizSubmit(qIdx)}
                             className="w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-40"
-                            style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff", border: "none" }}>
+                            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
                             Submit Answer
                           </button>
                         ) : (
                           <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                             className="p-4 rounded-xl text-xs leading-relaxed" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}`, color: c.textSec }}>
-                            <strong style={{ color: c.emerald }}>Explanation:</strong> {q.explanation}
+                            <strong style={{ color: c.amber }}>Explanation:</strong> {q.explanation}
                           </motion.div>
                         )}
                       </div>
@@ -852,7 +846,7 @@ export function StudyAssistantView() {
       <div className="space-y-6" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: "16px", padding: "24px" }}>
         <div className="space-y-2.5">
           <label className="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5" style={{ color: c.textMuted }}>
-            <Search size={12} style={{ color: c.violet }} /> Learning Objective
+            <Search size={12} style={{ color: c.amber }} /> Learning Objective
           </label>
           <div className="relative">
             <input type="text" value={inputTopic} onChange={e => setInputTopic(e.target.value)}
@@ -879,7 +873,7 @@ export function StudyAssistantView() {
         <div className="space-y-6">
           <div className="space-y-3">
             <label className="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5" style={{ color: c.textMuted }}>
-              <Clock size={12} style={{ color: c.violet }} /> Learning Timeframe
+              <Clock size={12} style={{ color: c.amber }} /> Learning Timeframe
             </label>
             <div className="flex p-1 rounded-xl max-w-md" style={{ background: c.inputBg, border: `1px solid ${c.border}` }}>
               {[
@@ -906,14 +900,14 @@ export function StudyAssistantView() {
           </div>
           <div className="space-y-3">
             <label className="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5" style={{ color: c.textMuted }}>
-              <GraduationCap size={13} style={{ color: c.violet }} /> Learning Mode Selector
+              <GraduationCap size={13} style={{ color: c.amber }} /> Learning Mode Selector
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { id: "beginner" as const, label: "Beginner", icon: BookOpen, desc: "Understand from scratch with simple terms & analogies", color: "emerald" },
-                { id: "intermediate" as const, label: "Intermediate", icon: Layers, desc: "Dive into practical details, mechanics, and design", color: "violet" },
+                { id: "beginner" as const, label: "Beginner", icon: BookOpen, desc: "Understand from scratch with simple terms & analogies", color: "amber" },
+                { id: "intermediate" as const, label: "Intermediate", icon: Layers, desc: "Dive into practical details, mechanics, and design", color: "amber" },
                 { id: "interview" as const, label: "Interview", icon: Award, desc: "Prepare for placements, trade-offs, and traps", color: "amber" },
-                { id: "revision" as const, label: "Quick Revision", icon: Zap, desc: "Refresh knowledge with condensed sheets", color: "rose" }
+                { id: "revision" as const, label: "Quick Revision", icon: Zap, desc: "Refresh knowledge with condensed sheets", color: "amber" }
               ].map(m => {
                 const isActive = level === m.id;
                 const Icon = m.icon;
@@ -954,7 +948,7 @@ export function StudyAssistantView() {
         </div>
         <button onClick={() => handleGenerateLesson(inputTopic)} disabled={isGenerating || !inputTopic.trim()}
           className="w-full py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40"
-          style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff", border: "none" }}>
+          style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
           <Sparkles size={16} /> Generate Accelerated Lesson
         </button>
       </div>
@@ -967,7 +961,7 @@ export function StudyAssistantView() {
             style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="space-y-4 max-w-xl mx-auto text-center">
               <h3 className="text-lg font-bold flex items-center justify-center gap-2" style={{ color: c.text }}>
-                <Sparkles size={18} style={{ color: c.violet }} /> Generating Personalized Lesson...
+                <Sparkles size={18} style={{ color: c.amber }} /> Generating Personalized Lesson...
               </h3>
               <p className="text-xs font-mono" style={{ color: c.textMuted }}>Synthesizing topic boundaries via AI model</p>
             </div>
@@ -983,12 +977,12 @@ export function StudyAssistantView() {
                       <div className="relative z-10 flex items-center justify-center">
                         {isDone ? (
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                            style={{ background: c.greenBg, border: `1px solid ${c.emerald}`, color: c.emerald }}>
+                            style={{ background: c.greenBg, border: `1px solid ${c.amber}`, color: c.amber }}>
                             <Check size={14} />
                           </div>
                         ) : isActive ? (
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
-                            style={{ background: c.violetBg, border: `1px solid ${c.violet}`, color: c.violet }}>
+                            style={{ background: c.amberBg, border: `1px solid ${c.amber}`, color: c.amber }}>
                             <RotateCcw className="animate-spin" size={12} />
                           </div>
                         ) : (
@@ -1000,7 +994,7 @@ export function StudyAssistantView() {
                       </div>
                       <div className="flex-1">
                         <span className="text-xs font-mono" style={{
-                          color: isDone ? c.emerald : isActive ? c.violet : c.textMuted,
+                          color: isDone ? c.amber : isActive ? c.amber : c.textMuted,
                           fontWeight: isActive ? 700 : 400
                         }}>{step}</span>
                       </div>
@@ -1032,7 +1026,7 @@ export function StudyAssistantView() {
             <div className="p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
               style={{ background: c.surface, border: `1px solid ${c.border}` }}>
               <div className="space-y-1">
-                <div className="inline-flex gap-1.5 items-center text-[10px] uppercase font-extrabold tracking-wider" style={{ color: c.violet }}>
+                <div className="inline-flex gap-1.5 items-center text-[10px] uppercase font-extrabold tracking-wider" style={{ color: c.amber }}>
                   <Sparkles size={10} /> Adaptive Lesson Generated ({duration} &bull; {level})
                 </div>
                 <h2 className="text-xl font-black tracking-tight" style={{ color: c.text }}>{currentTopic}</h2>
@@ -1041,15 +1035,15 @@ export function StudyAssistantView() {
                 <button onClick={() => setIsScratchpadOpen(!isScratchpadOpen)}
                   className="px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                   style={{
-                    background: isScratchpadOpen ? c.violetBg : c.surface,
-                    border: `1px solid ${isScratchpadOpen ? c.violetBorder : c.border}`,
-                    color: isScratchpadOpen ? c.violet : c.text
+                    background: isScratchpadOpen ? c.amberBg : c.surface,
+                    border: `1px solid ${isScratchpadOpen ? c.amberBorder : c.border}`,
+                    color: isScratchpadOpen ? c.amber : c.text
                   }}>
                   <Edit3 size={13} className="inline mr-1.5" />
                   {isScratchpadOpen ? "Hide Study Companion" : "Open Study Companion"}
                 </button>
                 <div className="text-xs px-3 py-1 rounded-lg flex items-center gap-1.5" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}`, color: c.textMuted }}>
-                  <Clock size={12} style={{ color: c.violet }} /> Digest: {duration}
+                  <Clock size={12} style={{ color: c.amber }} /> Digest: {duration}
                 </div>
               </div>
             </div>
@@ -1064,19 +1058,19 @@ export function StudyAssistantView() {
               {isScratchpadOpen && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                   className="lg:col-span-5 rounded-2xl p-5 sticky top-6 space-y-5"
-                  style={{ background: c.stickyBg, border: `1px solid ${c.violetBorder}`, backdropFilter: "blur(12px)" }}>
+                  style={{ background: c.stickyBg, border: `1px solid ${c.amberBorder}`, backdropFilter: "blur(12px)" }}>
                   <div className="flex justify-between items-center pb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
                     <div className="space-y-0.5">
                       <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: c.text }}>
-                        <Edit3 size={14} style={{ color: c.violet }} /> Active Scratchpad
+                        <Edit3 size={14} style={{ color: c.amber }} /> Active Scratchpad
                       </h3>
                       <p className="text-[10px]" style={{ color: c.textMuted }}>Study notes companion</p>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: c.textMuted }}>
                       {isSavingNotes ? (
-                        <><span className="h-1.5 w-1.5 rounded-full animate-ping" style={{ background: c.violet }} /><span>Saving...</span></>
+                        <><span className="h-1.5 w-1.5 rounded-full animate-ping" style={{ background: c.amber }} /><span>Saving...</span></>
                       ) : (
-                        <><Check size={11} style={{ color: c.emerald }} /><span style={{ color: c.emerald }}>Auto-saved</span></>
+                        <><Check size={11} style={{ color: c.amber }} /><span style={{ color: c.amber }}>Auto-saved</span></>
                       )}
                     </div>
                   </div>
@@ -1117,7 +1111,7 @@ export function StudyAssistantView() {
                     {scratchpadTab === "takeaways" && (
                       <div className="space-y-4">
                         <div className="text-[11px] leading-normal p-3 rounded-lg flex items-start gap-2" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}>
-                          <Sparkles size={12} style={{ color: c.violet }} className="shrink-0 mt-0.5" />
+                          <Sparkles size={12} style={{ color: c.amber }} className="shrink-0 mt-0.5" />
                           <span>Copy concepts directly into your active Scratchpad notes.</span>
                         </div>
                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
@@ -1127,7 +1121,7 @@ export function StudyAssistantView() {
                                 <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.text }}>{concept.title}</h4>
                                 <button onClick={() => handleImportConcept(concept)}
                                   className="px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                                  style={{ background: c.violetBg, border: `1px solid ${c.violetBorder}`, color: c.violet }}>
+                                  style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
                                   <Plus size={8} /> Copy to Notes
                                 </button>
                               </div>
@@ -1141,7 +1135,7 @@ export function StudyAssistantView() {
                       <div className="space-y-4 flex-1 flex flex-col justify-between">
                         <div className="space-y-3 flex-1 flex flex-col">
                           <div className="flex justify-between items-center text-[10px] font-mono pl-1" style={{ color: c.textMuted }}>
-                            <span className="flex items-center gap-1"><Terminal size={11} style={{ color: c.violet }} /> simulator_script.py</span>
+                            <span className="flex items-center gap-1"><Terminal size={11} style={{ color: c.amber }} /> simulator_script.py</span>
                           </div>
                           <div className="rounded-xl border font-mono text-[11px] leading-relaxed p-4 flex-1 min-h-[160px] whitespace-pre-wrap select-text"
                             style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.textSec }}>
@@ -1155,14 +1149,14 @@ export function StudyAssistantView() {
                           </div>
                           <button onClick={handleRunPlayground} disabled={isRunningPlayground}
                             className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40"
-                            style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff", border: "none" }}>
+                            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
                             {isRunningPlayground ? "Running script..." : "Execute Python Script"} <Play size={10} fill="currentColor" />
                           </button>
                         </div>
                         {playgroundOutput && (
                           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                             className="rounded-lg border p-3 font-mono text-[10px] leading-relaxed whitespace-pre-wrap"
-                            style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.emerald }}>
+                            style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.amber }}>
                             {playgroundOutput}
                           </motion.div>
                         )}
