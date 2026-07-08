@@ -60,6 +60,11 @@ model User {
   learningAnalytics   LearningAnalytics?
   learningEvents      LearningEvent[]
 
+  // Progress Tracking Relations
+  progressTracking    ProgressTracking?
+  topicProgress       TopicProgress[]
+  conceptMastery      ConceptMastery[]
+
   @@map("users")
 }
 
@@ -605,3 +610,68 @@ enum Role {
   USER
   ADMIN
 }
+
+model ProgressTracking {
+  id                  String   @id @default(cuid())
+  userId              String   @unique @map("user_id")
+  overallProgress     Int      @default(0) @map("overall_progress")
+  learningLevel       Int      @default(1) @map("learning_level")
+  learningLevelName   String   @default("Beginner") @map("learning_level_name")
+  masteryScore        Int      @default(0) @map("mastery_score")
+  masteryGrade        String   @default("Beginner") @map("mastery_grade")
+  topicsCompleted     Int      @default(0) @map("topics_completed")
+  documentsCompleted  Int      @default(0) @map("documents_completed")
+  questionsPracticed  Int      @default(0) @map("questions_practiced")
+  studySessions       Int      @default(0) @map("study_sessions")
+  currentStreak       Int      @default(0) @map("current_streak")
+  status              String   @default("Getting Started") @map("status")
+  milestonesJson      Json     @default("[]") @map("milestones_json")
+  revisionQueueJson   Json     @default("[]") @map("revision_queue_json")
+  timelineJson        Json     @default("[]") @map("timeline_json")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("progress_tracking")
+}
+
+model TopicProgress {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  documentId          String?  @map("document_id")
+  topicName           String   @map("topic_name")
+  progressPercentage  Int      @default(0) @map("progress_percentage")
+  masteryScore        Int      @default(0) @map("mastery_score")
+  revisionStatus      Boolean  @default(false) @map("revision_status")
+  questionsPracticed  Int      @default(0) @map("questions_practiced")
+  conceptsCovered     Int      @default(0) @map("concepts_covered")
+  totalConcepts       Int      @default(10) @map("total_concepts")
+  lastActivity        DateTime @default(now()) @map("last_activity")
+  status              String   @default("In Progress") @map("status")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("topic_progress")
+}
+
+model ConceptMastery {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  conceptName    String   @map("concept_name")
+  topicName      String?  @map("topic_name")
+  masteryScore   Int      @default(0) @map("mastery_score")
+  interactions   Int      @default(0)
+  revisionCount  Int      @default(0) @map("revision_count")
+  practiceCount  Int      @default(0) @map("practice_count")
+  lastReviewed   DateTime @default(now()) @map("last_reviewed")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("concept_mastery")
+}
+
