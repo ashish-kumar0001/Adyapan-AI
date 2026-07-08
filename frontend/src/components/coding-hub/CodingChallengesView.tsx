@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Clock, Star, Zap, Code, ShieldCheck, ChevronRight, Play } from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -12,40 +14,71 @@ const scaleIn = {
   visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
 };
 
+interface Challenge {
+  id: string;
+  title: string;
+  difficulty: string;
+  points: number;
+  timeRemaining: string;
+  description: string;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  score: number;
+  badges: string[];
+}
+
+interface SubmissionResult {
+  status: string;
+  score: number;
+  testCases: string;
+  message: string;
+}
+
 export function CodingChallengesView() {
   const [view, setView] = useState<"dashboard" | "solve">("dashboard");
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<Record<string, any> | null>(null);
+  const [result, setResult] = useState<SubmissionResult | null>(null);
+  const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const activeChallenge = {
-    title: "Daily: Subarray Sum Equals K",
-    difficulty: "Medium",
-    points: 200,
-    timeRemaining: "14:23:05",
-    description: "Given an array of integers nums and an integer k, return the total number of subarrays whose sum equals to k.\\n\\nA subarray is a contiguous non-empty sequence of elements within an array."
-  };
-
-  const leaderboard = [
-    { rank: 1, name: "Alex Chen", score: 14500, badges: ["🏆", "🔥"] },
-    { rank: 2, name: "Sarah JS", score: 13200, badges: ["🔥"] },
-    { rank: 3, name: "You (User)", score: 12100, badges: ["🚀"] },
-    { rank: 4, name: "CodeNinja99", score: 11800, badges: [] },
-    { rank: 5, name: "BytesMaker", score: 10400, badges: ["⭐"] },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [chalRes, lbRes] = await Promise.all([
+          api.get("/coding-challenges/daily"),
+          api.get("/coding-challenges/leaderboard"),
+        ]);
+        if (!cancelled) {
+          setActiveChallenge(chalRes.data);
+          setLeaderboard(lbRes.data);
+        }
+      } catch {
+        if (!cancelled) toast.error("Cannot connect to server. Please check your connection and try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 2000));
-    // Simulate submission outcome
-    const passed = Math.random() > 0.3;
-    setResult({
-      status: passed ? "Accepted" : "Failed",
-      score: passed ? activeChallenge.points : 0,
-      testCases: passed ? "12/12 Passed" : "4/12 Passed",
-      message: passed ? "Excellent logic!" : "Time Limit Exceeded on Test Case 5"
-    });
-    setSubmitting(false);
+    setResult(null);
+    try {
+      const { data } = await api.post("/coding-challenges/submit", { code, challengeId: activeChallenge?.id });
+      setResult(data);
+    } catch {
+      toast.error("Submission failed. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (view === "solve") {
@@ -74,7 +107,7 @@ export function CodingChallengesView() {
               >
                 <Zap className="text-amber-500" size={18} />
               </motion.div>
-              {activeChallenge.title}
+              {activeChallenge?.title ?? "Challenge"}
             </h2>
           </div>
           <div className="flex items-center gap-4 text-sm font-bold">

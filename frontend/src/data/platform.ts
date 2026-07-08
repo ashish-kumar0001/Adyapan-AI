@@ -1,11 +1,5 @@
 import type { UserRole } from "@/types/user";
 
-export const landingStats = [
-  { label: "Active users", value: "1,248" },
-  { label: "Profiles completed", value: "842" },
-  { label: "Platform tools", value: "60+" },
-];
-
 export const landingFeatures = [
   {
     title: "AI Study Assistant",
@@ -72,21 +66,6 @@ export const landingSteps = [
   },
 ];
 
-export const landingTestimonials = [
-  {
-    text: "Adyapan AI completely changed my internship search. The Resume Builder ATS analysis got me 5 interviews in 2 weeks, and the interview coach's feedback gave me the confidence to land my SDE offer.",
-    author: "Aditi Sharma",
-    role: "SDE Intern at TechCorp (Computer Science, 4th Year)",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-  },
-  {
-    text: "The AI Study Assistant matches my college syllabus perfectly. Generating flashcards and summaries has saved me hours of manual note-taking before end-semester exams. Highly recommend!",
-    author: "Rahul Verma",
-    role: "B.Tech IT (3rd Year)",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-  },
-];
-
 export const landingFAQs = [
   {
     question: "Is Adyapan AI free for college users?",
@@ -107,18 +86,6 @@ export const foundationModules = [
   "Profile and resume fields",
   "Admin operations surface",
   "Backend API contract",
-];
-
-export const userDashboardStats = [
-  { label: "Profile completion", value: "72%" },
-  { label: "Saved skills", value: "8" },
-  { label: "Resume status", value: "Uploaded" },
-];
-
-export const adminDashboardStats = [
-  { label: "Total users", value: "1,248" },
-  { label: "Admins", value: "6" },
-  { label: "Profiles completed", value: "842" },
 ];
 
 export const roleLabels: Record<UserRole, string> = {

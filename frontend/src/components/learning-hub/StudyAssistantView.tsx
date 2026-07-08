@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
+import { useSocket } from "@/context/SocketContext";
 
 // ─── Theme Hook ──────────────────────────────────────────────────────────────
 function useTheme() {
@@ -168,6 +169,7 @@ const slideRight = {
 export function StudyAssistantView() {
   const theme = useTheme();
   const c = mkColors(theme);
+  const { socket } = useSocket();
 
   const [file, setFile] = useState<File | null>(null);
   const [fileDetails, setFileDetails] = useState<{
@@ -209,46 +211,6 @@ export function StudyAssistantView() {
   const [playgroundOutput, setPlaygroundOutput] = useState<string | null>(null);
   const [isRunningPlayground, setIsRunningPlayground] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const MOCK_SUMMARY = {
-    title: "Data Structures & Algorithms",
-    topics: [
-      {
-        name: "Introduction to Data Structures",
-        overview: "Data structures are ways of organizing and storing data in a computer so that it can be accessed and modified efficiently. They are fundamental to computer science and programming, enabling efficient management of data for various applications.",
-        keyConcepts: ["Abstract Data Type (ADT)", "Data Organization", "Efficiency (Time & Space Complexity)", "Linear vs. Non-linear", "Static vs. Dynamic"],
-        importantPoints: ["Choosing the right data structure significantly impacts performance.", "Each data structure has strengths and weaknesses for specific operations.", "ADTs define logical form independent of physical implementation."],
-        quickRevision: "Data structures organize data for efficient access and modification. Key aspects include ADTs, time/space complexity, and choosing the right structure.",
-        keywords: ["Data Structure", "ADT", "Efficiency", "Time Complexity", "Space Complexity"]
-      },
-      {
-        name: "Arrays and Linked Lists",
-        overview: "Arrays provide contiguous memory allocation for same-type elements with O(1) random access. Linked Lists consist of pointer-connected nodes enabling dynamic memory allocation. Each has unique trade-offs in insertion, deletion, and access patterns.",
-        keyConcepts: ["Static vs. Dynamic Arrays", "Singly / Doubly / Circular Linked Lists", "Memory Allocation", "Pointer-based traversal", "Cache locality"],
-        importantPoints: ["Arrays have O(1) access but O(n) insertion/deletion.", "Linked lists have O(n) access but O(1) insertion at head.", "Dynamic arrays resize automatically with amortized O(1) append."],
-        quickRevision: "Arrays = fast access, slow insert. Linked Lists = slow access, fast insert. Choose based on usage patterns.",
-        keywords: ["Array", "Linked List", "Pointer", "Dynamic Array", "Cache", "Traversal"]
-      },
-      {
-        name: "Trees and Graphs",
-        overview: "Trees are hierarchical data structures with a root node and child nodes. Graphs extend this to arbitrary connections between nodes, enabling modeling of complex relationships like social networks and routing algorithms.",
-        keyConcepts: ["Binary Trees & BST", "AVL and Red-Black Trees", "Graph Representations", "DFS and BFS traversal", "Minimum Spanning Trees"],
-        importantPoints: ["BST search is O(log n) for balanced trees, O(n) for skewed.", "DFS uses a stack (or recursion); BFS uses a queue.", "Trees are a special case of graphs with no cycles."],
-        quickRevision: "Trees are hierarchical (parent-child); Graphs are arbitrary connections. DFS/BFS are universal traversal strategies.",
-        keywords: ["BST", "AVL Tree", "DFS", "BFS", "Graph", "Dijkstra", "Spanning Tree"]
-      },
-      {
-        name: "Sorting Algorithms",
-        overview: "Sorting algorithms arrange data in a defined order. They vary in time complexity, space usage, stability, and suitability for different input sizes. Understanding trade-offs is critical for selecting the right algorithm.",
-        keyConcepts: ["Comparison-based (Bubble, Merge, Quick, Heap)", "Non-comparison (Counting, Radix, Bucket)", "Stability in Sorting", "In-place vs. Out-of-place"],
-        importantPoints: ["Quick Sort average O(n log n) but O(n²) worst case.", "Merge Sort is always O(n log n) but requires O(n) extra space.", "For small arrays, Insertion Sort beats asymptotically faster algorithms."],
-        quickRevision: "Quick Sort is fast on average; Merge Sort is consistent; Heap Sort is space-efficient. Stability matters when sorting complex objects.",
-        keywords: ["Quick Sort", "Merge Sort", "Heap Sort", "Stability", "Radix Sort"]
-      }
-    ],
-    stats: { pages: 1, words: 20, topicsFound: 4, readingTime: "1 min", summaryLength: "Medium" },
-    insights: { mainSubject: "Computer Science", difficultyLevel: "Intermediate", estimatedStudyTime: "6–10 hours", importantChapters: ["Arrays & Linked Lists", "Trees & Graphs", "Sorting"], repeatedTopics: ["Time Complexity", "Space Complexity", "Traversal"] }
-  };
 
   useEffect(() => {
     try {
@@ -309,10 +271,8 @@ export function StudyAssistantView() {
         localStorage.setItem("adyapan-study-history", JSON.stringify(updated));
       } else throw new Error("Invalid response");
     } catch {
-      setStatus("ready");
-      setSummaryData(MOCK_SUMMARY);
-      setRevealedTopics(0);
-      setActiveTopic(MOCK_SUMMARY.topics[0].name);
+      setStatus("empty");
+      toast.error("Failed to analyze document. Please try again.");
     }
   };
 
@@ -393,8 +353,8 @@ export function StudyAssistantView() {
     }, 1000);
   };
 
-  const handleGenerateLesson = async (targetTopic: string) => {
-    if (!targetTopic.trim()) return;
+  const handleGenerateLesson = (targetTopic: string) => {
+    if (!targetTopic.trim() || !socket) return;
     setLessonData(null);
     setTopicError(null);
     setIsGenerating(true);
@@ -403,27 +363,30 @@ export function StudyAssistantView() {
     setQuizSubmitted({});
     setExpandedConceptIdx(null);
     setPracticeRevealed({});
-    intervalRef.current = setInterval(() => {
-      setLoadingStep(prev => prev < loadingSteps.length - 1 ? prev + 1 : prev);
-    }, 2000);
-    try {
-      const response = await api.post("/study/generate-lesson", {
-        topic: targetTopic,
-        duration,
-        level
-      });
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setLoadingStep(4);
-      setTimeout(() => {
-        setLessonData(response.data.data);
-        setCurrentTopic(targetTopic);
-        setIsGenerating(false);
-      }, 500);
-    } catch (err: any) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setTopicError(err?.response?.data?.error || err?.message || "Failed to generate lesson");
+
+    const onProgress = (payload: { step: number; status: string }) => {
+      setLoadingStep(payload.step);
+    };
+    const onComplete = (payload: { data: UnifiedLesson }) => {
+      socket.off("lesson:progress", onProgress);
+      socket.off("lesson:complete", onComplete);
+      socket.off("lesson:error", onError);
+      setLessonData(payload.data);
+      setCurrentTopic(targetTopic);
       setIsGenerating(false);
-    }
+    };
+    const onError = (payload: { error: string }) => {
+      socket.off("lesson:progress", onProgress);
+      socket.off("lesson:complete", onComplete);
+      socket.off("lesson:error", onError);
+      setTopicError(payload.error);
+      setIsGenerating(false);
+    };
+
+    socket.on("lesson:progress", onProgress);
+    socket.on("lesson:complete", onComplete);
+    socket.on("lesson:error", onError);
+    socket.emit("lesson:generate", { topic: targetTopic, duration, level });
   };
 
   const handleQuizSelect = (questionIdx: number, option: string) => {

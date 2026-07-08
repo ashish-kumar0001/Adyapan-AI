@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code2, CheckCircle2, Target, Trophy, Flame, Search, Filter, HelpCircle, Play, Sparkles } from "lucide-react";
+import { api } from "@/services/api";
+import { toast } from "sonner";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -15,10 +17,17 @@ const scaleIn = {
 export function DsaPracticeView() {
   const [view, setView] = useState<"dashboard" | "problem">("dashboard");
   const [activeProblem, setActiveProblem] = useState<Record<string, any> | null>(null);
+  const [problems, setProblems] = useState<Record<string, any>[]>([]);
   const [code, setCode] = useState("");
   const [aiReview, setAiReview] = useState<Record<string, any> | null>(null);
   const [hint, setHint] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.get("/dsa/problems")
+      .then((res) => setProblems(res.data.problems ?? res.data))
+      .catch(() => toast.error("Failed to load problems."));
+  }, []);
 
   const stats = [
     { label: "Problems Solved", value: "42", icon: CheckCircle2, color: "text-green-500" },
@@ -29,12 +38,6 @@ export function DsaPracticeView() {
 
   const categories = ["Arrays", "Strings", "Linked List", "Stack", "Queue", "Trees", "Graphs", "DP", "Greedy"];
   
-  const mockProblems = [
-    { id: 1, title: "Two Sum", difficulty: "Easy", category: "Arrays", company: "Google" },
-    { id: 2, title: "Longest Substring Without Repeating", difficulty: "Medium", category: "Strings", company: "Amazon" },
-    { id: 3, title: "Merge K Sorted Lists", difficulty: "Hard", category: "Linked List", company: "Microsoft" },
-  ];
-
   const handleOpenProblem = (p: Record<string, any>) => {
     setActiveProblem(p);
     setCode("// Write your solution here\\n\\nfunction solve() {\\n\\n}");
@@ -45,30 +48,28 @@ export function DsaPracticeView() {
 
   const requestHint = async () => {
     setLoading(true);
-    // Simulate AI delay
-    await new Promise(r => setTimeout(r, 1500));
-    setHint({
-      hint1: "Try using a hash map to store the values you've seen so far.",
-      hint2: "For each element x, check if (target - x) exists in the map.",
-      approach: "A one-pass hash table approach allows O(N) time complexity by storing array values and their indices."
-    });
-    setLoading(false);
+    setHint(null);
+    try {
+      const res = await api.post("/dsa/hint", { problemId: activeProblem?.id, code });
+      setHint(res.data);
+    } catch {
+      toast.error("Failed to fetch AI hint. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitCode = async () => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setAiReview({
-      status: "Accepted",
-      timeComplexity: "O(N) - You iterate through the array exactly once.",
-      spaceComplexity: "O(N) - The hash map stores at most N elements.",
-      optimizationTips: [
-        "Your solution is optimal for time complexity.",
-        "Ensure you handle edge cases where the array has less than 2 elements.",
-        "Consider using a Map object instead of a plain JS object for better performance."
-      ]
-    });
-    setLoading(false);
+    setAiReview(null);
+    try {
+      const res = await api.post("/dsa/review", { problemId: activeProblem?.id, code });
+      setAiReview(res.data);
+    } catch {
+      toast.error("Failed to submit code for AI review. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (view === "problem" && activeProblem) {
@@ -335,7 +336,7 @@ export function DsaPracticeView() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {mockProblems.map((p, i) => (
+            {problems.map((p, i) => (
               <motion.div
                 key={p.id}
                 custom={i}

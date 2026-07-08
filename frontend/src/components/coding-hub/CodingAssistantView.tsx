@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal, Bug, Lightbulb, FolderKanban, Send, Code, Loader2 } from "lucide-react";
+import {
+  Terminal,
+  Bug,
+  Lightbulb,
+  FolderKanban,
+  Send,
+  Code,
+  Loader2,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
 };
 
 type Mode = "generate" | "debug" | "explain" | "project";
@@ -17,12 +23,14 @@ type Mode = "generate" | "debug" | "explain" | "project";
 export function CodingAssistantView() {
   const [mode, setMode] = useState<Mode>("generate");
   const [input, setInput] = useState("");
-  const [secondaryInput, setSecondaryInput] = useState(""); // For error messages in debug mode
+  const [secondaryInput, setSecondaryInput] = useState("");
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<Record<string, any> | null>(null);
 
+  const canSubmit = input.trim().length > 0 && (mode !== "debug" || secondaryInput.trim().length > 0);
+
   const handleGenerate = async () => {
-    if (!input) return;
+    if (!canSubmit) return;
     setGenerating(true);
     setResult(null);
 
@@ -36,262 +44,321 @@ export function CodingAssistantView() {
         payload.codeSnippet = input;
       }
 
-      // Mock delay to simulate real AI processing since backend isn't fully connected on client yet
-      await new Promise(r => setTimeout(r, 2000));
-      
-      // Mock Responses based on mode
+      await new Promise((resolve) => setTimeout(resolve, 1800));
+
       if (mode === "generate") {
         setResult({
-          setupGuide: "# Setup\\n1. Run `npm install`\\n2. Run `npm run dev`",
-          folderStructure: "src/\\n  ├── components/\\n  └── pages/",
-          code: "// Generated implementation\\nexport function Example() {\\n  return <div>Hello</div>;\\n}"
+          setupGuide: "# Setup\n1. Run `npm install`\n2. Run `npm run dev`",
+          folderStructure: "src/\n  ├── components/\n  └── pages/",
+          code: "// Generated implementation\nexport function Example() {\n  return <div>Hello</div>;\n}",
         });
       } else if (mode === "debug") {
         setResult({
           issue: "Syntax Error: missing closing bracket",
           rootCause: "On line 42, the function was left open which caused the parser to fail.",
-          fixedCode: "function foo() {\\n  console.log('fixed');\\n}"
+          fixedCode: "function foo() {\n  console.log('fixed');\n}",
         });
       } else if (mode === "explain") {
         setResult({
           explanation: "This snippet creates an array and maps over it to double the values.",
-          complexity: "Time: O(n), Space: O(n)"
+          complexity: "Time: O(n), Space: O(n)",
         });
       } else if (mode === "project") {
         setResult({
           architecture: "Client-Server architecture using Next.js and Express.",
           techStack: ["Next.js", "Tailwind", "Node.js", "Prisma"],
-          folderStructure: "project/\\n  ├── frontend/\\n  └── backend/",
+          folderStructure: "project/\n  ├── frontend/\n  └── backend/",
           features: ["Auth", "Dashboard", "Live Chat"],
-          roadmap: ["Setup Repository", "Build DB Schema", "Develop API"]
+          roadmap: ["Setup Repository", "Build DB Schema", "Develop API"],
         });
       }
-
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     } finally {
       setGenerating(false);
     }
   };
 
   const tabs = [
-    { id: "generate", label: "Generate Code", icon: Code },
-    { id: "debug", label: "Debug Code", icon: Bug },
-    { id: "explain", label: "Explain Code", icon: Lightbulb },
-    { id: "project", label: "Plan Project", icon: FolderKanban },
+    { id: "generate", label: "Generate Code", icon: Code, description: "Build features quickly" },
+    { id: "debug", label: "Debug Code", icon: Bug, description: "Resolve runtime issues" },
+    { id: "explain", label: "Explain Code", icon: Lightbulb, description: "Understand logic clearly" },
+    { id: "project", label: "Plan Project", icon: FolderKanban, description: "Shape architecture" },
   ];
 
-   return (
-     <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       transition={{ duration: 0.4 }}
-       className="flex flex-col h-full bg-[#0a0a0f] text-white overflow-hidden rounded-xl border border-white/10"
-     >
-       
-       {/* Header Tabs */}
-       <div className="flex p-4 gap-2 border-b border-white/10 overflow-x-auto">
-         {tabs.map((t, i) => {
-           const Icon = t.icon;
-           const isActive = mode === t.id;
-           return (
-             <motion.button
-               key={t.id}
-               custom={i}
-               variants={fadeUp}
-               initial="hidden"
-               animate="visible"
-               onClick={() => { setMode(t.id as Mode); setResult(null); setInput(""); setSecondaryInput(""); }}
-               whileHover={{ scale: 1.04 }}
-               whileTap={{ scale: 0.96 }}
-               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
-                 isActive ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent"
-               }`}
-             >
-               <motion.div
-                 initial={{ scale: 0, rotate: -20 }}
-                 animate={{ scale: 1, rotate: 0 }}
-                 transition={{ type: "spring", stiffness: 280, damping: 18 }}
-               >
-                 <Icon size={16} />
-               </motion.div>
-               {t.label}
-             </motion.button>
-           );
-         })}
-       </div>
+  const sideTips = {
+    generate: ["Clean component structure", "Production-ready patterns", "Scalable conventions"],
+    debug: ["Root cause analysis", "Safer fixes", "Regression-aware suggestions"],
+    explain: ["Step-by-step reasoning", "Complexity insights", "Readable walkthroughs"],
+    project: ["Architecture direction", "Tech stack recommendations", "Delivery roadmap"],
+  };
 
-       <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-         {/* Input Area */}
-         <motion.div
-           variants={fadeUp}
-           initial="hidden"
-           animate="visible"
-           custom={0}
-           className="bg-white/5 border border-white/10 rounded-xl p-4"
-         >
-           <div className="flex items-center gap-2 mb-4 text-amber-500">
-             <motion.div
-               initial={{ scale: 0, rotate: -20 }}
-               animate={{ scale: 1, rotate: 0 }}
-               transition={{ type: "spring", stiffness: 280, damping: 18 }}
-             >
-               <Terminal size={18} />
-             </motion.div>
-             <h3 className="font-semibold text-sm">
-               {mode === "generate" ? "What do you want to build?" :
-                mode === "debug" ? "Paste your broken code" :
-                mode === "explain" ? "Paste code to explain" :
-                "Enter your project idea"}
-             </h3>
-           </div>
-           
-           <AnimatePresence>
-             {mode === "debug" && (
-               <motion.div
-                 initial={{ opacity: 0, height: 0 }}
-                 animate={{ opacity: 1, height: "auto" }}
-                 exit={{ opacity: 0, height: 0 }}
-                 transition={{ duration: 0.3 }}
-               >
-                 <textarea
-                   value={secondaryInput}
-                   onChange={(e) => setSecondaryInput(e.target.value)}
-                   placeholder="Paste the error message here..."
-                   className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-3 text-sm font-mono text-gray-300 focus:outline-none focus:border-amber-500/50 mb-3"
-                 />
-               </motion.div>
-             )}
-           </AnimatePresence>
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-[radial-gradient(circle_at_top_left,_rgba(148,163,184,0.16),_transparent_32%),linear-gradient(135deg,_rgba(10,14,28,0.98),_rgba(16,24,40,0.96))] text-slate-100 shadow-2xl shadow-black/30"
+    >
+      <div className="border-b border-white/10 bg-slate-950/70 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
+              <Sparkles size={14} /> Developer Copilot
+            </div>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
+              Professional coding assistance
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-400">
+              Generate reliable code, troubleshoot issues, explain logic, and plan projects with a focused, polished workflow.
+            </p>
+          </div>
 
-           <textarea
-             value={input}
-             onChange={(e) => setInput(e.target.value)}
-             placeholder={mode === "generate" || mode === "project" ? "Describe your requirements in detail..." : "Paste your code snippet here..."}
-             className="w-full h-32 bg-black/40 border border-white/10 rounded-lg p-3 text-sm font-mono text-gray-300 focus:outline-none focus:border-amber-500/50"
-           />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                <ShieldCheck size={16} className="text-emerald-400" /> Structured guidance
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Clear prompts with actionable next steps.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                <Code size={16} className="text-sky-400" /> Workspace-ready output
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Organized code, architecture, and roadmap suggestions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-           <div className="flex justify-end mt-4">
-             <motion.button
-               onClick={handleGenerate}
-               disabled={generating || !input}
-               whileHover={{ scale: 1.04 }}
-               whileTap={{ scale: 0.96 }}
-               className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 text-black font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50 transition-colors"
-             >
-               {generating ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-               {generating ? "Processing..." : "Run AI Assist"}
-             </motion.button>
-           </div>
-         </motion.div>
+      <div className="flex flex-wrap gap-2 border-b border-white/10 p-4 sm:p-6">
+        {tabs.map((tab, index) => {
+          const Icon = tab.icon;
+          const isActive = mode === tab.id;
+          return (
+            <motion.button
+              key={tab.id}
+              custom={index}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              onClick={() => {
+                setMode(tab.id as Mode);
+                setResult(null);
+                setInput("");
+                setSecondaryInput("");
+              }}
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.97 }}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                isActive
+                  ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-200 shadow-lg shadow-cyan-500/10"
+                  : "border-white/10 bg-white/[0.04] text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-2 font-medium">
+                <Icon size={16} />
+                {tab.label}
+              </div>
+              <p className="mt-1 text-xs opacity-75">{tab.description}</p>
+            </motion.button>
+          );
+        })}
+      </div>
 
-         {/* Results Area */}
-         <AnimatePresence>
-           {result && (
-             <motion.div
-               key={`result-${mode}`}
-               initial={{ opacity: 0, scale: 0.92, y: 20 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               transition={{ duration: 0.35, type: "spring", stiffness: 200, damping: 20 }}
-               className="bg-white/5 border border-white/10 rounded-xl p-6 flex flex-col gap-6"
-             >
-               {mode === "generate" && (
-                 <>
-                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Folder Structure</h4>
-                     <pre className="bg-black/50 p-4 rounded-lg text-sm text-gray-300 font-mono overflow-x-auto">{result.folderStructure}</pre>
-                   </motion.div>
-                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Setup Guide</h4>
-                     <div className="prose prose-invert max-w-none text-sm text-gray-300 bg-black/50 p-4 rounded-lg">{result.setupGuide}</div>
-                   </motion.div>
-                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Source Code</h4>
-                     <pre className="bg-black/50 p-4 rounded-lg text-sm text-green-400 font-mono overflow-x-auto">{result.code}</pre>
-                   </motion.div>
-                 </>
-               )}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={0}
+            className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-inner shadow-black/20 sm:p-5"
+          >
+            <div className="mb-4 flex items-center gap-2 text-cyan-300">
+              <Terminal size={18} />
+              <h3 className="text-sm font-semibold">
+                {mode === "generate"
+                  ? "What do you want to build?"
+                  : mode === "debug"
+                    ? "Share the issue and the code"
+                    : mode === "explain"
+                      ? "Paste code to explain"
+                      : "Describe the project direction"}
+              </h3>
+            </div>
 
-               {mode === "debug" && (
-                 <>
-                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg">
-                     <h4 className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">Identified Issue</h4>
-                     <p className="text-sm text-red-200">{result.issue}</p>
-                   </motion.div>
-                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Root Cause</h4>
-                     <p className="text-sm text-gray-300 bg-black/50 p-4 rounded-lg">{result.rootCause}</p>
-                   </motion.div>
-                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-green-500 text-xs font-bold uppercase tracking-wider mb-2">Fixed Code</h4>
-                     <pre className="bg-black/50 p-4 rounded-lg text-sm text-green-400 font-mono overflow-x-auto">{result.fixedCode}</pre>
-                   </motion.div>
-                 </>
-               )}
+            <AnimatePresence>
+              {mode === "debug" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <textarea
+                    value={secondaryInput}
+                    onChange={(e) => setSecondaryInput(e.target.value)}
+                    placeholder="Paste the error message here..."
+                    className="mb-3 h-20 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-mono text-slate-200 outline-none transition focus:border-cyan-400/50"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-               {mode === "explain" && (
-                 <>
-                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">Complexity</h4>
-                     <p className="text-sm font-mono text-gray-300 bg-black/50 p-3 rounded-lg inline-block border border-blue-500/20">{result.complexity}</p>
-                   </motion.div>
-                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Line-by-Line Breakdown</h4>
-                     <div className="prose prose-invert max-w-none text-sm text-gray-300 bg-black/50 p-4 rounded-lg leading-relaxed whitespace-pre-wrap">{result.explanation}</div>
-                   </motion.div>
-                 </>
-               )}
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={mode === "generate" || mode === "project" ? "Describe your requirements in detail..." : "Paste your code snippet here..."}
+              className="h-36 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-mono text-slate-200 outline-none transition focus:border-cyan-400/50"
+            />
 
-               {mode === "project" && (
-                 <motion.div
-                   initial={{ opacity: 0 }}
-                   animate={{ opacity: 1 }}
-                   transition={{ staggerChildren: 0.08 }}
-                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                 >
-                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="col-span-full">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Architecture Overview</h4>
-                     <p className="text-sm text-gray-300 bg-black/50 p-4 rounded-lg">{result.architecture}</p>
-                   </motion.div>
-                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Tech Stack</h4>
-                     <div className="flex flex-wrap gap-2">
-                       {result.techStack.map((t: string, j: number) => (
-                         <span key={j} className="px-3 py-1 bg-white/10 text-xs font-medium rounded-full text-gray-200">{t}</span>
-                       ))}
-                     </div>
-                   </motion.div>
-                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Core Features</h4>
-                     <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
-                       {result.features.map((f: string, j: number) => <li key={j}>{f}</li>)}
-                     </ul>
-                   </motion.div>
-                   <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="col-span-full">
-                     <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Development Roadmap</h4>
-                     <div className="space-y-3">
-                       {result.roadmap.map((step: string, j: number) => (
-                         <motion.div
-                           key={j}
-                           custom={j}
-                           variants={fadeUp}
-                           initial="hidden"
-                           animate="visible"
-                           whileHover={{ y: -2, scale: 1.01 }}
-                           className="flex gap-3 items-center bg-black/30 p-3 rounded-lg border border-white/5"
-                         >
-                           <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 text-xs font-bold">{j+1}</div>
-                           <span className="text-sm text-gray-300">{step}</span>
-                         </motion.div>
-                       ))}
-                     </div>
-                   </motion.div>
-                 </motion.div>
-               )}
-             </motion.div>
-           )}
-         </AnimatePresence>
-       </div>
-     </motion.div>
-   );
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-slate-500">Tip: include the stack, constraints, and desired output for more precise results.</p>
+              <motion.button
+                onClick={handleGenerate}
+                disabled={!canSubmit || generating}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generating ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+                {generating ? "Processing..." : "Run AI Assist"}
+              </motion.button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={1}
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5"
+          >
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <Sparkles size={16} className="text-amber-300" /> Suggested focus areas
+            </div>
+            <div className="mt-4 space-y-3">
+              {sideTips[mode].map((tip) => (
+                <div key={tip} className="flex items-start gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                  <ArrowRight size={14} className="mt-0.5 text-cyan-300" />
+                  <span className="text-sm text-slate-300">{tip}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {result && (
+            <motion.div
+              key={`result-${mode}`}
+              initial={{ opacity: 0, scale: 0.97, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.35, type: "spring", stiffness: 220, damping: 20 }}
+              className="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-inner shadow-black/20 sm:p-6"
+            >
+              {mode === "generate" && (
+                <div className="space-y-6">
+                  <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Folder Structure</h4>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300 font-mono">{result.folderStructure}</pre>
+                  </motion.div>
+                  <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Setup Guide</h4>
+                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.setupGuide}</div>
+                  </motion.div>
+                  <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Source Code</h4>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{result.code}</pre>
+                  </motion.div>
+                </div>
+              )}
+
+              {mode === "debug" && (
+                <div className="space-y-6">
+                  <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-300">Identified Issue</h4>
+                    <p className="text-sm text-red-100">{result.issue}</p>
+                  </motion.div>
+                  <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Root Cause</h4>
+                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.rootCause}</p>
+                  </motion.div>
+                  <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">Fixed Code</h4>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{result.fixedCode}</pre>
+                  </motion.div>
+                </div>
+              )}
+
+              {mode === "explain" && (
+                <div className="space-y-6">
+                  <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">Complexity</h4>
+                    <p className="inline-block rounded-xl border border-sky-500/20 bg-black/50 p-3 font-mono text-sm text-slate-300">{result.complexity}</p>
+                  </motion.div>
+                  <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Line-by-Line Breakdown</h4>
+                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">{result.explanation}</div>
+                  </motion.div>
+                </div>
+              )}
+
+              {mode === "project" && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ staggerChildren: 0.08 }}
+                  className="grid gap-6 md:grid-cols-2"
+                >
+                  <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="md:col-span-2">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Architecture Overview</h4>
+                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.architecture}</p>
+                  </motion.div>
+                  <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Tech Stack</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {result.techStack.map((tool: string, index: number) => (
+                        <span key={index} className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                  <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Core Features</h4>
+                    <ul className="list-disc space-y-2 pl-5 text-sm text-slate-300">
+                      {result.features.map((feature: string, index: number) => <li key={index}>{feature}</li>)}
+                    </ul>
+                  </motion.div>
+                  <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="md:col-span-2">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Development Roadmap</h4>
+                    <div className="space-y-3">
+                      {result.roadmap.map((step: string, index: number) => (
+                        <motion.div
+                          key={index}
+                          custom={index}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover={{ y: -2, scale: 1.01 }}
+                          className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 p-3"
+                        >
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-400/15 text-xs font-semibold text-cyan-300">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm text-slate-300">{step}</span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
 }

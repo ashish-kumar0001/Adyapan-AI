@@ -8,6 +8,7 @@ import {
   Trash2, Plus, Clock, MessageSquare, Award, ArrowLeft, ArrowRightLeft,
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw
 } from "lucide-react";
+import { toast } from "sonner";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -70,87 +71,6 @@ interface JobHubViewProps {
   theme?: string;
 }
 
-const MOCK_JOBS: Job[] = [
-  {
-    id: "job-1",
-    role: "Full Stack Engineer",
-    company: "Meta",
-    logoBg: "#0668E1",
-    location: "Menlo Park, CA (Hybrid)",
-    mode: "Hybrid",
-    type: "Full-Time",
-    salary: "$140,000 - $180,000 / yr",
-    experience: "1-3 Years",
-    skills: ["React", "Node.js", "Express", "PostgreSQL", "System Design"],
-    description: "Join the Meta Infrastructure Tools team to help build high-performance developer tools, dashboards, and automated service pipelines for global systems.",
-    responsibilities: [
-      "Design and maintain reusable React components and micro-frontend structures.",
-      "Optimize Node.js server performance and postgres query configurations.",
-      "Collaborate with reliability engineering to configure system scale and parameters."
-    ],
-    eligibility: [
-      "Bachelor's or Master's degree in Computer Science, or equivalent engineering background.",
-      "1+ years of professional development experience with React and Node."
-    ],
-    deadline: "2026-09-15",
-    website: "https://careers.meta.com"
-  },
-  {
-    id: "job-2",
-    role: "AI Engineer",
-    company: "Google",
-    logoBg: "#4285F4",
-    location: "Remote, US",
-    mode: "Remote",
-    type: "Full-Time",
-    salary: "$160,000 - $210,000 / yr",
-    experience: "3+ Years",
-    skills: ["Python", "TensorFlow", "PyTorch", "Transformers", "LLMs"],
-    description: "Work on cutting-edge generative AI applications in Google Cloud. You will integrate foundation models into client products and train custom adapter layers.",
-    responsibilities: [
-      "Develop model integration logic and handle prompt safety parameters.",
-      "Deploy inference models efficiently on cloud clusters using Kubernetes.",
-      "Fine-tune pre-trained models on specialized domain datasets."
-    ],
-    eligibility: [
-      "Masters or PhD in CS, ML, or related quantitative discipline.",
-      "Experience deploying deep learning pipelines in cloud settings."
-    ],
-    deadline: "2026-08-30",
-    website: "https://careers.google.com"
-  },
-  {
-    id: "job-3",
-    role: "Software Development Engineer (SDE-1)",
-    company: "Amazon",
-    logoBg: "#FF9900",
-    location: "Bangalore, India",
-    mode: "On-site",
-    type: "Full-Time",
-    salary: "₹18,000,000 - ₹24,000,000 / yr",
-    experience: "0-2 Years",
-    skills: ["Java", "Spring Boot", "AWS", "SQL", "Data Structures"],
-    description: "Build robust, scalable transaction backends inside Amazon Fulfillment Services. Participate in design discussions, write tests, and support deployment loops.",
-    responsibilities: [
-      "Develop reliable RESTful endpoints and microservice architectures.",
-      "Optimize database queries and transaction locks.",
-      "Write unit and integration tests to maintain high software coverage standards."
-    ],
-    eligibility: [
-      "B.Tech/M.Tech in CS or equivalent field.",
-      "Strong coding foundation in Java/C++ and core algorithmic structures."
-    ],
-    deadline: "2026-09-05",
-    website: "https://amazon.jobs"
-  }
-];
-
-const MOCK_CHALLENGES: HiringChallenge[] = [
-  { id: "ch-1", title: "Global Coding Hackathon", category: "Coding", difficulty: "Medium", duration: "3 Hours", eligibility: "Open to all students", company: "Microsoft", completed: false },
-  { id: "ch-2", title: "PostgreSQL Optimizer Duel", category: "SQL", difficulty: "Hard", duration: "1.5 Hours", eligibility: "SDE-2 eligible candidates", company: "Uber", completed: true, score: 92, rank: 14 },
-  { id: "ch-3", title: "DeepLearning Classifier Challenge", category: "Machine Learning", difficulty: "Hard", duration: "6 Hours", eligibility: "Graduating students only", company: "Nvidia", completed: false }
-];
-
 export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }: JobHubViewProps) {
   const isDark = theme === "dark";
   const c = {
@@ -182,6 +102,10 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [appliedCount, setAppliedCount] = useState(3);
+
+  // Jobs & Challenges (from API, initially empty)
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [challenges, setChallenges] = useState<HiringChallenge[]>([]);
 
   // Resume vs JD Analyzer state
   const [jdText, setJdText] = useState("");
@@ -222,12 +146,6 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     const savedRefs = localStorage.getItem("ady-job-referrals");
     if (savedRefs) {
       try { setReferrals(JSON.parse(savedRefs)); } catch { /* ignore */ }
-    } else {
-      const defaults: Referral[] = [
-        { id: "ref-1", company: "Google", role: "AI Engineer", deadline: "2026-08-30", status: "Requested", outreachMsg: "Dear Hiring Team,\n\nI am writing to express my interest..." }
-      ];
-      setReferrals(defaults);
-      localStorage.setItem("ady-job-referrals", JSON.stringify(defaults));
     }
   }, []);
 
@@ -253,33 +171,11 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     setMatchReport(null);
 
     try {
-      await new Promise(r => setTimeout(r, 2000));
-      // Mock compatibility evaluation
-      setMatchReport({
-        overallScore: 78,
-        skillsMatch: 80,
-        experienceMatch: 70,
-        educationMatch: 90,
-        atsCompatibility: 85,
-        keywordsFound: ["React", "Node.js", "Express", "SQL"],
-        keywordsMissing: ["TypeScript", "System Design", "Microservices"],
-        keywordsSuggested: ["Next.js", "PostgreSQL", "Docker", "REST API"],
-        missingSkills: ["TypeScript", "System Design"],
-        learningPath: [
-          "Study TypeScript basics via Microsoft Learn.",
-          "Read 'System Design Primer' on GitHub to understand architectural concepts."
-        ],
-        suggestions: [
-          "Rewrite your Project 1 summary to focus on React scalability and state hooks.",
-          "Add 'REST API design' directly to your skills section.",
-          "Include a sentence explaining postgres database caching in your experience description."
-        ],
-        strengths: ["Excellent backend Node alignment", "Solid education background"],
-        improvements: ["Needs stronger system design concepts", "Add modern TypeScript syntax keywords"],
-        hiringProbability: "High",
-        readiness: "Ready"
-      });
+      // TODO: Call backend API for real compatibility analysis
+      await new Promise(r => setTimeout(r, 500));
+      toast.error("JD Analyzer backend is not available. Please try again later.");
     } catch (err) {
+      toast.error("JD Analyzer backend is not available. Please try again later.");
       console.error(err);
     } finally {
       setAnalyzing(false);
@@ -290,8 +186,11 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     e.preventDefault();
     if (!refCompany.trim() || !refRole.trim()) return;
 
-    // Generate simulated outreach message
-    const generatedOutreach = `Hi there,\n\nI hope this message finds you well.\n\nI recently came across the ${refRole} opening at ${refCompany} and was incredibly impressed by the team's work. With my background in React, Next.js, and Python, I believe I could contribute significantly to your goals. Would you be open to reviewing my resume for a potential referral?\n\nThank you,\nCandidate`;
+    // Generate outreach message from user inputs
+    const notesSection = refNotes.trim()
+      ? `\n\nAdditional context:\n${refNotes.trim()}`
+      : "";
+    const generatedOutreach = `Hi there,\n\nI hope this message finds you well.\n\nI am writing to express my strong interest in the ${refRole} position at ${refCompany}. I believe my skills and experience align well with what your team is looking for.${notesSection}\n\nI would be very grateful if you would consider referring me for this role. Please let me know if you need any additional information from me.\n\nThank you for your time and support.\n\nBest regards,\nCandidate`;
 
     const newRef: Referral = {
       id: `ref-${Date.now()}`,
@@ -347,7 +246,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     }
   };
 
-  const filteredJobs = MOCK_JOBS.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     const matchesSearch =
       job.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -791,7 +690,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
               >
                 {/* Available Contests */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {MOCK_CHALLENGES.map((ch, i) => (
+                  {challenges.map((ch, i) => (
                     <motion.div
                       variants={fadeUp}
                       initial="hidden"

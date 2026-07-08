@@ -16,7 +16,6 @@ import { AnimatedRocket, AnimatedSparkles, AnimatedCheck, AnimatedCode, Animated
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { landingFAQs } from "@/data/platform";
-import CountUp from "react-countup";
 import Scene from "@/components/3d/Scene";
 
 // ─── Animation Variants ──────────────────────────────────────────────────
@@ -1043,41 +1042,21 @@ export default function LandingPage() {
               Live Platform Statistics
             </motion.h2>
             <motion.p variants={staggerItem} className="text-gray-400 text-sm md:text-base leading-relaxed">
-              Every learning session, mock test, and resume check is logged dynamically in your verified workspace.
+              Real-time platform analytics will appear here once sufficient user activity is recorded.
             </motion.p>
           </motion.div>
 
           <motion.div
-            className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-6"
+            className="lg:col-span-8 flex items-center justify-center"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {[
-              { value: 1248, suffix: "+", label: "Hours Learned", color: "amber" },
-              { value: 412, suffix: "+", label: "Notes Generated", color: "orange" },
-              { value: 85, suffix: "%", label: "Resume Score", color: "yellow" },
-              { value: 94, suffix: "/100", label: "Interview Score", color: "amber" },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                variants={staggerItem}
-                whileHover={{ y: -6, scale: 1.02, borderColor: "rgba(245,158,11,0.2)" }}
-                className="p-6 bg-white/2 border border-white/5 rounded-2xl text-center space-y-2"
-              >
-                <motion.span
-                  className={`block text-3xl font-extrabold text-${stat.color}-400`}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + i * 0.1 }}
-                >
-                  <CountUp end={stat.value} enableScrollSpy scrollSpyOnce />
-                  {stat.suffix}
-                </motion.span>
-                <span className="block text-[10px] text-gray-500 uppercase tracking-wider">{stat.label}</span>
-              </motion.div>
-            ))}
+            <motion.div variants={staggerItem} className="p-12 bg-white/2 border border-dashed border-white/10 rounded-2xl text-center space-y-3 w-full max-w-md">
+              <span className="block text-5xl">📊</span>
+              <p className="text-gray-500 text-sm">Stats coming soon — live once the platform has meaningful data to show.</p>
+            </motion.div>
           </motion.div>
         </div>
       </Section>

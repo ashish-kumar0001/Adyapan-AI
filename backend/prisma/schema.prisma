@@ -6,62 +6,48 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  profile   Profile?
-
-  resumes         Resume[]
-  atsReports      ATSReport[]
-  resumeAnalyses  ResumeAnalysis[]
-  coverLetters    CoverLetter[]
-  linkedinReports LinkedInReport[]
-
-  // Learning Hub Relations
-  studySessions   StudySession[]
-  uploadedDocs    UploadedDocument[]
-  generatedNotes  GeneratedNote[]
-  quizzes         Quiz[]
-  quizAttempts    QuizAttempt[]
-  flashcards      Flashcard[]
-  assignments     Assignment[]
-  presentations   Presentation[]
-  mindMaps        MindMap[]
-
-  // Coding Hub Relations
-  codingSessions      CodingSession[]
-  submissions         Submission[]
-  dsaProgress         DSAProgress[]
-  challengeSubmissions ChallengeSubmission[]
-  leaderboards        Leaderboard[]
-  portfolios          Portfolio[]
-  githubProfiles      GithubProfile[]
-  generatedReadmes    GeneratedReadme[]
-
-  // Interview Hub Relations
-  interviewSessions   InterviewSession[]
-
-  // Ady Chat Relations
-  chatSessions        ChatSession[]
-
-  // Payment / Subscription Relations
-  plan                String   @default("free")
-  razorpayCustomerId  String?  @map("razorpay_customer_id")
-  razorpaySubscriptionId String? @map("razorpay_subscription_id")
-  subscriptionStatus  String?  @map("subscription_status") // "active" | "cancelled" | "expired"
-  subscriptionEnd     DateTime? @map("subscription_end")
-  payments            Payment[]
-  notifications       Notification[]
+  id                     String                @id @default(cuid())
+  name                   String
+  email                  String                @unique
+  password               String
+  role                   Role                  @default(USER)
+  createdAt              DateTime              @default(now()) @map("created_at")
+  updatedAt              DateTime              @updatedAt @map("updated_at")
+  plan                   String                @default("free")
+  razorpayCustomerId     String?               @map("razorpay_customer_id")
+  razorpaySubscriptionId String?               @map("razorpay_subscription_id")
+  subscriptionEnd        DateTime?             @map("subscription_end")
+  subscriptionStatus     String?               @map("subscription_status")
+  assignments            Assignment[]
+  atsReports             ATSReport[]
+  challengeSubmissions   ChallengeSubmission[]
+  chatSessions           ChatSession[]
+  codingSessions         CodingSession[]
+  coverLetters           CoverLetter[]
+  dsaProgress            DSAProgress[]
+  flashcards             Flashcard[]
+  generatedNotes         GeneratedNote[]
+  generatedReadmes       GeneratedReadme[]
+  githubProfiles         GithubProfile[]
+  interviewSessions      InterviewSession[]
+  leaderboards           Leaderboard[]
+  learning_analytics     learning_analytics?
+  learning_events        learning_events[]
+  linkedinReports        LinkedInReport[]
+  mindMaps               MindMap[]
+  notifications          Notification[]
+  payments               Payment[]
+  portfolios             Portfolio[]
+  presentations          Presentation[]
+  profile                Profile?
+  quizAttempts           QuizAttempt[]
+  quizzes                Quiz[]
+  resumeAnalyses         ResumeAnalysis[]
+  resumes                Resume[]
+  studySessions          StudySession[]
+  submissions            Submission[]
+  uploadedDocs           UploadedDocument[]
 
   @@map("users")
 }
@@ -69,27 +55,27 @@ model User {
 model Profile {
   id                String   @id @default(cuid())
   userId            String   @unique @map("user_id")
-  username          String?
-  phone             String?
-  location          String?
-  aboutMe           String?  @map("about_me")
   college           String?
   branch            String?
-  degree            String?
+  phone             String?
   year              String?
-  graduationYear    String?  @map("graduation_year")
-  skills            String[] @default([])
-  interestedDomains String[] @default([]) @map("interested_domains")
-  targetRole        String?  @map("target_role")
   careerGoal        String?  @map("career_goal")
-  careerObjective   String?  @map("career_objective")
+  skills            String[] @default([])
   linkedin          String?
   github            String?
-  portfolio         String?
   resumeUrl         String?  @map("resume_url")
   resumeName        String?  @map("resume_name")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
+  aboutMe           String?  @map("about_me")
+  careerObjective   String?  @map("career_objective")
+  degree            String?
+  graduationYear    String?  @map("graduation_year")
+  interestedDomains String[] @default([]) @map("interested_domains")
+  location          String?
+  portfolio         String?
+  targetRole        String?  @map("target_role")
+  username          String?
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
@@ -106,18 +92,17 @@ model Resume {
   projects       Json
   skills         Json
   certifications Json
-  achievements   Json?
-  languages      Json?
-  targetCompany  String?          @map("target_company")
-  pdfUrl         String?          @map("pdf_url")
-  docxUrl        String?          @map("docx_url")
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
-
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievements   Json?
+  docxUrl        String?          @map("docx_url")
+  languages      Json?
+  pdfUrl         String?          @map("pdf_url")
+  targetCompany  String?          @map("target_company")
   atsReports     ATSReport[]
-  resumeAnalyses ResumeAnalysis[]
   coverLetters   CoverLetter[]
+  resumeAnalyses ResumeAnalysis[]
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("resumes")
 }
@@ -130,9 +115,8 @@ model ATSReport {
   missingKeywords Json     @map("missing_keywords")
   recommendations Json
   createdAt       DateTime @default(now()) @map("created_at")
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ats_reports")
 }
@@ -145,9 +129,8 @@ model ResumeAnalysis {
   weaknesses      Json
   recommendations Json
   createdAt       DateTime @default(now()) @map("created_at")
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("resume_analyses")
 }
@@ -155,9 +138,11 @@ model ResumeAnalysis {
 model CoverLetter {
   id             String   @id @default(cuid())
   userId         String   @map("user_id")
-  resumeId       String?  @map("resume_id")
   companyName    String   @map("company_name")
   role           String
+  content        String
+  createdAt      DateTime @default(now()) @map("created_at")
+  resumeId       String?  @map("resume_id")
   jobDescription String?  @map("job_description")
   tone           String   @default("Professional")
   letterType     String   @default("Full-Time") @map("letter_type")
@@ -165,13 +150,10 @@ model CoverLetter {
   introduction   String?
   body           String?
   closing        String?
-  content        String
   pdfUrl         String?  @map("pdf_url")
   docxUrl        String?  @map("docx_url")
-  createdAt      DateTime @default(now()) @map("created_at")
-
+  resume         Resume?  @relation(fields: [resumeId], references: [id])
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume         Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
 
   @@map("cover_letters")
 }
@@ -185,49 +167,45 @@ model LinkedInReport {
   recommendations Json
   score           Int
   createdAt       DateTime @default(now()) @map("created_at")
-
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("linkedin_reports")
 }
 
 model StudySession {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
   topic     String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
   messages  StudyMessage[]
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   documents UploadedDocument[]
 
   @@map("study_sessions")
 }
 
 model StudyMessage {
-  id        String   @id @default(cuid())
-  sessionId String   @map("session_id")
-  role      String   // "user" or "model"
+  id        String       @id @default(cuid())
+  sessionId String       @map("session_id")
+  role      String
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-
+  createdAt DateTime     @default(now()) @map("created_at")
   session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("study_messages")
 }
 
 model UploadedDocument {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  sessionId String?  @map("session_id")
-  fileName  String   @map("file_name")
-  fileUrl   String   @map("file_url")
-  fileType  String   @map("file_type")
-  createdAt DateTime @default(now()) @map("created_at")
-
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  sessionId String?       @map("session_id")
+  fileName  String        @map("file_name")
+  fileUrl   String        @map("file_url")
+  fileType  String        @map("file_type")
+  createdAt DateTime      @default(now()) @map("created_at")
+  session   StudySession? @relation(fields: [sessionId], references: [id])
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session   StudySession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@map("uploaded_documents")
 }
@@ -238,27 +216,25 @@ model GeneratedNote {
   topic      String
   subject    String?
   difficulty String?
-  type       String   // "detailed", "short", "revision", "formula", "exam"
+  type       String
   content    String
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
-
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("generated_notes")
 }
 
 model Quiz {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
+  id         String        @id @default(cuid())
+  userId     String        @map("user_id")
   topic      String
   difficulty String?
   questions  Json
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attempts   QuizAttempt[]
+  createdAt  DateTime      @default(now()) @map("created_at")
   flashcards Flashcard[]
+  attempts   QuizAttempt[]
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("quizzes")
 }
@@ -273,9 +249,8 @@ model QuizAttempt {
   weakTopics   String[] @map("weak_topics")
   strongTopics String[] @map("strong_topics")
   createdAt    DateTime @default(now()) @map("created_at")
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("quiz_attempts")
 }
@@ -288,9 +263,8 @@ model Flashcard {
   front     String
   back      String
   createdAt DateTime @default(now()) @map("created_at")
-
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz      Quiz?   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz      Quiz?    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("flashcards")
 }
@@ -301,9 +275,8 @@ model Assignment {
   topic         String
   academicLevel String   @map("academic_level")
   wordCount     Int      @map("word_count")
-  content       Json     // Introduction, Body, Conclusion, References
+  content       Json
   createdAt     DateTime @default(now()) @map("created_at")
-
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("assignments")
@@ -316,9 +289,8 @@ model Presentation {
   slideCount Int      @map("slide_count")
   audience   String?
   style      String?
-  slides     Json     // Array of Slide Content
+  slides     Json
   createdAt  DateTime @default(now()) @map("created_at")
-
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("presentations")
@@ -331,60 +303,48 @@ model MindMap {
   nodes     Json
   edges     Json
   createdAt DateTime @default(now()) @map("created_at")
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("mind_maps")
 }
 
-// ==========================================
-// Coding Hub Models
-// ==========================================
-
 model CodingSession {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
+  id        String          @id @default(cuid())
+  userId    String          @map("user_id")
   title     String
   language  String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
   messages  CodingMessage[]
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("coding_sessions")
 }
 
 model CodingMessage {
-  id        String   @id @default(cuid())
-  sessionId String   @map("session_id")
-  role      String   // "user" or "model"
+  id        String        @id @default(cuid())
+  sessionId String        @map("session_id")
+  role      String
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-
+  createdAt DateTime      @default(now()) @map("created_at")
   session   CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("coding_messages")
 }
 
-// ------------------------------------------
-// DSA Practice Models
-// ------------------------------------------
-
 model Problem {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
-  difficulty  String   // "Easy", "Medium", "Hard"
-  category    String   // e.g., "Arrays", "DP"
-  companies   String[] // e.g., ["Google", "Amazon"]
+  difficulty  String
+  category    String
+  companies   String[]
   statement   String
   constraints String
   examples    Json
   hints       String[]
   editorial   String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   submissions Submission[]
 
   @@map("problems")
@@ -396,14 +356,13 @@ model Submission {
   problemId String   @map("problem_id")
   code      String
   language  String
-  status    String   // "Accepted", "Wrong Answer", "Time Limit Exceeded"
+  status    String
   timeMs    Int?
   memoryKb  Int?
-  aiReview  Json?    // Stores Time/Space Complexity & Optimization Tips
+  aiReview  Json?
   createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("submissions")
 }
@@ -417,43 +376,36 @@ model DSAProgress {
   ranking   Int?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("dsa_progress")
 }
 
-// ------------------------------------------
-// Coding Challenges Models
-// ------------------------------------------
-
 model Challenge {
-  id          String   @id @default(cuid())
+  id          String                @id @default(cuid())
   title       String
-  difficulty  String   // "Easy", "Medium", "Hard"
+  difficulty  String
   points      Int
   description String
   startTime   DateTime
   endTime     DateTime
-  createdAt   DateTime @default(now()) @map("created_at")
-
+  createdAt   DateTime              @default(now()) @map("created_at")
   submissions ChallengeSubmission[]
 
   @@map("challenges")
 }
 
 model ChallengeSubmission {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  challengeId String   @map("challenge_id")
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  challengeId String    @map("challenge_id")
   code        String
   language    String
-  score       Int      @default(0)
-  status      String   // "Accepted", "Failed"
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score       Int       @default(0)
+  status      String
+  createdAt   DateTime  @default(now()) @map("created_at")
   challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("challenge_submissions")
 }
@@ -465,27 +417,21 @@ model Leaderboard {
   rank      Int?
   badges    String[]
   updatedAt DateTime @updatedAt @map("updated_at")
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("leaderboards")
 }
 
-// ------------------------------------------
-// GitHub Portfolio Builder Models
-// ------------------------------------------
-
 model GithubProfile {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  username    String
-  repos       Json     // Processed repo data
-  languages   Json     // Language stats
-  stars       Int      @default(0)
-  commits     Int      @default(0)
-  lastSynced  DateTime @default(now()) @map("last_synced")
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  username   String
+  repos      Json
+  languages  Json
+  stars      Int      @default(0)
+  commits    Int      @default(0)
+  lastSynced DateTime @default(now()) @map("last_synced")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("github_profiles")
 }
@@ -496,7 +442,6 @@ model GeneratedReadme {
   projectName String
   content     String
   createdAt   DateTime @default(now()) @map("created_at")
-
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("generated_readmes")
@@ -506,72 +451,63 @@ model Portfolio {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
   theme       String   @default("default")
-  content     Json     // Configured sections (Home, About, Projects)
+  content     Json
   isPublished Boolean  @default(false)
   url         String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("portfolios")
 }
 
-// ==========================================
-// Interview Hub Models
-// ==========================================
-
 model InterviewSession {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
+  id         String             @id @default(cuid())
+  userId     String             @map("user_id")
   role       String
   company    String?
-  type       String   // "technical", "behavioral", "general"
-  difficulty String   @default("medium")
-  status     String   @default("in_progress") // "in_progress", "completed"
+  type       String
+  difficulty String             @default("medium")
+  status     String             @default("in_progress")
   feedback   Json?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
   messages   InterviewMessage[]
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("interview_sessions")
 }
 
 model InterviewMessage {
-  id        String   @id @default(cuid())
-  sessionId String   @map("session_id")
-  role      String   // "user", "interviewer", "feedback"
+  id        String           @id @default(cuid())
+  sessionId String           @map("session_id")
+  role      String
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-
+  createdAt DateTime         @default(now()) @map("created_at")
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("interview_messages")
 }
 
 model ChatSession {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  title     String   @default("New Chat")
-  model     String   @default("openai/gpt-4o-mini")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages ChatMessage[]
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  title     String        @default("New Chat")
+  model     String        @default("openai/gpt-4o-mini")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  messages  ChatMessage[]
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("chat_sessions")
 }
 
 model ChatMessage {
-  id        String   @id @default(cuid())
-  sessionId String   @map("session_id")
-  role      String   // "user" | "assistant"
+  id        String      @id @default(cuid())
+  sessionId String      @map("session_id")
+  role      String
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-
+  createdAt DateTime    @default(now()) @map("created_at")
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
@@ -580,13 +516,12 @@ model ChatMessage {
 model Notification {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
-  type      String   // "system", "subscription", "achievement", "ats_update", "interview", "admin", "payment"
+  type      String
   title     String
   message   String
-  link      String?  // optional deep link e.g. "/premium"
+  link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
@@ -600,11 +535,10 @@ model Payment {
   signature String?  @map("signature")
   amount    Int
   currency  String   @default("INR")
-  plan      String   // "pro_monthly" | "pro_yearly"
-  status    String   @default("created") // "created" | "paid" | "failed"
+  plan      String
+  status    String   @default("created")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payments")
@@ -617,4 +551,40 @@ model BlacklistedToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("blacklisted_tokens")
+}
+
+model learning_analytics {
+  id                   String   @id
+  user_id              String   @unique
+  documents_count      Int      @default(0)
+  study_time_minutes   Int      @default(0)
+  concepts_learned     Int      @default(0)
+  learning_score       Int      @default(0)
+  exam_readiness       Int      @default(0)
+  current_streak       Int      @default(0)
+  longest_streak       Int      @default(0)
+  tool_usage_json      Json
+  topic_analytics_json Json
+  recommendations_json Json
+  insights_json        Json
+  created_at           DateTime @default(now())
+  updated_at           DateTime
+  users                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model learning_events {
+  id          String   @id
+  user_id     String
+  event_type  String
+  document_id String?
+  tool_used   String?
+  topic       String?
+  duration    Int?     @default(0)
+  created_at  DateTime @default(now())
+  users       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
 }

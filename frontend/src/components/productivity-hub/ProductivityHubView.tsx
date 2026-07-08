@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { api } from "@/services/api";
 import {
   Search, Calendar, DollarSign, Send, Sparkles, CheckCircle2,
   XCircle, Info, Heart, ArrowRight, Share2, Trash2, Plus, Clock,
@@ -120,12 +122,6 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     const saved = localStorage.getItem("ady-productivity-docs");
     if (saved) {
       try { setSavedDocs(JSON.parse(saved)); } catch { /* ignore */ }
-    } else {
-      const defaults: Document[] = [
-        { id: "doc-1", title: "Job Application Email - Google", type: "Email", content: "Dear Hiring Team,\n\nI am writing to express my interest...", dateCreated: new Date().toISOString() }
-      ];
-      setSavedDocs(defaults);
-      localStorage.setItem("ady-productivity-docs", JSON.stringify(defaults));
     }
   }, []);
 
@@ -160,13 +156,19 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      const generatedSubject = `Application for ${emailCat} - Professional Request`;
-      const generatedBody = `Dear hiring team,\n\nI hope this email finds you well.\n\nI am writing to submit my candidature for the ${emailCat} position. Based on my academic goals and hands-on projects, I am confident in my capacity to add value to your current workflows.\n\nHere are some details regarding my background:\n${emailDetails || "[Detail description]"}\n\nI look forward to discussing how my qualifications align with your requirements. Please find my resume attached.\n\nSincerely,\nCandidate`;
-      setSubjectLine(generatedSubject);
-      setGeneratedOutput(generatedBody);
-      setEditingContent(generatedBody);
+      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: emailCat, tone: emailTone, length: emailLength, recipient: emailRecipient, details: emailDetails }),
+      });
+      if (!res.ok) throw new Error("Email generation failed");
+      const data = await res.json();
+      setSubjectLine(data.subject || "");
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
+    } catch (err) {
+      toast.error("Email generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -176,12 +178,19 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 1800));
-      const generatedSop = `STATEMENT OF PURPOSE\n\nMy decision to pursue the ${sopCourse} at ${sopTargetUni} is rooted in my career goal to research technical integrations. During my bachelor studies, I focused on data foundations and built several applications. My target is to specialize in large scale operations.\n\nAcademic Background:\n${sopBackground || "[Academic details]"}\n\nCareer Objectives & Research:\n${sopGoals || "[Objectives]"}\n\nI am convinced that target syllabus structure and research options at ${sopTargetUni} represent the ideal environment for my academic growth.`;
+      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-sop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: sopCat, background: sopBackground, goals: sopGoals, targetUniversity: sopTargetUni, course: sopCourse }),
+      });
+      if (!res.ok) throw new Error("SOP generation failed");
+      const data = await res.json();
       setSubjectLine("");
-      setGeneratedOutput(generatedSop);
-      setEditingContent(generatedSop);
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
+    } catch (err) {
+      toast.error("SOP generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -191,14 +200,19 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 1200));
-      let post = `🚀 Thrilled to share my latest progress!\n\nI just finalized work on my new project: ${liTopic || "Full Stack Application"}.\n\nThis build represents key learnings in scale, performance tuning, and clean component structures. Grateful to everyone who provided feedback along the way!\n\nCheck it out and let me know your thoughts. 👇`;
-      if (liIncludeEmojis) post += " 💻 🔥 ✨";
-      if (liIncludeHashtags) post += "\n\n#SoftwareDevelopment #TechCommunity #BuildingInPublic";
+      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-linkedin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: liCat, format: liFormat, topic: liTopic, includeEmojis: liIncludeEmojis, includeHashtags: liIncludeHashtags }),
+      });
+      if (!res.ok) throw new Error("LinkedIn post generation failed");
+      const data = await res.json();
       setSubjectLine("");
-      setGeneratedOutput(post);
-      setEditingContent(post);
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
+    } catch (err) {
+      toast.error("LinkedIn post generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -208,12 +222,19 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 2000));
-      const content = `TECHNICAL BRIEF - ${contentCat.toUpperCase()}\n\nOverview:\nThis documentation details the structural foundations for the project. Using modern modular templates, developers can maintain reusable layers and avoid dependency conflicts.\n\nOutline & Scope:\n${contentOutline || "[Outline summary]"}\n\nKeyword Optimization:\nTarget keywords: ${contentKeywords || "[Keywords]"}\n\nKey Recommendations:\nMaintain clear documentation parameters and ensure test environments are isolated from build dependencies.`;
+      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-content`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: contentCat, style: contentStyle, keywords: contentKeywords, outline: contentOutline }),
+      });
+      if (!res.ok) throw new Error("Content generation failed");
+      const data = await res.json();
       setSubjectLine("");
-      setGeneratedOutput(content);
-      setEditingContent(content);
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
+    } catch (err) {
+      toast.error("Content generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }

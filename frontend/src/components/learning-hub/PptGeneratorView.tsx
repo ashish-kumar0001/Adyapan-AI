@@ -61,12 +61,6 @@ export function PptGeneratorView() {
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
 
-  const MOCK_SLIDES = [
-    { title: "Adyapan AI Startup Introduction", bullets: ["Unlocking student potential with generative learning models.", "Integrated AI Study Assistants, Notes Generators, and Interview preparation portals.", "A cohesive database structure designed for maximum availability."], notes: "Welcome the stakeholders and introduce the core vision of Adyapan AI." },
-    { title: "Market Opportunity & Pain Points", bullets: ["Traditional study materials are fragmented and dry.", "Placement preparation is unstructured and creates anxiety.", "Growing demand for personalized study aids in higher education."], notes: "Emphasize why personalization is the next biggest growth driver in EdTech." },
-    { title: "The Product Workspace Architecture", bullets: ["Unified dashboard with dedicated, separate modules.", "State management using Next.js client structures.", "High performance database queries with Neon PostgreSQL."], notes: "Point out the technical efficiency and structural speed parameters." }
-  ];
-
   useEffect(() => {
     try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
     try { const stored = localStorage.getItem("adyapan-ppt-history"); if (stored) setHistory(JSON.parse(stored)); } catch {}
@@ -93,12 +87,8 @@ export function PptGeneratorView() {
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "ppt", payload: { topic, slideCount: slideCount.split(" ")[0], userId: userIdRef.current } });
     } else {
-      const stages = [{ msg: "Structuring presentation outline...", prg: 25 }, { msg: "Writing slide text components...", prg: 50 }, { msg: "Creating speaker notes prompts...", prg: 75 }, { msg: "Complete (Offline Demo Mode)...", prg: 100 }];
-      let step = 0;
-      const timer = setInterval(() => {
-        if (step < stages.length) { setStatusMsg(stages[step].msg); setProgress(stages[step].prg); step++; }
-        else { clearInterval(timer); setGenerating(false); setSlides(MOCK_SLIDES); setActiveSlide(0); }
-      }, 600);
+      setGenerating(false);
+      toast.error("Cannot connect to server. Please check your connection and try again.");
     }
   };
 

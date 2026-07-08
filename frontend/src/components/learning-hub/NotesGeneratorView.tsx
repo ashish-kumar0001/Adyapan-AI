@@ -66,16 +66,6 @@ export function NotesGeneratorView() {
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
 
-  const MOCK_NOTES = {
-    topic: "Database Management Systems",
-    sections: [
-      { title: "Relational Data Model", content: "The relational data model represents data in the form of relations (tables). Each relation consists of rows (tuples) and columns (attributes). It is the most widely used data model in modern database management.", bulletPoints: ["Relation schema defines the table structure (attributes).", "Keys (Primary key, foreign key) enforce integrity bounds.", "Relational algebra provides select, project, join operations."] },
-      { title: "Normalization & Normal Forms", content: "Normalization is the process of organizing database fields and tables to minimize redundancy and dependency. It divides large tables into smaller ones and defines relationships between them.", bulletPoints: ["First Normal Form (1NF) ensures atomic values in attributes.", "Second Normal Form (2NF) removes partial dependencies.", "Third Normal Form (3NF) removes transitive dependencies."] },
-      { title: "Transaction & ACID Properties", content: "A transaction is a single logical unit of database processing. To ensure reliability and consistency, databases enforce the ACID rules on every transaction executed.", bulletPoints: ["Atomicity: Either the whole transaction succeeds, or none of it does.", "Consistency: Database transitions from one valid state to another.", "Isolation: Concurrent transactions run without interference.", "Durability: Committed data is permanently saved in the system."] }
-    ],
-    wordCount: 1850, studyTime: "45 mins", difficulty: "Intermediate"
-  };
-
   function parseMarkdownToSections(md: string): NoteSection[] {
     const sections: NoteSection[] = [];
     const lines = md.split("\n");
@@ -124,12 +114,8 @@ export function NotesGeneratorView() {
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "notes", payload: { topic, difficulty, type: noteType, userId: userIdRef.current } });
     } else {
-      const stages = [{ msg: "Extracting core syllabus...", prg: 20 }, { msg: "Analyzing subject requirements...", prg: 40 }, { msg: "Structuring chapter-wise layout...", prg: 70 }, { msg: "Generating notes modules...", prg: 90 }, { msg: "Complete (Offline Demo Mode)...", prg: 100 }];
-      let step = 0;
-      const timer = setInterval(() => {
-        if (step < stages.length) { setStatusMsg(stages[step].msg); setProgress(stages[step].prg); step++; }
-        else { clearInterval(timer); setGenerating(false); setNotesData(MOCK_NOTES); if (MOCK_NOTES.sections.length > 0) setActiveSection(MOCK_NOTES.sections[0].title); }
-      }, 600);
+      setGenerating(false);
+      toast.error("Cannot connect to server. Please check your connection and try again.");
     }
   };
 

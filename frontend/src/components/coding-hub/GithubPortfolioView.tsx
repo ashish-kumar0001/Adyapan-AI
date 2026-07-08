@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GitBranch, FileText, Layout, Send, Loader2, GitCommit, Star, Code2, Globe } from "lucide-react";
+import { toast } from "sonner";
+import { api } from "../../services/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -31,39 +33,39 @@ export function GithubPortfolioView() {
   const handleAnalyze = async () => {
     if (!username) return;
     setLoading(true);
-    // Simulate API Call
-    await new Promise(r => setTimeout(r, 2000));
-    setAnalysis({
-      summary: "A passionate full-stack developer specializing in scalable Node.js backends and responsive React interfaces.",
-      topLanguages: ["TypeScript", "Python", "Rust"],
-      estimatedCommits: 1450,
-      estimatedStars: 128,
-      keyProjects: [
-        { name: "Adyapan AI", description: "An AI-powered education platform" },
-        { name: "FastAPI-Boilerplate", description: "Production ready Python backend template" }
-      ]
-    });
+    try {
+      const res = await api.post("/github/analyze", { username });
+      setAnalysis(res.data.analysis);
+    } catch {
+      toast.error("Failed to analyze profile. Please check your connection and try again.");
+    }
     setLoading(false);
   };
 
   const handleGenerateReadme = async () => {
     if (!projectName) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setReadme(`# ${projectName}\\n\\n![License](https://img.shields.io/badge/license-MIT-blue.svg)\\n\\n${projectContext || 'A blazingly fast modern web application.'}\\n\\n## Installation\\n\\n\`\`\`bash\\nnpm install\\nnpm run dev\\n\`\`\`\\n\\n## Features\\n- Highly scalable\\n- AI Integrated\\n- Fully typed`);
+    try {
+      const res = await api.post("/github/readme", { projectName, extraContext: projectContext });
+      setReadme(res.data.readmeContent);
+    } catch {
+      toast.error("Failed to generate README. Please check your connection and try again.");
+    }
     setLoading(false);
   };
 
   const handleBuildPortfolio = async () => {
+    if (!analysis) {
+      toast.error("Please analyze your GitHub profile first.");
+      return;
+    }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 3000));
-    setPortfolio({
-      homeHero: { tagline: "Building the Future of EdTech", bio: "Full Stack Engineer @ Adyapan" },
-      aboutSection: "I started coding when I was 14 and never looked back. I love building tools that empower developers.",
-      projectsToHighlight: [
-        { title: "Adyapan AI", tech: "Next.js, Prisma", summary: "Built an AI mentor system serving 10k users." }
-      ]
-    });
+    try {
+      const res = await api.post("/github/portfolio", { profileData: JSON.stringify(analysis) });
+      setPortfolio(res.data);
+    } catch {
+      toast.error("Failed to build portfolio. Please check your connection and try again.");
+    }
     setLoading(false);
   };
 

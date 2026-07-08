@@ -95,47 +95,6 @@ const TECHNICAL_TOPICS = [
   { name: "Computer Networks", icon: null }
 ];
 
-const MOCK_MOCK_TESTS: MockTest[] = [
-  {
-    id: "mock-1",
-    name: "TCS NQT Placement Simulation",
-    company: "TCS",
-    durationMs: 45 * 60 * 1000,
-    totalQuestions: 15,
-    sections: [
-      {
-        name: "Quantitative Aptitude",
-        questions: [
-          { id: "q-1", text: "If a work can be completed by 10 men in 15 days, how many days will 15 men take to complete the same work?", options: ["8 days", "10 days", "12 days", "15 days"], correctIdx: 1, explanation: "Using work formula M1 * D1 = M2 * D2: 10 * 15 = 15 * D2 => D2 = 10.", trick: "Inverse proportion: 1.5x men means 1/1.5 = 2/3x time. 15 * (2/3) = 10." },
-          { id: "q-2", text: "A shopkeeper sells a book at a profit of 20%. If he had bought it at 10% less and sold it for ₹18 more, he would have gained 40%. Find the Cost Price of the book.", options: ["₹200", "₹300", "₹400", "₹500"], correctIdx: 1, explanation: "Let CP = 100x. SP1 = 120x. New CP = 90x. New SP = 90x * 1.4 = 126x. Difference = 6x. 6x = 18 => x = 3 => CP = 300.", trick: "Percentage difference method: 126% - 120% = 6%, which is equal to ₹18. CP = 18/0.06 = 300." }
-        ]
-      },
-      {
-        name: "Logical Reasoning",
-        questions: [
-          { id: "q-3", text: "Pointing to a photograph, a man said, 'I have no brother or sister but that man's father is my father's son.' Whose photograph was it?", options: ["His own", "His son's", "His father's", "His nephew's"], correctIdx: 1, explanation: "'My father's son' with no siblings means the speaker himself. So, that man's father is the speaker himself. The photograph is of his son.", trick: "Substitute relations backwards: My father's son = Me. Man's father = Me. So, the man is my son." }
-        ]
-      }
-    ]
-  },
-  {
-    id: "mock-2",
-    name: "Amazon Online Assessment Prep",
-    company: "Amazon",
-    durationMs: 60 * 60 * 1000,
-    totalQuestions: 20,
-    sections: [
-      {
-        name: "Technical MCQs",
-        questions: [
-          { id: "q-4", text: "Which of the following data structures is optimal for implementing a LIFO (Last In First Out) system?", options: ["Queue", "Stack", "Linked List", "Binary Tree"], correctIdx: 1, explanation: "A Stack inserts and removes elements from the same end, providing Last In First Out behavior.", trick: "LIFO = Stack; FIFO = Queue." },
-          { id: "q-5", text: "What is the worst-case time complexity of searching an element in a binary search tree (BST)?", options: ["O(1)", "O(log n)", "O(n)", "O(n log n)"], correctIdx: 2, explanation: "In the worst case of a skewed BST (degenerated into a linked list), the search requires scanning all elements, which takes O(n) time.", trick: "A skewed tree behaves like a linked list, which is O(n)." }
-        ]
-      }
-    ]
-  }
-];
-
 export function PlacementHubView({ setView, activeModule = "placement-hub", theme = "dark" }: PlacementHubViewProps) {
   const isDark = theme === "dark";
   const c = {
@@ -168,8 +127,8 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   const [testCompletedReport, setTestCompletedReport] = useState<any | null>(null);
 
   // Stats / History
-  const [completedMocksCount, setCompletedMocksCount] = useState(2);
-  const [avgAccuracy, setAvgAccuracy] = useState(82);
+  const [completedMocksCount, setCompletedMocksCount] = useState(0);
+  const [avgAccuracy, setAvgAccuracy] = useState(0);
 
   // AI Assistant panel state
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -216,36 +175,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   }, [chatMessages]);
 
   const handleStartPractice = (topicName: string, category: "aptitude" | "reasoning" | "mcqs") => {
-    // Standard mock questions pool based on topic
-    const sampleQuestions: Question[] = [
-      {
-        id: "pq-1",
-        text: `Find the missing value for ${topicName} assessment:\nIn a set of items, if 30% are defective and 140 are functional, what is the total count?`,
-        options: ["180", "200", "220", "250"],
-        correctIdx: 1,
-        explanation: "Since 30% are defective, 70% are functional. 70% of Total = 140 => Total = 140 / 0.70 = 200.",
-        trick: "Divide directly: 140 / 0.7 = 200."
-      },
-      {
-        id: "pq-2",
-        text: `Evaluate for ${topicName} context:\nA train travelling at 60 km/h crosses a pole in 9 seconds. What is the length of the train?`,
-        options: ["120 meters", "150 meters", "180 meters", "324 meters"],
-        correctIdx: 1,
-        explanation: "Speed in m/s = 60 * 5/18 = 50/3 m/s. Distance (train length) = Speed * Time = (50/3) * 9 = 150 meters.",
-        trick: "60 km/h is roughly 16.67 m/s. 16.67 * 9 = 150."
-      }
-    ];
-
-    setPracticeSession({
-      topic: topicName,
-      questions: sampleQuestions,
-      currentIdx: 0,
-      selectedOptionIdx: null,
-      submitted: false,
-      score: 0,
-      history: []
-    });
-    setShowTrick(false);
+    alert("⚠️ Practice questions are not available yet. Please check back later.");
   };
 
   const handlePracticeSubmit = () => {
@@ -344,27 +274,11 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
     setChatLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query but didn't find any direct triggers. Try asking:\n- *'Create a mock test for TCS'*\n- *'Explain percentages shortcuts'*\n- *'Generate SQL technical MCQs'*";
-
-      if (promptText.toLowerCase().includes("tcs") || promptText.toLowerCase().includes("infosys")) {
-        const targetTest = MOCK_MOCK_TESTS[0];
-        handleStartMockTest(targetTest);
-        setTab("mocks");
-        responseText = "📝 **Action Triggered**: Launched the **TCS NQT placement simulation** test environment. Complete the sections before the timer expires!";
-      } else if (promptText.toLowerCase().includes("explain")) {
-        responseText = "💡 **AI Mathematics Shortcut Guide**:\nFor percentages calculations: *X% of Y is always equal to Y% of X*.\nExample: 8% of 50 = 50% of 8 = 4. This makes arithmetic computations much faster during timed mock tests!";
-      } else if (promptText.toLowerCase().includes("mcq") || promptText.toLowerCase().includes("sql")) {
-        setTab("mcqs");
-        responseText = "🧠 **Action Triggered**: Navigated to **Technical MCQs**. Choose a domain card (e.g. *DBMS & SQL*) to begin timed practice.";
-      } else if (promptText.toLowerCase().includes("weak")) {
-        setTab("readiness");
-        responseText = "📊 **Action Triggered**: Navigated to the **Readiness Score Dashboard**. Review your strong vs weak areas and recommended learning roadmaps.";
-      }
-
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+      // Attempt real API call - currently unavailable
+      throw new Error("Placement Coach API is not available. Please check your network connection or try again later.");
     } catch (err) {
-      console.error(err);
+      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
+      setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ **Service Unavailable**: ${message}` }]);
     } finally {
       setChatLoading(false);
     }
@@ -663,43 +577,24 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                   </motion.div>
                 )}
 
-                {/* Mock lists */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {MOCK_MOCK_TESTS.map((test, i) => (
-                    <motion.div
-                      key={test.id}
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      custom={i}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className="p-5 border rounded-2xl flex flex-col justify-between"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <div className="space-y-3">
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          {test.company} Simulation
-                        </span>
-                        <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{test.name}</h4>
-                        <div className="text-[10px] space-y-1" style={{ color: c.textMuted }}>
-                          <div>Duration: {test.durationMs / 60 / 1000} Minutes</div>
-                          <div>Total Questions: {test.totalQuestions}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
-                        <motion.button
-                          onClick={() => handleStartMockTest(test)}
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.96 }}
-                          className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
-                        >
-                          <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Play size={10} className="fill-current" /></motion.span> Launch Test
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* No mock tests available */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-10 border rounded-2xl text-center"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
+                  >
+                    <FileText size={24} className="text-amber-500/60" />
+                  </motion.div>
+                  <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No tests available</p>
+                  <p className="text-xs" style={{ color: c.textMuted }}>Check back later or contact your administrator.</p>
+                </motion.div>
               </motion.div>
             )}
 
@@ -793,154 +688,19 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
+                className="p-10 border rounded-2xl text-center"
+                style={{ background: c.cardBg, borderColor: c.border }}
               >
-                {/* Readiness Circular Ring Dashboard */}
                 <motion.div
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  className="p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-8 justify-around"
-                  style={{ background: c.cardBg, borderColor: c.border }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
                 >
-                  <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="64" cy="64" r="54" stroke="var(--border-color)" strokeWidth="10" fill="transparent" style={{ stroke: c.border }} />
-                      <circle
-                        cx="64" cy="64" r="54"
-                        stroke={c.primary}
-                        strokeWidth="10" fill="transparent"
-                        strokeDasharray={2 * Math.PI * 54}
-                        strokeDashoffset={2 * Math.PI * 54 * (1 - 0.74)}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000"
-                      />
-                    </svg>
-                    <div className="absolute text-center">
-                      <span className="text-3xl font-extrabold" style={{ color: c.text }}>74%</span>
-                      <span className="block text-[8px] uppercase tracking-wider" style={{ color: c.textMuted }}>Aggregate score</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-center md:text-left">
-                    <span className="inline-block px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider">
-                      Intermediate Prep Tier
-                    </span>
-                    <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>Placement Readiness Analysis</h2>
-                    <p className="text-xs leading-relaxed max-w-md" style={{ color: c.textSec }}>
-                      Your stats show excellent programming core concepts, but need higher focus on quant (probability) and logical deduction frameworks to unlock top tier interview links.
-                    </p>
-                  </div>
+                  <Target size={24} className="text-amber-500/60" />
                 </motion.div>
-
-                {/* Readiness Breakdown list */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Category bars */}
-                  <motion.div
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    className="p-5 border rounded-2xl space-y-4"
-                    style={{ background: c.cardBg, borderColor: c.border }}
-                  >
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.text }}>Category Breakdown</h4>
-                    {[
-                      { label: "Technical Concepts", val: 85, color: "#10b981" },
-                      { label: "Quantitative Aptitude", val: 68, color: "#f59e0b" },
-                      { label: "Logical Reasoning", val: 72, color: "#06b6d4" },
-                      { label: "Coding Algorithms", val: 80, color: "#8b5cf6" },
-                      { label: "Communication Flow", val: 65, color: "#ec4899" }
-                    ].map((bar, i) => (
-                      <motion.div
-                        key={bar.label}
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={i}
-                        className="space-y-1.5"
-                      >
-                        <div className="flex justify-between text-[11px] font-bold" style={{ color: c.textSec }}>
-                          <span>{bar.label}</span>
-                          <span>{bar.val}%</span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-white/5 border overflow-hidden" style={{ borderColor: c.border }}>
-                          <div className="h-full rounded-full" style={{ width: `${bar.val}%`, background: bar.color }} />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-
-                  {/* Weak vs Strong topics */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <motion.div
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className="p-5 border rounded-2xl space-y-3"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-                        <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><CheckCircle2 size={14} /></motion.span> Strong Topics
-                      </h4>
-                      <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
-                        {["OOP / Programming Core", "Data Structures", "Percentages / Profit & Loss", "Coding Logic"].map((item, i) => (
-                          <motion.li
-                            key={item}
-                            variants={fadeUp}
-                            initial="hidden"
-                            animate="visible"
-                            custom={i}
-                          >• {item}</motion.li>
-                        ))}
-                      </ul>
-                    </motion.div>
-
-                    <motion.div
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className="p-5 border rounded-2xl space-y-3"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-red-500 flex items-center gap-1">
-                        <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><XCircle size={14} /></motion.span> Focus Topics
-                      </h4>
-                      <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
-                        {["Probability", "Permutations & Combos", "Syllogisms / Deduction", "Speech / Interview Confidence"].map((item, i) => (
-                          <motion.li
-                            key={item}
-                            variants={fadeUp}
-                            initial="hidden"
-                            animate="visible"
-                            custom={i}
-                          >• {item}</motion.li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* AI Roadmap / Learning Path */}
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  className="p-5 border rounded-2xl space-y-3 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10"
-                >
-                  <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
-                    <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Sparkles size={14} /></motion.span> AI Improvement Roadmap
-                  </h4>
-                  <ul className="space-y-2">
-                    {[
-                      { num: "1.", text: "Initiate a timed practice session for **Probability** under Aptitude to learn shortcut formulas." },
-                      { num: "2.", text: "Run a **TCS NQT placement simulation** mock test to evaluate section time management." },
-                      { num: "3.", text: "Access the **Interview Hub** once your readiness score crosses 80% to start behavioral checks." },
-                    ].map((item, i) => (
-                      <motion.li
-                        key={item.num}
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={i}
-                        className="text-xs leading-relaxed flex items-start gap-2"
-                        style={{ color: c.textSec }}
-                      >
-                        <span className="text-amber-500 font-bold">{item.num}</span>
-                        <span>{item.text}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
+                <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No readiness data yet</p>
+                <p className="text-xs" style={{ color: c.textMuted }}>Complete mock tests and practice sessions to generate your readiness analysis.</p>
               </motion.div>
             )}
 

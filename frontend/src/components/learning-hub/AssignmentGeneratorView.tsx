@@ -63,13 +63,6 @@ export function AssignmentGeneratorView() {
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
 
-  const MOCK_ASSIGNMENT = {
-    introduction: "Quantum computing introduces a paradigm shift in processing power, leveraging superposition and entanglement to execute operations far beyond classical limitations. However, this advancement poses a direct threat to existing cryptographic standards, specifically public-key infrastructures such as RSA.",
-    body: "Shor's algorithm, executable on a sufficiently large quantum computer, can solve prime factorization in polynomial time. Consequently, this compromises standard encryption techniques that rely on the computational difficulty of factoring large integers. Research into post-quantum cryptography (PQC) focuses on lattice-based cryptography, multivariate equations, and code-based cryptosystems to withstand quantum-level audits.",
-    conclusion: "In conclusion, the advent of quantum processing necessitates a rapid transition to quantum-safe standards. Developing and implementing new protocols will protect critical infrastructures against future quantum adversaries.",
-    references: ["Shor, P. W. (1994). Algorithms for quantum computation: discrete logarithms and factoring.", "NIST. (2022). Post-Quantum Cryptography Standardization Report."]
-  };
-
   useEffect(() => {
     try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
     try { const stored = localStorage.getItem("adyapan-assign-history"); if (stored) setHistory(JSON.parse(stored)); } catch {}
@@ -96,12 +89,8 @@ export function AssignmentGeneratorView() {
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "assignment", payload: { topic, level, wordCount: wordCount.split(" ")[0], userId: userIdRef.current } });
     } else {
-      const stages = [{ msg: "Researching topic sources...", prg: 25 }, { msg: "Drafting introduction module...", prg: 50 }, { msg: "Validating reference materials...", prg: 75 }, { msg: "Compiling draft document (Offline Demo)...", prg: 100 }];
-      let step = 0;
-      const timer = setInterval(() => {
-        if (step < stages.length) { setStatusMsg(stages[step].msg); setProgress(stages[step].prg); step++; }
-        else { clearInterval(timer); setGenerating(false); setResult(MOCK_ASSIGNMENT); setActiveSection("Introduction"); }
-      }, 600);
+      setGenerating(false);
+      toast.error("Cannot connect to server. Please check your connection and try again.");
     }
   };
 

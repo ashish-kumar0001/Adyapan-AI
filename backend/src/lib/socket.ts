@@ -251,6 +251,92 @@ export function initSocketServer(server: HttpServer) {
       }
     });
 
+    // Lesson generation using direct Gemini streaming API
+    socket.on("lesson:generate", async ({ topic, duration, level }: { topic: string; duration: string; level: string }) => {
+      try {
+        socket.emit("lesson:progress", { step: 0, status: "Analyzing Topic Semantics" });
+
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.7,
+            maxOutputTokens: 8192,
+          },
+        });
+
+        const prompt = `You are an expert academic tutor. Teach the topic: "${topic}" at "${level}" level, duration: "${duration}".
+
+Return a JSON object with this exact structure (no markdown, no \`\`\`):
+{
+  "learning_goal": "string",
+  "estimated_completion_time": "string",
+  "lesson_structure": ["string"],
+  "overview": "string",
+  "why_matters": "string",
+  "simple_explanation": "string",
+  "real_life_analogy": "string",
+  "example": "string",
+  "key_takeaways": ["string"],
+  "mini_quiz": [{"question": "string", "options": ["string"], "answer": "string", "explanation": "string"}],
+  "key_concepts": [{"title": "string", "content": "string", "sub_concepts": ["string"], "tips": ["string"]}],
+  "examples": [{"title": "string", "scenario": "string", "code_or_data": "string", "explanation": "string"}],
+  "practice_questions": [{"question": "string", "guidance": "string", "expected_answer": "string", "red_flag": "string"}],
+  "quiz": [{"question": "string", "options": ["string"], "answer": "string", "explanation": "string"}],
+  "summary": "string"
+}
+
+If level is "beginner":
+- Fill overview, why_matters, simple_explanation, real_life_analogy, example, key_takeaways (3), mini_quiz (1-2), key_concepts (2-3)
+- Set examples, practice_questions, quiz, summary to empty array or empty string as appropriate
+
+If level is "intermediate", "interview", or "revision":
+- Fill overview, key_concepts (3-5 with sub_concepts and tips), examples (1-3 with code), practice_questions (1-3), quiz (2-4), summary
+- Set why_matters, simple_explanation, real_life_analogy, example, key_takeaways, mini_quiz to empty values
+
+Always include: learning_goal, estimated_completion_time, lesson_structure as array of section names.
+Keep responses concise for short durations and detailed for longer durations.`;
+
+        const result = await model.generateContentStream(prompt);
+        let fullResponse = "";
+        let charCount = 0;
+        const progressMilestones = [100, 500, 1500, 3000];
+        let milestoneIdx = 0;
+        const progressMessages = [
+          "Building Custom Learning Path",
+          "Creating Real-World Analogies",
+          "Generating Comprehension Checkpoint Quiz",
+          "Finalizing Visual Revision Sheet",
+        ];
+
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          fullResponse += chunkText;
+          charCount += chunkText.length;
+
+          while (milestoneIdx < progressMilestones.length && charCount >= progressMilestones[milestoneIdx]) {
+            socket.emit("lesson:progress", { step: milestoneIdx + 1, status: progressMessages[milestoneIdx] });
+            milestoneIdx++;
+          }
+        }
+
+        const cleaned = fullResponse
+          .replace(/^```json\s*/i, "")
+          .replace(/```\s*$/, "")
+          .trim();
+        const data = JSON.parse(cleaned);
+
+        if (milestoneIdx < progressMessages.length) {
+          socket.emit("lesson:progress", { step: progressMessages.length, status: "Finalizing Visual Revision Sheet" });
+        }
+
+        socket.emit("lesson:complete", { data });
+      } catch (error) {
+        console.error("Lesson generation error:", error);
+        socket.emit("lesson:error", { error: "Failed to generate lesson. Please try again." });
+      }
+    });
+
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
     });

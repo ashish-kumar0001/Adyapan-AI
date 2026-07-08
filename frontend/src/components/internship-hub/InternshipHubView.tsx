@@ -8,6 +8,7 @@ import {
   Trash2, Plus, Clock, MessageSquare, Award, ArrowLeft, ArrowRightLeft,
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle
 } from "lucide-react";
+import { toast } from "sonner";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -62,139 +63,7 @@ interface InternshipHubViewProps {
   theme?: string;
 }
 
-const MOCK_INTERNSHIPS: Internship[] = [
-  {
-    id: "int-1",
-    role: "Machine Learning Intern",
-    company: "Google",
-    logoBg: "#4285F4",
-    location: "Bangalore, India",
-    mode: "Hybrid",
-    duration: "6 Months",
-    stipend: "₹50,000 / mo",
-    skills: ["Python", "TensorFlow", "PyTorch", "scikit-learn", "Machine Learning"],
-    description: "Join the Google Cloud AI team to build and evaluate large language model pipelines, optimize model deployment, and run hyperparameter tuning experiments.",
-    responsibilities: [
-      "Collaborate with senior researchers to train and fine-tune models.",
-      "Analyze model datasets for performance bottlenecks.",
-      "Write high-quality documentation for model parameters and validation runs."
-    ],
-    eligibility: [
-      "Pursuing a BS, MS, or PhD in Computer Science, Mathematics, or related field.",
-      "Strong proficiency in Python programming and deep learning frameworks."
-    ],
-    deadline: "2026-08-30",
-    website: "https://careers.google.com",
-    matchScore: 94,
-    matchReasons: [
-      "Your profile lists Python and Machine Learning as core skills.",
-      "You have completed a regression-based project recently."
-    ],
-    missingSkills: ["TensorFlow", "PyTorch"],
-    learningPath: [
-      "Complete 'Deep Learning Specialization' on Coursera.",
-      "Build a simple image classifier using PyTorch locally."
-    ]
-  },
-  {
-    id: "int-2",
-    role: "Frontend Developer Intern",
-    company: "Netflix",
-    logoBg: "#E50914",
-    location: "Remote, US",
-    mode: "Remote",
-    duration: "3 Months",
-    stipend: "$4,500 / mo",
-    skills: ["React", "TypeScript", "Tailwind CSS", "Next.js", "Framer Motion"],
-    description: "Help build the future of user interfaces at Netflix. You will write reusable component libraries, improve accessibility, and implement key performance metrics.",
-    responsibilities: [
-      "Develop responsive and accessible web applications using React.",
-      "Collaborate with UI designers to build fluid interactive mockups.",
-      "Debug cross-browser compatibility issues and optimize loading speeds."
-    ],
-    eligibility: [
-      "Familiarity with HTML, CSS, JavaScript, and modern JS frameworks.",
-      "Experience writing custom CSS styles or using Tailwind CSS."
-    ],
-    deadline: "2026-08-15",
-    website: "https://jobs.netflix.com",
-    matchScore: 88,
-    matchReasons: [
-      "You have active projects using React and Next.js.",
-      "You demonstrate expertise in CSS transition animations."
-    ],
-    missingSkills: ["TypeScript", "Framer Motion"],
-    learningPath: [
-      "Study 'TypeScript Deep Dive' book online.",
-      "Practice Framer Motion layouts on CodePen."
-    ]
-  },
-  {
-    id: "int-3",
-    role: "Data Science Intern",
-    company: "Amazon",
-    logoBg: "#FF9900",
-    location: "Hyderabad, India",
-    mode: "On-site",
-    duration: "6 Months",
-    stipend: "₹45,000 / mo",
-    skills: ["Python", "SQL", "Pandas", "Tableau", "PowerBI"],
-    description: "Work directly with business analysts to parse customer satisfaction metrics, run multivariate tests, and build dashboards showing growth trends.",
-    responsibilities: [
-      "Write SQL queries to extract data from data warehouses.",
-      "Clean and preprocess unstructured customer review datasets.",
-      "Build visual charts showing performance indices for leadership reviews."
-    ],
-    eligibility: [
-      "Basic understanding of statistical models and analytics tools.",
-      "Strong SQL execution capabilities."
-    ],
-    deadline: "2026-09-10",
-    website: "https://amazon.jobs",
-    matchScore: 90,
-    matchReasons: [
-      "Strong SQL knowledge demonstrated in your study session assessments.",
-      "Experience utilizing Pandas and Python scripts."
-    ],
-    missingSkills: ["Tableau"],
-    learningPath: [
-      "Take 'Tableau Certified Associate' courses on Udemy.",
-      "Build a dashboard using public datasets on Tableau Public."
-    ]
-  },
-  {
-    id: "int-4",
-    role: "DevOps Engineer Intern",
-    company: "Microsoft",
-    logoBg: "#00A4EF",
-    location: "Bangalore, India",
-    mode: "Hybrid",
-    duration: "3 Months",
-    stipend: "₹40,000 / mo",
-    skills: ["Docker", "Kubernetes", "Linux", "GitHub Actions", "Azure"],
-    description: "Support our cloud systems engineering team to deploy CI/CD pipelines, optimize cluster containers, and monitor application health dashboards.",
-    responsibilities: [
-      "Maintain automated test workflows using GitHub Actions.",
-      "Write Dockerfiles and configure Kubernetes YAML templates.",
-      "Monitor cloud resource parameters using Prometheus."
-    ],
-    eligibility: [
-      "Knowledge of Linux shell scripting.",
-      "Familiarity with containerization concepts."
-    ],
-    deadline: "2026-08-20",
-    website: "https://careers.microsoft.com",
-    matchScore: 65,
-    matchReasons: [
-      "Good familiarity with Linux and GitHub repositories."
-    ],
-    missingSkills: ["Kubernetes", "Docker", "Azure"],
-    learningPath: [
-      "Complete 'Docker for Absolute Beginners' on YouTube.",
-      "Practice basic Kubernetes operations on Katacoda."
-    ]
-  }
-];
+const EMPTY_INTERNSHIPS: Internship[] = [];
 
 const TRACKER_STATUSES = [
   "Saved",
@@ -358,18 +227,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
   };
 
   // Filter listings
-  const filteredInternships = MOCK_INTERNSHIPS.filter(item => {
-    const matchesSearch =
-      item.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesLoc = locFilter === "All" || item.location.toLowerCase().includes(locFilter.toLowerCase());
-    const matchesMode = modeFilter === "All" || item.mode === modeFilter;
-    const matchesDur = durationFilter === "All" || item.duration === durationFilter;
-
-    return matchesSearch && matchesLoc && matchesMode && matchesDur;
-  });
+  const filteredInternships = EMPTY_INTERNSHIPS;
 
   const handleAssistantSend = async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -379,27 +237,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
     setChatLoading(true);
 
     try {
-      // Simulate AI thinking and smart responses based on commands
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query, but didn't find any direct triggers. I can help search for internships or assist you with application prep. Try prompts like:\n- *'Recommend ML internships'* \n- *'Show remote internships'*";
-
-      if (promptText.toLowerCase().includes("recommend")) {
-        responseText = "🤖 **AI Recommendation Engine Activated**:\nBased on your database profile, your top skills are **React, Next.js, and Python**.\nI suggest applying to:\n1. **Netflix - Frontend Developer Intern** (88% Profile Match)\n2. **Google - Machine Learning Intern** (94% Profile Match)\n\nYou can click on the **AI Recommendations** tab above to view custom study plans for missing skills!";
-      } else if (promptText.toLowerCase().includes("remote")) {
-        setModeFilter("Remote");
-        setTab("finder");
-        responseText = "🔍 **Action Triggered**: Filters updated to **Remote** internships only. You can see updated listings in the **Internship Finder** tab.";
-      } else if (promptText.toLowerCase().includes("ml") || promptText.toLowerCase().includes("machine learning")) {
-        setSearchQuery("Machine Learning");
-        setTab("finder");
-        responseText = "🔍 **Action Triggered**: Searching for **Machine Learning** internships in the Finder tab.";
-      } else if (promptText.toLowerCase().includes("resume")) {
-        responseText = "📄 **Resume Preparation Guide**:\nI suggest improving project summaries. Click here to go to the [Resume Builder](file:///f:/Adyapan%20AI/frontend/src/components/resume-hub/ResumeBuilderView.tsx) to update your active templates.";
-      } else if (promptText.toLowerCase().includes("cover letter")) {
-        responseText = "✍️ **Cover Letter Helper**:\nI can draft a cover letter. Click on [Cover Letter Generator](file:///f:/Adyapan%20AI/frontend/src/components/resume-hub/CoverLetterView.tsx) to target a specific role and tone.";
-      }
-
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+      toast.error("AI Assistant is not available yet. Real-time responses will be enabled in a future update.");
     } catch (err) {
       console.error(err);
     } finally {
@@ -522,7 +360,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 {filteredInternships.length === 0 ? (
                   <motion.div initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.35 }} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
-                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No internships match your current search criteria.</span>
+                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No internships available.</span>
                   </motion.div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -619,93 +457,9 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 </motion.div>
 
                 {/* Recommendations Loop */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {MOCK_INTERNSHIPS.map((item, i) => (
-                    <motion.div
-                      key={item.id}
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      custom={i}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className="p-5 border rounded-2xl flex flex-col justify-between"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <div className="flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0" style={{ background: item.logoBg }}>
-                              {item.company[0]}
-                            </div>
-                            <div>
-                              <h4 className="font-extrabold text-sm truncate" style={{ color: c.text }}>{item.role}</h4>
-                              <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{item.company} · {item.location}</span>
-                            </div>
-                          </div>
-                          <div className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-black">
-                            {item.matchScore}% Match
-                          </div>
-                        </div>
-
-                        {/* Match Analysis */}
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.text }}>Why this matches:</div>
-                          <ul className="space-y-1">
-                            {item.matchReasons.map((r, idx) => (
-                              <motion.li key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
-                                <CheckCircle2 size={12} className="text-emerald-500 shrink-0 mt-0.5" />
-                                <span>{r}</span>
-                              </motion.li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Missing skills & study recommendations */}
-                        {item.missingSkills.length > 0 && (
-                          <div className="space-y-2 pt-2 border-t" style={{ borderColor: c.border }}>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Missing Skills:</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {item.missingSkills.map(s => (
-                                <span key={s} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                  {s}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider block pt-1.5" style={{ color: c.text }}>Recommended Learning Path:</div>
-                            <ul className="space-y-1">
-                              {item.learningPath.map((path, idx) => (
-                                <motion.li key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
-                                  <Info size={12} className="text-cyan-500 shrink-0 mt-0.5" />
-                                  <span>{path}</span>
-                                </motion.li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* AI Assistant Actions */}
-                      <div className="mt-6 flex flex-wrap gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.96 }}
-                          onClick={() => setView("resume-hub")}
-                          className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-bold flex items-center gap-1.5"
-                          style={{ borderColor: c.border, color: c.text }}
-                        >
-                          <FileText size={12} /> Improve Resume
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.96 }}
-                          onClick={() => setView("interview-hub")}
-                          className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 transition-colors text-[10px] font-bold flex items-center gap-1.5"
-                        >
-                          <UserCheck size={12} /> Prepare Interview
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
+                <div className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
+                  <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No internship recommendations available. Connect your profile to get started.</span>
                 </div>
               </motion.div>
             )}
