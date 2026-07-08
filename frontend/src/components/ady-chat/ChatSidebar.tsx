@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, Search, Trash2, Pin, Archive, Edit3,
-  MessageSquare, ChevronDown, User, Zap,
-  HardDrive, Clock, Star
+  Plus, Search, Trash2, MessageSquare,
+  HardDrive, Clock, Star, Zap,
 } from "lucide-react";
 import type { ChatSession } from "./types";
 
@@ -15,6 +14,7 @@ interface ChatSidebarProps {
   activeSessionId: string | null;
   isDark: boolean;
   onNewChat: () => void;
+  onToggle: () => void;
   onSelectSession: (id: string) => void;
   onDeleteSession: (id: string, e: React.MouseEvent) => void;
   userName?: string;
@@ -50,6 +50,7 @@ export function ChatSidebar({
   activeSessionId,
   isDark,
   onNewChat,
+  onToggle,
   onSelectSession,
   onDeleteSession,
   userName,
@@ -88,23 +89,52 @@ export function ChatSidebar({
             zIndex: 10,
           }}
         >
-          {/* Top: New Chat + Search */}
+          {/* Top: Toggle + New Chat + Search */}
           <div className="p-3 space-y-2 flex-shrink-0">
-            {/* New Chat button */}
-            <motion.button
-              onClick={onNewChat}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
-              style={{
-                background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                color: "#000",
-                boxShadow: "0 4px 20px rgba(245,158,11,0.3)",
-              }}
-              whileHover={{ scale: 1.02, boxShadow: "0 6px 28px rgba(245,158,11,0.45)" }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Chat</span>
-            </motion.button>
+            {/* Amber toggle + New Chat row */}
+            <div className="flex items-center gap-2">
+              {/* Sidebar toggle — amber, hamburger icon */}
+              <motion.button
+                onClick={onToggle}
+                className="flex items-center justify-center rounded-xl flex-shrink-0"
+                style={{
+                  width: 40,
+                  height: 40,
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  color: "#000",
+                  boxShadow: "0 4px 16px rgba(245,158,11,0.35)",
+                }}
+                whileHover={{ scale: 1.06, boxShadow: "0 6px 24px rgba(245,158,11,0.5)" }}
+                whileTap={{ scale: 0.93 }}
+                title="Close sidebar"
+              >
+                {/* Hamburger SVG */}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                  <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                  <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                </svg>
+              </motion.button>
+
+              {/* New Chat button */}
+              <motion.button
+                onClick={onNewChat}
+                className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                style={{
+                  background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+                  color: isDark ? "rgba(255,255,255,0.85)" : "#1e293b",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.09)"}`,
+                }}
+                whileHover={{
+                  scale: 1.02,
+                  background: isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)",
+                }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>New</span>
+              </motion.button>
+            </div>
 
             {/* Search */}
             <div

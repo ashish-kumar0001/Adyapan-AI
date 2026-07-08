@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu } from "lucide-react";
 
 import { api } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -331,20 +330,37 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       {/* Animated background — absolute within container */}
       <ChatBackground />
 
-      {/* Sidebar toggle button */}
-      <motion.button
-        className="absolute top-3 left-3 z-30 w-8 h-8 rounded-xl flex items-center justify-center"
-        style={{
-          background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-          color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
-        }}
-        onClick={() => setSidebarOpen(o => !o)}
-        whileHover={{ scale: 1.06, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }}
-        whileTap={{ scale: 0.94 }}
-      >
-        <Menu className="w-4 h-4" />
-      </motion.button>
+      {/* Sidebar toggle — amber pill, only visible when sidebar is closed */}
+      <AnimatePresence>
+        {!sidebarOpen && (
+          <motion.button
+            key="sidebar-open-btn"
+            className="absolute top-3 left-3 z-30 flex items-center justify-center rounded-xl"
+            style={{
+              width: 40,
+              height: 40,
+              background: "linear-gradient(135deg, #f59e0b, #d97706)",
+              color: "#000",
+              boxShadow: "0 4px 16px rgba(245,158,11,0.35)",
+            }}
+            initial={{ opacity: 0, scale: 0.8, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.8, x: -10 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            onClick={() => setSidebarOpen(true)}
+            whileHover={{ scale: 1.08, boxShadow: "0 6px 24px rgba(245,158,11,0.55)" }}
+            whileTap={{ scale: 0.92 }}
+            title="Open sidebar"
+          >
+            {/* Hamburger SVG */}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
+              <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+              <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+            </svg>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Body: sidebar + main — both sit as flex children, no overlay */}
       <div className="flex flex-1 overflow-hidden relative z-10">
@@ -355,6 +371,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
           activeSessionId={activeSessionId}
           isDark={isDark}
           onNewChat={handleNewSession}
+          onToggle={() => setSidebarOpen(false)}
           onSelectSession={id => setActiveSessionId(id)}
           onDeleteSession={handleDeleteSession}
           userName={userName}
