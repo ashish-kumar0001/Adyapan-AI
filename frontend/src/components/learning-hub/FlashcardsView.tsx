@@ -48,17 +48,9 @@ const mkColors = (theme: string) => {
     amberBg:      isDark ? "rgba(245,158,11,0.07)"   : "rgba(245,158,11,0.08)",
     amberBorder:  isDark ? "rgba(245,158,11,0.18)"   : "rgba(245,158,11,0.25)",
     amberActive:  isDark ? "rgba(245,158,11,0.12)"   : "rgba(245,158,11,0.1)",
-    emerald:      "#10b981",
-    emeraldBg:    isDark ? "rgba(16,185,129,0.08)"   : "rgba(16,185,129,0.06)",
-    emeraldBorder: isDark ? "rgba(16,185,129,0.18)"  : "rgba(16,185,129,0.25)",
-    violet:       "#8b5cf6",
-    violetBg:     isDark ? "rgba(139,92,246,0.08)"   : "rgba(139,92,246,0.06)",
-    violetBorder: isDark ? "rgba(139,92,246,0.18)"   : "rgba(139,92,246,0.2)",
     rose:         "#f43f5e",
     roseBg:       isDark ? "rgba(244,63,94,0.07)"    : "rgba(244,63,94,0.06)",
     roseBorder:   isDark ? "rgba(244,63,94,0.18)"    : "rgba(244,63,94,0.2)",
-    purpleBg:     isDark ? "rgba(139,92,246,0.06)"   : "rgba(139,92,246,0.05)",
-    purpleBorder: isDark ? "rgba(139,92,246,0.14)"   : "rgba(139,92,246,0.15)",
     cyanBg:       isDark ? "rgba(6,182,212,0.06)"    : "rgba(6,182,212,0.05)",
     cyanBorder:   isDark ? "rgba(6,182,212,0.14)"    : "rgba(6,182,212,0.15)",
     green:        "#10b981",
@@ -213,7 +205,7 @@ export function FlashcardsView() {
 
   const getRetentionLevel = (ret: number) => {
     if (ret >= 85) return { text: "Strong Recall", color: "text-emerald-400" };
-    if (ret >= 60) return { text: "Moderate retention", color: "text-indigo-400" };
+    if (ret >= 60) return { text: "Moderate retention", color: "text-amber-400" };
     return { text: "Needs spaced review", color: "text-rose-400" };
   };
 
@@ -236,8 +228,8 @@ export function FlashcardsView() {
       const duration = 3 * 1000;
       const end = Date.now() + duration;
       const frame = () => {
-        confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors: ["#8b5cf6", "#6366f1", "#10b981"] });
-        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors: ["#8b5cf6", "#6366f1", "#10b981"] });
+        confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors: ["#f59e0b", "#d97706", "#10b981"] });
+        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors: ["#f59e0b", "#d97706", "#10b981"] });
         if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
@@ -370,7 +362,7 @@ export function FlashcardsView() {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 280, damping: 18 }}
             className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)" }}
+            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
           >
             <Layers size={18} style={{ color: "#fff" }} />
           </motion.div>
@@ -381,7 +373,7 @@ export function FlashcardsView() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}>
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}>
             <Flame size={13} className="text-orange-400" />
             <span>{studyStreak} Day Streak</span>
           </div>
@@ -406,12 +398,12 @@ export function FlashcardsView() {
             >
               <motion.div className="p-6 rounded-3xl relative overflow-hidden" style={{ background: c.surface, border: `2px solid ${c.border}` }}>
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute top-4 right-8 w-24 h-24 rounded-full" style={{ opacity: c.isDark ? 0.05 : 0.08, background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
-                  <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full" style={{ opacity: c.isDark ? 0.04 : 0.06, background: "radial-gradient(circle, #6366f1, transparent)" }} />
+                  <div className="absolute top-4 right-8 w-24 h-24 rounded-full" style={{ opacity: c.isDark ? 0.05 : 0.08, background: "radial-gradient(circle, #f59e0b, transparent)" }} />
+                  <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full" style={{ opacity: c.isDark ? 0.04 : 0.06, background: "radial-gradient(circle, #d97706, transparent)" }} />
                 </div>
                 <div className="relative z-10 space-y-4">
                   <div className="flex flex-col items-center text-center space-y-1.5">
-                    <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 items-center justify-center text-white shadow-lg mb-1">
+                    <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-tr from-amber-600 to-orange-600 items-center justify-center text-white shadow-lg mb-1">
                       <Brain size={22} />
                     </div>
                     <h2 className="text-lg font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Flashcard Generator</h2>
@@ -455,7 +447,7 @@ export function FlashcardsView() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-semibold flex items-center gap-1.5" style={{ color: c.textSec }}>
-                          <Sliders size={13} style={{ color: "#a78bfa" }} />
+                          <Sliders size={13} style={{ color: "#f59e0b" }} />
                           Learning Mode
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -471,11 +463,11 @@ export function FlashcardsView() {
                               className="p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-1"
                               style={
                                 mode === m.id
-                                  ? { background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: c.text }
+                                  ? { background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.text }
                                   : { background: "transparent", border: `1px solid ${c.border}`, color: c.textMuted }
                               }
                             >
-                              <span className="text-xs font-bold" style={{ color: mode === m.id ? "#a78bfa" : c.textSec }}>{m.label}</span>
+                              <span className="text-xs font-bold" style={{ color: mode === m.id ? "#f59e0b" : c.textSec }}>{m.label}</span>
                               <span className="text-[9px]" style={{ color: c.textMuted }}>{m.desc}</span>
                             </button>
                           ))}
@@ -484,7 +476,7 @@ export function FlashcardsView() {
 
                       <div className="space-y-2">
                         <label className="text-xs font-semibold flex items-center gap-1.5" style={{ color: c.textSec }}>
-                          <Sparkles size={13} style={{ color: "#a78bfa" }} />
+                          <Sparkles size={13} style={{ color: "#f59e0b" }} />
                           Flashcard Count
                         </label>
                         <div className="grid grid-cols-3 gap-2">
@@ -495,11 +487,11 @@ export function FlashcardsView() {
                               className="p-3.5 rounded-xl border text-center transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-1"
                               style={
                                 cardCount === count
-                                  ? { background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: c.text }
+                                  ? { background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.text }
                                   : { background: "transparent", border: `1px solid ${c.border}`, color: c.textMuted }
                               }
                             >
-                              <span className="text-sm font-extrabold" style={{ color: cardCount === count ? "#a78bfa" : c.textSec }}>{count}</span>
+                              <span className="text-sm font-extrabold" style={{ color: cardCount === count ? "#f59e0b" : c.textSec }}>{count}</span>
                               <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: c.textMuted }}>Cards</span>
                             </button>
                           ))}
@@ -512,7 +504,7 @@ export function FlashcardsView() {
                       whileTap={{ scale: 0.98 }}
                       onClick={handleGenerate}
                       className="w-full py-2.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all"
-                      style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff" }}
+                      style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff" }}
                     >
                       <Play size={15} fill="currentColor" />
                       Generate Flashcards
@@ -523,12 +515,12 @@ export function FlashcardsView() {
 
               <div>
                 <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                  <Sparkles size={15} style={{ color: "#a78bfa" }} /> How It Works
+                  <Sparkles size={15} style={{ color: "#f59e0b" }} /> How It Works
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { step: "01", title: "Configure", desc: "Set a topic, mode, and card count for AI generation.", icon: <Brain size={18} style={{ color: "#a78bfa" }} /> },
-                    { step: "02", title: "Study", desc: "Flip each card, review explanations, and rate your recall.", icon: <Layers size={18} style={{ color: "#6366f1" }} /> },
+                    { step: "01", title: "Configure", desc: "Set a topic, mode, and card count for AI generation.", icon: <Brain size={18} style={{ color: "#f59e0b" }} /> },
+                    { step: "02", title: "Study", desc: "Flip each card, review explanations, and rate your recall.", icon: <Layers size={18} style={{ color: "#d97706" }} /> },
                     { step: "03", title: "Review", desc: "Get cognitive insights, retention stats, and XP rewards.", icon: <Award size={18} style={{ color: c.amber }} /> },
                   ].map((item, i) => (
                     <motion.div
@@ -543,7 +535,7 @@ export function FlashcardsView() {
                       <div className="flex items-start gap-3 mb-3">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>{item.icon}</div>
                         <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: "#a78bfa" }}>Step {item.step}</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: "#f59e0b" }}>Step {item.step}</span>
                           <h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4>
                         </div>
                       </div>
@@ -565,14 +557,14 @@ export function FlashcardsView() {
               className="flex flex-col items-center justify-center py-16 gap-8"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-violet-600/10 rounded-full blur-2xl animate-pulse" />
-                <div className="h-16 w-16 rounded-full border-4 border-violet-500/10 border-t-violet-500 animate-spin relative z-10" />
+                <div className="absolute inset-0 bg-amber-600/10 rounded-full blur-2xl animate-pulse" />
+                <div className="h-16 w-16 rounded-full border-4 border-amber-500/10 border-t-amber-500 animate-spin relative z-10" />
               </div>
 
               <div className="text-center space-y-2">
                 <h3 className="text-base font-bold uppercase tracking-wider" style={{ color: c.text }}>Crafting Personalized Deck</h3>
                 <p className="text-xs" style={{ color: c.textMuted }}>
-                  Synthesising questions for <span style={{ color: "#a78bfa", fontWeight: 600 }}>&ldquo;{inputTopic || topic}&rdquo;</span>.
+                  Synthesising questions for <span style={{ color: "#f59e0b", fontWeight: 600 }}>&ldquo;{inputTopic || topic}&rdquo;</span>.
                 </p>
               </div>
 
@@ -589,7 +581,7 @@ export function FlashcardsView() {
                           isDone
                             ? { background: c.greenBg, border: `1px solid ${c.green}40`, color: c.green }
                             : isCurrent
-                            ? { background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }
+                            ? { background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }
                             : { background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }
                         }
                       >
@@ -612,7 +604,7 @@ export function FlashcardsView() {
                           animate={{ opacity: [1, 0.3, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
                           className="w-1.5 h-1.5 rounded-full ml-auto shrink-0"
-                          style={{ background: "#a78bfa" }}
+                          style={{ background: "#f59e0b" }}
                         />
                       )}
                     </div>
@@ -634,7 +626,7 @@ export function FlashcardsView() {
               <div className="text-center space-y-1">
                 <span
                   className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded"
-                  style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}
+                  style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}
                 >
                   Topic: {topic} {isMemoryModeActive && "(Review Pack)"}
                 </span>
@@ -670,7 +662,7 @@ export function FlashcardsView() {
                 <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: "linear-gradient(90deg, #8b5cf6, #6366f1)" }}
+                    style={{ background: "linear-gradient(90deg, #f59e0b, #d97706)" }}
                     initial={{ width: 0 }}
                     animate={{ width: `${((currentCardIndex + 1) / cards.length) * 100}%` }}
                     transition={{ type: "spring", stiffness: 100, damping: 15 }}
@@ -689,7 +681,7 @@ export function FlashcardsView() {
                   <button
                     onClick={() => setIsFlipped((f) => !f)}
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                    style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}
+                    style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}
                   >
                     <RotateCw size={13} /> Flip Card
                   </button>
@@ -724,7 +716,7 @@ export function FlashcardsView() {
                         handleNext();
                       }}
                       className="py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex flex-col items-center gap-0.5"
-                      style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}
+                      style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}
                     >
                       <span>Medium</span>
                       <span className="text-[8px] font-semibold" style={{ opacity: 0.7 }}>70% Recall</span>
@@ -799,7 +791,7 @@ export function FlashcardsView() {
                   <div className="space-y-2">
                     {[
                       { label: "Easy", count: easyCount, color: c.green, bg: c.greenBg },
-                      { label: "Medium", count: mediumCount, color: "#a78bfa", bg: c.purpleBg },
+                      { label: "Medium", count: mediumCount, color: "#f59e0b", bg: c.amberBg },
                       { label: "Hard", count: hardCount, color: c.rose, bg: c.roseBg },
                     ].map((item) => (
                       <div key={item.label} className="space-y-1">
@@ -817,14 +809,14 @@ export function FlashcardsView() {
 
                 {/* XP / Level / Streak */}
                 <div className="rounded-2xl p-5 flex flex-col justify-between text-center relative overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}`, height: "180px" }}>
-                  <div className="absolute top-0 right-0 h-20 w-20 rounded-full blur-xl pointer-events-none" style={{ background: `${c.purpleBg}` }} />
+                  <div className="absolute top-0 right-0 h-20 w-20 rounded-full blur-xl pointer-events-none" style={{ background: `${c.amberBg}` }} />
                   <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: c.textMuted }}>Gamification Summary</span>
                   <div className="my-auto space-y-1">
-                    <h4 className="text-3xl font-black" style={{ color: "#a78bfa" }}>+{xpEarned} XP</h4>
+                    <h4 className="text-3xl font-black" style={{ color: "#f59e0b" }}>+{xpEarned} XP</h4>
                     <p className="text-[10px] font-semibold uppercase" style={{ color: c.textMuted }}>Accumulated reward</p>
                   </div>
                   <div className="flex justify-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}>Streak Saved!</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}>Streak Saved!</span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>Lv. {level}</span>
                   </div>
                 </div>
@@ -833,7 +825,7 @@ export function FlashcardsView() {
               {/* Cognitive Insights */}
               <div className="w-full rounded-2xl p-6 space-y-4" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <div className="flex items-center gap-2 pb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
-                  <Brain size={18} style={{ color: "#a78bfa" }} />
+                  <Brain size={18} style={{ color: "#f59e0b" }} />
                   <h3 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: c.text }}>Cognitive Analysis & Insights</h3>
                 </div>
 
@@ -864,7 +856,7 @@ export function FlashcardsView() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => window.location.href = `/quiz?topic=${encodeURIComponent(topic)}&mode=${encodeURIComponent(mode)}&autostart=true`}
                   className="flex-1 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all"
-                  style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff" }}
+                  style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff" }}
                 >
                   <Brain size={14} /> Test My Knowledge
                 </motion.button>
@@ -949,7 +941,7 @@ function CardFace({
     <>
       {isActive && (
         <>
-          <motion.div style={{ opacity: leftOpacity, background: "rgba(139,92,246,0.9)", color: "#fff", borderColor: "rgba(139,92,246,0.2)" }} className="absolute top-8 right-8 z-30 px-4 py-2 rounded-lg font-bold border shadow-lg pointer-events-none uppercase text-sm tracking-wider flex items-center gap-1.5">
+          <motion.div style={{ opacity: leftOpacity, background: "rgba(245,158,11,0.9)", color: "#fff", borderColor: "rgba(245,158,11,0.2)" }} className="absolute top-8 right-8 z-30 px-4 py-2 rounded-lg font-bold border shadow-lg pointer-events-none uppercase text-sm tracking-wider flex items-center gap-1.5">
             Next Card
           </motion.div>
           <motion.div style={{ opacity: rightOpacity, background: "rgba(39,39,42,0.95)", color: "#d4d4d8", borderColor: "rgba(255,255,255,0.05)" }} className="absolute top-8 left-8 z-30 px-4 py-2 rounded-lg font-bold border shadow-lg pointer-events-none uppercase text-sm tracking-wider flex items-center gap-1.5">
@@ -992,20 +984,20 @@ function CardFace({
           style={{ backfaceVisibility: "hidden", ...cardFrontStyle(c) }}
           className="absolute inset-0 w-full h-full rounded-2xl p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl border transition-all duration-300"
         >
-          <div className="absolute -top-[30%] -right-[30%] w-60 h-60 rounded-full blur-[65px] pointer-events-none" style={{ background: "rgba(139,92,246,0.1)" }} />
+          <div className="absolute -top-[30%] -right-[30%] w-60 h-60 rounded-full blur-[65px] pointer-events-none" style={{ background: "rgba(245,158,11,0.1)" }} />
 
           <div className="flex justify-between items-center relative z-10">
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border" style={{ background: "rgba(139,92,246,0.05)", borderColor: "rgba(139,92,246,0.2)", color: "#a78bfa" }}>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border" style={{ background: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>
               {card.difficulty} Mode
             </span>
             <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: c.textMuted }}>
-              <RefreshCw size={11} className="animate-spin-slow" style={{ color: "#a78bfa" }} />
+              <RefreshCw size={11} className="animate-spin-slow" style={{ color: "#f59e0b" }} />
               <span>Tap to Flip</span>
             </div>
           </div>
 
           <div className="my-auto text-center space-y-4 relative z-10 px-2">
-            <div className="inline-flex h-9 w-9 rounded-lg items-center justify-center mx-auto" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}>
+            <div className="inline-flex h-9 w-9 rounded-lg items-center justify-center mx-auto" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}>
               <Sparkles size={16} />
             </div>
             <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight leading-snug" style={{ color: "#fff" }}>
@@ -1052,12 +1044,12 @@ function CardFace({
             </div>
 
             {card.memoryTip && (
-              <div className="rounded-xl p-3 flex gap-2.5 items-start border" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.08))", borderColor: "rgba(139,92,246,0.1)" }}>
-                <div className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-0.5" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}`, color: "#a78bfa" }}>
+              <div className="rounded-xl p-3 flex gap-2.5 items-start border" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.08))", borderColor: "rgba(245,158,11,0.1)" }}>
+                <div className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-0.5" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: "#f59e0b" }}>
                   <Lightbulb size={13} />
                 </div>
                 <div>
-                  <span className="text-[9px] uppercase font-bold tracking-wider block mb-0.5" style={{ color: "#a78bfa" }}>Memory Tip</span>
+                  <span className="text-[9px] uppercase font-bold tracking-wider block mb-0.5" style={{ color: "#f59e0b" }}>Memory Tip</span>
                   <p className="text-[11px] leading-normal font-medium" style={{ color: c.textSec }}>{card.memoryTip}</p>
                 </div>
               </div>
