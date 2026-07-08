@@ -30,7 +30,7 @@ export function UserMessage({ message, index, isDark, onEdit }: UserMessageProps
 
   return (
     <motion.div
-      className="flex justify-end mb-5"
+      className="flex justify-end mb-5 group"
       initial={{ opacity: 0, x: 20, scale: 0.97 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{
@@ -69,7 +69,7 @@ export function UserMessage({ message, index, isDark, onEdit }: UserMessageProps
           </motion.div>
 
           {/* Action icons under the user chat bubble */}
-          <div className="flex items-center gap-2.5 mt-1.5 mr-1 flex-shrink-0">
+          <div className="flex items-center gap-2.5 mt-1.5 mr-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {/* Copy button */}
             <motion.button
               onClick={handleCopy}
