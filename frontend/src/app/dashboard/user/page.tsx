@@ -21,7 +21,6 @@ import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGen
 import { PptGeneratorView } from "@/components/learning-hub/PptGeneratorView";
 import { MindMapsView } from "@/components/learning-hub/MindMapsView";
 import { FlashcardsView } from "@/components/learning-hub/FlashcardsView";
-import { LearnView } from "@/components/learning-hub/LearnView";
 import { CodingAssistantView } from "@/components/coding-hub/CodingAssistantView";
 import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
 import { CodingChallengesView } from "@/components/coding-hub/CodingChallengesView";
@@ -105,7 +104,6 @@ const sidebarItems: SidebarItem[] = [
       { label: "PPT Generator", href: "#" },
       { label: "Mind Maps", href: "#" },
       { label: "Flashcards", href: "#" },
-      { label: "Learn", href: "#" },
     ],
   },
   {
@@ -283,7 +281,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "PPT Generator") onViewTool("ppt-generator");
                       else if (sub.label === "Mind Maps") onViewTool("mind-maps");
                       else if (sub.label === "Flashcards") onViewTool("flashcards");
-                      else if (sub.label === "Learn") onViewTool("learn");
                       else if (sub.label === "Coding Assistant") onViewTool("coding-assistant");
                       else if (sub.label === "DSA Practice") onViewTool("dsa-practice");
                       else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
@@ -1763,8 +1760,6 @@ function UserDashboardContent() {
           <MindMapsView />
         ) : activeView === "flashcards" ? (
           <FlashcardsView />
-        ) : activeView === "learn" ? (
-          <LearnView />
         ) : activeView === "coding-assistant" ? (
           <CodingAssistantView />
         ) : activeView === "dsa-practice" ? (

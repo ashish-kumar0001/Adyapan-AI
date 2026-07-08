@@ -216,43 +216,51 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
               transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              {/* Logo icon */}
+              {/* Logo icon — 3D animated orb */}
               <motion.div
-                className="relative"
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="relative flex flex-col items-center justify-center"
+                style={{ perspective: 1000 }}
               >
-                <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                <motion.img
+                  src="/assets/logo.png"
+                  alt="Adyapan Logo"
+                  className="w-28 h-28 object-contain select-none pointer-events-none"
                   style={{
-                    background: "linear-gradient(135deg, rgba(245,158,11,0.25) 0%, rgba(245,158,11,0.08) 100%)",
-                    border: "1px solid rgba(245,158,11,0.4)",
-                    boxShadow: "0 0 60px rgba(245,158,11,0.3), 0 0 120px rgba(245,158,11,0.1), inset 0 1px 0 rgba(255,255,255,0.1)",
+                    filter: "drop-shadow(0 15px 35px rgba(245,158,11,0.35))",
+                    transformStyle: "preserve-3d",
                   }}
-                >
-                  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-                    <path
-                      d="M22 6L28 18H16L22 6Z"
-                      fill="rgba(245,158,11,0.9)"
-                    />
-                    <path
-                      d="M16 18L10 30H22L16 18Z"
-                      fill="rgba(245,158,11,0.6)"
-                    />
-                    <path
-                      d="M28 18L22 30H34L28 18Z"
-                      fill="rgba(245,158,11,0.75)"
-                    />
-                    <circle cx="22" cy="22" r="3" fill="white" opacity="0.9" />
-                  </svg>
-                </div>
+                  animate={{
+                    y: [0, -12, 0],
+                    rotateY: [-12, 12, -12],
+                    rotateX: [-8, 8, -8],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
 
-                {/* Pulse ring */}
+                {/* Floating floor shadow under the orb */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{ border: "1px solid rgba(245,158,11,0.4)" }}
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                  className="absolute rounded-full"
+                  style={{
+                    width: 70,
+                    height: 8,
+                    background: "rgba(0, 0, 0, 0.6)",
+                    filter: "blur(6px)",
+                    bottom: -8,
+                    zIndex: -1,
+                  }}
+                  animate={{
+                    scale: [1, 0.8, 1],
+                    opacity: [0.5, 0.25, 0.5],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
                 />
               </motion.div>
 

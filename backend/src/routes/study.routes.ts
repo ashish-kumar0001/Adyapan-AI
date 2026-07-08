@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { generateStudyResponse } from "../lib/ai/gemini";
+import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
 import { prisma } from "../config/prisma";
 import { generateJSON } from "../lib/ai/openrouter";
 import { env } from "../config/env";
@@ -115,6 +115,17 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
   } catch (error) {
     console.error("Document analysis error:", error);
     res.status(500).json({ error: "Failed to analyze document. Please try again." });
+  }
+});
+
+// Generate AI lesson on a topic (migrated from learn module)
+studyRouter.post("/generate-lesson", async (req, res) => {
+  try {
+    const { topic, duration, level } = req.body;
+    const result = await generateLearnLesson(topic, duration || "10m", level || "intermediate");
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ error: "Lesson generation failed" });
   }
 });
 

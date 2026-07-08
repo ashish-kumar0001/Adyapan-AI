@@ -23,7 +23,6 @@ import { adyChatRouter } from "./ady-chat.routes";
 import { paymentRouter } from "./payment.routes";
 import { notificationRouter } from "./notification.routes";
 import { flashcardsRouter } from "./flashcards.routes";
-import { learnRouter } from "./learn.routes";
 
 export const apiRouter = Router();
 
@@ -51,6 +50,5 @@ apiRouter.use("/github", githubRouter);
 apiRouter.use("/interview", interviewRouter);
 apiRouter.use("/ady-chat", adyChatRouter);
 apiRouter.use("/flashcards", flashcardsRouter);
-apiRouter.use("/learn", learnRouter);
 apiRouter.use("/payment", paymentRouter);
 apiRouter.use("/notifications", notificationRouter);
