@@ -54,6 +54,12 @@ export function initSocketServer(server: HttpServer) {
     // Real-time Study Assistant Streaming (uses actual Gemini API)
     socket.on("study:message", async ({ sessionId, query, context }: { sessionId: string; query: string; context: string }) => {
       try {
+        const userId = await resolveUserId({});
+        if (!userId || userId === "unknown") {
+          socket.emit("study:error", { error: "Authentication required." });
+          return;
+        }
+
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const prompt = `
           You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
@@ -76,34 +82,27 @@ export function initSocketServer(server: HttpServer) {
           io.to(sessionId).emit("study:chunk", { text: chunkText });
         }
 
-        let session = await prisma.studySession.findUnique({
+        const session = await prisma.studySession.findUnique({
           where: { id: sessionId },
         });
 
+        if (session && session.userId !== userId) {
+          socket.emit("study:error", { error: "Session does not belong to you." });
+          return;
+        }
+
         if (!session) {
-          const firstUser = await prisma.user.findFirst();
-          if (firstUser) {
-            session = await prisma.studySession.create({
-              data: {
-                id: sessionId,
-                userId: firstUser.id,
-                topic: "General Study",
-              },
-            });
-          }
-        }
-
-        if (session) {
-          await prisma.studyMessage.create({
-            data: { sessionId, role: "user", content: query },
-          });
-          await prisma.studyMessage.create({
-            data: { sessionId, role: "model", content: fullResponse },
+          await prisma.studySession.create({
+            data: { id: sessionId, userId, topic: "General Study" },
           });
         }
-
+        await prisma.studyMessage.createMany({
+          data: [
+            { sessionId, role: "user", content: query },
+            { sessionId, role: "model", content: fullResponse },
+          ],
+        });
         io.to(sessionId).emit("study:complete", { fullResponse });
-
       } catch (error) {
         console.error("Socket study assistant streaming error:", error);
         io.to(sessionId).emit("study:error", { error: "Failed to process query in real-time." });
@@ -114,8 +113,7 @@ export function initSocketServer(server: HttpServer) {
     async function resolveUserId(payload: any): Promise<string> {
       if (payload.userId) return payload.userId;
       if (socket.data?.userId) return socket.data.userId;
-      const firstUser = await prisma.user.findFirst();
-      return firstUser?.id || "unknown";
+      return "unknown";
     }
 
     // Real-time AI Generation for all Learning Hub tools

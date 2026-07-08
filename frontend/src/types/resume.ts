@@ -9,6 +9,7 @@ export type ResumeHubViewType =
   | "ats-checker"
   | "cover-letter"
   | "linkedin-optimizer"
+  | "lesson-view"
   | "study-assistant"
   | "notes-generator"
   | "quiz-generator"

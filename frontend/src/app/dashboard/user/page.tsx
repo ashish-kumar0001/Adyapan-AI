@@ -1503,6 +1503,7 @@ function UserDashboardContent() {
   const [toast, setToast] = useState(false);
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: any; duration: string; level: string } | null>(null);
   const selectedTemplate = "ATS Modern";
   const { socket, isConnected } = useSocket();
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -1748,7 +1749,9 @@ function UserDashboardContent() {
         ) : activeView === "linkedin-optimizer" ? (
           <LinkedInView setView={setActiveView} />
         ) : activeView === "study-assistant" ? (
-          <StudyAssistantView />
+          <StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} />
+        ) : activeView === "lesson-view" && lessonResult ? (
+          <StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} />
         ) : activeView === "notes-generator" ? (
           <NotesGeneratorView />
         ) : activeView === "quiz-generator" ? (

@@ -280,18 +280,6 @@ export function ChatInput({
         className="hidden"
         onChange={onFileSelect}
       />
-
-      {/* Footer hint */}
-      <motion.div
-        className="text-center mt-1.5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 0.5 }}
-      >
-        <span className="text-[9px]" style={{ color: textMuted, letterSpacing: "0.03em" }}>
-          Press <kbd className="font-mono">Enter</kbd> to send · <kbd className="font-mono">Shift+Enter</kbd> for new line
-        </span>
-      </motion.div>
     </motion.div>
   );
 }

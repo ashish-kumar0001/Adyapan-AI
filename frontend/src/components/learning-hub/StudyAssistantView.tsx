@@ -110,7 +110,7 @@ const modeConfig = {
   revision: { borderColor: "border-amber-500/15", textColor: "text-amber-400", accentBg: "bg-amber-500/10", glowColor: "from-amber-500/20 to-red-500/20", icon: Zap }
 };
 
-function parseMarkdown(text: string): React.ReactNode {
+function parseMarkdown(text: string, isDark: boolean): React.ReactNode {
   if (!text) return null;
   const blocks = text.split(/(```[\s\S]*?```)/g);
   return (
@@ -121,9 +121,9 @@ function parseMarkdown(text: string): React.ReactNode {
           const lang = match ? match[1] : "";
           const codeContent = match ? match[2].trim() : block.slice(3, -3).trim();
           return (
-            <div key={blockIdx} className="my-3 rounded-lg border overflow-hidden font-mono text-[11px] leading-relaxed" style={{ border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.45)" }}>
-              {lang && <div className="flex justify-between items-center px-4 py-1.5 border-b text-[9px] uppercase" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.3)", color: "rgba(255,255,255,0.3)" }}><span>{lang}</span></div>}
-              <pre className="p-3 overflow-x-auto" style={{ color: "rgba(255,255,255,0.7)" }}><code>{codeContent}</code></pre>
+            <div key={blockIdx} className="my-3 rounded-lg border overflow-hidden font-mono text-[11px] leading-relaxed" style={{ border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(0,0,0,0.45)" : "#f1f5f9" }}>
+              {lang && <div className="flex justify-between items-center px-4 py-1.5 border-b text-[9px] uppercase" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", background: isDark ? "rgba(0,0,0,0.3)" : "#e2e8f0", color: isDark ? "rgba(255,255,255,0.3)" : "#64748b" }}><span>{lang}</span></div>}
+              <pre className="p-3 overflow-x-auto" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "#334155" }}><code>{codeContent}</code></pre>
             </div>
           );
         }
@@ -131,8 +131,8 @@ function parseMarkdown(text: string): React.ReactNode {
         return (
           <span key={blockIdx}>
             {inlineParts.map((part, inlineIdx) => {
-              if (part.startsWith("**") && part.endsWith("**")) return <strong key={inlineIdx} className="font-extrabold" style={{ color: "rgba(255,255,255,0.95)" }}>{part.slice(2, -2)}</strong>;
-              if (part.startsWith("*") && part.endsWith("*")) return <em key={inlineIdx} className="italic" style={{ color: "rgba(255,255,255,0.7)" }}>{part.slice(1, -1)}</em>;
+              if (part.startsWith("**") && part.endsWith("**")) return <strong key={inlineIdx} className="font-extrabold" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "#0f172a" }}>{part.slice(2, -2)}</strong>;
+              if (part.startsWith("*") && part.endsWith("*")) return <em key={inlineIdx} className="italic" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "#475569" }}>{part.slice(1, -1)}</em>;
               if (part.startsWith("`") && part.endsWith("`")) return <code key={inlineIdx} className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ background: "rgba(245,158,11,0.1)", borderColor: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>{part.slice(1, -1)}</code>;
               if (part === "\n") return <br key={inlineIdx} />;
               return <span key={inlineIdx}>{part}</span>;
@@ -166,7 +166,10 @@ const slideRight = {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function StudyAssistantView() {
+export function StudyAssistantView({ onViewLesson, lessonToView }: {
+  onViewLesson?: (data: { topic: string; lesson: UnifiedLesson; duration: string; level: string }) => void
+  lessonToView?: { topic: string; lesson: UnifiedLesson; duration: string; level: string }
+}) {
   const theme = useTheme();
   const c = mkColors(theme);
   const { socket } = useSocket();
@@ -377,8 +380,6 @@ export function StudyAssistantView() {
       socket.off("lesson:progress", onProgress);
       socket.off("lesson:complete", onComplete);
       socket.off("lesson:error", onError);
-      setLessonData(payload.data);
-      setCurrentTopic(targetTopic);
       setIsGenerating(false);
       // Save to topic history
       const newEntry = { topic: targetTopic, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), duration, level, lesson: payload.data };
@@ -387,6 +388,12 @@ export function StudyAssistantView() {
         localStorage.setItem("adyapan-topic-history", JSON.stringify(updated));
         return updated;
       });
+      if (onViewLesson) {
+        onViewLesson({ topic: targetTopic, lesson: payload.data, duration, level });
+      } else {
+        setLessonData(payload.data);
+        setCurrentTopic(targetTopic);
+      }
     };
     const onError = (payload: { error: string }) => {
       socket.off("lesson:progress", onProgress);
@@ -420,7 +427,7 @@ export function StudyAssistantView() {
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <BookOpen size={14} /> Simple Overview
             </div>
-            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.overview)}</div>
+            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.overview, c.isDark)}</div>
           </div>
         </div>
       </motion.div>
@@ -430,7 +437,7 @@ export function StudyAssistantView() {
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Lightbulb size={14} /> Why This Matters
             </div>
-            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.why_matters || "")}</div>
+            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.why_matters || "", c.isDark)}</div>
           </div>
         </div>
       </motion.div>
@@ -440,7 +447,7 @@ export function StudyAssistantView() {
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Sparkles size={14} /> Simple Explanation
             </div>
-            <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: c.textSec }}>{parseMarkdown(data.simple_explanation || "")}</div>
+            <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: c.textSec }}>{parseMarkdown(data.simple_explanation || "", c.isDark)}</div>
           </div>
         </div>
       </motion.div>
@@ -450,7 +457,7 @@ export function StudyAssistantView() {
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>
               <Layers size={14} /> Real-Life Analogy
             </div>
-            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.real_life_analogy || "")}</div>
+            <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.real_life_analogy || "", c.isDark)}</div>
           </div>
         </div>
       </motion.div>
@@ -458,7 +465,7 @@ export function StudyAssistantView() {
         <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
           <div className="space-y-3">
             <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: c.amber }}>A Simple Example</div>
-            <div className="text-sm leading-relaxed" style={{ color: c.textMuted }}>{parseMarkdown(data.example || "")}</div>
+            <div className="text-sm leading-relaxed" style={{ color: c.textMuted }}>{parseMarkdown(data.example || "", c.isDark)}</div>
           </div>
         </div>
       </motion.div>
@@ -511,7 +518,7 @@ export function StudyAssistantView() {
                       {quiz.options.map((opt) => {
                         const isSelected = userAns === opt;
                         const isCorrect = opt === quiz.answer;
-                        let optionStyle: React.CSSProperties = { background: "rgba(0,0,0,0.35)", borderColor: c.border };
+                        let optionStyle: React.CSSProperties = { background: c.inputBg, borderColor: c.border };
                         if (isSelected && !isSubmitted) {
                           optionStyle = { background: c.amberBg, borderColor: c.amber, color: c.amber };
                         } else if (isSubmitted) {
@@ -520,7 +527,7 @@ export function StudyAssistantView() {
                           } else if (isSelected) {
                             optionStyle = { background: "rgba(244,63,94,0.15)", borderColor: c.rose, color: c.rose };
                           } else {
-                            optionStyle = { background: "rgba(0,0,0,0.2)", borderColor: c.border, opacity: 0.55 };
+                            optionStyle = { background: c.surface, borderColor: c.border, opacity: 0.55 };
                           }
                         }
                         return (
@@ -575,7 +582,7 @@ export function StudyAssistantView() {
               <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.text }}>
                 <ModeIcon size={14} /> Comprehension Overview
               </div>
-              <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.overview)}</div>
+              <div className="text-sm leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(data.overview, c.isDark)}</div>
             </div>
           </div>
         </motion.div>
@@ -603,7 +610,7 @@ export function StudyAssistantView() {
                     {isExpanded && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}
                         className="mt-3.5 space-y-4 pt-3 border-t" style={{ borderColor: c.divider }}>
-                        <div className="text-xs leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(concept.content)}</div>
+                        <div className="text-xs leading-relaxed" style={{ color: c.textSec }}>{parseMarkdown(concept.content, c.isDark)}</div>
                         {concept.sub_concepts && concept.sub_concepts.length > 0 && (
                           <div className="space-y-2 pl-2" style={{ borderLeft: `2px solid ${c.borderHover}` }}>
                             <span className="text-[9px] uppercase tracking-widest font-extrabold block" style={{ color: c.textMuted }}>Sub-Concepts</span>
@@ -653,9 +660,9 @@ export function StudyAssistantView() {
                     <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style={{ color: c.textMuted }}>
                       <Terminal size={14} /> {ex.title}
                     </div>
-                    <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: c.textSec }}>{parseMarkdown(ex.scenario)}</div>
+                    <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: c.textSec }}>{parseMarkdown(ex.scenario, c.isDark)}</div>
                     {ex.code_or_data && (
-                      <div className="rounded-xl border font-mono text-xs leading-relaxed whitespace-pre-wrap select-text p-4" style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.textSec }}>
+                      <div className="rounded-xl border font-mono text-xs leading-relaxed whitespace-pre-wrap select-text p-4" style={{ borderColor: c.border, background: c.isDark ? "rgba(0,0,0,0.4)" : "#f1f5f9", color: c.textSec }}>
                         <code>{ex.code_or_data}</code>
                       </div>
                     )}
@@ -706,7 +713,7 @@ export function StudyAssistantView() {
                             <div className="space-y-1">
                               <span className="text-[9px] uppercase tracking-widest font-extrabold block" style={{ color: c.amber }}>Ideal Model Answer</span>
                               <div className="text-xs leading-relaxed p-3.5 rounded-xl" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.textSec }}>
-                                {parseMarkdown(pr.expected_answer)}
+                                {parseMarkdown(pr.expected_answer, c.isDark)}
                               </div>
                             </div>
                           )}
@@ -714,7 +721,7 @@ export function StudyAssistantView() {
                             <div className="space-y-1">
                               <span className="text-[9px] uppercase tracking-widest font-extrabold block" style={{ color: c.rose }}>Critical Trap / Common Mistake</span>
                               <div className="text-xs leading-relaxed p-3.5 rounded-xl" style={{ background: c.roseBg, border: `1px solid ${c.roseBorder}`, color: c.textSec }}>
-                                {parseMarkdown(pr.red_flag)}
+                                {parseMarkdown(pr.red_flag, c.isDark)}
                               </div>
                             </div>
                           )}
@@ -747,7 +754,7 @@ export function StudyAssistantView() {
                         {q.options.map((opt) => {
                           const isSelected = userAns === opt;
                           const isCorrect = opt === q.answer;
-                          let optionStyle: React.CSSProperties = { background: "rgba(0,0,0,0.35)", borderColor: c.border };
+                          let optionStyle: React.CSSProperties = { background: c.inputBg, borderColor: c.border };
                           if (isSelected && !isSubmitted) {
                             optionStyle = { background: c.cardBgAlt, borderColor: c.borderHover, color: c.text };
                           } else if (isSubmitted) {
@@ -756,7 +763,7 @@ export function StudyAssistantView() {
                             } else if (isSelected) {
                               optionStyle = { background: "rgba(244,63,94,0.15)", borderColor: c.rose, color: c.rose };
                             } else {
-                              optionStyle = { background: "rgba(0,0,0,0.2)", borderColor: c.border, opacity: 0.55 };
+                              optionStyle = { background: c.surface, borderColor: c.border, opacity: 0.55 };
                             }
                           }
                           return (
@@ -802,7 +809,7 @@ export function StudyAssistantView() {
                   <span className="text-xs font-black tracking-widest uppercase" style={{ color: c.text }}>REVISION CHEAT SHEET</span>
                   <span className="text-[10px] font-mono" style={{ color: c.textMuted }}>ACCELERATED DIGEST</span>
                 </div>
-                <div className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: c.textSec }}>{parseMarkdown(data.summary)}</div>
+                <div className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: c.textSec }}>{parseMarkdown(data.summary, c.isDark)}</div>
               </div>
             </div>
           </div>
@@ -994,7 +1001,8 @@ export function StudyAssistantView() {
         </div>
       )}
 
-      {/* LESSON CONTENT */}
+      {/* LESSON CONTENT — only render inline if no onViewLesson (backward compat) */}
+      {!onViewLesson && (
       <AnimatePresence>
         {lessonData && !isGenerating && (
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-8">
@@ -1114,7 +1122,7 @@ export function StudyAssistantView() {
                             <span className="flex items-center gap-1"><Terminal size={11} style={{ color: c.amber }} /> simulator_script.py</span>
                           </div>
                           <div className="rounded-xl border font-mono text-[11px] leading-relaxed p-4 flex-1 min-h-[160px] whitespace-pre-wrap select-text"
-                            style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.textSec }}>
+                            style={{ borderColor: c.border, background: c.isDark ? "rgba(0,0,0,0.4)" : "#f1f5f9", color: c.textSec }}>
                             <code>
                               {currentTopic.toLowerCase().includes("gradient")
                                 ? `# Gradient Descent optimization simulator\nimport numpy as np\n\nweights = 10.0\nlearning_rate = 0.01\ngradient = 2.5\n\nprint("Updating weights...")\nweights = weights - (learning_rate * gradient)\nprint(f"Final weights: {weights}")`
@@ -1132,7 +1140,7 @@ export function StudyAssistantView() {
                         {playgroundOutput && (
                           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                             className="rounded-lg border p-3 font-mono text-[10px] leading-relaxed whitespace-pre-wrap"
-                            style={{ borderColor: c.border, background: "rgba(0,0,0,0.4)", color: c.amber }}>
+                            style={{ borderColor: c.border, background: c.isDark ? "rgba(0,0,0,0.4)" : "#f1f5f9", color: c.amber }}>
                             {playgroundOutput}
                           </motion.div>
                         )}
@@ -1145,6 +1153,7 @@ export function StudyAssistantView() {
           </motion.div>
         )}
       </AnimatePresence>
+      )}
     </motion.div>
   );
 
@@ -1156,7 +1165,49 @@ export function StudyAssistantView() {
 
   const uploadStages = ["Upload", "Extract Text", "Analyze Content", "Identify Topics", "Generate Summary", "Completed"];
 
-  return (
+  return lessonToView ? (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col antialiased"
+      style={{ color: c.text }}
+    >
+      <style>{`
+        .sa-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .sa-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
+      {/* Viewer mode — back button + lesson content */}
+      <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
+        <button onClick={() => onViewLesson?.(null as any)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer"
+          style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
+          <ChevronRight size={14} className="rotate-180" /> Back to Study Assistant
+        </button>
+        <div className="inline-flex gap-1.5 items-center text-[10px] uppercase font-extrabold tracking-wider" style={{ color: c.amber }}>
+          <Sparkles size={10} /> Adaptive Lesson Generated ({lessonToView.duration} &bull; {lessonToView.level})
+        </div>
+      </div>
+
+      {/* LESSON HEADER */}
+      <div className="p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
+        style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+        <div className="space-y-1">
+          <h2 className="text-xl font-black tracking-tight" style={{ color: c.text }}>{lessonToView.topic}</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-xs px-3 py-1 rounded-lg flex items-center gap-1.5" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}`, color: c.textMuted }}>
+            <Clock size={12} style={{ color: c.amber }} /> Digest: {lessonToView.duration}
+          </div>
+        </div>
+      </div>
+
+      {/* LESSON CONTENT */}
+      <div className="space-y-8">
+        {lessonToView.level === "beginner" ? renderBeginner(lessonToView.lesson) : renderIntermediate(lessonToView.lesson)}
+      </div>
+    </motion.div>
+  ) : (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -1363,15 +1414,19 @@ export function StudyAssistantView() {
                       className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all"
                       style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
                       onClick={() => {
-                        setLessonData(item.lesson);
-                        setCurrentTopic(item.topic);
-                        setInputTopic(item.topic);
-                        setDuration(item.duration as typeof duration);
-                        setLevel(item.level as typeof level);
-                        setQuizAnswers({});
-                        setQuizSubmitted({});
-                        setExpandedConceptIdx(null);
-                        setPracticeRevealed({});
+                        if (onViewLesson) {
+                          onViewLesson({ topic: item.topic, lesson: item.lesson, duration: item.duration, level: item.level });
+                        } else {
+                          setLessonData(item.lesson);
+                          setCurrentTopic(item.topic);
+                          setInputTopic(item.topic);
+                          setDuration(item.duration as typeof duration);
+                          setLevel(item.level as typeof level);
+                          setQuizAnswers({});
+                          setQuizSubmitted({});
+                          setExpandedConceptIdx(null);
+                          setPracticeRevealed({});
+                        }
                         setShowTopicHistory(false);
                       }}
                       whileHover={{ scale: 1.01, borderColor: c.amberBorder }}

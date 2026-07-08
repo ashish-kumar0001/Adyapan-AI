@@ -98,8 +98,8 @@ export function ChatSidebar({
                 onClick={onToggle}
                 className="flex items-center justify-center rounded-xl flex-shrink-0"
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
                   color: "#000",
                   boxShadow: "0 3px 12px rgba(245,158,11,0.3)",
@@ -109,7 +109,7 @@ export function ChatSidebar({
                 title="Close sidebar"
               >
                 {/* Hamburger SVG */}
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
                   <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
                   <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
