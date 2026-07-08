@@ -248,33 +248,16 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     setChatLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query but didn't find any direct triggers. I can help compose letters, edit summaries, or outline articles. Try:\n- *'Write a job application email'* \n- *'Generate SOP draft'*";
-
-      if (promptText.toLowerCase().includes("email")) {
-        setTab("email");
-        setEmailCat("Job Application");
-        setEmailDetails("Targeting Frontend SDE position. 1 year React experience.");
-        responseText = "✍️ **Action Triggered**: Configured the **Email Writer** for a Job Application. Click 'Generate Email' to draft the layout.";
-      } else if (promptText.toLowerCase().includes("sop")) {
-        setTab("sop");
-        setSopTargetUni("Stanford");
-        setSopCourse("Master's in Computer Science");
-        responseText = "📄 **Action Triggered**: Configured the **SOP Generator** for a Master's Program. Click 'Generate SOP' to compile the paragraphs.";
-      } else if (promptText.toLowerCase().includes("linkedin") || promptText.toLowerCase().includes("post")) {
-        setTab("linkedin");
-        setLiTopic("My new ML project with Gemini models");
-        responseText = "🚀 **Action Triggered**: Configured the **LinkedIn Post Generator** for a project showcase. Click 'Generate Post' to view the layout.";
-      } else if (promptText.toLowerCase().includes("blog") || promptText.toLowerCase().includes("content")) {
-        setTab("content");
-        setContentCat("Blog Article");
-        setContentKeywords("Generative AI, LLM frameworks");
-        responseText = "📝 **Action Triggered**: Configured the **Content Writer** for a blog article. Click 'Generate Content' to view the structured text.";
-      }
-
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+      const res = await fetch(`${api.defaults.baseURL}/productivity/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: promptText, context: { tab } }),
+      });
+      if (!res.ok) throw new Error("Chat request failed");
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: "assistant", content: data.response || "No response received." }]);
     } catch (err) {
-      console.error(err);
+      toast.error("AI Assistant is unavailable. Please try again later.");
     } finally {
       setChatLoading(false);
     }

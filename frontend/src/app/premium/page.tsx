@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   Crown, Check, X, ArrowLeft, Sparkles, Zap,
   Shield, Loader2, Star, ChevronDown,
@@ -114,35 +115,55 @@ export default function PremiumPage() {
  
    const handleSubscribe = async (planId: string) => {
      if (processing) return;
- 
+
      setProcessing(planId);
      try {
        const orderRes = await api.post("/payment/create-order", { plan: planId });
        if (!orderRes.data.success) throw new Error("Failed to create order");
- 
-       const { order } = orderRes.data;
- 
-       // Redirect to external Razorpay payment page
-       window.open("https://rzp.io/l/adyapan-premium", "_blank");
- 
-       // Verify immediately via mock bypass signature to activate plan
-       const verifyRes = await api.post("/payment/verify", {
-         orderId: order.id,
-         paymentId: `pay_mock_${Math.random().toString(36).substring(7)}`,
-         signature: "mock_signature_bypass",
-       });
-       if (verifyRes.data.success) {
-         setSub({
-           plan: planId,
-           status: "active",
-           endDate: null,
-           razorpaySubscriptionId: order.id,
-         });
-         alert("Redirected to external Razorpay payment link. Plan activated automatically for this demo.");
-       }
-       setProcessing(null);
+
+       const { order, key } = orderRes.data;
+
+       const options = {
+         key,
+         amount: order.amount,
+         currency: order.currency,
+         name: "Adyapan AI",
+         description: `${planId === "pro_monthly" ? "Pro Monthly" : "Pro Yearly"} Subscription`,
+         order_id: order.id,
+         handler: async function (response: any) {
+           try {
+             const verifyRes = await api.post("/payment/verify", {
+               orderId: response.razorpay_order_id,
+               paymentId: response.razorpay_payment_id,
+               signature: response.razorpay_signature,
+             });
+             if (verifyRes.data.success) {
+               setSub({
+                 plan: planId,
+                 status: "active",
+                 endDate: null,
+                 razorpaySubscriptionId: order.id,
+               });
+               toast.success("Payment successful! Your plan is now active.");
+             } else {
+               toast.error("Payment verification failed. Please contact support.");
+             }
+           } catch {
+             toast.error("Payment verification failed. Please contact support.");
+           }
+           setProcessing(null);
+         },
+         modal: {
+           ondismiss: function () {
+             setProcessing(null);
+           },
+         },
+       };
+
+       const rzp = new (window as any).Razorpay(options);
+       rzp.open();
      } catch (err: any) {
-       alert(err?.response?.data?.message || "Failed to initiate payment");
+       toast.error(err?.response?.data?.message || "Failed to initiate payment");
        setProcessing(null);
      }
    };

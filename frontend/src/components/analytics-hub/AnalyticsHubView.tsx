@@ -16,6 +16,7 @@ const fadeUp = {
 };
 
 import { LearningAnalyticsDashboard } from "./LearningAnalyticsDashboard";
+import { api } from "@/services/api";
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
@@ -42,11 +43,7 @@ interface AnalyticsHubViewProps {
   theme?: string;
 }
 
-const MOCK_INTERVIEW_LOGS: PerformanceLog[] = [
-  { id: "log-1", role: "AI SDE Mock", type: "Technical", date: "2026-07-01", score: 82, feedback: "Great DSA skills, solid binary tree node answers, communication flow is excellent." },
-  { id: "log-2", role: "Graduate Analyst Interview", type: "HR Behavioral", date: "2026-06-25", score: 88, feedback: "Strong leadership examples, confident speaking tone, structure was clear." },
-  { id: "log-3", role: "Backend Developer Mock", type: "Technical", date: "2026-06-18", score: 75, feedback: "Needs minor refinement in database transaction indexing concepts." }
-];
+const EMPTY_INTERVIEW_LOGS: PerformanceLog[] = [];
 
 export function AnalyticsHubView({ setView, activeModule = "analytics-hub", theme = "dark" }: AnalyticsHubViewProps) {
   const isDark = theme === "dark";
@@ -101,26 +98,13 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
     setChatLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query but didn't find any direct triggers. Try prompts like:\n- *'Show learning hours'* \n- *'Recommend missing skills'*";
-
-      if (promptText.toLowerCase().includes("hours") || promptText.toLowerCase().includes("learning")) {
-        setTab("learning");
-        responseText = "📊 **Performance Analysis Summary**:\nYour learning consistency is **Excellent** (84% syllabus completion).\nYou spent **18 hours** studying core domains this week, mostly focusing on Operating Systems and Python.";
-      } else if (promptText.toLowerCase().includes("skill") || promptText.toLowerCase().includes("missing")) {
-        setTab("skills");
-        responseText = "🧠 **AI Skill Recommender**:\nBased on current job postings in generative tech, I recommend adding **TypeScript** and **Docker** to your stack. Your current Programming Language mastery level is at **90%**.";
-      } else if (promptText.toLowerCase().includes("interview") || promptText.toLowerCase().includes("score")) {
-        setTab("interview");
-        responseText = "📈 **AI Interview Insight**:\nYour overall mock interview readiness is **80%**.\nYour communication score is **88%** (high), but you can improve technical problem-solving by practicing 3 more dynamic programming algorithms.";
-      } else if (promptText.toLowerCase().includes("resume")) {
-        setTab("resume");
-        responseText = "📄 **Resume Health Report**:\nYour current resume score is **90%**.\nI suggest adding specific metrics to your Project 2 description (e.g. *'improved database query efficiency by 24%'*) to boost shortlisting odds.";
-      }
-
+      const res = await api.post("/analytics/chat", { query: promptText, tab });
+      const data = res.data;
+      const responseText = data?.response || "I couldn't process that request. Please try again.";
       setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
     } catch (err) {
       console.error(err);
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I encountered an error processing your request." }]);
     } finally {
       setChatLoading(false);
     }
@@ -226,7 +210,7 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         </tr>
                       </thead>
                       <tbody className="divide-y" style={{ borderColor: c.border }}>
-                        {MOCK_INTERVIEW_LOGS.map((log, i) => (
+                        {EMPTY_INTERVIEW_LOGS.map((log, i) => (
                           <motion.tr
                             key={log.id}
                             variants={fadeUp}
@@ -254,6 +238,11 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         ))}
                       </tbody>
                     </table>
+                    {EMPTY_INTERVIEW_LOGS.length === 0 && (
+                      <div className="py-8 text-center text-sm" style={{ color: c.textMuted }}>
+                        No interview logs yet. Complete a mock interview to see your performance history.
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               </motion.div>

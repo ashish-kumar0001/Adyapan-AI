@@ -82,6 +82,13 @@ export function CodingChallengesView() {
   };
 
   if (view === "solve") {
+    if (!activeChallenge && !loading) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-400">
+          <p>No challenge available. <button onClick={() => setView("dashboard")} className="text-amber-500 underline">Go back</button></p>
+        </div>
+      );
+    }
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -119,9 +126,9 @@ export function CodingChallengesView() {
               >
                 <Trophy size={14} />
               </motion.div>
-              {activeChallenge.points} XP
+              {activeChallenge?.points ?? 0} XP
             </span>
-            <span className="text-red-400 flex items-center gap-1"><Clock size={14}/> {activeChallenge.timeRemaining}</span>
+            <span className="text-red-400 flex items-center gap-1"><Clock size={14}/> {activeChallenge?.timeRemaining ?? "--:--:--"}</span>
           </div>
         </div>
 
@@ -134,7 +141,7 @@ export function CodingChallengesView() {
             className="w-1/3 p-6 border-r border-white/10 overflow-y-auto bg-black/20"
           >
             <h3 className="font-bold mb-4">Problem Statement</h3>
-            <p className="text-sm text-gray-300 whitespace-pre-wrap">{activeChallenge.description}</p>
+            <p className="text-sm text-gray-300 whitespace-pre-wrap">{activeChallenge?.description ?? "No challenge loaded."}</p>
             
             <AnimatePresence>
               {result && (
@@ -224,46 +231,56 @@ export function CodingChallengesView() {
         </motion.h2>
         
         {/* Daily Challenge Card */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          custom={0}
-          whileHover={{ y: -4, scale: 1.01 }}
-          className="relative bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-6 overflow-hidden group"
-        >
-          <div className="relative z-10 flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-amber-500 text-black text-xs font-bold rounded-full uppercase tracking-wider">Today&apos;s Daily</span>
-                <span className="text-sm font-bold text-red-400 flex items-center gap-1"><Clock size={14}/> {activeChallenge.timeRemaining}</span>
-              </div>
-              <h3 className="text-xl font-bold mb-2 group-hover:text-amber-400 transition-colors">{activeChallenge.title}</h3>
-              <p className="text-sm text-gray-300 max-w-md line-clamp-2">{activeChallenge.description}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-black text-amber-500">{activeChallenge.points} XP</div>
-              <span className="text-xs font-medium text-gray-400">Reward</span>
-            </div>
+        {loading && !activeChallenge ? (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 animate-pulse space-y-4">
+            <div className="h-4 w-24 bg-white/10 rounded" />
+            <div className="h-6 w-64 bg-white/10 rounded" />
+            <div className="h-4 w-80 bg-white/10 rounded" />
           </div>
-          
-          <motion.button
-            onClick={() => setView("solve")}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            className="relative z-10 mt-6 flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-500 transition-all font-bold text-sm rounded-lg"
-          >
-            <Code size={16} /> Solve Challenge <ChevronRight size={16} />
-          </motion.button>
-          
+        ) : (
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.3 }}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={0}
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="relative bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-6 overflow-hidden group"
           >
-            <Zap size={140} className="absolute -bottom-10 -right-10 text-amber-500/5 group-hover:scale-110 transition-transform duration-500" />
+            <div className="relative z-10 flex justify-between items-start">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-3 py-1 bg-amber-500 text-black text-xs font-bold rounded-full uppercase tracking-wider">Today&apos;s Daily</span>
+                  <span className="text-sm font-bold text-red-400 flex items-center gap-1"><Clock size={14}/> {activeChallenge?.timeRemaining ?? "--:--:--"}</span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 group-hover:text-amber-400 transition-colors">{activeChallenge?.title ?? "No Daily Challenge"}</h3>
+                <p className="text-sm text-gray-300 max-w-md line-clamp-2">{activeChallenge?.description ?? ""}</p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-black text-amber-500">{activeChallenge?.points ?? 0} XP</div>
+                <span className="text-xs font-medium text-gray-400">Reward</span>
+              </div>
+            </div>
+            
+            {activeChallenge && (
+              <motion.button
+                onClick={() => setView("solve")}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="relative z-10 mt-6 flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-500 transition-all font-bold text-sm rounded-lg"
+              >
+                <Code size={16} /> Solve Challenge <ChevronRight size={16} />
+              </motion.button>
+            )}
+            
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.3 }}
+            >
+              <Zap size={140} className="absolute -bottom-10 -right-10 text-amber-500/5 group-hover:scale-110 transition-transform duration-500" />
+            </motion.div>
           </motion.div>
-        </motion.div>
+        )}
 
         {/* Weekly Challenge */}
         <motion.div
@@ -319,32 +336,48 @@ export function CodingChallengesView() {
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
-          {leaderboard.map((user, i) => (
-            <motion.div
-              key={user.rank}
-              custom={i}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              whileHover={{ x: 4 }}
-              className={`flex items-center gap-4 p-3 rounded-lg mb-1 ${user.name.includes("User") ? "bg-amber-500/10 border border-amber-500/20" : "hover:bg-white/5"}`}
-            >
-              <div className={`w-6 h-6 flex items-center justify-center font-bold text-sm rounded-full ${
-                user.rank === 1 ? "bg-yellow-500 text-black" :
-                user.rank === 2 ? "bg-gray-300 text-black" :
-                user.rank === 3 ? "bg-amber-700 text-white" : "text-gray-400"
-              }`}>
-                {user.rank}
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm flex items-center gap-2">
-                  {user.name}
-                  {user.badges.map((b, j) => <span key={j} className="text-xs">{b}</span>)}
+          {loading && leaderboard.length === 0 ? (
+            <div className="space-y-3 p-2 animate-pulse">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className="flex items-center gap-4 p-3">
+                  <div className="w-6 h-6 bg-white/10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-24 bg-white/10 rounded" />
+                    <div className="h-3 w-16 bg-white/10 rounded" />
+                  </div>
                 </div>
-                <div className="text-xs text-amber-500 font-bold">{user.score.toLocaleString()} XP</div>
-              </div>
-            </motion.div>
-          ))}
+              ))}
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">No leaderboard data available.</p>
+          ) : (
+            leaderboard.map((user, i) => (
+              <motion.div
+                key={user.rank}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                whileHover={{ x: 4 }}
+                className={`flex items-center gap-4 p-3 rounded-lg mb-1 ${user.name.includes("User") ? "bg-amber-500/10 border border-amber-500/20" : "hover:bg-white/5"}`}
+              >
+                <div className={`w-6 h-6 flex items-center justify-center font-bold text-sm rounded-full ${
+                  user.rank === 1 ? "bg-yellow-500 text-black" :
+                  user.rank === 2 ? "bg-gray-300 text-black" :
+                  user.rank === 3 ? "bg-amber-700 text-white" : "text-gray-400"
+                }`}>
+                  {user.rank}
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm flex items-center gap-2">
+                    {user.name}
+                    {user.badges.map((b, j) => <span key={j} className="text-xs">{b}</span>)}
+                  </div>
+                  <div className="text-xs text-amber-500 font-bold">{user.score.toLocaleString()} XP</div>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </motion.div>
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { api } from "@/services/api";
 import {
   BookOpen, Search, Clock, Award, Sparkles, Send, CheckCircle2,
   XCircle, Info, Heart, ArrowRight, Share2, Trash2, Plus, MessageSquare,
@@ -99,18 +101,18 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
     if (!paperTopic.trim() || generating) return;
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 1800));
-      let draft = "";
-      if (paperOption === "Summarize Abstract") {
-        draft = `RESEARCH SUMMARY: ${paperTopic.toUpperCase()}\n\nAbstract:\nThis audit details generative language structures and token distribution patterns. By mapping local database layers to API endpoints, developers can mitigate latency spikes.\n\nKey Insights:\n1. Attention mechanisms optimize response alignment.\n2. In-memory data transfers reduce query latency by 24%.\n\nConclusion:\nIntegrating modular model weights results in robust runtime performance.`;
-      } else if (paperOption === "Literature Outline") {
-        draft = `LITERATURE REVIEW OUTLINE: ${paperTopic.toUpperCase()}\n\n1. Introduction & Background\n   - Evolution of transformers and token weights.\n   - Problem Statement: Network call latencies in API-driven dashboards.\n2. Current Methodologies\n   - Pre-trained foundation models vs fine-tuned layers.\n   - Limitations: High resource footprints and model drift.\n3. Proposed Architectural Framework\n   - Edge compilation and database-side inference routines.`;
-      } else {
-        draft = `CITATION FORMAT (${citationFormat}):\n\nKumar, A. (2026). Optimizing Generative AI Workflows inside Campus Placement Dashboards. Journal of Academic Software Systems, 14(2), 120-135.`;
-      }
-      setGeneratedOutput(draft);
-      setEditingContent(draft);
+      const res = await fetch(`${api.defaults.baseURL}/research/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ option: paperOption, topic: paperTopic, citationFormat }),
+      });
+      if (!res.ok) throw new Error("Research generation failed");
+      const data = await res.json();
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
+    } catch (err) {
+      toast.error("Research generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -121,15 +123,16 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
     setCheckingPlagiarism(true);
     setPlagiarismResult(null);
     try {
-      await new Promise(r => setTimeout(r, 2000));
-      setPlagiarismResult({
-        similarity: 12,
-        sources: [
-          { title: "Academic LLM Structures", url: "https://arxiv.org/abs/2304.0928", match: 8 },
-          { title: "Database Edge Inferences", url: "https://ieee.org/document/8291", match: 4 }
-        ],
-        highlightedText: plagiarismText
+      const res = await fetch(`${api.defaults.baseURL}/research/check-plagiarism`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: plagiarismText }),
       });
+      if (!res.ok) throw new Error("Plagiarism check failed");
+      const data = await res.json();
+      setPlagiarismResult(data);
+    } catch (err) {
+      toast.error("Plagiarism check failed. Please try again.");
     } finally {
       setCheckingPlagiarism(false);
     }
@@ -139,12 +142,19 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
     if (!plagiarismText.trim()) return;
     setGenerating(true);
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      const rephrased = `Originality Audit Rephrase:\n\nOur structural design implements local compiler optimizations for AI models. By hosting key weights inside client-side caches and utilizing edge routing loops, users experience faster query evaluations and lower connection overhead.`;
-      setGeneratedOutput(rephrased);
-      setEditingContent(rephrased);
+      const res = await fetch(`${api.defaults.baseURL}/research/rephrase`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: plagiarismText }),
+      });
+      if (!res.ok) throw new Error("Rephrasing failed");
+      const data = await res.json();
+      setGeneratedOutput(data.content || "");
+      setEditingContent(data.content || "");
       setIsPreview(false);
-      alert("✨ Text rephrased by AI successfully! Check the output workspace.");
+      toast.success("Text rephrased successfully! Check the output workspace.");
+    } catch (err) {
+      toast.error("Rephrasing failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -158,27 +168,16 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
     setChatLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query but didn't find any direct triggers. Try prompts like:\n- *'Generate APA citation'* \n- *'Check text for plagiarism'*";
-
-      if (promptText.toLowerCase().includes("citation")) {
-        setTab("paper-ai");
-        setPaperOption("Generate Citations");
-        setPaperTopic("Optimizing Campus Placement Systems");
-        responseText = "📝 **Action Triggered**: Configured **Research Paper AI** to generate citations for 'Optimizing Campus Placement Systems'. Click 'Generate Research Insights' to view the formatted reference.";
-      } else if (promptText.toLowerCase().includes("plagiarism") || promptText.toLowerCase().includes("similarity")) {
-        setTab("plagiarism");
-        responseText = "🔍 **Action Triggered**: Navigated to the **Plagiarism Checker**. Paste your document draft in the box to compute similarity rates.";
-      } else if (promptText.toLowerCase().includes("outline") || promptText.toLowerCase().includes("paper")) {
-        setTab("paper-ai");
-        setPaperOption("Literature Outline");
-        setPaperTopic("Large Language Models inside edge databases");
-        responseText = "📝 **Action Triggered**: Configured **Research Paper AI** for a Literature Outline. Click 'Generate Research Insights' to load the structured hierarchy.";
-      }
-
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+      const res = await fetch(`${api.defaults.baseURL}/research/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: promptText, context: { tab } }),
+      });
+      if (!res.ok) throw new Error("Chat request failed");
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: "assistant", content: data.response || "No response received." }]);
     } catch (err) {
-      console.error(err);
+      toast.error("AI Assistant is unavailable. Please try again later.");
     } finally {
       setChatLoading(false);
     }

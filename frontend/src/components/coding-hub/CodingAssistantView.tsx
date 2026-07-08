@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -44,36 +46,16 @@ export function CodingAssistantView() {
         payload.codeSnippet = input;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1800));
-
-      if (mode === "generate") {
-        setResult({
-          setupGuide: "# Setup\n1. Run `npm install`\n2. Run `npm run dev`",
-          folderStructure: "src/\n  ├── components/\n  └── pages/",
-          code: "// Generated implementation\nexport function Example() {\n  return <div>Hello</div>;\n}",
-        });
-      } else if (mode === "debug") {
-        setResult({
-          issue: "Syntax Error: missing closing bracket",
-          rootCause: "On line 42, the function was left open which caused the parser to fail.",
-          fixedCode: "function foo() {\n  console.log('fixed');\n}",
-        });
-      } else if (mode === "explain") {
-        setResult({
-          explanation: "This snippet creates an array and maps over it to double the values.",
-          complexity: "Time: O(n), Space: O(n)",
-        });
-      } else if (mode === "project") {
-        setResult({
-          architecture: "Client-Server architecture using Next.js and Express.",
-          techStack: ["Next.js", "Tailwind", "Node.js", "Prisma"],
-          folderStructure: "project/\n  ├── frontend/\n  └── backend/",
-          features: ["Auth", "Dashboard", "Live Chat"],
-          roadmap: ["Setup Repository", "Build DB Schema", "Develop API"],
-        });
+      const res = await api.post("/coding/assist", { mode, ...payload });
+      const data = res.data?.result ?? res.data;
+      if (data) {
+        setResult(data);
+      } else {
+        throw new Error("Unexpected response format");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || "Something went wrong. Please try again.";
+      toast.error(msg);
     } finally {
       setGenerating(false);
     }

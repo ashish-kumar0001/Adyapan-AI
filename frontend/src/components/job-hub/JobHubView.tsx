@@ -372,7 +372,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 {filteredJobs.length === 0 ? (
                   <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
-                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No jobs match your search parameters.</span>
+                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>{jobs.length === 0 ? "No jobs available at this time." : "No jobs match your search parameters."}</span>
                   </motion.div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -689,63 +689,70 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 className="space-y-6"
               >
                 {/* Available Contests */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {challenges.map((ch, i) => (
-                    <motion.div
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      custom={i}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      key={ch.id}
-                      className="p-5 border rounded-2xl flex flex-col justify-between"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
-                            {ch.category}
-                          </motion.span>
+                {challenges.length === 0 ? (
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
+                    <Award className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
+                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No hiring challenges available at this time.</span>
+                  </motion.div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {challenges.map((ch, i) => (
+                      <motion.div
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        key={ch.id}
+                        className="p-5 border rounded-2xl flex flex-col justify-between"
+                        style={{ background: c.cardBg, borderColor: c.border }}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
+                              {ch.category}
+                            </motion.span>
+                            {ch.completed ? (
+                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                Rank #{ch.rank}
+                              </motion.span>
+                            ) : (
+                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                Active
+                              </motion.span>
+                            )}
+                          </div>
+                          <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ch.title}</h4>
+                          <span className="text-[10px] font-bold" style={{ color: c.textSec }}>Host: {ch.company}</span>
+                          <div className="text-[10px]" style={{ color: c.textMuted }}>
+                            Duration: {ch.duration} · Difficulty: {ch.difficulty}
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
                           {ch.completed ? (
-                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                              Rank #{ch.rank}
-                            </motion.span>
+                            <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                              <Check size={12} /> Challenge Solved ({ch.score}%)
+                            </span>
                           ) : (
-                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                              Active
-                            </motion.span>
+                            <motion.button
+                              whileHover={{ scale: 1.04 }}
+                              whileTap={{ scale: 0.96 }}
+                              onClick={() => {
+                                alert("🚀 Starting Challenge environment. All inputs and compilers are initialized.");
+                              }}
+                              className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
+                            >
+                              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                                <Play size={10} className="fill-current" />
+                              </motion.div> Participate Now
+                            </motion.button>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ch.title}</h4>
-                        <span className="text-[10px] font-bold" style={{ color: c.textSec }}>Host: {ch.company}</span>
-                        <div className="text-[10px]" style={{ color: c.textMuted }}>
-                          Duration: {ch.duration} · Difficulty: {ch.difficulty}
-                        </div>
-                      </div>
-
-                      <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
-                        {ch.completed ? (
-                          <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-                            <Check size={12} /> Challenge Solved ({ch.score}%)
-                          </span>
-                        ) : (
-                          <motion.button
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.96 }}
-                            onClick={() => {
-                              alert("🚀 Starting Challenge environment. All inputs and compilers are initialized.");
-                            }}
-                            className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
-                          >
-                            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                              <Play size={10} className="fill-current" />
-                            </motion.div> Participate Now
-                          </motion.button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
