@@ -76,7 +76,7 @@ export function ChatSidebar({
       {isOpen && (
         <motion.aside
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 300, opacity: 1 }}
+          animate={{ width: 260, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="flex-shrink-0 flex flex-col overflow-hidden"
@@ -98,18 +98,18 @@ export function ChatSidebar({
                 onClick={onToggle}
                 className="flex items-center justify-center rounded-xl flex-shrink-0"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
                   color: "#000",
-                  boxShadow: "0 4px 16px rgba(245,158,11,0.35)",
+                  boxShadow: "0 3px 12px rgba(245,158,11,0.3)",
                 }}
-                whileHover={{ scale: 1.06, boxShadow: "0 6px 24px rgba(245,158,11,0.5)" }}
-                whileTap={{ scale: 0.93 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 5px 18px rgba(245,158,11,0.45)" }}
+                whileTap={{ scale: 0.94 }}
                 title="Close sidebar"
               >
                 {/* Hamburger SVG */}
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
                   <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
                   <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
@@ -119,7 +119,7 @@ export function ChatSidebar({
               {/* New Chat button */}
               <motion.button
                 onClick={onNewChat}
-                className="flex-1 h-10 flex items-center justify-center gap-2 px-3 rounded-xl font-semibold text-sm transition-all"
+                className="flex-1 h-8 flex items-center justify-center gap-1.5 px-2.5 rounded-xl font-semibold text-xs transition-all"
                 style={{
                   background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
                   color: isDark ? "rgba(255,255,255,0.85)" : "#1e293b",
@@ -131,25 +131,25 @@ export function ChatSidebar({
                 }}
                 whileTap={{ scale: 0.97 }}
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>New</span>
+                <Plus className="w-3 h-3" />
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>New</span>
               </motion.button>
             </div>
 
             {/* Search */}
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
               style={{
                 background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
                 border: `1px solid ${border}`,
               }}
             >
-              <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: textMuted }} />
+              <Search className="w-3 h-3 flex-shrink-0" style={{ color: textMuted }} />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search chats..."
-                className="flex-1 bg-transparent border-none outline-none text-xs"
+                className="flex-1 bg-transparent border-none outline-none text-[11px]"
                 style={{ color: text }}
               />
             </div>
@@ -177,8 +177,8 @@ export function ChatSidebar({
                 {groups.map((group) => (
                   <div key={group.label}>
                     <div
-                      className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: textMuted, letterSpacing: "0.1em" }}
+                      className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider"
+                      style={{ color: textMuted, letterSpacing: "0.08em" }}
                     >
                       {group.label}
                     </div>
@@ -210,16 +210,16 @@ export function ChatSidebar({
 
           {/* Bottom: User profile */}
           <div
-            className="p-3 flex-shrink-0"
+            className="p-2.5 flex-shrink-0"
             style={{ borderTop: `1px solid ${border}` }}
           >
             {/* Storage usage */}
-            <div className="mb-3 px-1">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] flex items-center gap-1" style={{ color: textMuted }}>
-                  <HardDrive className="w-3 h-3" /> Storage
+            <div className="mb-2 px-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] flex items-center gap-1" style={{ color: textMuted }}>
+                  <HardDrive className="w-2.5 h-2.5" /> Storage
                 </span>
-                <span className="text-[10px]" style={{ color: textMuted }}>2.1 GB / 5 GB</span>
+                <span className="text-[9px]" style={{ color: textMuted }}>2.1 GB / 5 GB</span>
               </div>
               <div
                 className="w-full h-1 rounded-full overflow-hidden"
@@ -237,30 +237,30 @@ export function ChatSidebar({
 
             {/* User card */}
             <motion.div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-xl cursor-pointer"
               style={{ background: surfaceHover }}
               whileHover={{ background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)" }}
             >
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                 style={{
                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
                   color: "#000",
-                  boxShadow: "0 0 12px rgba(245,158,11,0.3)",
+                  boxShadow: "0 0 10px rgba(245,158,11,0.25)",
                 }}
               >
                 {userName ? userName.charAt(0).toUpperCase() : "A"}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate" style={{ color: text }}>
+                <div className="text-[11px] font-semibold truncate" style={{ color: text }}>
                   {userName || "Ashish"}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-2.5 h-2.5" style={{ color: "#f59e0b" }} />
-                  <span className="text-[10px] font-medium" style={{ color: "#f59e0b" }}>Premium</span>
+                <div className="flex items-center gap-0.5">
+                  <Star className="w-2 h-2" style={{ color: "#f59e0b" }} />
+                  <span className="text-[9px] font-medium" style={{ color: "#f59e0b" }}>Premium</span>
                 </div>
               </div>
-              <Zap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#f59e0b" }} />
+              <Zap className="w-3 h-3 flex-shrink-0" style={{ color: "#f59e0b" }} />
             </motion.div>
           </div>
         </motion.aside>
@@ -319,18 +319,18 @@ function SessionItem({
       }}
     >
       <MessageSquare
-        className="w-3.5 h-3.5 flex-shrink-0"
+        className="w-3 h-3 flex-shrink-0"
         style={{ color: isActive ? "#f59e0b" : textMuted }}
       />
       <div className="flex-1 min-w-0">
         <div
-          className="text-xs font-medium truncate"
+          className="text-[11px] font-medium truncate"
           style={{ color: isActive ? "#f59e0b" : textSec }}
         >
           {session.title}
         </div>
-        <div className="text-[10px] flex items-center gap-1" style={{ color: textMuted }}>
-          <Clock className="w-2.5 h-2.5" />
+        <div className="text-[9px] flex items-center gap-1" style={{ color: textMuted }}>
+          <Clock className="w-2 h-2" />
           {new Date(session.updatedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
         </div>
       </div>
@@ -346,12 +346,12 @@ function SessionItem({
           >
             <motion.button
               onClick={onDelete}
-              className="w-5 h-5 rounded-md flex items-center justify-center"
+              className="w-4 h-4 rounded flex items-center justify-center"
               style={{ background: "rgba(239,68,68,0.12)" }}
               whileHover={{ background: "rgba(239,68,68,0.2)", scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Trash2 className="w-2.5 h-2.5 text-red-400" />
+              <Trash2 className="w-2 h-2 text-red-400" />
             </motion.button>
           </motion.div>
         )}

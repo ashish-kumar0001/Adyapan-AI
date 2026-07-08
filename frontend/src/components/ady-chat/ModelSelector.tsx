@@ -69,11 +69,11 @@ export function ModelSelector({ selectedModel, isDark, onModelChange }: ModelSel
   const hoverBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
 
   return (
-    <div className="relative flex justify-center mb-3">
+    <div className="relative flex justify-center mb-2.5">
       {/* Trigger */}
       <motion.button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold"
         style={{
           background: bg,
           border: `1px solid ${border}`,
@@ -83,19 +83,19 @@ export function ModelSelector({ selectedModel, isDark, onModelChange }: ModelSel
         whileHover={{
           scale: 1.02,
           borderColor: "rgba(245,158,11,0.35)",
-          boxShadow: "0 0 14px rgba(245,158,11,0.15)",
+          boxShadow: "0 0 10px rgba(245,158,11,0.12)",
         }}
         whileTap={{ scale: 0.97 }}
       >
         <span style={{ color: "#f59e0b" }}>
-          <ModelIcon iconKey={current.iconKey} size={14} />
+          <ModelIcon iconKey={current.iconKey} size={12} />
         </span>
         <span style={{ fontFamily: "'Outfit', sans-serif" }}>{current.displayName}</span>
         <motion.div
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-3 h-3" style={{ color: textMuted }} />
+          <ChevronDown className="w-2.5 h-2.5" style={{ color: textMuted }} />
         </motion.div>
       </motion.button>
 
@@ -105,11 +105,11 @@ export function ModelSelector({ selectedModel, isDark, onModelChange }: ModelSel
           <>
             <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
             <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              initial={{ opacity: 0, y: 6, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ duration: 0.18 }}
-              className="absolute bottom-full mb-2 w-64 rounded-2xl overflow-hidden z-50"
+              exit={{ opacity: 0, y: 6, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-full mb-1.5 w-56 rounded-2xl overflow-hidden z-50"
               style={{
                 background: dropdownBg,
                 border: `1px solid ${border}`,
@@ -168,7 +168,7 @@ function ModelOption({
   return (
     <motion.button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left"
+      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left"
       style={{
         background: isSelected ? "rgba(245,158,11,0.1)" : "transparent",
         borderLeft: isSelected ? "2px solid rgba(245,158,11,0.6)" : "2px solid transparent",
@@ -180,16 +180,16 @@ function ModelOption({
       whileTap={{ scale: 0.98 }}
     >
       <span style={{ color: isSelected ? "#f59e0b" : textMuted }}>
-        <ModelIcon iconKey={model.iconKey} size={16} />
+        <ModelIcon iconKey={model.iconKey} size={14} />
       </span>
       <div className="flex-1 min-w-0">
         <div
-          className="text-xs font-semibold"
+          className="text-[11px] font-semibold"
           style={{ color: isSelected ? "#f59e0b" : text, fontFamily: "'Outfit', sans-serif" }}
         >
           {model.displayName}
         </div>
-        <div className="text-[10px]" style={{ color: textMuted }}>
+        <div className="text-[9px]" style={{ color: textMuted }}>
           {model.description} · {model.fast ? "Fast" : "Premium"}
         </div>
       </div>
@@ -197,7 +197,7 @@ function ModelOption({
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"
+          className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"
         />
       )}
     </motion.button>

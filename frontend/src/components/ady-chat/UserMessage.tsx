@@ -6,70 +6,67 @@ import type { ChatMessage } from "./types";
 interface UserMessageProps {
   message: ChatMessage;
   index: number;
+  isDark: boolean;
 }
 
-export function UserMessage({ message, index }: UserMessageProps) {
+export function UserMessage({ message, index, isDark }: UserMessageProps) {
+  // ChatGPT-style gray bubble
+  const bg = isDark ? "#2f2f2f" : "#f4f4f4";
+  const text = isDark ? "#ececf1" : "#0f172a";
+  const border = isDark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.02)";
+  const shadow = isDark ? "0 4px 12px rgba(0,0,0,0.15)" : "0 2px 8px rgba(0,0,0,0.04)";
+
   return (
     <motion.div
-      className="flex justify-end mb-6"
-      initial={{ opacity: 0, x: 30, scale: 0.95 }}
+      className="flex justify-end mb-5"
+      initial={{ opacity: 0, x: 20, scale: 0.97 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{
-        duration: 0.4,
-        delay: index * 0.04,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        duration: 0.35,
+        delay: index * 0.03,
+        ease: "easeOut",
       }}
     >
-      <div className="flex items-end gap-3 max-w-[75%]">
+      <div className="flex items-end gap-2.5 max-w-[75%]">
         {/* Message bubble */}
         <motion.div
-          className="relative px-5 py-3.5 text-sm leading-relaxed"
+          className="relative px-4 py-2.5 text-sm leading-relaxed"
           style={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-            borderRadius: "24px 24px 6px 24px",
-            color: "#ffffff",
-            boxShadow: "0 8px 32px rgba(59,130,246,0.3)",
+            background: bg,
+            border: border,
+            borderRadius: "20px 20px 4px 20px",
+            color: text,
+            boxShadow: shadow,
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-            lineHeight: 1.65,
+            lineHeight: 1.6,
             wordBreak: "break-word",
           }}
-          whileHover={{
-            boxShadow: "0 12px 40px rgba(59,130,246,0.4)",
-            y: -1,
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          whileHover={{ y: -0.5 }}
         >
-          {/* Subtle inner glow */}
-          <div
-            className="absolute inset-0 rounded-[inherit] pointer-events-none"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)",
-            }}
-          />
           <span className="relative">{message.content}</span>
 
           {/* Timestamp */}
           <div
-            className="text-[10px] mt-1.5 text-right opacity-60"
+            className="text-[9px] mt-1 text-right opacity-50 font-medium"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
         </motion.div>
 
-        {/* Avatar */}
+        {/* User initials bubble (gray gradient) */}
         <motion.div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mb-1"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mb-0.5"
           style={{
-            background: "linear-gradient(135deg, #f59e0b, #d97706)",
-            color: "#000",
-            boxShadow: "0 0 10px rgba(245,158,11,0.3)",
+            background: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+            color: isDark ? "#e2e8f0" : "#475569",
+            border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.04)",
           }}
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.05 }}
         >
-          A
+          U
         </motion.div>
       </div>
     </motion.div>

@@ -34,7 +34,7 @@ export function MessageList({
         <AnimatePresence initial={false}>
           {messages.map((msg, i) =>
             msg.role === "user" ? (
-              <UserMessage key={msg.id || i} message={msg} index={i} />
+              <UserMessage key={msg.id || i} message={msg} index={i} isDark={isDark} />
             ) : (
               <AIMessage
                 key={msg.id || i}

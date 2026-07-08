@@ -451,7 +451,8 @@ export function AIMessage({
   streamingText,
   onRegenerate,
 }: AIMessageProps) {
-  const content = isStreaming ? (streamingText || "") : message.content;
+  const rawContent = isStreaming ? (streamingText || "") : message.content;
+  const content = rawContent.replace(/\*/g, "");
   const [showCursor] = useState(true);
 
   return (

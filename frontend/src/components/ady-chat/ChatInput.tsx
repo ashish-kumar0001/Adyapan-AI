@@ -113,7 +113,7 @@ export function ChatInput({
 
       {/* Main input container */}
       <motion.div
-        className="relative flex items-end gap-2 px-4 py-3"
+        className="relative flex items-end gap-2 px-3 py-2"
         style={{
           background: bg,
           border: `1.5px solid ${focused ? focusBorder : border}`,
@@ -127,11 +127,11 @@ export function ChatInput({
         }}
       >
         {/* Left icons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Attachment */}
           <motion.button
             onClick={() => fileInputRef.current?.click()}
-            className="w-8 h-8 rounded-full flex items-center justify-center"
+            className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{ color: textMuted }}
             whileHover={{
               scale: 1.1,
@@ -141,13 +141,13 @@ export function ChatInput({
             whileTap={{ scale: 0.9 }}
             title="Attach file"
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className="w-3.5 h-3.5" />
           </motion.button>
 
           {/* Voice */}
           <motion.button
             onClick={onVoiceToggle}
-            className="w-8 h-8 rounded-full flex items-center justify-center"
+            className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{
               color: listening ? "#f59e0b" : textMuted,
               background: listening ? "rgba(245,158,11,0.12)" : "transparent",
@@ -169,7 +169,7 @@ export function ChatInput({
                   exit={{ scale: 0, rotate: 10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <MicOff className="w-4 h-4" />
+                  <MicOff className="w-3.5 h-3.5" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -179,7 +179,7 @@ export function ChatInput({
                   exit={{ scale: 0, rotate: -10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Mic className="w-4 h-4" />
+                  <Mic className="w-3.5 h-3.5" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -196,7 +196,7 @@ export function ChatInput({
           onBlur={() => setFocused(false)}
           placeholder={listening ? "Listening..." : "Ask Ady Chat anything..."}
           rows={1}
-          className="flex-1 bg-transparent border-none outline-none resize-none text-sm leading-relaxed py-1"
+          className="flex-1 bg-transparent border-none outline-none resize-none text-xs leading-relaxed py-1"
           style={{
             color: text,
             maxHeight: 160,
@@ -208,37 +208,37 @@ export function ChatInput({
         <motion.button
           onClick={onSend}
           disabled={!canSend}
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+          className="w-7.5 h-7.5 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
             background: canSend
               ? "linear-gradient(135deg, #3b82f6, #2563eb)"
               : isDark
               ? "rgba(255,255,255,0.06)"
               : "rgba(0,0,0,0.06)",
-            boxShadow: canSend ? "0 0 20px rgba(59,130,246,0.5)" : "none",
+            boxShadow: canSend ? "0 0 16px rgba(59,130,246,0.4)" : "none",
             cursor: canSend ? "pointer" : "not-allowed",
           }}
           animate={
             canSend
               ? {
                   boxShadow: [
-                    "0 0 12px rgba(59,130,246,0.4)",
-                    "0 0 24px rgba(59,130,246,0.7)",
-                    "0 0 12px rgba(59,130,246,0.4)",
+                    "0 0 10px rgba(59,130,246,0.3)",
+                    "0 0 18px rgba(59,130,246,0.6)",
+                    "0 0 10px rgba(59,130,246,0.3)",
                   ],
                 }
               : {}
           }
           transition={canSend ? { duration: 2, repeat: Infinity } : {}}
-          whileHover={canSend ? { scale: 1.1, boxShadow: "0 0 30px rgba(59,130,246,0.8)" } : {}}
-          whileTap={canSend ? { scale: 0.92 } : {}}
+          whileHover={canSend ? { scale: 1.08, boxShadow: "0 0 24px rgba(59,130,246,0.7)" } : {}}
+          whileTap={canSend ? { scale: 0.93 } : {}}
         >
           {loading ? (
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                 <circle
                   cx="12" cy="12" r="10"
                   stroke="rgba(255,255,255,0.3)"
@@ -254,7 +254,7 @@ export function ChatInput({
             </motion.div>
           ) : (
             <Send
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               style={{
                 color: canSend ? "white" : isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
                 transform: "translateX(1px)",
@@ -275,12 +275,12 @@ export function ChatInput({
 
       {/* Footer hint */}
       <motion.div
-        className="text-center mt-2"
+        className="text-center mt-1.5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.4 }}
         transition={{ delay: 0.5 }}
       >
-        <span className="text-[10px]" style={{ color: textMuted, letterSpacing: "0.03em" }}>
+        <span className="text-[9px]" style={{ color: textMuted, letterSpacing: "0.03em" }}>
           Press <kbd className="font-mono">Enter</kbd> to send · <kbd className="font-mono">Shift+Enter</kbd> for new line
         </span>
       </motion.div>
