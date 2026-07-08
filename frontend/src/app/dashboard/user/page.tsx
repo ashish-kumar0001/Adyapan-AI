@@ -169,7 +169,8 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "analytics", label: "Analytics", icon: <LineChart size={18} />,
     submenu: [
-      { label: "Learning Progress", href: "#" }, { label: "Interview Progress", href: "#" },
+      { label: "Learning Progress", href: "#" }, { label: "Progress Tracker", href: "#" },
+      { label: "Interview Progress", href: "#" },
       { label: "Resume Score", href: "#" }, { label: "Skill Growth", href: "#" },
     ],
   },
@@ -309,6 +310,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "LinkedIn Post Gen") onViewTool("prod-linkedin");
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
                       else if (sub.label === "Learning Progress") router.push("/dashboard/learning-analytics");
+                      else if (sub.label === "Progress Tracker") router.push("/dashboard/progress");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
@@ -990,11 +992,14 @@ function StatCardsGrid({ stats }: { stats: any }) {
 }
 // ─── 3-Column Panel Grid ──────────────────────────────────────────────────────
 function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => void }) {
+  const router = useRouter();
   const quickActions = [
-    { label: "Study Assistant", icon: <GraduationCap size={16} />, color: "#8b5cf6", target: "study-assistant" },
-    { label: "DSA Practice", icon: <Code2 size={16} />, color: "var(--primary)", target: "dsa-practice" },
-    { label: "Resume Builder", icon: <FileText size={16} />, color: "#3b82f6", target: "resume-hub" },
-    { label: "ATS Checker", icon: <BarChart3 size={16} />, color: "#10b981", target: "ats-checker" },
+    { label: "Study Assistant", icon: <GraduationCap size={16} />, color: "#8b5cf6", target: "study-assistant", href: null },
+    { label: "DSA Practice", icon: <Code2 size={16} />, color: "var(--primary)", target: "dsa-practice", href: null },
+    { label: "Resume Builder", icon: <FileText size={16} />, color: "#3b82f6", target: "resume-hub", href: null },
+    { label: "ATS Checker", icon: <BarChart3 size={16} />, color: "#10b981", target: "ats-checker", href: null },
+    { label: "Progress Tracker", icon: <TrendingUp size={16} />, color: "#f59e0b", target: null, href: "/dashboard/progress" },
+    { label: "AI Analytics", icon: <LineChart size={16} />, color: "#ec4899", target: null, href: "/dashboard/learning-analytics" },
   ];
 
   return (
@@ -1059,7 +1064,10 @@ function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => 
             {quickActions.map((action) => (
               <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
                 key={action.label}
-                onClick={() => onViewTool(action.target as any)}
+                onClick={() => {
+                  if (action.href) router.push(action.href);
+                  else onViewTool(action.target as any);
+                }}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.5rem",
                   padding: "0.6rem", border: "1px solid var(--border-color)",
