@@ -5,7 +5,7 @@ import { prisma } from "../config/prisma";
 import { generateJSON } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
-const pdfParse = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 import mammoth from "mammoth";
 
 const uploadMemory = multer({
@@ -20,8 +20,9 @@ studyRouter.use(requireAuth);
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   if (mimeType === "application/pdf") {
-    const parsed = await pdfParse(file.buffer);
-    return parsed.text;
+    const pdf = new PDFParse({ data: file.buffer });
+    const result = await pdf.getText();
+    return result.text;
   } else if (
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     mimeType === "application/msword"

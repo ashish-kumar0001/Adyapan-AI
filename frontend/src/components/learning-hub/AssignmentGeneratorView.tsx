@@ -292,15 +292,15 @@ export function AssignmentGeneratorView() {
               </div>
               <div className="w-full max-w-lg grid grid-cols-3 gap-3">
                 {stages.map((step, idx) => {
-                  const stageIdx = stages.indexOf(statusMsg);
-                  const isActive = idx <= stageIdx;
+                  const currentStage = progress === 0 ? -1 : Math.min(Math.floor((progress / 100) * (stages.length - 1)), stages.length - 1);
+                  const isActive = idx <= currentStage;
                   return (
                     <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
                       className="p-3 rounded-xl text-center space-y-1.5 transition-all duration-500" style={{ background: isActive ? c.amberBg : c.surface, border: `1px solid ${isActive ? c.amberBorder : c.border}` }}>
                       <span className="text-[9px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Stage {idx + 1}</span>
                       <span className="text-xs font-semibold block" style={{ color: c.text }}>{step}</span>
-                      {isActive && idx === stageIdx && <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 rounded-full mx-auto" style={{ background: c.amber }} />}
-                      {isActive && idx < stageIdx && <CheckCircle2 size={12} style={{ color: c.green }} className="mx-auto" />}
+                      {isActive && idx === currentStage && <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 rounded-full mx-auto" style={{ background: c.amber }} />}
+                      {isActive && idx < currentStage && <CheckCircle2 size={12} style={{ color: c.green }} className="mx-auto" />}
                     </motion.div>
                   );
                 })}
