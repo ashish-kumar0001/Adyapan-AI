@@ -22,7 +22,7 @@ export interface ChatModel {
   name: string;
   displayName: string;
   provider: string;
-  icon: string;
+  iconKey: "flash" | "pro" | "reasoning" | "vision";
   description: string;
   fast: boolean;
 }
@@ -33,7 +33,7 @@ export const ADY_MODELS: ChatModel[] = [
     name: "Ady Flash",
     displayName: "Ady Flash",
     provider: "Google",
-    icon: "⚡",
+    iconKey: "flash",
     description: "Fast & efficient",
     fast: true,
   },
@@ -42,7 +42,7 @@ export const ADY_MODELS: ChatModel[] = [
     name: "Ady Pro",
     displayName: "Ady Pro",
     provider: "Google",
-    icon: "🧠",
+    iconKey: "pro",
     description: "Most capable",
     fast: false,
   },
@@ -51,7 +51,7 @@ export const ADY_MODELS: ChatModel[] = [
     name: "Ady Reasoning",
     displayName: "Ady Reasoning",
     provider: "DeepSeek",
-    icon: "🔬",
+    iconKey: "reasoning",
     description: "Deep reasoning",
     fast: false,
   },
@@ -60,21 +60,21 @@ export const ADY_MODELS: ChatModel[] = [
     name: "Ady Vision",
     displayName: "Ady Vision",
     provider: "Anthropic",
-    icon: "👁️",
+    iconKey: "vision",
     description: "Multimodal",
     fast: false,
   },
 ];
 
 export const SUGGESTION_CARDS = [
-  { icon: "📚", title: "Study a Topic", prompt: "Help me study " },
-  { icon: "📝", title: "Generate Notes", prompt: "Generate detailed notes on " },
-  { icon: "💻", title: "Explain Code", prompt: "Explain this code: " },
-  { icon: "📄", title: "Resume Review", prompt: "Review and improve my resume: " },
-  { icon: "🎯", title: "Interview Prep", prompt: "Help me prepare for an interview for " },
-  { icon: "🔬", title: "Research Assistant", prompt: "Research and summarize: " },
-  { icon: "📋", title: "Assignment Help", prompt: "Help me with this assignment: " },
-  { icon: "🎨", title: "Create PPT Outline", prompt: "Create a presentation outline for " },
-  { icon: "❓", title: "Generate Quiz", prompt: "Generate a quiz on " },
-  { icon: "🚀", title: "Career Advice", prompt: "Give me career advice for " },
+  { iconKey: "book",       title: "Study a Topic",       prompt: "Help me study " },
+  { iconKey: "notes",      title: "Generate Notes",       prompt: "Generate detailed notes on " },
+  { iconKey: "code",       title: "Explain Code",         prompt: "Explain this code: " },
+  { iconKey: "resume",     title: "Resume Review",        prompt: "Review and improve my resume: " },
+  { iconKey: "target",     title: "Interview Prep",       prompt: "Help me prepare for an interview for " },
+  { iconKey: "research",   title: "Research Assistant",   prompt: "Research and summarize: " },
+  { iconKey: "clipboard",  title: "Assignment Help",      prompt: "Help me with this assignment: " },
+  { iconKey: "slides",     title: "Create PPT Outline",   prompt: "Create a presentation outline for " },
+  { iconKey: "quiz",       title: "Generate Quiz",        prompt: "Generate a quiz on " },
+  { iconKey: "career",     title: "Career Advice",        prompt: "Give me career advice for " },
 ];

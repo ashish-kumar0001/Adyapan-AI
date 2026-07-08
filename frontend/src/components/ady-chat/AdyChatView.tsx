@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { api } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +10,6 @@ import type { ResumeHubViewType } from "@/types/resume";
 
 import { IntroAnimation } from "./IntroAnimation";
 import { ChatBackground } from "./ChatBackground";
-import { ChatNavbar } from "./ChatNavbar";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatGreeting } from "./ChatGreeting";
 import { ChatInput } from "./ChatInput";
@@ -69,13 +68,7 @@ function useTheme() {
     return () => obs.disconnect();
   }, []);
 
-  const toggle = useCallback(() => {
-    const next = theme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    setTheme(next);
-  }, [theme]);
-
-  return { theme, toggle };
+  return { theme };
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -88,7 +81,7 @@ interface AdyChatViewProps {
 
 export function AdyChatView({ setView }: AdyChatViewProps) {
   const { user } = useAuth();
-  const { theme, toggle: toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const isDark = theme === "dark";
 
   // ── Intro animation ────────────────────────────────────────────────────────
@@ -106,9 +99,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState(ADY_MODELS[0].id);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; text: string } | null>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Load sessions ──────────────────────────────────────────────────────────
   const loadSessions = useCallback(async () => {
@@ -178,7 +168,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -190,9 +179,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, []);
 
@@ -212,7 +198,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       finalMessage = `[File: ${uploadedFile.name}]\n\n${uploadedFile.text}\n\n---\n${text || "Please analyze this document."}`;
     }
 
-    // Create session if none active
     let sessionId = activeSessionId;
     if (!sessionId) {
       try {
@@ -231,7 +216,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       }
     }
 
-    // Optimistic user message
     const userMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
       sessionId: sessionId!,
@@ -245,8 +229,10 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
     setLoading(true);
     setStreamingText("");
 
-    // Streaming fetch
-    const token = typeof window !== "undefined" ? (localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token")) : null;
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token")
+        : null;
     try {
       const res = await fetch(`${api.defaults.baseURL}/ady-chat/send`, {
         method: "POST",
@@ -317,7 +303,6 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
     }
   }, [input, uploadedFile, activeSessionId, selectedModel, loadSessions]);
 
-  // ── Suggestion card click ──────────────────────────────────────────────────
   const handleSuggestionClick = useCallback((prompt: string) => {
     setInput(prompt);
   }, []);
@@ -326,182 +311,145 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   const userName = user?.name || "Ashish";
 
   // ─── Render ────────────────────────────────────────────────────────────────
-
+  // NOTE: This component sits inside .dash-main (margin-left:60px, margin-top:70px).
+  // We use relative positioning so we NEVER overlap the dashboard nav or sidebar.
   return (
-    <>
-      {/* ── Intro animation (blocks everything until complete) ── */}
+    <div
+      className="relative flex overflow-hidden"
+      style={{
+        height: "calc(100vh - 70px)",
+        background: isDark ? "#070715" : "#f0f4ff",
+      }}
+    >
+      {/* Intro animation — absolute, stays within this container */}
       <AnimatePresence>
         {!introComplete && (
           <IntroAnimation onComplete={() => setIntroComplete(true)} />
         )}
       </AnimatePresence>
 
-      {/* ── Main chat interface ── */}
-      <motion.div
-        className="fixed inset-0 flex flex-col overflow-hidden"
-        style={{ zIndex: 1 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: introComplete ? 1 : 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-      >
-        {/* Animated background */}
-        <ChatBackground />
+      {/* Animated background — absolute within container */}
+      <ChatBackground />
 
-        {/* Navbar */}
-        <ChatNavbar
-          theme={theme}
-          onThemeToggle={toggleTheme}
-          onSettingsClick={() => {}}
+      {/* Sidebar toggle button */}
+      <motion.button
+        className="absolute top-3 left-3 z-30 w-8 h-8 rounded-xl flex items-center justify-center"
+        style={{
+          background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+          color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
+        }}
+        onClick={() => setSidebarOpen(o => !o)}
+        whileHover={{ scale: 1.06, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }}
+        whileTap={{ scale: 0.94 }}
+      >
+        <Menu className="w-4 h-4" />
+      </motion.button>
+
+      {/* Body: sidebar + main — both sit as flex children, no overlay */}
+      <div className="flex flex-1 overflow-hidden relative z-10">
+        {/* Sidebar */}
+        <ChatSidebar
+          isOpen={sidebarOpen}
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          isDark={isDark}
+          onNewChat={handleNewSession}
+          onSelectSession={id => setActiveSessionId(id)}
+          onDeleteSession={handleDeleteSession}
+          userName={userName}
         />
 
-        {/* Body: sidebar + main */}
-        <div className="flex flex-1 overflow-hidden relative z-10">
-          {/* Sidebar toggle button (mobile) */}
-          <motion.button
-            className="absolute top-3 left-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center sm:hidden"
-            style={{
-              background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-              color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
-            }}
-            onClick={() => setSidebarOpen(o => !o)}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-          >
-            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </motion.button>
-
-          {/* Desktop sidebar toggle */}
-          <motion.button
-            className="hidden sm:flex absolute top-3 left-3 z-20 w-8 h-8 rounded-xl items-center justify-center"
-            style={{
-              background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-              color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
-            }}
-            onClick={() => setSidebarOpen(o => !o)}
-            whileHover={{ scale: 1.06, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)" }}
-            whileTap={{ scale: 0.94 }}
-          >
-            <Menu className="w-4 h-4" />
-          </motion.button>
-
-          {/* Sidebar */}
-          <ChatSidebar
-            isOpen={sidebarOpen}
-            sessions={sessions}
-            activeSessionId={activeSessionId}
-            isDark={isDark}
-            onNewChat={handleNewSession}
-            onSelectSession={id => {
-              setActiveSessionId(id);
-            }}
-            onDeleteSession={handleDeleteSession}
-            userName={userName}
-          />
-
-          {/* Main content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <AnimatePresence mode="wait">
-              {!hasMessages ? (
-                /* ── Greeting / empty state ── */
-                <motion.div
-                  key="greeting"
-                  className="flex-1 flex flex-col overflow-hidden"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.96,
-                    y: -20,
-                    transition: { duration: 0.35, ease: [0.43, 0.13, 0.23, 0.96] },
-                  }}
-                  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  <div className="flex-1 flex items-center justify-center overflow-y-auto">
-                    <ChatGreeting
-                      userName={userName}
-                      isDark={isDark}
-                      onSuggestionClick={handleSuggestionClick}
-                    />
-                  </div>
-
-                  {/* Input at bottom of greeting */}
-                  <div className="pb-6 pt-2">
-                    <ChatInput
-                      input={input}
-                      isDark={isDark}
-                      loading={loading}
-                      listening={listening}
-                      uploadedFile={uploadedFile}
-                      selectedModel={selectedModel}
-                      hasMessages={false}
-                      onInputChange={setInput}
-                      onSend={handleSend}
-                      onVoiceToggle={toggleVoice}
-                      onFileSelect={handleFileSelect}
-                      onRemoveFile={() => setUploadedFile(null)}
-                      onModelChange={setSelectedModel}
-                    />
-                  </div>
-                </motion.div>
-              ) : (
-                /* ── Active conversation ── */
-                <motion.div
-                  key="conversation"
-                  className="flex-1 flex flex-col overflow-hidden"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  {/* Messages */}
-                  <MessageList
-                    messages={messages}
-                    streamingText={streamingText}
-                    loading={loading}
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <AnimatePresence mode="wait">
+            {!hasMessages ? (
+              /* ── Greeting / empty state ── */
+              <motion.div
+                key="greeting"
+                className="flex-1 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96, y: -16, transition: { duration: 0.3 } }}
+                transition={{ duration: 0.35 }}
+              >
+                <div className="flex-1 flex items-center justify-center overflow-y-auto">
+                  <ChatGreeting
+                    userName={userName}
                     isDark={isDark}
-                    onRegenerate={() => {
-                      // Regenerate last AI message
-                      const lastUser = [...messages].reverse().find(m => m.role === "user");
-                      if (lastUser) {
-                        setInput(lastUser.content);
-                        setMessages(prev => prev.slice(0, -1));
-                      }
-                    }}
+                    onSuggestionClick={handleSuggestionClick}
                   />
-
-                  {/* Input at bottom of conversation */}
-                  <div
-                    className="pb-5 pt-2"
-                    style={{
-                      background: isDark
-                        ? "linear-gradient(to top, rgba(6,6,18,0.9) 0%, transparent 100%)"
-                        : "linear-gradient(to top, rgba(248,250,252,0.9) 0%, transparent 100%)",
-                    }}
-                  >
-                    <ChatInput
-                      input={input}
-                      isDark={isDark}
-                      loading={loading}
-                      listening={listening}
-                      uploadedFile={uploadedFile}
-                      selectedModel={selectedModel}
-                      hasMessages={true}
-                      onInputChange={setInput}
-                      onSend={handleSend}
-                      onVoiceToggle={toggleVoice}
-                      onFileSelect={handleFileSelect}
-                      onRemoveFile={() => setUploadedFile(null)}
-                      onModelChange={setSelectedModel}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                </div>
+                <div className="pb-5 pt-2">
+                  <ChatInput
+                    input={input}
+                    isDark={isDark}
+                    loading={loading}
+                    listening={listening}
+                    uploadedFile={uploadedFile}
+                    selectedModel={selectedModel}
+                    hasMessages={false}
+                    onInputChange={setInput}
+                    onSend={handleSend}
+                    onVoiceToggle={toggleVoice}
+                    onFileSelect={handleFileSelect}
+                    onRemoveFile={() => setUploadedFile(null)}
+                    onModelChange={setSelectedModel}
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              /* ── Active conversation ── */
+              <motion.div
+                key="conversation"
+                className="flex-1 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35 }}
+              >
+                <MessageList
+                  messages={messages}
+                  streamingText={streamingText}
+                  loading={loading}
+                  isDark={isDark}
+                  onRegenerate={() => {
+                    const lastUser = [...messages].reverse().find(m => m.role === "user");
+                    if (lastUser) {
+                      setInput(lastUser.content);
+                      setMessages(prev => prev.slice(0, -1));
+                    }
+                  }}
+                />
+                <div
+                  className="pb-5 pt-2 flex-shrink-0"
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(to top, rgba(7,7,21,0.95) 0%, transparent 100%)"
+                      : "linear-gradient(to top, rgba(240,244,255,0.95) 0%, transparent 100%)",
+                  }}
+                >
+                  <ChatInput
+                    input={input}
+                    isDark={isDark}
+                    loading={loading}
+                    listening={listening}
+                    uploadedFile={uploadedFile}
+                    selectedModel={selectedModel}
+                    hasMessages={true}
+                    onInputChange={setInput}
+                    onSend={handleSend}
+                    onVoiceToggle={toggleVoice}
+                    onFileSelect={handleFileSelect}
+                    onRemoveFile={() => setUploadedFile(null)}
+                    onModelChange={setSelectedModel}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 }

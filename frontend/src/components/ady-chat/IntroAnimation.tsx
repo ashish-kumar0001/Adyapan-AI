@@ -109,7 +109,7 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
       {phase < 4 && (
         <motion.div
           key="intro"
-          className="fixed inset-0 flex flex-col items-center justify-center"
+          className="absolute inset-0 flex flex-col items-center justify-center"
           style={{
             zIndex: 1000,
             background: "linear-gradient(135deg, #040412 0%, #080820 50%, #050512 100%)",
