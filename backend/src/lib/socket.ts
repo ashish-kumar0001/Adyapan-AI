@@ -145,6 +145,7 @@ export function initSocketServer(server: HttpServer) {
               },
             });
 
+            emitProgress("Finalizing and saving notes...");
             socket.emit("generate:complete", { content, noteId: note.id });
             break;
           }

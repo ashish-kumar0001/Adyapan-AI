@@ -95,11 +95,11 @@ export async function generateJSON<T>(
 
 // Default model presets for different task categories
 export const MODELS = {
-  FAST: "openai/gpt-4o-mini",
-  BALANCED: "openai/gpt-4o",
-  POWERFUL: "anthropic/claude-sonnet-4",
-  CODE: "anthropic/claude-sonnet-4",
-  CHEAP: "openai/gpt-4o-mini",
+  FAST: "meta-llama/llama-2-7b-chat",
+  BALANCED: "meta-llama/llama-3-70b-instruct",
+  POWERFUL: "meta-llama/llama-3-70b-instruct",
+  CODE: "meta-llama/llama-3-70b-instruct",
+  CHEAP: "meta-llama/llama-2-7b-chat",
 } as const;
 
 // Available models for Ady Chat

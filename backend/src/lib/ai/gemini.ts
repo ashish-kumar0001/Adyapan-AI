@@ -612,9 +612,18 @@ Style: ${type}
 
 Use clear headings, bullet points, markdown. Highlight key definitions. Structure from basics to advanced. Return ONLY valid markdown.`;
   try {
-    return await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL });
-  } catch {
-    return "# Notes Generation Failed\nPlease try again.";
+    console.log("[Notes Generator] Starting for topic:", topic, "Difficulty:", difficulty);
+    const result = await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL });
+    console.log("[Notes Generator] Successfully generated notes, length:", result?.length || 0);
+    
+    if (!result || result.trim().length === 0) {
+      throw new Error("Empty response from AI model");
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("[Notes Generator] Error generating notes:", error instanceof Error ? error.message : String(error));
+    throw error;
   }
 }
 
