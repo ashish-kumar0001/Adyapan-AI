@@ -29,7 +29,7 @@ export function MessageList({
   }, [messages, streamingText]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6">
       <div className="max-w-3xl mx-auto py-6">
         <AnimatePresence initial={false}>
           {messages.map((msg, i) =>

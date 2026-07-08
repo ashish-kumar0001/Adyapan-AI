@@ -378,13 +378,13 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
         />
 
         {/* Main content area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           <AnimatePresence mode="wait">
             {!hasMessages ? (
               /* ── Greeting / empty state ── */
               <motion.div
                 key="greeting"
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 min-h-0 flex flex-col overflow-hidden"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96, y: -16, transition: { duration: 0.3 } }}
@@ -419,7 +419,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
               /* ── Active conversation ── */
               <motion.div
                 key="conversation"
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 min-h-0 flex flex-col overflow-hidden"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
