@@ -9,8 +9,40 @@ import {
   Calendar as CalendarIcon, BookOpen, Clock, AlertCircle, Award, 
   Sparkles, CheckCircle, RefreshCw, ChevronLeft, ChevronRight, 
   ArrowLeft, Download, Plus, AlertTriangle, BookOpenCheck, Flame, 
-  CalendarRange, ListTodo, Star, UploadCloud, FileText, CheckSquare, Square
+  CalendarRange, ListTodo, Star, UploadCloud, FileText, CheckSquare, Square, Zap
 } from "lucide-react";
+
+function useTheme() {
+  const [theme, setTheme] = useState("dark");
+  useEffect(() => {
+    const t = document.documentElement.getAttribute("data-theme") || "dark";
+    setTheme(t);
+    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
+}
+
+const mkColors = (theme: string) => {
+  const isDark = theme === "dark";
+  return {
+    isDark,
+    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8", textOnAmber: "#000000",
+    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", cardBgAlt: isDark ? "rgba(0,0,0,0.25)" : "#f8fafc",
+    stickyBg: isDark ? "rgba(10,10,20,0.88)" : "rgba(248,250,252,0.92)",
+    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)", amberActive: isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.1)",
+    purpleBg: isDark ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)", purpleBorder: isDark ? "rgba(139,92,246,0.14)" : "rgba(139,92,246,0.15)",
+    cyanBg: isDark ? "rgba(6,182,212,0.06)" : "rgba(6,182,212,0.05)", cyanBorder: isDark ? "rgba(6,182,212,0.14)" : "rgba(6,182,212,0.15)",
+    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
+    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+  };
+};
 
 interface StudyTask {
   id: string;
@@ -49,13 +81,18 @@ interface Recommendation {
   action: string;
 }
 
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }) };
+const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }) };
+const slideRight = { hidden: { opacity: 0, x: -24 }, visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.07, duration: 0.4 } }) };
+
 export function StudyPlannerDashboard() {
-  const [theme, setTheme] = useState("dark");
+  const theme = useTheme();
+  const c = mkColors(theme);
+
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
   
-  // Generator form state
   const [formData, setFormData] = useState({
     title: "",
     examDate: "",
@@ -67,7 +104,6 @@ export function StudyPlannerDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analyzingFile, setAnalyzingFile] = useState(false);
 
-  // Active plan states
   const [activePlan, setActivePlan] = useState<StudyPlan | null>(null);
   const [tasks, setTasks] = useState<StudyTask[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -75,11 +111,9 @@ export function StudyPlannerDashboard() {
   const [todayRevisions, setTodayRevisions] = useState<any[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
 
-  // Calendar rendering states
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  // Generation loading stages
   const [loadingStage, setLoadingStage] = useState(0);
   const loadingStages = [
     "Analyzing Learning Material...",
@@ -91,21 +125,8 @@ export function StudyPlannerDashboard() {
     "Study Plan Ready!"
   ];
 
-  // Load theme and plan initially
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
-      setTheme(savedTheme);
-    }
     fetchActivePlan();
-    
-    // Listen for theme mutations
-    const observer = new MutationObserver(() => {
-      const t = document.documentElement.getAttribute("data-theme") ?? "dark";
-      setTheme(t);
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => observer.disconnect();
   }, []);
 
   const fetchActivePlan = async () => {
@@ -166,7 +187,6 @@ export function StudyPlannerDashboard() {
     }
   };
 
-  // Smart Rescheduling
   const handleReschedule = async () => {
     setRescheduling(true);
     try {
@@ -183,7 +203,6 @@ export function StudyPlannerDashboard() {
     }
   };
 
-  // Complete Study Task
   const handleToggleTask = async (taskId: string, currentStatus: string) => {
     const nextStatus = currentStatus === "Completed" ? "Pending" : "Completed";
     try {
@@ -200,25 +219,15 @@ export function StudyPlannerDashboard() {
         } else {
           toast.info("Task marked as pending.");
         }
-        // Update local tasks
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
         setTodayTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
-        // Refresh overview metrics
         const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t);
         const completed = updatedTasks.filter(t => t.status === "Completed").length;
         const compPct = Math.round((completed / updatedTasks.length) * 100);
-        
         if (activePlan) {
-          setActivePlan({
-            ...activePlan,
-            completionPercentage: compPct,
-            successProbability: `${Math.min(98, 70 + Math.round(compPct * 0.28))}%`
-          });
+          setActivePlan({ ...activePlan, completionPercentage: compPct, successProbability: `${Math.min(98, 70 + Math.round(compPct * 0.28))}%` });
         }
-        await Promise.all([
-          fetchRecommendations(),
-          fetchCalendarEvents()
-        ]);
+        await Promise.all([fetchRecommendations(), fetchCalendarEvents()]);
       }
     } catch (e) {
       console.error(e);
@@ -226,50 +235,32 @@ export function StudyPlannerDashboard() {
     }
   };
 
-  // Generate Plan flow
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) return toast.error("Please enter a study goal or exam name.");
-    
     setGenerating(true);
     setLoadingStage(0);
-
-    // Simulate animated loading stages
     const timer = setInterval(() => {
-      setLoadingStage(prev => {
-        if (prev < loadingStages.length - 2) return prev + 1;
-        return prev;
-      });
+      setLoadingStage(prev => prev < loadingStages.length - 2 ? prev + 1 : prev);
     }, 1800);
-
     try {
       let documentText = "";
-      
       if (selectedFile) {
         setAnalyzingFile(true);
         const fileData = new FormData();
         fileData.append("file", selectedFile);
-        
         const analyzeRes = await api.post("/study/analyze", fileData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
-        
         if (analyzeRes.data.success && analyzeRes.data.analysis) {
-          const analysis = analyzeRes.data.analysis;
-          documentText = JSON.stringify(analysis);
+          documentText = JSON.stringify(analyzeRes.data.analysis);
         }
         setAnalyzingFile(false);
       }
-
-      setLoadingStage(5); // Planning Revisions
-
-      const res = await api.post("/study-planner/generate", {
-        ...formData,
-        documentText
-      });
-
+      setLoadingStage(5);
+      const res = await api.post("/study-planner/generate", { ...formData, documentText });
       if (res.data.success) {
-        setLoadingStage(6); // Success stage
+        setLoadingStage(6);
         setTimeout(async () => {
           clearInterval(timer);
           toast.success("AI Study Plan generated successfully!");
@@ -290,7 +281,6 @@ export function StudyPlannerDashboard() {
     window.print();
   };
 
-  // Calendar calculation functions
   const handleMonthChange = (direction: "prev" | "next") => {
     setCurrentMonth(prev => {
       const copy = new Date(prev);
@@ -304,534 +294,417 @@ export function StudyPlannerDashboard() {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysCount = new Date(year, month + 1, 0).getDate();
-    
     const days = [];
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysCount; i++) {
-      days.push(new Date(year, month, i));
-    }
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysCount; i++) days.push(new Date(year, month, i));
     return days;
   };
 
-  const isDark = theme === "dark";
-
-  const backgroundStyle = isDark 
-    ? "bg-[#080710] text-white" 
-    : "bg-[#F8FAFC] text-slate-900";
-  
-  const glassCardStyle = isDark 
-    ? "bg-[#0f0f19]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]" 
-    : "bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_24px_rgba(148,163,184,0.15)]";
-
-  const bannerStyle = isDark
-    ? "bg-gradient-to-r from-amber-950/20 via-amber-900/10 to-slate-900/40 border border-white/5"
-    : "bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/5 border border-slate-200";
-
   return (
-    <div className={`w-full min-h-screen ${backgroundStyle} relative overflow-hidden transition-all duration-300`}>
-      {/* Background Radial Glow elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {isDark ? (
-          <>
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], x: [0, 30, 0] }}
-              transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
-              className="absolute top-[-8%] left-[-5%] w-[45%] h-[45%] rounded-full blur-[130px]"
-              style={{ background: "radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)" }}
-            />
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], y: [0, 20, 0] }}
-              transition={{ repeat: Infinity, duration: 15, ease: "easeInOut", delay: 2 }}
-              className="absolute bottom-[-8%] right-[-5%] w-[45%] h-[45%] rounded-full blur-[130px]"
-              style={{ background: "radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)" }}
-            />
-          </>
-        ) : (
-          <>
-            <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-amber-100/50" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-amber-50/40" />
-          </>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased" style={{ color: c.text }}>
+      <style>{`.sp-scroll { scrollbar-width: none; -ms-overflow-style: none; } .sp-scroll::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
+        <div className="flex items-center gap-2.5">
+          <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+            <CalendarIcon size={18} style={{ color: "#000" }} />
+          </motion.div>
+          <div>
+            <motion.h1 initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} className="text-base font-extrabold leading-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Study Planner</motion.h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="text-xs leading-tight" style={{ color: c.textMuted }}>AI-powered spaced repetition study schedules</motion.p>
+          </div>
+        </div>
+        {activePlan && (
+          <div className="flex items-center gap-2">
+            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              onClick={() => { setActivePlan(null); setTasks([]); }} className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
+              <Plus size={14} /> New Plan
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              onClick={handleReschedule} disabled={rescheduling}
+              className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
+              {rescheduling ? <RefreshCw className="animate-spin" size={13} /> : <RefreshCw size={13} />} Reschedule
+            </motion.button>
+          </div>
         )}
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        
-        {loadingPlan ? (
-          <div className="flex flex-col items-center justify-center min-h-[450px] gap-4">
-            <RefreshCw className="animate-spin text-amber-500" size={32} />
-            <p className="text-sm font-semibold opacity-60">Synchronizing planner profile...</p>
-          </div>
-        ) : !activePlan ? (
-          
-          <AnimatePresence>
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0 }}
-              className="max-w-3xl mx-auto"
-            >
-              {generating ? (
-                <div className={`flex flex-col items-center justify-center p-12 min-h-[450px] ${glassCardStyle} rounded-3xl text-center`}>
-                  <div className="relative w-28 h-28 mb-8 flex items-center justify-center">
-                    <motion.div 
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-                      className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-amber-600 border-b-amber-500 border-l-amber-500/10"
-                    />
-                    <BookOpen className="text-amber-500 animate-pulse" size={40} />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Analyzing Material & Generating Schedule</h3>
-                  <p className="text-sm opacity-50 mb-8 max-w-md">Our cognitive learning priority engine is designing your personalized spaced repetition study plan.</p>
-                  
-                  <div className="w-full max-w-xs space-y-3 text-left">
-                    {loadingStages.map((stage, idx) => {
-                      const isActive = idx === loadingStage;
-                      const isCompleted = idx < loadingStage;
-                      return (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
-                            isCompleted ? "bg-emerald-500 text-white" : 
-                            isActive ? "border-2 border-amber-500 animate-pulse" : "border border-white/20"
-                          }`}>
-                            {isCompleted && <span className="text-[10px] font-bold">✓</span>}
-                          </div>
-                          <span className={`text-xs font-semibold transition-all ${
-                            isActive ? "text-amber-400 font-bold" : isCompleted ? "opacity-40" : "opacity-20"
-                          }`}>{stage}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+      {loadingPlan ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <RefreshCw className="animate-spin" size={32} style={{ color: c.amber }} />
+          <p className="text-sm font-semibold" style={{ color: c.textMuted }}>Synchronizing planner profile...</p>
+        </div>
+      ) : !activePlan ? (
+        <AnimatePresence>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            {generating ? (
+              <motion.div key="generating" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 gap-8">
+                <div className="relative w-24 h-24">
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="absolute inset-0 rounded-full" style={{ border: `3px solid transparent`, borderTopColor: c.amber, borderRightColor: c.amberBg }} />
+                  <motion.div animate={{ rotate: -360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} className="absolute inset-3 rounded-full" style={{ border: `2px solid transparent`, borderTopColor: "rgba(139,92,246,0.6)", borderLeftColor: "rgba(139,92,246,0.2)" }} />
+                  <div className="absolute inset-0 flex items-center justify-center"><BookOpen size={28} style={{ color: c.amber }} /></div>
                 </div>
-              ) : (
-                <div className={`${glassCardStyle} rounded-3xl p-8`}>
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-tr from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                      <Sparkles size={28} className="animate-pulse" />
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-black">AI Study Planner</h1>
-                    <p className="text-sm opacity-60 mt-1 max-w-md mx-auto">
-                      Don't just study. Optimize study schedules using spaced repetition, cognitive workloads, and adaptive priorities.
-                    </p>
+                <div className="text-center space-y-1">
+                  <h3 className="text-lg font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Generating Study Plan...</h3>
+                  <p className="text-sm" style={{ color: c.textMuted }}>Our cognitive learning priority engine is designing your personalized schedule</p>
+                </div>
+                <div className="w-full max-w-lg space-y-3 text-left">
+                  {loadingStages.map((stage, idx) => {
+                    const isActive = idx === loadingStage;
+                    const isCompleted = idx < loadingStage;
+                    return (
+                      <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: isActive ? c.amberBg : "transparent", border: `1px solid ${isActive ? c.amberBorder : "transparent"}` }}>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all" style={{ background: isCompleted ? c.green : isActive ? c.amberBg : c.pill, border: `2px solid ${isCompleted ? c.green : isActive ? c.amber : c.border}` }}>
+                          {isCompleted && <CheckCircle size={12} style={{ color: "#fff" }} />}
+                        </div>
+                        <span className={`text-xs font-semibold transition-all ${isActive ? "font-bold" : ""}`} style={{ color: isActive ? c.amber : isCompleted ? c.textSec : c.textMuted }}>{stage}</span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                {/* Config Form */}
+                <motion.div className="p-6 rounded-3xl relative overflow-hidden" style={{ background: c.surface, border: `2px solid ${c.border}` }}>
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-4 right-8 w-24 h-24 rounded-full" style={{ opacity: c.isDark ? 0.05 : 0.08, background: "radial-gradient(circle, #f59e0b, transparent)" }} />
+                    <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full" style={{ opacity: c.isDark ? 0.04 : 0.06, background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
                   </div>
-
-                  <form onSubmit={handleGenerate} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Exam / Subject Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.title}
-                          onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  <div className="relative z-10 space-y-4">
+                    <h3 className="text-lg font-extrabold text-center" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Configure AI Study Plan</h3>
+                    <form onSubmit={handleGenerate} className="space-y-4 max-w-xl mx-auto">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Exam / Subject Title</label>
+                        <input type="text" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
                           placeholder="e.g. Machine Learning Mid-Term or AWS Solutions Architect"
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
-                        />
+                          className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }} />
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Target Exam Date</label>
-                        <input
-                          type="date"
-                          value={formData.examDate}
-                          onChange={e => setFormData({ ...formData, examDate: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold" style={{ color: c.textSec }}>Target Exam Date</label>
+                          <input type="date" value={formData.examDate} onChange={e => setFormData({ ...formData, examDate: e.target.value })}
+                            className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold" style={{ color: c.textSec }}>Daily Study Hours</label>
+                          <input type="number" min="1" max="12" value={formData.dailyHours} onChange={e => setFormData({ ...formData, dailyHours: e.target.value })}
+                            className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold" style={{ color: c.textSec }}>Target Score</label>
+                          <select value={formData.targetScore} onChange={e => setFormData({ ...formData, targetScore: e.target.value })}
+                            className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
+                            <option>95%</option><option>90%</option><option>85%</option><option>80%</option><option>75%</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold" style={{ color: c.textSec }}>Study Mode</label>
+                          <select value={formData.studyMode} onChange={e => setFormData({ ...formData, studyMode: e.target.value })}
+                            className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
+                            <option>Exam Preparation</option><option>Interview Preparation</option><option>Quick Revision</option><option>Deep Learning</option><option>Placement Preparation</option>
+                          </select>
+                        </div>
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Daily Study Hours</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={formData.dailyHours}
-                          onChange={e => setFormData({ ...formData, dailyHours: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Target Score / Percentage</label>
-                        <select
-                          value={formData.targetScore}
-                          onChange={e => setFormData({ ...formData, targetScore: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
-                        >
-                          <option>95%</option>
-                          <option>90%</option>
-                          <option>85%</option>
-                          <option>80%</option>
-                          <option>75%</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Study Mode</label>
-                        <select
-                          value={formData.studyMode}
-                          onChange={e => setFormData({ ...formData, studyMode: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
-                        >
-                          <option>Exam Preparation</option>
-                          <option>Interview Preparation</option>
-                          <option>Quick Revision</option>
-                          <option>Deep Learning</option>
-                          <option>Placement Preparation</option>
-                        </select>
-                      </div>
-
-                      <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Upload Study Material (Optional)</label>
-                        <div className={`border-2 border-dashed ${isDark ? "border-white/10 hover:border-amber-500 bg-white/[0.01]" : "border-slate-200 hover:border-amber-500 bg-slate-50/50"} rounded-2xl p-6 text-center cursor-pointer transition-all relative`}>
-                          <input
-                            type="file"
-                            accept=".pdf,.doc,.docx,.txt"
-                            onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Upload Study Material (Optional)</label>
+                        <div className="rounded-2xl p-5 text-center cursor-pointer transition-all relative" style={{ background: c.inputBg, border: `2px dashed ${c.border}` }}>
+                          <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={e => setSelectedFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                           <div className="flex flex-col items-center justify-center gap-2">
-                            <UploadCloud className="text-amber-500" size={28} />
-                            <span className="text-xs font-bold">{selectedFile ? selectedFile.name : "Drag or drop file here"}</span>
-                            <span className="text-[10px] opacity-40">Supports PDF, DOCX, TXT up to 10MB</span>
+                            <UploadCloud size={24} style={{ color: c.amber }} />
+                            <span className="text-xs font-bold" style={{ color: c.textSec }}>{selectedFile ? selectedFile.name : "Drag or drop file here"}</span>
+                            <span className="text-[10px]" style={{ color: c.textMuted }}>Supports PDF, DOCX, TXT up to 10MB</span>
                           </div>
                         </div>
                       </div>
-
-                      <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Custom Topics list (Optional)</label>
-                        <textarea
-                          rows={3}
-                          value={formData.customTopics}
-                          onChange={e => setFormData({ ...formData, customTopics: e.target.value })}
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Custom Topics (Optional)</label>
+                        <textarea rows={2} value={formData.customTopics} onChange={e => setFormData({ ...formData, customTopics: e.target.value })}
                           placeholder="e.g. CPU Scheduling, Deadlocks, SQL Joins, TCP/IP basics..."
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm resize-none`}
-                        />
+                          className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none resize-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }} />
                       </div>
-                    </div>
+                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit"
+                        className="w-full py-2.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}>
+                        <Sparkles size={16} /> Generate Study Plan
+                      </motion.button>
+                    </form>
+                  </div>
+                </motion.div>
 
-                    <button
-                      type="submit"
-                      disabled={generating}
-                      className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 rounded-xl font-bold shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    >
-                      <Sparkles size={16} /> Let AI Build Study Plan
-                    </button>
-                  </form>
+                {/* How It Works */}
+                <div>
+                  <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Zap size={15} style={{ color: c.amber }} /> How It Works</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { step: "01", title: "Configure", desc: "Set your exam goal, study hours, and upload material for AI analysis.", icon: <BookOpen size={18} style={{ color: c.amber }} /> },
+                      { step: "02", title: "AI Schedules", desc: "Our engine creates a spaced repetition plan with smart workload balancing.", icon: <CalendarIcon size={18} style={{ color: "#a78bfa" }} /> },
+                      { step: "03", title: "Track & Adapt", desc: "Complete tasks, get revision reminders, and reschedule with one click.", icon: <Sparkles size={18} style={{ color: "#22d3ee" }} /> }
+                    ].map((item, i) => (
+                      <motion.div key={item.step} custom={i} variants={fadeUp} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.01 }} className="p-5 rounded-2xl relative overflow-hidden group transition-all" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>{item.icon}</div>
+                          <div><span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Step {item.step}</span><h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4></div>
+                        </div>
+                        <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{item.desc}</p>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            
-            <div className={`p-6 rounded-3xl ${bannerStyle} flex flex-col md:flex-row md:items-center justify-between gap-6`}>
-              <div className="space-y-2">
+
+                {/* Features */}
+                <motion.div variants={fadeUp} custom={3} initial="hidden" animate="visible" className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Star size={14} style={{ color: c.amber }} /> Features</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {["Spaced Repetition", "Smart Rescheduling", "Calendar Overview", "Today's Tasks", "AI Recommendations", "Progress Tracking"].map((feat, i) => (
+                      <motion.div key={feat} custom={i} variants={scaleIn} initial="hidden" animate="visible" className="flex items-center gap-2 text-sm" style={{ color: c.textSec }}>
+                        <CheckCircle size={14} style={{ color: c.amber }} className="shrink-0" />
+                        <span>{feat}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        /* ─── ACTIVE PLAN ─── */
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          {/* Banner */}
+          <motion.div variants={scaleIn} initial="hidden" animate="visible" className="p-5 rounded-2xl" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold uppercase bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full">{activePlan.studyMode}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full" style={{ background: c.amberActive, color: c.amber }}>{activePlan.studyMode}</span>
                   {activePlan.daysRemaining <= 5 && (
-                    <span className="text-xs font-extrabold uppercase bg-red-500/20 text-red-400 px-3 py-1 rounded-full animate-pulse">Critical Timeline</span>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>Critical</span>
                   )}
                 </div>
-                <h1 className="text-xl sm:text-2xl font-black">{activePlan.title}</h1>
-                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold opacity-70">
-                  <span className="flex items-center gap-1"><CalendarIcon size={14} /> Exam Date: {activePlan.examDate ? new Date(activePlan.examDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : "Not set"}</span>
-                  <span className="flex items-center gap-1"><Clock size={14} /> Capacity: {activePlan.dailyHours} hrs/day</span>
-                  <span className="flex items-center gap-1"><Star size={14} /> Target Score: {activePlan.targetScore}</span>
+                <h1 className="text-lg font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{activePlan.title}</h1>
+                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold" style={{ color: c.textMuted }}>
+                  <span className="flex items-center gap-1"><CalendarIcon size={12} /> {activePlan.examDate ? new Date(activePlan.examDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : "No date"}</span>
+                  <span className="flex items-center gap-1"><Clock size={12} /> {activePlan.dailyHours} hrs/day</span>
+                  <span className="flex items-center gap-1"><Star size={12} /> Target: {activePlan.targetScore}</span>
                 </div>
               </div>
-
-              <div className="flex flex-wrap gap-4 items-center">
-                <div className="relative group">
-                  <button 
-                    onClick={() => handleExport("PDF")}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                      isDark ? "bg-white/[0.02] border-white/10 hover:bg-white/5" : "bg-white border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Download size={13} /> Export Report
-                  </button>
-                </div>
-
-                <button 
-                  onClick={handleReschedule}
-                  disabled={rescheduling}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-md shadow-amber-500/10`}
-                >
-                  {rescheduling ? <RefreshCw className="animate-spin" size={13} /> : <RefreshCw size={13} />} Smart Reschedule
-                </button>
+              <div className="flex gap-2">
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleExport("PDF")}
+                  className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
+                  <Download size={13} /> Export
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleReschedule} disabled={rescheduling}
+                  className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
+                  {rescheduling ? <RefreshCw className="animate-spin" size={13} /> : <RefreshCw size={13} />} Reschedule
+                </motion.button>
               </div>
             </div>
+          </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
-                <span className="text-[10px] font-extrabold uppercase opacity-40">Streak</span>
-                <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black flex items-center gap-1 text-amber-500">{activePlan.streak} <Flame size={20} className="fill-amber-500 text-amber-500" /></span>
-                  <span className="text-[9px] font-bold opacity-60">Active Streak</span>
+          {/* Stats */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Streak", value: `${activePlan.streak}`, icon: <Flame size={16} style={{ color: c.amber }} />, suffix: "days", color: c.amber },
+              { label: "Completion", value: `${activePlan.completionPercentage}%`, icon: <CheckCircle size={16} style={{ color: c.green }} />, suffix: "done", color: c.green },
+              { label: "Success Rate", value: activePlan.successProbability, icon: <Award size={16} style={{ color: "#a78bfa" }} />, suffix: "projected", color: "#a78bfa" },
+              { label: "Days Left", value: `${activePlan.daysRemaining}`, icon: <Clock size={16} style={{ color: "#22d3ee" }} />, suffix: "remaining", color: "#22d3ee" },
+            ].map((stat, i) => (
+              <motion.div key={stat.label} custom={i} variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="flex items-center gap-2 mb-2">
+                  {stat.icon}
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textMuted }}>{stat.label}</span>
                 </div>
-              </div>
-              <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
-                <span className="text-[10px] font-extrabold uppercase opacity-40">Completion Rate</span>
-                <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black text-amber-500">{activePlan.completionPercentage}%</span>
-                  <span className="text-[9px] font-bold opacity-60">Tasks finished</span>
+                <div className="flex items-end justify-between">
+                  <span className="text-xl font-extrabold" style={{ color: stat.color }}>{stat.value}</span>
+                  <span className="text-[9px] font-bold" style={{ color: c.textMuted }}>{stat.suffix}</span>
                 </div>
-              </div>
-              <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
-                <span className="text-[10px] font-extrabold uppercase opacity-40">Success Probability</span>
-                <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black text-emerald-400">{activePlan.successProbability}</span>
-                  <span className="text-[9px] font-bold opacity-60">AI Projection</span>
-                </div>
-              </div>
-              <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
-                <span className="text-[10px] font-extrabold uppercase opacity-40">Days Countdown</span>
-                <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black text-rose-400">{activePlan.daysRemaining} days</span>
-                  <span className="text-[9px] font-bold opacity-60">Time left</span>
-                </div>
-              </div>
-            </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              <div className="lg:col-span-2 space-y-6">
-                
-                <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <ListTodo className="text-amber-500" size={18} />
-                      <h3 className="font-extrabold text-base">Today's Tasks</h3>
-                    </div>
-                    <span className="text-xs opacity-60 font-semibold">{todayTasks.length} tasks scheduled</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Today's Tasks */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <ListTodo size={16} style={{ color: c.amber }} />
+                    <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Today's Tasks</h3>
                   </div>
-
-                  {todayTasks.length === 0 ? (
-                    <div className="text-center py-8 text-xs opacity-50 border border-dashed border-white/5 rounded-xl">
-                      No tasks scheduled for today. Take a quick practice test or revise weak topics!
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {todayTasks.map(t => {
-                        const isDone = t.status === "Completed";
-                        return (
-                          <motion.div 
-                            key={t.id}
-                            whileHover={{ scale: 1.01 }}
-                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                              isDone 
-                                ? "bg-emerald-500/5 border-emerald-500/20" 
-                                : isDark ? "bg-white/[0.01] border-white/5 hover:border-white/10" : "bg-slate-50 border-slate-200/60 hover:border-slate-300"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <button 
-                                onClick={() => handleToggleTask(t.id, t.status)}
-                                className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
-                                  isDone ? "bg-emerald-500 text-white" : "border-2 border-white/20 hover:border-amber-500"
-                                }`}
-                              >
-                                {isDone && <CheckCircle size={14} className="fill-emerald-500 text-white" />}
-                              </button>
-                              <div>
-                                <span className={`text-sm font-semibold ${isDone ? "line-through opacity-45" : ""}`}>{t.topicName}</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                                    t.priority === "High" ? "bg-rose-500/10 text-rose-400" : 
-                                    t.priority === "Important" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
-                                  }`}>{t.priority}</span>
-                                  <span className="text-[9px] opacity-40 font-bold flex items-center gap-0.5"><Clock size={8} /> {t.estimatedTime} mins</span>
-                                </div>
+                  <span className="text-[10px] font-semibold" style={{ color: c.textMuted }}>{todayTasks.length} tasks</span>
+                </div>
+                {todayTasks.length === 0 ? (
+                  <div className="text-center py-6 text-xs" style={{ color: c.textMuted, border: `1px dashed ${c.border}`, borderRadius: 12 }}>
+                    No tasks scheduled for today. Take a quick practice test or revise weak topics!
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {todayTasks.map(t => {
+                      const isDone = t.status === "Completed";
+                      return (
+                        <motion.div key={t.id} whileHover={{ scale: 1.01 }} className="flex items-center justify-between p-3 rounded-xl transition-all" style={{ background: isDone ? c.greenBg : c.surface, border: `1px solid ${isDone ? c.green : c.border}` }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <button onClick={() => handleToggleTask(t.id, t.status)} className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all" style={{ background: isDone ? c.green : "transparent", border: `2px solid ${isDone ? c.green : c.border}` }}>
+                              {isDone && <CheckCircle size={12} style={{ color: "#fff" }} />}
+                            </button>
+                            <div className="min-w-0">
+                              <span className={`text-sm font-semibold ${isDone ? "line-through" : ""}`} style={{ color: isDone ? c.textMuted : c.text }}>{t.topicName}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: t.priority === "High" ? "rgba(239,68,68,0.1)" : c.amberBg, color: t.priority === "High" ? "#ef4444" : c.amber }}>{t.priority}</span>
+                                <span className="text-[9px]" style={{ color: c.textMuted }}><Clock size={8} className="inline" /> {t.estimatedTime} min</span>
                               </div>
                             </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {todayRevisions.length > 0 && (
-                    <div className="mt-6 border-t border-white/5 pt-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-500">Spaced Repetition Queue</h4>
-                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold">Forgetfulness curve block</span>
-                      </div>
-                      <div className="space-y-2">
-                        {todayRevisions.map(rev => (
-                          <div key={rev.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                            isDark ? "bg-[#14121f]/50 border-amber-500/10" : "bg-amber-500/[0.02] border-amber-500/20"
-                          }`}>
-                            <span className="text-xs font-semibold">{rev.topicName}</span>
-                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full">{rev.revisionType}</span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="text-amber-500" size={18} />
-                      <h3 className="font-extrabold text-base">Monthly Roadmap</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleMonthChange("prev")} className="p-1 hover:bg-white/5 rounded-lg"><ChevronLeft size={16} /></button>
-                      <span className="text-xs font-bold">{currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
-                      <button onClick={() => handleMonthChange("next")} className="p-1 hover:bg-white/5 rounded-lg"><ChevronRight size={16} /></button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-                      <span key={d} className="text-[10px] font-black uppercase opacity-40 py-1">{d}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {getDaysInMonth(currentMonth).map((day, idx) => {
-                      if (!day) return <div key={`empty-${idx}`} className="aspect-square opacity-0" />;
-                      
-                      const dayStr = day.toISOString().split("T")[0];
-                      const dayEvents = calendarEvents.filter(e => e.date === dayStr);
-                      const hasStudy = dayEvents.some(e => e.type === "study");
-                      const hasRev = dayEvents.some(e => e.type === "revision");
-                      const isSelected = selectedDate?.toDateString() === day.toDateString();
-
-                      return (
-                        <button
-                          key={dayStr}
-                          onClick={() => setSelectedDate(day)}
-                          className={`aspect-square rounded-xl flex flex-col items-center justify-between p-1 text-xs relative transition-all border ${
-                            isSelected 
-                              ? "bg-amber-500 border-amber-500 text-slate-950" 
-                              : isDark ? "bg-white/[0.01] border-white/5 hover:bg-white/5" : "bg-slate-100/50 border-slate-200/50 hover:bg-slate-100"
-                          }`}
-                        >
-                          <span className="font-extrabold">{day.getDate()}</span>
-                          <div className="flex gap-0.5 justify-center mb-0.5 w-full">
-                            {hasStudy && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-slate-950" : "bg-amber-500"}`} />}
-                            {hasRev && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-slate-950" : "bg-amber-500"}`} />}
-                          </div>
-                        </button>
+                        </motion.div>
                       );
                     })}
                   </div>
-
-                  {selectedDate && (
-                    <div className="mt-4 p-4 rounded-xl border border-white/5 bg-white/[0.01] space-y-2">
-                      <h4 className="text-xs font-extrabold text-amber-500">Scheduled on {selectedDate.toLocaleDateString(undefined, {month: 'long', day: 'numeric'})}</h4>
-                      {(() => {
-                        const selStr = selectedDate.toISOString().split("T")[0];
-                        const selEvents = calendarEvents.filter(e => e.date === selStr);
-                        if (selEvents.length === 0) return <p className="text-[11px] opacity-40">No scheduled sessions or practice runs.</p>;
-                        return (
-                          <div className="space-y-1.5">
-                            {selEvents.map(e => (
-                              <div key={e.id} className="flex items-center justify-between text-[11px] font-semibold opacity-80">
-                                <span>{e.title}</span>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                  e.type === "study" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
-                                }`}>{e.status}</span>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()}
+                )}
+                {todayRevisions.length > 0 && (
+                  <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${c.divider}` }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider" style={{ color: c.amber }}>Spaced Repetition</h4>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.amberBg, color: c.amber }}>Review queue</span>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                
-                <div className={`p-6 rounded-2xl ${glassCardStyle} text-center space-y-4`}>
-                  <div className="w-20 h-20 mx-auto relative flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-4 border-dashed border-amber-500/30 animate-spin" style={{ animationDuration: "12s" }} />
-                    <Award className="text-amber-500 animate-bounce" size={32} />
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-black">Level Progress</h3>
-                    <p className="text-xs opacity-50 mt-0.5">Study Planner Intelligence XP</p>
-                  </div>
-
-                  <div className="w-full space-y-1.5 text-left">
-                    <div className="flex justify-between text-xs font-extrabold">
-                      <span className="text-amber-500">Lv.{Math.round(activePlan.completionPercentage / 15) + 1} Scholar</span>
-                      <span>{activePlan.completionPercentage}% Completion</span>
-                    </div>
-                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all" style={{ width: `${activePlan.completionPercentage}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <CalendarRange className="text-amber-500" size={18} />
-                    <h3 className="font-extrabold text-base">Workload Analysis</h3>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
-                      <span className="opacity-60 font-semibold">Today's Intensity</span>
-                      <span className={`font-bold ${
-                        activePlan.workloadAnalysis.dailyWorkload === "High" ? "text-rose-400" : 
-                        activePlan.workloadAnalysis.dailyWorkload === "Moderate" ? "text-amber-500" : "text-emerald-400"
-                      }`}>{activePlan.workloadAnalysis.dailyWorkload} Workload</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
-                      <span className="opacity-60 font-semibold">Burnout Risk</span>
-                      <span className={`font-bold ${
-                        activePlan.workloadAnalysis.burnoutRisk === "High" ? "text-rose-400 animate-pulse" : 
-                        activePlan.workloadAnalysis.burnoutRisk === "Moderate" ? "text-amber-500" : "text-emerald-400"
-                      }`}>{activePlan.workloadAnalysis.burnoutRisk} Risk</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="opacity-60 font-semibold">Allocated Capacity</span>
-                      <span className="font-bold text-amber-500">{activePlan.workloadAnalysis.learningCapacity}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="text-amber-500" size={18} />
-                    <h3 className="font-extrabold text-base">AI Recommendation</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    {recommendations.map((rec, index) => (
-                      <div key={index} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            rec.type === "study" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
-                          }`}>{rec.type}</span>
-                          <span className="text-[10px] font-bold text-rose-400">{rec.priority} Priority</span>
+                    <div className="space-y-1.5">
+                      {todayRevisions.map(rev => (
+                        <div key={rev.id} className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                          <span className="text-xs font-semibold" style={{ color: c.text }}>{rev.topicName}</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.amberActive, color: c.amber }}>{rev.revisionType}</span>
                         </div>
-                        <h4 className="text-xs font-black">{rec.title}</h4>
-                        <p className="text-[11px] opacity-60 leading-relaxed">{rec.reason}</p>
-                        <button className="text-[10px] font-bold text-amber-500 flex items-center gap-1 hover:underline">{rec.action} →</button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Calendar */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon size={16} style={{ color: c.amber }} />
+                    <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Monthly Roadmap</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleMonthChange("prev")} className="p-1 rounded-lg" style={{ color: c.textMuted }}><ChevronLeft size={14} /></motion.button>
+                    <span className="text-xs font-bold" style={{ color: c.text }}>{currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleMonthChange("next")} className="p-1 rounded-lg" style={{ color: c.textMuted }}><ChevronRight size={14} /></motion.button>
                   </div>
                 </div>
-
-              </div>
-
+                <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                    <span key={d} className="text-[9px] font-black uppercase" style={{ color: c.textMuted }}>{d}</span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {getDaysInMonth(currentMonth).map((day, idx) => {
+                    if (!day) return <div key={`empty-${idx}`} className="aspect-square opacity-0" />;
+                    const dayStr = day.toISOString().split("T")[0];
+                    const dayEvents = calendarEvents.filter(e => e.date === dayStr);
+                    const hasStudy = dayEvents.some(e => e.type === "study");
+                    const hasRev = dayEvents.some(e => e.type === "revision");
+                    const isSelected = selectedDate?.toDateString() === day.toDateString();
+                    const isToday = new Date().toDateString() === day.toDateString();
+                    return (
+                      <motion.button key={dayStr} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedDate(day)} className="aspect-square rounded-xl flex flex-col items-center justify-between p-1 text-xs relative transition-all" style={{ background: isSelected ? c.amber : isToday ? c.amberBg : c.surface, border: `1px solid ${isSelected ? c.amber : isToday ? c.amberBorder : c.border}` }}>
+                        <span className="font-extrabold" style={{ color: isSelected ? "#000" : c.text }}>{day.getDate()}</span>
+                        <div className="flex gap-0.5 justify-center mb-0.5 w-full">
+                          {hasStudy && <span className="w-1 h-1 rounded-full" style={{ background: isSelected ? "#000" : c.amber }} />}
+                          {hasRev && <span className="w-1 h-1 rounded-full" style={{ background: isSelected ? "#000" : c.amber }} />}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                {selectedDate && (
+                  <div className="mt-3 p-3 rounded-xl" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+                    <h4 className="text-xs font-extrabold mb-2" style={{ color: c.amber }}>Scheduled on {selectedDate.toLocaleDateString(undefined, {month: 'long', day: 'numeric'})}</h4>
+                    {(() => {
+                      const selStr = selectedDate.toISOString().split("T")[0];
+                      const selEvents = calendarEvents.filter(e => e.date === selStr);
+                      if (selEvents.length === 0) return <p className="text-[11px]" style={{ color: c.textMuted }}>No scheduled sessions.</p>;
+                      return <div className="space-y-1">
+                        {selEvents.map(e => (
+                          <div key={e.id} className="flex items-center justify-between text-xs font-semibold" style={{ color: c.textSec }}>
+                            <span>{e.title}</span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: c.amberBg, color: c.amber }}>{e.status}</span>
+                          </div>
+                        ))}
+                      </div>;
+                    })()}
+                  </div>
+                )}
+              </motion.div>
             </div>
 
-          </motion.div>
-        )}
+            {/* Right sidebar */}
+            <div className="space-y-4">
+              {/* Level Progress */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="w-16 h-16 mx-auto relative flex items-center justify-center mb-3">
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="absolute inset-0 rounded-full" style={{ border: `3px dashed ${c.amberBorder}` }} />
+                  <Award size={28} style={{ color: c.amber }} />
+                </div>
+                <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Level Progress</h3>
+                <p className="text-[10px] mb-3" style={{ color: c.textMuted }}>Scholar XP</p>
+                <div className="space-y-1 text-left">
+                  <div className="flex justify-between text-xs font-extrabold">
+                    <span style={{ color: c.amber }}>Lv.{Math.round(activePlan.completionPercentage / 15) + 1}</span>
+                    <span style={{ color: c.textSec }}>{activePlan.completionPercentage}%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: c.pill }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${activePlan.completionPercentage}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #f59e0b, #d97706)" }} />
+                  </div>
+                </div>
+              </motion.div>
 
-      </div>
-    </div>
+              {/* Workload Analysis */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <CalendarRange size={16} style={{ color: c.amber }} />
+                  <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Workload</h3>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { label: "Today's Intensity", value: activePlan.workloadAnalysis.dailyWorkload, color: activePlan.workloadAnalysis.dailyWorkload === "High" ? "#ef4444" : activePlan.workloadAnalysis.dailyWorkload === "Moderate" ? c.amber : c.green },
+                    { label: "Burnout Risk", value: activePlan.workloadAnalysis.burnoutRisk, color: activePlan.workloadAnalysis.burnoutRisk === "High" ? "#ef4444" : activePlan.workloadAnalysis.burnoutRisk === "Moderate" ? c.amber : c.green },
+                    { label: "Capacity", value: activePlan.workloadAnalysis.learningCapacity, color: c.amber },
+                  ].map(item => (
+                    <div key={item.label} className="flex justify-between items-center text-sm pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
+                      <span style={{ color: c.textMuted, fontWeight: 600 }}>{item.label}</span>
+                      <span style={{ color: item.color, fontWeight: 800 }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* AI Recommendations */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles size={16} style={{ color: c.amber }} />
+                  <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Recommendations</h3>
+                </div>
+                <div className="space-y-2">
+                  {recommendations.map((rec, index) => (
+                    <motion.div key={index} custom={index} variants={slideRight} initial="hidden" animate="visible" className="p-3 rounded-xl" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: c.amberBg, color: c.amber }}>{rec.type}</span>
+                        <span className="text-[9px] font-bold" style={{ color: "#ef4444" }}>{rec.priority}</span>
+                      </div>
+                      <h4 className="text-xs font-extrabold" style={{ color: c.text }}>{rec.title}</h4>
+                      <p className="text-[10px] mt-0.5" style={{ color: c.textMuted }}>{rec.reason}</p>
+                    </motion.div>
+                  ))}
+                  {recommendations.length === 0 && (
+                    <p className="text-xs" style={{ color: c.textMuted }}>Complete more tasks to get personalized recommendations.</p>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
