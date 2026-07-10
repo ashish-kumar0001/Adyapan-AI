@@ -59,7 +59,8 @@ export type ResumeHubViewType =
   | "community-profile"
   | "research-hub"
   | "research-paper-ai"
-  | "research-plagiarism";
+  | "research-plagiarism"
+  | "progress-hub";
 
 export interface PersonalInfo {
   fullName: string;
