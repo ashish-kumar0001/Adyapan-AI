@@ -359,9 +359,9 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative" style={{ minHeight: "calc(100vh - 120px)" }}>
+    <div className="relative h-full flex flex-col" style={{ padding: "1.25rem" }}>
       {/* Top Navigation */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-shrink-0">
         <motion.button
           whileHover={buttonHover} whileTap={buttonTap}
           onClick={() => screen === "home" ? setView("resume-hub") : setScreen("home")}
@@ -389,6 +389,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
         </div>
       </div>
 
+      <div className="flex-1 overflow-y-auto" style={{ paddingRight: 4 }}>
       <AnimatePresence mode="wait">
         {/* ─────── SCREEN 1: HOME ─────── */}
         {screen === "home" && (
@@ -396,7 +397,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             key="home"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}
-            className="max-w-2xl mx-auto space-y-6"
+            className="space-y-6"
           >
             {/* Target Role */}
             <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -417,81 +418,83 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               />
             </div>
 
-            {/* Option 1: Choose Existing Resume */}
-            {resumes.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12 }}>
+              {/* Option 1: Choose Existing Resume */}
+              {resumes.length > 0 && (
+                <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
+                    <FileText size={16} className="inline mr-2" style={{ color: c.primary }} />
+                    Choose Existing Resume
+                  </h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {resumes.map(r => (
+                      <motion.button
+                        key={r.id}
+                        whileHover={cardHover} whileTap={{ scale: 0.99 }}
+                        onClick={() => { setSelectedResumeId(r.id); setFile(null); }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                        style={{
+                          background: selectedResumeId === r.id ? "rgba(245,158,11,0.1)" : c.surface,
+                          border: `1px solid ${selectedResumeId === r.id ? "rgba(245,158,11,0.3)" : c.border}`,
+                          color: c.text,
+                        }}
+                      >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)" }}>
+                          <FileText size={14} style={{ color: c.primary }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold truncate">{r.title}</div>
+                          <div className="text-[10px]" style={{ color: c.textMuted }}>
+                            {r.template} · {new Date(r.updatedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        {selectedResumeId === r.id && <CheckCircle size={16} style={{ color: c.primary }} />}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Option 2: Upload Resume */}
               <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                  <FileText size={16} className="inline mr-2" style={{ color: c.primary }} />
-                  Choose Existing Resume
+                  <Upload size={16} className="inline mr-2" style={{ color: c.primary }} />
+                  Upload Resume
                 </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {resumes.map(r => (
-                    <motion.button
-                      key={r.id}
-                      whileHover={cardHover} whileTap={{ scale: 0.99 }}
-                      onClick={() => { setSelectedResumeId(r.id); setFile(null); }}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
-                      style={{
-                        background: selectedResumeId === r.id ? "rgba(245,158,11,0.1)" : c.surface,
-                        border: `1px solid ${selectedResumeId === r.id ? "rgba(245,158,11,0.3)" : c.border}`,
-                        color: c.text,
-                      }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)" }}>
-                        <FileText size={14} style={{ color: c.primary }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold truncate">{r.title}</div>
-                        <div className="text-[10px]" style={{ color: c.textMuted }}>
-                          {r.template} · {new Date(r.updatedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                      {selectedResumeId === r.id && <CheckCircle size={16} style={{ color: c.primary }} />}
-                    </motion.button>
-                  ))}
+                <div
+                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                  onClick={() => fileRef.current?.click()}
+                  className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
+                  style={{
+                    borderColor: dragging ? c.primary : c.border,
+                    background: dragging ? "rgba(245,158,11,0.05)" : c.surface,
+                  }}
+                >
+                  <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
+                  {file ? (
+                    <div className="space-y-2">
+                      <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.primary }} /></motion.span>
+                      <p className="text-sm font-bold" style={{ color: c.text }}>{file.name}</p>
+                      <p className="text-xs" style={{ color: c.textMuted }}>
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                      <motion.button
+                        whileHover={buttonHover} whileTap={buttonTap}
+                        onClick={e => { e.stopPropagation(); setFile(null); setSelectedResumeId(""); }}
+                        className="text-xs font-bold mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
+                        style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
+                      >
+                        <X size={12} /> Remove
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <motion.span variants={springIcon} initial="hidden" animate="visible"><Upload size={40} className="mx-auto" style={{ color: c.textMuted }} /></motion.span>
+                      <p className="text-sm font-bold" style={{ color: c.text }}>Drag & drop your resume here</p>
+                      <p className="text-xs" style={{ color: c.textMuted }}>Supports PDF, DOCX up to 5MB</p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Option 2: Upload Resume */}
-            <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-              <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                <Upload size={16} className="inline mr-2" style={{ color: c.primary }} />
-                Upload Resume
-              </h3>
-              <div
-                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                onClick={() => fileRef.current?.click()}
-                className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
-                style={{
-                  borderColor: dragging ? c.primary : c.border,
-                  background: dragging ? "rgba(245,158,11,0.05)" : c.surface,
-                }}
-              >
-                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
-                {file ? (
-                  <div className="space-y-2">
-                    <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.primary }} /></motion.span>
-                    <p className="text-sm font-bold" style={{ color: c.text }}>{file.name}</p>
-                    <p className="text-xs" style={{ color: c.textMuted }}>
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                    <motion.button
-                      whileHover={buttonHover} whileTap={buttonTap}
-                      onClick={e => { e.stopPropagation(); setFile(null); setSelectedResumeId(""); }}
-                      className="text-xs font-bold mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
-                      style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
-                    >
-                      <X size={12} /> Remove
-                    </motion.button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <motion.span variants={springIcon} initial="hidden" animate="visible"><Upload size={40} className="mx-auto" style={{ color: c.textMuted }} /></motion.span>
-                    <p className="text-sm font-bold" style={{ color: c.text }}>Drag & drop your resume here</p>
-                    <p className="text-xs" style={{ color: c.textMuted }}>Supports PDF, DOCX up to 5MB</p>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -518,7 +521,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             key="jd"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}
-            className="max-w-2xl mx-auto space-y-6"
+            className="space-y-6"
           >
             <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
               <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.primary }} /></motion.span>
@@ -640,7 +643,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             key="loading"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-            className="max-w-md mx-auto"
+            className="max-w-lg mx-auto"
           >
             <div className="p-8 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
               <motion.div
@@ -1285,6 +1288,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       {/* ─── AI CHAT BUTTON ─── */}
       {(screen === "dashboard" || screen === "suggestions") && (
