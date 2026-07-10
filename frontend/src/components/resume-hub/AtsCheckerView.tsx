@@ -399,7 +399,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto" style={{ paddingRight: 4 }}>
+      <div className="flex-1 overflow-y-auto px-5 pb-4" style={{ paddingRight: 20 }}>
       <AnimatePresence mode="wait">
         {/* ─────── SCREEN 1: HOME ─────── */}
         {screen === "home" && (
