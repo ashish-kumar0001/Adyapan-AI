@@ -1,7 +1,5 @@
 import { env } from "../../config/env";
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-
 export interface OpenRouterMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -14,51 +12,123 @@ export interface OpenRouterOptions {
   responseFormat?: { type: "json_object" | "text" };
 }
 
-interface OpenRouterResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-  error?: { message: string };
-}
-
-async function callOpenRouter(
+// Robust fallback completion engine using OpenRouter, Groq, and Google AI Studio
+async function callAIRobust(
   messages: OpenRouterMessage[],
   options: OpenRouterOptions
 ): Promise<string> {
-  const body: Record<string, unknown> = {
-    model: options.model,
-    messages,
-    temperature: options.temperature ?? 0.7,
-    max_tokens: options.maxTokens ?? 4096,
-  };
+  const providers = [];
 
-  if (options.responseFormat?.type === "json_object") {
-    body.response_format = { type: "json_object" };
+  // 1. Add OpenRouter if key exists
+  if (env.openrouterApiKey) {
+    providers.push({
+      name: "OpenRouter",
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      key: env.openrouterApiKey,
+      model: options.model || "openai/gpt-4o-mini"
+    });
   }
 
-  const res = await fetch(OPENROUTER_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.openrouterApiKey}`,
-      "HTTP-Referer": env.frontendUrl,
-      "X-Title": "Adyapan AI",
-    },
-    body: JSON.stringify(body),
-  });
-
-  const data = (await res.json()) as OpenRouterResponse;
-
-  if (!res.ok || data.error) {
-    throw new Error(`OpenRouter API error: ${data.error?.message ?? res.statusText}`);
+  // 2. Add Groq if key exists
+  if (env.groqApiKey) {
+    let groqModel = "llama-3.3-70b-versatile";
+    if (options.model?.includes("mini") || options.model?.includes("fast") || options.model?.includes("cheap")) {
+      groqModel = "llama-3.1-8b-instant";
+    }
+    providers.push({
+      name: "Groq",
+      url: "https://api.groq.com/openai/v1/chat/completions",
+      key: env.groqApiKey,
+      model: groqModel
+    });
   }
 
-  return data.choices[0].message.content;
+  // 3. Add Google Gemini if key exists
+  if (env.geminiApiKey) {
+    let geminiModel = "gemini-1.5-flash";
+    if (options.model?.includes("powerful") || options.model?.includes("pro")) {
+      geminiModel = "gemini-1.5-pro";
+    }
+    providers.push({
+      name: "Gemini",
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      key: env.geminiApiKey,
+      model: geminiModel
+    });
+  }
+
+  if (providers.length === 0) {
+    throw new Error("No AI providers configured. Please check environment keys.");
+  }
+
+  let lastError: Error | null = null;
+
+  for (const provider of providers) {
+    try {
+      console.log(`[AI Engine] Calling ${provider.name} using model ${provider.model}...`);
+      
+      const body: Record<string, unknown> = {
+        model: provider.model,
+        messages,
+        temperature: options.temperature ?? 0.7,
+        max_tokens: options.maxTokens ?? 4096,
+      };
+
+      if (options.responseFormat?.type === "json_object") {
+        body.response_format = { type: "json_object" };
+      }
+
+      const res = await fetch(provider.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider.key}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = (await res.json()) as any;
+
+      if (!res.ok || data.error) {
+        throw new Error(`${provider.name} error: ${data.error?.message ?? res.statusText}`);
+      }
+
+      const content = data.choices?.[0]?.message?.content;
+      if (!content || content.trim().length === 0) {
+        throw new Error(`${provider.name} returned empty completion.`);
+      }
+
+      console.log(`[AI Engine] Successfully generated content via ${provider.name}.`);
+      return content;
+    } catch (e: any) {
+      console.warn(`[AI Engine] ${provider.name} execution failed:`, e.message || e);
+      lastError = e;
+    }
+  }
+
+  throw new Error(`All AI completion providers failed. Last Error: ${lastError?.message}`);
 }
 
+// Extracts clean JSON string by finding first '{' or '[' and matching to final '}' or ']'
 function stripMarkdownJson(text: string): string {
+  const firstBrace = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  
+  let startIdx = -1;
+  let endIdx = -1;
+  
+  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+    startIdx = firstBrace;
+    endIdx = text.lastIndexOf("}");
+  } else if (firstBracket !== -1) {
+    startIdx = firstBracket;
+    endIdx = text.lastIndexOf("]");
+  }
+  
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    return text.substring(startIdx, endIdx + 1);
+  }
+  
   return text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
 }
 
@@ -71,7 +141,7 @@ export async function generateText(
     { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
-  return callOpenRouter(messages, options);
+  return callAIRobust(messages, options);
 }
 
 export async function generateJSON<T>(
@@ -80,26 +150,29 @@ export async function generateJSON<T>(
   options: OpenRouterOptions,
   fallback: T
 ): Promise<T> {
+  let text = "";
   try {
     const messages: OpenRouterMessage[] = [
-      { role: "system", content: `${systemPrompt}\nYou MUST respond with valid JSON only, no markdown.` },
+      { role: "system", content: `${systemPrompt}\nYou MUST respond with valid JSON only, no other conversational introduction or explanation.` },
       { role: "user", content: userPrompt },
     ];
-    const text = await callOpenRouter(messages, options);
-    return JSON.parse(stripMarkdownJson(text)) as T;
+    text = await callAIRobust(messages, options);
+    const cleaned = stripMarkdownJson(text);
+    return JSON.parse(cleaned) as T;
   } catch (error) {
-    console.error(`OpenRouter JSON error (${options.model}):`, error);
+    console.error(`[AI Engine] JSON generation error (${options.model}):`, error);
+    console.error(`[AI Engine] Original LLM Response text was:\n${text}`);
     return fallback;
   }
 }
 
 // Default model presets for different task categories
 export const MODELS = {
-  FAST: "meta-llama/llama-2-7b-chat",
-  BALANCED: "meta-llama/llama-3-70b-instruct",
-  POWERFUL: "meta-llama/llama-3-70b-instruct",
-  CODE: "meta-llama/llama-3-70b-instruct",
-  CHEAP: "meta-llama/llama-2-7b-chat",
+  FAST: "openai/gpt-4o-mini",
+  BALANCED: "openai/gpt-4o-mini",
+  POWERFUL: "openai/gpt-4o",
+  CODE: "openai/gpt-4o",
+  CHEAP: "openai/gpt-4o-mini",
 } as const;
 
 // Available models for Ady Chat
