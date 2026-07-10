@@ -105,7 +105,7 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
     const analysis = await generateJSON(
       "You are an expert academic tutor. Analyze the document and return a structured JSON summary.",
       prompt,
-      { model: "google/gemini-2.5-flash", maxTokens: 8192 },
+      { model: "google/gemini-2.5-flash", maxTokens: 4000 },
       null
     );
 
