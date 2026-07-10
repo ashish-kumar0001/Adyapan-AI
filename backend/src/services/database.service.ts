@@ -135,18 +135,40 @@ class DatabaseService {
   }
 
   async getDatabaseUrlForUser(userId: string): Promise<string> {
-    const dbName = `user_${userId}`;
-    const exists = await this.checkDatabaseExists(dbName);
-    if (!exists) {
-      throw httpError(404, `Database not found for user: ${userId}`);
+    if (!this.apiKey || !this.projectId || !this.branchId) {
+      console.log(`[Database] Neon API credentials missing. Falling back to default DATABASE_URL for user ${userId}`);
+      return env.databaseUrl;
     }
-    return this.getConnectionString(dbName);
+    try {
+      const dbName = `user_${userId}`;
+      const exists = await this.checkDatabaseExists(dbName);
+      if (!exists) {
+        console.log(`[Database] User database '${dbName}' not found. Creating dynamically...`);
+        try {
+          await this.createDatabase(dbName);
+        } catch (createErr) {
+          console.warn("[Database] Dynamic database creation failed, using main database:", createErr);
+          return env.databaseUrl;
+        }
+      }
+      return this.getConnectionString(dbName);
+    } catch (err: any) {
+      console.warn(`[Database] Neon branch query failed for user ${userId}. Falling back to default DATABASE_URL. Error:`, err.message || err);
+      return env.databaseUrl;
+    }
   }
 
   async getUserDatabaseInfo(userId: string): Promise<NeonDatabase | null> {
-    const dbName = `user_${userId}`;
-    const databases = await this.listDatabases();
-    return databases.find((db) => db.name === dbName) || null;
+    if (!this.apiKey || !this.projectId || !this.branchId) {
+      return null;
+    }
+    try {
+      const dbName = `user_${userId}`;
+      const databases = await this.listDatabases();
+      return databases.find((db) => db.name === dbName) || null;
+    } catch {
+      return null;
+    }
   }
 
   async waitForOperation(
