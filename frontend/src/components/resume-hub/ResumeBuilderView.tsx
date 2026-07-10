@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import {
   FileText, ArrowLeft, Save, Sparkles, Download, Plus, Trash2,
-  ChevronLeft, ChevronRight, Eye, ZoomIn, ZoomOut, Maximize2,
+  ChevronLeft, ChevronRight, ArrowRight, Eye, ZoomIn, ZoomOut, Maximize2,
   Check, MessageCircle, Send, X, Bot, User, Loader2, Zap,
   Globe, BookOpen, Award, Languages,
   GraduationCap, Briefcase, Code2, UserCircle, Settings,
@@ -298,164 +298,162 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
             {screen === 2 && (
               <div className="h-full flex flex-col">
                 <div style={{ flex: 1, overflowY: "auto", padding: "0.75rem 1.25rem" }}>
-                  <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Personal Info */}
-                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
-                      <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><UserCircle size={14} style={{ color: col }} /> Personal Info</h3>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                        {[{ p: "Full Name *", v: personalInfo.fullName, set: (v: string) => setPersonalInfo({ ...personalInfo, fullName: v }) }, { p: "Email *", v: personalInfo.email, set: (v: string) => setPersonalInfo({ ...personalInfo, email: v }) }, { p: "Phone", v: personalInfo.phone, set: (v: string) => setPersonalInfo({ ...personalInfo, phone: v }) }, { p: "Location", v: personalInfo.location, set: (v: string) => setPersonalInfo({ ...personalInfo, location: v }) }].map((f, i) => (
-                          <input key={i} placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={inputSx} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                        ))}
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 10, alignItems: "start" }}>
+                    {/* Left column */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {/* Personal Info */}
+                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
+                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><UserCircle size={14} style={{ color: col }} /> Personal Info</h3>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          {[{ p: "Full Name *", v: personalInfo.fullName, set: (v: string) => setPersonalInfo({ ...personalInfo, fullName: v }) }, { p: "Email *", v: personalInfo.email, set: (v: string) => setPersonalInfo({ ...personalInfo, email: v }) }, { p: "Phone", v: personalInfo.phone, set: (v: string) => setPersonalInfo({ ...personalInfo, phone: v }) }, { p: "Location", v: personalInfo.location, set: (v: string) => setPersonalInfo({ ...personalInfo, location: v }) }].map((f, i) => (
+                            <input key={i} placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={inputSx} />
+                          ))}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
+                          {[{ p: "LinkedIn URL", v: personalInfo.linkedin, set: (v: string) => setPersonalInfo({ ...personalInfo, linkedin: v }) }, { p: "GitHub URL", v: personalInfo.github, set: (v: string) => setPersonalInfo({ ...personalInfo, github: v }) }, { p: "Portfolio URL", v: personalInfo.portfolio, set: (v: string) => setPersonalInfo({ ...personalInfo, portfolio: v }) }].map((f, i) => (
+                            <div key={i} style={{ position: "relative" }}>
+                              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMuted, display: "flex" }}><Globe size={12} /></span>
+                              <input placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={{ ...inputSx, paddingLeft: "1.8rem" }} />
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
-                        {[{ p: "LinkedIn URL", v: personalInfo.linkedin, set: (v: string) => setPersonalInfo({ ...personalInfo, linkedin: v }) }, { p: "GitHub URL", v: personalInfo.github, set: (v: string) => setPersonalInfo({ ...personalInfo, github: v }) }, { p: "Portfolio URL", v: personalInfo.portfolio, set: (v: string) => setPersonalInfo({ ...personalInfo, portfolio: v }) }].map((f, i) => (
-                          <div key={i} style={{ position: "relative" }}>
-                            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMuted, display: "flex" }}><Globe size={12} /></span>
-                            <input placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={{ ...inputSx, paddingLeft: "1.8rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
+
+                      {/* Education */}
+                      <CollapsibleSection title="Education" icon={<GraduationCap size={14} />} color={col} t={t} onAdd={addEdu}>
+                        {education.map((item, idx) => (
+                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                              <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="Degree" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="Field of Study" value={item.fieldOfStudy} onChange={e => updateEdu(idx, "fieldOfStudy", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="CGPA/Grade" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
+                              <input placeholder="Start Date" value={item.startDate} onChange={e => updateEdu(idx, "startDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            </div>
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeEdu(idx)} style={{ position: "absolute", top: 6, right: 6, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
                           </div>
                         ))}
-                      </div>
+                      </CollapsibleSection>
+
+                      {/* Experience */}
+                      <CollapsibleSection title="Experience" icon={<Briefcase size={14} />} color={col} t={t} onAdd={addExp}>
+                        {experience.map((item, idx) => (
+                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
+                              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIExperience(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
+                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeExp(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                              <input placeholder="Company" value={item.company} onChange={e => updateExp(idx, "company", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="Role" value={item.role} onChange={e => updateExp(idx, "role", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
+                              <input placeholder="Start Date" value={item.startDate} onChange={e => updateExp(idx, "startDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            </div>
+                            <textarea placeholder="Description (responsibilities, achievements, technologies used)..."
+                              value={item.description} onChange={e => updateExp(idx, "description", e.target.value)}
+                              style={{ ...inputSx, height: 56, resize: "vertical", fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }}
+                            />
+                          </div>
+                        ))}
+                      </CollapsibleSection>
+
+                      {/* Achievements */}
+                      <CollapsibleSection title="Achievements" icon={<Trophy size={14} />} color={col} t={t} onAdd={addAchievement}>
+                        {achievements.map((ach, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                            <input placeholder="e.g. Secured 1st place in National Hackathon" value={ach} onChange={e => updateAchievement(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeAchievement(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 5, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={12} /></motion.button>
+                          </div>
+                        ))}
+                      </CollapsibleSection>
                     </div>
 
-                    {/* Summary */}
-                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}><BookOpen size={14} style={{ color: col }} /> Professional Summary</h3>
-                        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAISummary} disabled={generatingAI}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 6, color: col, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>
-                          <Sparkles size={10} /> {generatingAI ? "..." : "AI Generate"}
-                        </motion.button>
-                      </div>
-                      <textarea value={summary} onChange={e => setSummary(e.target.value)} placeholder="Summarize your professional experience, key skills, and career objectives..."
-                        style={{ ...inputSx, height: 68, resize: "vertical", fontSize: "0.8rem" }}
-                        onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                        onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
-                      />
-                    </div>
-
-                    {/* Education */}
-                    <CollapsibleSection title="Education" icon={<GraduationCap size={14} />} color={col} t={t} onAdd={addEdu}>
-                      {education.map((item, idx) => (
-                        <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                            <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="Degree" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="Field of Study" value={item.fieldOfStudy} onChange={e => updateEdu(idx, "fieldOfStudy", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="CGPA/Grade" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
-                            <input placeholder="Start Date" value={item.startDate} onChange={e => updateEdu(idx, "startDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          </div>
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeEdu(idx)} style={{ position: "absolute", top: 6, right: 6, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
+                    {/* Right column */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {/* Summary */}
+                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                          <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}><BookOpen size={14} style={{ color: col }} /> Professional Summary</h3>
+                          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAISummary} disabled={generatingAI}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 6, color: col, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>
+                            <Sparkles size={10} /> {generatingAI ? "..." : "AI Generate"}
+                          </motion.button>
                         </div>
-                      ))}
-                    </CollapsibleSection>
-
-                    {/* Experience */}
-                    <CollapsibleSection title="Experience" icon={<Briefcase size={14} />} color={col} t={t} onAdd={addExp}>
-                      {experience.map((item, idx) => (
-                        <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
-                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
-                            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIExperience(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
-                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeExp(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
-                          </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                            <input placeholder="Company" value={item.company} onChange={e => updateExp(idx, "company", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="Role" value={item.role} onChange={e => updateExp(idx, "role", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
-                            <input placeholder="Start Date" value={item.startDate} onChange={e => updateExp(idx, "startDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          </div>
-                          <textarea placeholder="Description (responsibilities, achievements, technologies used)..."
-                            value={item.description} onChange={e => updateExp(idx, "description", e.target.value)}
-                            style={{ ...inputSx, height: 56, resize: "vertical", fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }}
-                            onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                            onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
-                          />
-                        </div>
-                      ))}
-                    </CollapsibleSection>
-
-                    {/* Projects */}
-                    <CollapsibleSection title="Projects" icon={<Code2 size={14} />} color={col} t={t} onAdd={addProj}>
-                      {projects.map((item, idx) => (
-                        <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
-                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
-                            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIProject(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
-                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeProj(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
-                          </div>
-                          <input placeholder="Project Name" value={item.name} onChange={e => updateProj(idx, "name", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          <input placeholder="Technologies (comma separated)" value={item.techStack} onChange={e => updateProj(idx, "techStack", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          <textarea placeholder="Description (key features, your contributions, results)"
-                            value={item.description} onChange={e => updateProj(idx, "description", e.target.value)}
-                            style={{ ...inputSx, height: 56, resize: "vertical", fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }}
-                            onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                            onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
-                          />
-                        </div>
-                      ))}
-                    </CollapsibleSection>
-
-                    {/* Skills */}
-                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
-                      <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><Zap size={14} style={{ color: col }} /> Skills</h3>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && addSkill()}
-                          style={{ ...inputSx, flex: 1, fontSize: "0.8rem", padding: "0.5rem 0.75rem" }}
-                          onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                          onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                        <textarea value={summary} onChange={e => setSummary(e.target.value)} placeholder="Summarize your professional experience, key skills, and career objectives..."
+                          style={{ ...inputSx, height: 72, resize: "vertical", fontSize: "0.8rem" }}
                         />
-                        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={addSkill}
-                          style={{ padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f59e0b, #d97706)", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}>
-                          Add
-                        </motion.button>
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
-                        {skills.map((s) => (
-                          <motion.span key={s} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: 16, fontSize: "0.72rem", color: t.textSecondary, fontWeight: 600 }}>
-                            {s}
-                            <motion.button whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.8 }} onClick={() => removeSkill(s)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.85rem", lineHeight: 1 }}>&times;</motion.button>
-                          </motion.span>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Certifications */}
-                    <CollapsibleSection title="Certifications" icon={<Award size={14} />} color={col} t={t} onAdd={addCert}>
-                      {certifications.map((item, idx) => (
-                        <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                            <input placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                            <input placeholder="Issuer" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
+                      {/* Projects */}
+                      <CollapsibleSection title="Projects" icon={<Code2 size={14} />} color={col} t={t} onAdd={addProj}>
+                        {projects.map((item, idx) => (
+                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
+                              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIProject(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
+                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeProj(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
+                            </div>
+                            <input placeholder="Project Name" value={item.name} onChange={e => updateProj(idx, "name", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            <input placeholder="Technologies (comma separated)" value={item.techStack} onChange={e => updateProj(idx, "techStack", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }} />
+                            <textarea placeholder="Description (key features, your contributions, results)"
+                              value={item.description} onChange={e => updateProj(idx, "description", e.target.value)}
+                              style={{ ...inputSx, height: 56, resize: "vertical", fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }}
+                            />
                           </div>
-                          <input placeholder="Date" value={item.date} onChange={e => updateCert(idx, "date", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeCert(idx)} style={{ position: "absolute", top: 6, right: 6, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
-                        </div>
-                      ))}
-                    </CollapsibleSection>
+                        ))}
+                      </CollapsibleSection>
 
-                    {/* Achievements */}
-                    <CollapsibleSection title="Achievements" icon={<Trophy size={14} />} color={col} t={t} onAdd={addAchievement}>
-                      {achievements.map((ach, idx) => (
-                        <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                          <input placeholder="e.g. Secured 1st place in National Hackathon" value={ach} onChange={e => updateAchievement(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeAchievement(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 5, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={12} /></motion.button>
+                      {/* Skills */}
+                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
+                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><Zap size={14} style={{ color: col }} /> Skills</h3>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && addSkill()}
+                            style={{ ...inputSx, flex: 1, fontSize: "0.8rem", padding: "0.5rem 0.75rem" }}
+                          />
+                          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={addSkill}
+                            style={{ padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f59e0b, #d97706)", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}>
+                            Add
+                          </motion.button>
                         </div>
-                      ))}
-                    </CollapsibleSection>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+                          {skills.map((s) => (
+                            <motion.span key={s} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: 16, fontSize: "0.72rem", color: t.textSecondary, fontWeight: 600 }}>
+                              {s}
+                              <motion.button whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.8 }} onClick={() => removeSkill(s)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.85rem", lineHeight: 1 }}>&times;</motion.button>
+                            </motion.span>
+                          ))}
+                        </div>
+                      </div>
 
-                    {/* Languages */}
-                    <CollapsibleSection title="Languages" icon={<Languages size={14} />} color={col} t={t} onAdd={addLanguage}>
-                      {languages.map((lang, idx) => (
-                        <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                          <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }} onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }} />
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeLanguage(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 5, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={12} /></motion.button>
-                        </div>
-                      ))}
-                    </CollapsibleSection>
+                      {/* Certifications */}
+                      <CollapsibleSection title="Certifications" icon={<Award size={14} />} color={col} t={t} onAdd={addCert}>
+                        {certifications.map((item, idx) => (
+                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                              <input placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                              <input placeholder="Issuer" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            </div>
+                            <input placeholder="Date" value={item.date} onChange={e => updateCert(idx, "date", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem", marginTop: 6 }} />
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeCert(idx)} style={{ position: "absolute", top: 6, right: 6, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
+                          </div>
+                        ))}
+                      </CollapsibleSection>
+
+                      {/* Languages */}
+                      <CollapsibleSection title="Languages" icon={<Languages size={14} />} color={col} t={t} onAdd={addLanguage}>
+                        {languages.map((lang, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                            <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeLanguage(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 5, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={12} /></motion.button>
+                          </div>
+                        ))}
+                      </CollapsibleSection>
+                    </div>
                   </div>
                 </div>
 
@@ -480,33 +478,46 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
             {/* ─── SCREEN 3 — Generation ─── */}
             {screen === 3 && (
-              <div className="h-full flex items-center justify-center" style={{ padding: "1.5rem" }}>
-                <div style={{ maxWidth: 420, width: "100%", textAlign: "center" }}>
-                  <motion.div animate={{ rotate: genStep >= 4 ? 0 : 360 }} transition={{ repeat: genStep >= 4 ? 0 : Infinity, duration: 1.5, ease: "linear" }}
-                    style={{ width: 56, height: 56, borderRadius: "50%", background: genStep >= 4 ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)", border: `2px solid ${genStep >= 4 ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem" }}>
-                    {genStep >= 4 ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><Check size={26} style={{ color: "#10b981" }} /></motion.div> : <Loader2 size={26} style={{ color: col }} />}
-                  </motion.div>
-                  <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: t.text, margin: 0 }}>{genStep >= 4 ? "Resume Generated!" : "Crafting Your Resume"}</h2>
-                  <p style={{ fontSize: "0.8rem", color: t.textMuted, margin: "0.25rem 0 1rem" }}>{genStep >= 4 ? "Your ATS-optimized resume is ready for review" : "AI is analyzing and optimizing your profile"}</p>
+              <div className="h-full" style={{ padding: "1.5rem", overflowY: "auto" }}>
+                <div style={{ maxWidth: 800, margin: "0 auto" }}>
+                  {/* Status card */}
+                  <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
+                    <motion.div animate={{ rotate: genStep >= 4 ? 0 : 360 }} transition={{ repeat: genStep >= 4 ? 0 : Infinity, duration: 1.5, ease: "linear" }}
+                      style={{ width: 60, height: 60, borderRadius: "50%", background: genStep >= 4 ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)", border: `2px solid ${genStep >= 4 ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.85rem" }}>
+                      {genStep >= 4 ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><Check size={28} style={{ color: "#10b981" }} /></motion.div> : <Loader2 size={28} style={{ color: col }} />}
+                    </motion.div>
+                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: t.text, margin: 0 }}>{genStep >= 4 ? "Resume Generated!" : "Crafting Your Resume"}</h2>
+                    <p style={{ fontSize: "0.85rem", color: t.textMuted, margin: "0.25rem 0 0" }}>{genStep >= 4 ? "Your ATS-optimized resume is ready for review" : "AI is analyzing and optimizing your profile"}</p>
+                  </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     {genSteps.map((step, i) => (
                       <motion.div key={step.label} animate={{ background: i <= genStep ? t.genBg : t.surface, borderColor: i <= genStep ? "rgba(245,158,11,0.2)" : t.border }}
-                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.65rem 0.85rem", borderRadius: 10, border: "1px solid", textAlign: "left" }}>
+                        style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "0.85rem 1rem", borderRadius: 12, border: "1px solid" }}>
                         <motion.div animate={{ background: i < genStep ? col : i === genStep ? "rgba(245,158,11,0.2)" : t.surface, scale: i === genStep ? [1, 1.15, 1] : 1 }} transition={{ repeat: i === genStep ? Infinity : 0, duration: 1 }}
-                          style={{ width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {i < genStep ? <Check size={12} style={{ color: "#000" }} /> : i === genStep ? <Loader2 size={11} style={{ color: col }} /> : <div style={{ width: 6, height: 6, borderRadius: "50%", background: t.textDim }} />}
+                          style={{ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {i < genStep ? <Check size={14} style={{ color: "#000" }} /> : i === genStep ? <Loader2 size={12} style={{ color: col }} /> : <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.textDim }} />}
                         </motion.div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: "0.78rem", fontWeight: 700, color: i <= genStep ? t.text : t.textDim, display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: i <= genStep ? t.text : t.textDim, display: "flex", alignItems: "center", gap: 6 }}>
                             {i <= genStep && <span style={{ color: col }}>{step.icon}</span>} {step.label}
                           </div>
-                          <div style={{ fontSize: "0.65rem", color: i <= genStep ? t.textMuted : t.textDim, marginTop: 1 }}>{step.desc}</div>
+                          <div style={{ fontSize: "0.7rem", color: i <= genStep ? t.textMuted : t.textDim, marginTop: 3, lineHeight: 1.5 }}>{step.desc}</div>
                         </div>
-                        {i < genStep && <Check size={12} style={{ color: "#10b981" }} />}
+                        {i < genStep && <Check size={14} style={{ color: "#10b981", flexShrink: 0 }} />}
                       </motion.div>
                     ))}
                   </div>
+
+                  {/* Bottom action */}
+                  {genStep >= 4 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center", marginTop: "1.5rem" }}>
+                      <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(4)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.65rem 1.5rem", borderRadius: 12, fontWeight: 700, fontSize: "0.85rem", cursor: "pointer", background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
+                        Continue to Editor <ArrowRight size={16} />
+                      </motion.button>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             )}
@@ -638,63 +649,70 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
             {/* ─── SCREEN 5 — Review ─── */}
             {screen === 5 && (
-              <div className="h-full flex items-center justify-center" style={{ padding: "1.5rem", overflowY: "auto" }}>
-                <div style={{ maxWidth: 500, width: "100%" }}>
-                  <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
+              <div className="h-full" style={{ padding: "1.5rem", overflowY: "auto" }}>
+                <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+                  {/* Header */}
+                  <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12 }}
-                      style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(16,185,129,0.1)", border: "2px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.65rem" }}>
-                      <Check size={24} style={{ color: "#10b981" }} />
+                      style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(16,185,129,0.1)", border: "2px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem" }}>
+                      <Check size={26} style={{ color: "#10b981" }} />
                     </motion.div>
-                    <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: t.text, margin: 0 }}>Resume Complete</h2>
-                    <p style={{ fontSize: "0.8rem", color: t.textMuted, margin: "0.2rem 0 0" }}>Your AI-optimized ATS resume is ready to export</p>
+                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: t.text, margin: 0 }}>Resume Complete</h2>
+                    <p style={{ fontSize: "0.82rem", color: t.textMuted, margin: "0.2rem 0 0" }}>Your AI-optimized ATS resume is ready to export</p>
                   </div>
 
-                  <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem", marginBottom: "0.85rem" }}>
-                    <h3 style={{ fontSize: "0.68rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.65rem" }}>Resume Details</h3>
-                    {[
-                      { label: "Template", value: setup.resumeStyle },
-                      { label: "Target Company", value: setup.company },
-                      { label: "Target Profession", value: setup.profession },
-                      { label: "Career Level", value: setup.careerLevel },
-                    ].map((item) => (
-                      <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.35rem 0", borderBottom: `1px solid ${t.border}`, fontSize: "0.75rem" }}>
-                        <span style={{ color: t.textMuted, fontWeight: 600 }}>{item.label}</span>
-                        <span style={{ color: t.text, fontWeight: 700 }}>{item.value}</span>
-                      </div>
-                    ))}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.35rem 0", fontSize: "0.75rem" }}>
-                      <span style={{ color: t.textMuted, fontWeight: 600 }}>Sections Included</span>
-                      <span style={{ color: t.text, fontWeight: 700 }}>{[personalInfo.fullName && "Personal", summary && "Summary", experience.some(e => e.company) && "Experience", projects.some(p => p.name) && "Projects", education.some(e => e.institution) && "Education", skills.length && "Skills"].filter(Boolean).length} / 6</span>
-                    </div>
-                  </div>
-
-                  <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem", marginBottom: "0.85rem" }}>
-                    <h3 style={{ fontSize: "0.68rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.65rem", display: "flex", alignItems: "center", gap: 6 }}>
-                      <Download size={13} style={{ color: col }} /> Export Options
-                    </h3>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  {/* Two-column layout for details + export */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: "1rem" }}>
+                    {/* Resume Details */}
+                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1.1rem" }}>
+                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem" }}>Resume Details</h3>
                       {[
-                        { type: "pdf" as const, label: "PDF", desc: "Download as PDF", color: col, bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)" },
-                        { type: "docx" as const, label: "DOCX", desc: "Word document", color: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.25)" },
-                        { type: "save" as const, label: "Save Draft", desc: "Save to account", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)" },
-                      ].map((opt) => (
-                        <motion.button key={opt.label} whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
-                          onClick={() => { if (opt.type === "save") handleSaveDraft(); else if (opt.type === "pdf" || opt.type === "docx") handleExport(opt.type); }}
-                          disabled={exporting !== null || saving}
-                          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "0.85rem", borderRadius: 10, cursor: "pointer", background: opt.bg, border: `1px solid ${opt.border}` }}>
-                          {opt.type === "save" ? <Save size={20} style={{ color: opt.color }} /> : <FileText size={20} style={{ color: opt.color }} />}
-                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: t.text }}>{exporting === opt.type || saving ? "..." : opt.label}</span>
-                          <span style={{ fontSize: "0.55rem", color: t.textMuted }}>{opt.desc}</span>
-                        </motion.button>
+                        { label: "Template", value: setup.resumeStyle },
+                        { label: "Target Company", value: setup.company },
+                        { label: "Target Profession", value: setup.profession },
+                        { label: "Career Level", value: setup.careerLevel },
+                      ].map((item) => (
+                        <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", borderBottom: `1px solid ${t.border}`, fontSize: "0.78rem" }}>
+                          <span style={{ color: t.textMuted, fontWeight: 600 }}>{item.label}</span>
+                          <span style={{ color: t.text, fontWeight: 700 }}>{item.value}</span>
+                        </div>
                       ))}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", fontSize: "0.78rem" }}>
+                        <span style={{ color: t.textMuted, fontWeight: 600 }}>Sections Included</span>
+                        <span style={{ color: t.text, fontWeight: 700 }}>{[personalInfo.fullName && "Personal", summary && "Summary", experience.some(e => e.company) && "Experience", projects.some(p => p.name) && "Projects", education.some(e => e.institution) && "Education", skills.length && "Skills"].filter(Boolean).length} / 6</span>
+                      </div>
+                    </div>
+
+                    {/* Export Options */}
+                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1.1rem" }}>
+                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                        <Download size={14} style={{ color: col }} /> Export Options
+                      </h3>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                        {[
+                          { type: "pdf" as const, label: "PDF", desc: "Download as PDF", color: col, bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)" },
+                          { type: "docx" as const, label: "DOCX", desc: "Word document", color: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.25)" },
+                          { type: "save" as const, label: "Save Draft", desc: "Save to account", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)" },
+                        ].map((opt) => (
+                          <motion.button key={opt.label} whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
+                            onClick={() => { if (opt.type === "save") handleSaveDraft(); else if (opt.type === "pdf" || opt.type === "docx") handleExport(opt.type); }}
+                            disabled={exporting !== null || saving}
+                            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "1rem", borderRadius: 12, cursor: "pointer", background: opt.bg, border: `1px solid ${opt.border}` }}>
+                            {opt.type === "save" ? <Save size={22} style={{ color: opt.color }} /> : <FileText size={22} style={{ color: opt.color }} />}
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text }}>{exporting === opt.type || saving ? "..." : opt.label}</span>
+                            <span style={{ fontSize: "0.58rem", color: t.textMuted }}>{opt.desc}</span>
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(4)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0.55rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                  {/* Action buttons */}
+                  <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(4)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.55rem 1.2rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}>
                       <ChevronLeft size={14} /> Back to Editor
                     </motion.button>
-                    <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" }} whileTap={{ scale: 0.98 }} onClick={() => setView("resume-hub")} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0.55rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
+                    <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" }} whileTap={{ scale: 0.98 }} onClick={() => setView("resume-hub")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.55rem 1.2rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
                       Done <Check size={14} />
                     </motion.button>
                   </div>
