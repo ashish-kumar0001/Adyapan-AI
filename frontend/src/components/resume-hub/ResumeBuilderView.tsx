@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import {
   FileText, ArrowLeft, Save, Sparkles, Download, Plus, Trash2,
-  ChevronLeft, ChevronRight, Eye, ZoomIn, ZoomOut, Maximize2,
+  ChevronLeft, ChevronRight, Eye, ZoomIn, ZoomOut, Maximize2, Minimize2,
   Check, MessageCircle, Send, X, Bot, User, Loader2, Zap,
+  Globe, Link2, BookOpen, Award, Languages,
+  GraduationCap, Briefcase, Code2, UserCircle, Settings,
+  Monitor, Smartphone, Tablet, Trophy,
 } from "lucide-react";
 import type { ResumeHubViewType } from "@/types/resume";
 
@@ -20,72 +23,62 @@ const COMPANIES = ["Google", "Microsoft", "Amazon", "Meta", "Apple", "Netflix", 
 const PROFESSIONS = ["Software Engineer", "ML Engineer", "Data Scientist", "Full Stack Developer", "Frontend Developer", "Backend Developer", "DevOps Engineer", "Cloud Engineer", "AI Engineer", "Product Manager", "UI/UX Designer", "Data Analyst", "SDE", "SRE", "Systems Engineer", "Research Scientist", "Other"];
 const CAREER_LEVELS = ["Fresher", "Junior (1-2 yrs)", "Mid-Level (3-5 yrs)", "Senior (6-8 yrs)", "Lead (8+ yrs)"];
 const RESUME_STYLES = ["ATS Modern", "ATS Professional", "ATS Minimal", "ATS Developer", "ATS Student"];
-const SCREENS = ["Setup", "Information", "Generation", "Editor", "AI Chat", "Review"];
+const SCREENS = ["Setup", "Information", "Generation", "Editor", "Review"];
 const CHAT_SUGGESTIONS = ["Optimize for Amazon", "Reduce to one page", "Improve summary", "Improve project descriptions", "Add stronger action verbs", "Rewrite achievements"];
 
-const containerVariants = {
-  enter: { opacity: 0, y: 20 },
-  center: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.06, duration: 0.3, ease: "easeOut" as const },
-  }),
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.85 },
-  visible: (i = 0) => ({
-    opacity: 1, scale: 1,
-    transition: { delay: i * 0.06, type: "spring" as const, stiffness: 200, damping: 15 },
-  }),
+const pageTransition = {
+  duration: 0.35, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
 };
 
 const staggerContainer = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
+  visible: { transition: { staggerChildren: 0.05 } },
 };
 
-const cardHover = { y: -4, scale: 1.01 };
-const btnHover = { scale: 1.04 };
-const btnTap = { scale: 0.96 };
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.85 },
+  visible: { opacity: 1, scale: 1 },
+};
 
 export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }: ResumeBuilderViewProps) {
   const isDark = theme === "dark";
   const t = {
-    bg: isDark ? "#060b0e" : "#f0f4ff",
+    bg: isDark ? "#060b0e" : "#f8fafc",
     surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-    border: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.08)",
-    borderLight: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    border: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+    borderLight: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
     text: isDark ? "#fff" : "#0f172a",
     textSecondary: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-    textMuted: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
-    textDim: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)",
-    inputBg: isDark ? "rgba(0,0,0,0.4)" : "rgba(246,249,252,0.8)",
-    cardBg: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.7)",
-    genBg: isDark ? "rgba(245,158,11,0.06)" : "rgba(245,158,11,0.08)",
-    genBorder: isDark ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.25)",
-    mutedBg: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
-    stepCircle: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-    stepCircleBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
-    fullscreenBg: isDark ? "#060b0e" : "#f0f4ff",
-    chatBg: isDark ? "#0a0e14" : "#ffffff",
+    textMuted: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)",
+    textDim: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
+    inputBg: isDark ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.9)",
+    cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)",
+    genBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)",
+    genBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
+    successBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.1)",
+    successBorder: isDark ? "rgba(16,185,129,0.2)" : "rgba(16,185,129,0.3)",
+    chatBg: isDark ? "#0a0e16" : "#ffffff",
   };
+
+  // Screen state
   const [screen, setScreen] = useState(1);
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
-  const [zoom, setZoom] = useState(75);
+  const [zoom, setZoom] = useState(80);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "ai"; text: string }>>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // Screen 1 — Setup
   const [setup, setSetup] = useState({ company: "Google", profession: "Software Engineer", careerLevel: "Fresher", resumeStyle: selectedTemplate || "ATS Modern" });
@@ -94,10 +87,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState(0);
   const genSteps = [
-    { label: "Analyzing Profile", done: false },
-    { label: `Optimizing for ${setup.company}`, done: false },
-    { label: `Optimizing for ${setup.profession}`, done: false },
-    { label: "Generating ATS Resume", done: false },
+    { label: "Analyzing Profile", icon: <UserCircle size={14} /> },
+    { label: `Optimizing for ${setup.company}`, icon: <Briefcase size={14} /> },
+    { label: `Optimizing for ${setup.profession}`, icon: <Code2 size={14} /> },
+    { label: "Generating ATS Resume", icon: <FileText size={14} /> },
   ];
 
   // Form Fields
@@ -111,19 +104,25 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   const [certifications, setCertifications] = useState<Array<{ name: string; issuer: string; date: string }>>([{ name: "", issuer: "", date: "" }]);
   const [achievements, setAchievements] = useState<string[]>([""]);
   const [languages, setLanguages] = useState<string[]>([""]);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  }, []);
+
   const resumeJSON = { personalInfo, summary, education, experience, projects, skills, certifications, achievements, languages };
 
-  // --- AI functions ---
+  // AI functions
   const handleAISummary = async () => {
     setGeneratingAI(true);
     try {
       const res = await api.post("/resume/generate-summary", { personalInfo, education, experience, skills });
       if (res.data.success && res.data.summary) setSummary(res.data.summary);
-    } catch {} finally { setGeneratingAI(false); }
+    } catch { showToast("AI summary generation failed"); } finally { setGeneratingAI(false); }
   };
 
   const handleAIExperience = async (index: number) => {
@@ -133,6 +132,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
       const res = await api.post("/resume/enhance-experience", { role: item.role, company: item.company, description: item.description });
       if (res.data.success && res.data.description) {
         const updated = [...experience]; updated[index].description = res.data.description; setExperience(updated);
+        showToast("Experience enhanced!");
       }
     } catch {} finally { setGeneratingAI(false); }
   };
@@ -144,6 +144,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
       const res = await api.post("/resume/enhance-project", { name: item.name, techStack: item.techStack, description: item.description });
       if (res.data.success && res.data.description) {
         const updated = [...projects]; updated[index].description = res.data.description; setProjects(updated);
+        showToast("Project enhanced!");
       }
     } catch {} finally { setGeneratingAI(false); }
   };
@@ -163,6 +164,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
         if (r.certifications) setCertifications(r.certifications);
         if (r.achievements) setAchievements(r.achievements);
         if (r.languages) setLanguages(r.languages);
+        showToast("Resume optimized for " + setup.company);
       }
     } catch {} finally { setGeneratingAI(false); }
   };
@@ -176,8 +178,6 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
     const token = typeof window !== "undefined" ? localStorage.getItem("adyapan-token") : null;
 
-    // Add a streaming placeholder message
-    const aiMsgIndex = chatMessages.length + 1; // after user msg
     setChatMessages((prev) => [...prev, { role: "ai", text: "" }]);
 
     try {
@@ -212,7 +212,6 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
           if (!trimmed.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(trimmed.slice(6));
-
             if (data.type === "chunk") {
               accumulatedText += data.text;
               setChatMessages((prev) => {
@@ -225,10 +224,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
               if (data.experience) setExperience(data.experience);
               if (data.projects) setProjects(data.projects);
               if (data.skills) setSkills(data.skills);
-              const updated = Object.keys({ summary: data.summary, experience: data.experience, projects: data.projects, skills: data.skills })
-                .filter(k => data[k]).join(", ");
+              const updated = Object.keys({ summary: data.summary, experience: data.experience, projects: data.projects, skills: data.skills }).filter(k => data[k]).join(", ");
               if (updated) {
-                accumulatedText += `\n\n✅ Updated: ${updated}`;
+                accumulatedText += `\n\nUpdated: ${updated}`;
                 setChatMessages((prev) => {
                   const next = [...prev];
                   next[next.length - 1] = { role: "ai", text: accumulatedText };
@@ -238,7 +236,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
             } else if (data.type === "error") {
               throw new Error(data.message || "Stream error");
             }
-          } catch { /* skip unparseable lines */ }
+          } catch {}
         }
       }
     } catch {
@@ -250,11 +248,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
     } finally { setChatLoading(false); }
   };
 
-  // --- Generation ---
+  // Generation
   const handleGenerate = async () => {
     setGenerating(true);
     setGenStep(0);
-    // Snapshot current state to avoid stale closures
     const snap = {
       personalInfo, summary, education, experience, projects, skills,
       certifications: [...certifications], achievements: [...achievements], languages: [...languages],
@@ -287,17 +284,18 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
     setScreen(4);
   };
 
-  // --- Save ---
+  // Save
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
       const payload = { title: `My ${setup.profession} Resume`, template: setup.resumeStyle, ...resumeJSON, targetCompany: setup.company, careerLevel: setup.careerLevel };
       if (resumeId) await api.put(`/resume/update/${resumeId}`, payload);
       else { const res = await api.post("/resume/create", payload); if (res.data?.success && res.data.resume) setResumeId(res.data.resume.id); }
-    } catch {} finally { setSaving(false); }
+      showToast("Draft saved!");
+    } catch { showToast("Failed to save"); } finally { setSaving(false); }
   };
 
-  // --- Export ---
+  // Export
   const handleExport = async (type: "pdf" | "docx") => {
     if (!resumeId) { await handleSaveDraft(); }
     setExporting(type);
@@ -307,10 +305,11 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
       const response = await api.post(`/resume/export-${type}`, { resumeId: id }, { responseType: "blob" });
       const blob = new Blob([response.data], { type: type === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${setup.company}_${setup.profession}_Resume.${type}`; link.click();
-    } catch {} finally { setExporting(null); }
+      showToast(`Resume exported as ${type.toUpperCase()}`);
+    } catch { showToast("Export failed"); } finally { setExporting(null); }
   };
 
-  // --- Helpers ---
+  // Helpers
   const addEdu = () => setEducation([...education, { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", grade: "" }]);
   const removeEdu = (i: number) => setEducation(education.filter((_, idx) => idx !== i));
   const updateEdu = (i: number, k: string, v: string) => { const u = [...education]; (u[i] as any)[k] = v; setEducation(u); };
@@ -338,43 +337,113 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
     return true;
   };
 
+  // Fullscreen toggle
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const previewWidth = previewDevice === "desktop" ? "100%" : previewDevice === "tablet" ? "600px" : "360px";
+
+  // Nav button style
+  const navBtn: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "0.45rem 1rem", borderRadius: 10, fontWeight: 600,
+    fontSize: "0.78rem", cursor: "pointer", transition: "all 0.2s ease",
+  };
+
+  // Input style
+  const inputStyle: React.CSSProperties = {
+    width: "100%", background: t.inputBg, border: `1px solid ${t.border}`,
+    borderRadius: 10, padding: "0.6rem 0.85rem", fontSize: "0.82rem",
+    color: t.text, outline: "none", transition: "border-color 0.2s, box-shadow 0.2s",
+    boxSizing: "border-box",
+  };
+
+  const inputFocusStyle = { borderColor: "rgba(245,158,11,0.5)", boxShadow: "0 0 0 3px rgba(245,158,11,0.1)" };
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle, cursor: "pointer", appearance: "none" as const,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", paddingRight: "2rem",
+  };
+
+  const iconColor = "#f59e0b";
+
   return (
-    <div className="relative h-full flex flex-col">
-      {/* Top Progress Bar */}
-      <div className="px-6 pt-4 pb-2 border-b border-white/5">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+    <div className="h-full w-full flex flex-col" style={{ background: t.bg }}>
+      {/* Toast */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            style={{
+              position: "fixed", top: 84, left: "50%", transform: "translateX(-50%)", zIndex: 9999,
+              background: isDark ? "#1a1a2e" : "#ffffff",
+              border: `1px solid ${t.genBorder}`, borderRadius: 14,
+              padding: "0.6rem 1.2rem", boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              display: "flex", alignItems: "center", gap: 8,
+              fontSize: "0.82rem", fontWeight: 600, color: t.text,
+            }}
+          >
+            <motion.div initial={{ rotate: -20, scale: 0 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 300 }}>
+              <Sparkles size={16} style={{ color: iconColor }} />
+            </motion.div>
+            {toastMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Progress Bar */}
+      <div style={{ padding: "0.75rem 1.25rem 0.5rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", maxWidth: 800, margin: "0 auto" }}>
           {SCREENS.map((label, i) => {
             const step = i + 1;
             const active = screen === step;
             const done = screen > step;
             return (
-              <div key={label} className="flex items-center gap-0 flex-1">
-                <div className="flex flex-col items-center gap-1">
+              <div key={label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                <motion.button
+                  onClick={() => step <= screen && setScreen(step)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                    background: "none", border: "none", cursor: step <= screen ? "pointer" : "default", padding: 0,
+                  }}
+                  whileHover={step <= screen ? { scale: 1.05 } : {}}
+                  whileTap={step <= screen ? { scale: 0.95 } : {}}
+                >
                   <motion.div
-                    animate={{ scale: active ? 1.15 : 1 }}
-                    transition={{ duration: 0.2 }}
+                    animate={{ scale: active ? 1.12 : 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
                     style={{
-                      width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "0.65rem", fontWeight: 800,
-                      background: done ? "#f59e0b" : active ? "rgba(245,158,11,0.2)" : t.stepCircle,
-                      border: `2px solid ${done ? "#f59e0b" : active ? "rgba(245,158,11,0.5)" : t.stepCircleBorder}`,
+                      background: done ? "#f59e0b" : active ? "rgba(245,158,11,0.15)" : t.surface,
+                      border: `2px solid ${done ? "#f59e0b" : active ? "rgba(245,158,11,0.5)" : t.borderLight}`,
                       color: done ? "#000" : active ? "#f59e0b" : t.textDim,
                     }}
                   >
-                    {done ? <Check size={14} /> : step}
+                    {done ? <Check size={13} /> : step}
                   </motion.div>
-                  <span style={{
-                    fontSize: "0.55rem", fontWeight: active || done ? 700 : 500,
-                    color: active ? "#f59e0b" : done ? t.textSecondary : t.textDim,
-                    whiteSpace: "nowrap", letterSpacing: "0.02em",
-                  }}>{label}</span>
-                </div>
+                  <motion.span
+                    animate={{ color: active ? "#f59e0b" : done ? t.textSecondary : t.textDim }}
+                    style={{ fontSize: "0.52rem", fontWeight: active || done ? 700 : 500, whiteSpace: "nowrap", letterSpacing: "0.03em" }}
+                  >
+                    {label}
+                  </motion.span>
+                </motion.button>
                 {i < SCREENS.length - 1 && (
-                  <div style={{
-                    flex: 1, height: 2, margin: "0 6px", marginBottom: 16, borderRadius: 1,
-                    background: done ? "#f59e0b" : t.stepCircle,
-                    transition: "background 0.3s ease",
-                  }} />
+                  <motion.div
+                    animate={{ background: done ? "#f59e0b" : t.surface }}
+                    style={{ flex: 1, height: 2, margin: "0 8px", marginBottom: 16, borderRadius: 2 }}
+                  />
                 )}
               </div>
             );
@@ -382,376 +451,930 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      {/* Main content */}
+      <div className="flex-1 overflow-hidden" style={{ position: "relative" }}>
         <AnimatePresence mode="wait">
-          <motion.div key={screen} variants={containerVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="h-full">
+          <motion.div
+            key={screen}
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.98 }}
+            transition={pageTransition}
+            className="h-full"
+          >
 
-            {/* ========== SCREEN 1 — Welcome / Resume Setup ========== */}
+            {/* ========== SCREEN 1 — Setup ========== */}
             {screen === 1 && (
-              <div className="h-full flex items-center justify-center p-8">
-                <motion.div className="w-full max-w-lg space-y-8" variants={staggerContainer} initial="hidden" animate="visible">
-                  <div className="text-center space-y-2">
-                    <motion.div variants={scaleIn} initial="hidden" animate="visible" className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
-                      <FileText size={28} className="text-amber-500" />
+              <div className="h-full flex items-center justify-center" style={{ padding: "1.5rem" }}>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="w-full max-w-lg"
+                >
+                  <motion.div variants={fadeUp} className="text-center" style={{ marginBottom: "1.5rem" }}>
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                      style={{
+                        width: 56, height: 56, borderRadius: 16,
+                        background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)",
+                        display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem",
+                      }}
+                    >
+                      <FileText size={28} style={{ color: iconColor }} />
                     </motion.div>
-                    <h2 className="text-2xl font-extrabold text-white">Resume Builder</h2>
-                    <p className="text-sm text-white/50">Create an AI-powered ATS-optimized resume</p>
-                  </div>
+                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: t.text, margin: 0 }}>Resume Builder</h2>
+                    <p style={{ fontSize: "0.85rem", color: t.textMuted, margin: "0.3rem 0 0" }}>AI-powered ATS-optimized resume in minutes</p>
+                  </motion.div>
 
-                    <motion.div variants={staggerContainer} initial="hidden" animate="visible" whileHover={cardHover} className="space-y-4 bg-white/[0.03] border border-white/5 rounded-2xl p-6">
+                  <motion.div
+                    variants={fadeUp}
+                    style={{
+                      background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 20,
+                      padding: "1.25rem", marginBottom: "1rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                       {[
                         { label: "Target Company", value: setup.company, onChange: (v: string) => setSetup({ ...setup, company: v }), options: COMPANIES },
                         { label: "Target Profession", value: setup.profession, onChange: (v: string) => setSetup({ ...setup, profession: v }), options: PROFESSIONS },
                         { label: "Career Level", value: setup.careerLevel, onChange: (v: string) => setSetup({ ...setup, careerLevel: v }), options: CAREER_LEVELS },
                         { label: "Resume Style", value: setup.resumeStyle, onChange: (v: string) => setSetup({ ...setup, resumeStyle: v }), options: RESUME_STYLES },
                       ].map((field, i) => (
-                        <motion.div key={field.label} variants={fadeUp} custom={i} initial="hidden" animate="visible" className="space-y-1.5">
-                          <label className="text-[11px] font-semibold text-white/60 uppercase tracking-wider">{field.label}</label>
-                          <select
-                            value={field.value}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
-                          >
-                            {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                          </select>
+                        <motion.div key={field.label} variants={fadeUp} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <label style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em" }}>{field.label}</label>
+                          <div style={{ position: "relative" }}>
+                            <select
+                              value={field.value}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              style={selectStyle}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            >
+                              {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          </div>
                         </motion.div>
                       ))}
-                    </motion.div>
+                    </div>
+                  </motion.div>
 
                   <motion.button
-                    whileHover={canContinue(1) ? btnHover : {}} whileTap={canContinue(1) ? btnTap : {}}
+                    variants={fadeUp}
+                    whileHover={canContinue(1) ? { scale: 1.02, boxShadow: "0 8px 25px rgba(245,158,11,0.3)" } : {}}
+                    whileTap={canContinue(1) ? { scale: 0.98 } : {}}
                     onClick={() => canContinue(1) && setScreen(2)}
                     disabled={!canContinue(1)}
-                    className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
                     style={{
-                      background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
+                      ...navBtn, width: "100%", justifyContent: "center", padding: "0.65rem",
+                      background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.surface,
                       color: canContinue(1) ? "#000" : t.textDim,
-                      cursor: canContinue(1) ? "pointer" : "not-allowed",
+                      cursor: canContinue(1) ? "pointer" : "not-allowed", border: "none",
+                      fontSize: "0.85rem",
                     }}
-                  >Continue <ChevronRight size={16} /></motion.button>
+                  >
+                    {canContinue(1) ? (
+                      <>Get Started <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}><ChevronRight size={16} /></motion.span></>
+                    ) : "Fill all fields to continue"}
+                  </motion.button>
                 </motion.div>
               </div>
             )}
 
-            {/* ========== SCREEN 2 — Resume Information ========== */}
+            {/* ========== SCREEN 2 — Information ========== */}
             {screen === 2 && (
               <div className="h-full flex flex-col">
-                <motion.div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar" variants={staggerContainer} initial="hidden" animate="visible">
-                  {/* Personal Info */}
-                  <Section title="Personal Info" custom={0}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input placeholder="Full Name" value={personalInfo.fullName} onChange={e => setPersonalInfo({ ...personalInfo, fullName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="Email" value={personalInfo.email} onChange={e => setPersonalInfo({ ...personalInfo, email: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="Phone" value={personalInfo.phone} onChange={e => setPersonalInfo({ ...personalInfo, phone: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="Location" value={personalInfo.location} onChange={e => setPersonalInfo({ ...personalInfo, location: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="LinkedIn URL" value={personalInfo.linkedin} onChange={e => setPersonalInfo({ ...personalInfo, linkedin: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="GitHub URL" value={personalInfo.github} onChange={e => setPersonalInfo({ ...personalInfo, github: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                      <input placeholder="Portfolio URL" value={personalInfo.portfolio} onChange={e => setPersonalInfo({ ...personalInfo, portfolio: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white md:col-span-2" />
-                    </div>
-                  </Section>
-
-                  {/* Education */}
-                  <Section title="Education" onAdd={addEdu} custom={1}>
-                    {education.map((item, idx) => (
-                      <motion.div variants={fadeUp} custom={idx} initial="hidden" animate="visible" whileHover={cardHover} key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
-                        <button onClick={() => removeEdu(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
-                        <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <div className="grid grid-cols-2 gap-2">
-                          <input placeholder="Degree" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                          <input placeholder="Field of Study" value={item.fieldOfStudy} onChange={e => updateEdu(idx, "fieldOfStudy", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          <input placeholder="Start Date" value={item.startDate} onChange={e => updateEdu(idx, "startDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                          <input placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                          <input placeholder="CGPA/Grade" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </Section>
-
-                  {/* Experience */}
-                  <Section title="Experience" onAdd={addExp} custom={2}>
-                    {experience.map((item, idx) => (
-                      <motion.div variants={fadeUp} custom={idx} initial="hidden" animate="visible" whileHover={cardHover} key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
-                        <div className="flex justify-between items-center pr-6">
-                          <button onClick={() => handleAIExperience(idx)} disabled={generatingAI} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20">
-                            <Sparkles size={10} /> AI Improve
-                          </button>
-                          <button onClick={() => removeExp(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
-                        </div>
-                        <input placeholder="Company" value={item.company} onChange={e => updateExp(idx, "company", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <input placeholder="Role" value={item.role} onChange={e => updateExp(idx, "role", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <div className="grid grid-cols-2 gap-2">
-                          <input placeholder="Start Date" value={item.startDate} onChange={e => updateExp(idx, "startDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                          <input placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        </div>
-                        <textarea placeholder="Description (responsibilities, achievements)..." value={item.description} onChange={e => updateExp(idx, "description", e.target.value)} className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white resize-none" />
-                      </motion.div>
-                    ))}
-                  </Section>
-
-                  {/* Projects */}
-                  <Section title="Projects" onAdd={addProj} custom={3}>
-                    {projects.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
-                        <div className="flex justify-between items-center pr-6">
-                          <button onClick={() => handleAIProject(idx)} disabled={generatingAI} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20">
-                            <Sparkles size={10} /> AI Improve
-                          </button>
-                          <button onClick={() => removeProj(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
-                        </div>
-                        <input placeholder="Project Name" value={item.name} onChange={e => updateProj(idx, "name", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <input placeholder="Technologies (comma separated)" value={item.techStack} onChange={e => updateProj(idx, "techStack", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <textarea placeholder="Description..." value={item.description} onChange={e => updateProj(idx, "description", e.target.value)} className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white resize-none" />
+                <div style={{ flex: 1, overflowY: "auto", padding: "1rem 1.25rem" }}>
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                    style={{ maxWidth: 860, margin: "0 auto" }}
+                  >
+                    {/* Personal Info */}
+                    <motion.div variants={fadeUp} style={{
+                      background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16,
+                      padding: "1.1rem", marginBottom: "0.85rem",
+                    }}>
+                      <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: t.text, margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                        <UserCircle size={14} style={{ color: iconColor }} /> Personal Info
+                      </h3>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" }}>
+                        {[
+                          { placeholder: "Full Name *", value: personalInfo.fullName, onChange: (v: string) => setPersonalInfo({ ...personalInfo, fullName: v }) },
+                          { placeholder: "Email *", value: personalInfo.email, onChange: (v: string) => setPersonalInfo({ ...personalInfo, email: v }) },
+                          { placeholder: "Phone", value: personalInfo.phone, onChange: (v: string) => setPersonalInfo({ ...personalInfo, phone: v }) },
+                          { placeholder: "Location", value: personalInfo.location, onChange: (v: string) => setPersonalInfo({ ...personalInfo, location: v }) },
+                        ].map((f, i) => (
+                          <input key={i} placeholder={f.placeholder} value={f.value}
+                            onChange={e => f.onChange(e.target.value)}
+                            style={inputStyle}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                        ))}
                       </div>
-                    ))}
-                  </Section>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem", marginTop: "0.65rem" }}>
+                        {[
+                          { icon: <Globe size={13} />, placeholder: "LinkedIn URL", value: personalInfo.linkedin, onChange: (v: string) => setPersonalInfo({ ...personalInfo, linkedin: v }) },
+                          { icon: <Globe size={13} />, placeholder: "GitHub URL", value: personalInfo.github, onChange: (v: string) => setPersonalInfo({ ...personalInfo, github: v }) },
+                          { icon: <Globe size={13} />, placeholder: "Portfolio URL", value: personalInfo.portfolio, onChange: (v: string) => setPersonalInfo({ ...personalInfo, portfolio: v }) },
+                        ].map((f, i) => (
+                          <div key={i} style={{ position: "relative" }}>
+                            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMuted, display: "flex" }}>{f.icon}</span>
+                            <input placeholder={f.placeholder} value={f.value}
+                              onChange={e => f.onChange(e.target.value)}
+                              style={{ ...inputStyle, paddingLeft: "2rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
 
-                  {/* Skills */}
-                  <Section title="Skills" custom={4}>
-                    <div className="flex gap-2">
-                      <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addSkill()} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white" />
-                      <button onClick={addSkill} className="px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-400 transition-colors">Add</button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {skills.map((s) => (
-                        <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
-                          {s} <button onClick={() => removeSkill(s)} className="text-red-400 hover:text-red-300 font-bold ml-1">&times;</button>
-                        </span>
+                    {/* Summary */}
+                    <motion.div variants={fadeUp} style={{
+                      background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16,
+                      padding: "1.1rem", marginBottom: "0.85rem",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                        <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                          <BookOpen size={14} style={{ color: iconColor }} /> Professional Summary
+                        </h3>
+                        <motion.button
+                          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                          onClick={handleAISummary}
+                          disabled={generatingAI}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 4, padding: "0.3rem 0.65rem",
+                            background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
+                            borderRadius: 8, color: iconColor, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer",
+                          }}
+                        >
+                          <Sparkles size={11} /> {generatingAI ? "..." : "AI Generate"}
+                        </motion.button>
+                      </div>
+                      <textarea
+                        value={summary}
+                        onChange={e => setSummary(e.target.value)}
+                        placeholder="Summarize your professional experience, key skills, and career objectives..."
+                        style={{ ...inputStyle, height: 80, resize: "vertical", fontSize: "0.8rem" }}
+                        onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                      />
+                    </motion.div>
+
+                    {/* Education */}
+                    <Section title="Education" icon={<GraduationCap size={14} />} onAdd={addEdu} color={iconColor} t={t}>
+                      {education.map((item, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{
+                          background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: "0.85rem",
+                          position: "relative", marginBottom: "0.5rem",
+                        }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                            <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="Degree" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="Field of Study" value={item.fieldOfStudy} onChange={e => updateEdu(idx, "fieldOfStudy", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="CGPA/Grade" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.5rem" }}>
+                            <input placeholder="Start Date" value={item.startDate} onChange={e => updateEdu(idx, "startDate", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={() => removeEdu(idx)}
+                            style={{ position: "absolute", top: 8, right: 8, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 4, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                          >
+                            <Trash2 size={12} />
+                          </motion.button>
+                        </motion.div>
                       ))}
-                    </div>
-                  </Section>
+                    </Section>
 
-                  {/* Certifications */}
-                  <Section title="Certifications" onAdd={addCert} custom={5}>
-                    {certifications.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
-                        <button onClick={() => removeCert(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
-                        <input placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <input placeholder="Issuer" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                        <input placeholder="Date" value={item.date} onChange={e => updateCert(idx, "date", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
-                      </div>
-                    ))}
-                  </Section>
+                    {/* Experience */}
+                    <Section title="Experience" icon={<Briefcase size={14} />} onAdd={addExp} color={iconColor} t={t}>
+                      {experience.map((item, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{
+                          background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: "0.85rem",
+                          position: "relative", marginBottom: "0.5rem",
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: "0.5rem" }}>
+                            <motion.button
+                              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                              onClick={() => handleAIExperience(idx)} disabled={generatingAI}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.55rem",
+                                background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)",
+                                borderRadius: 6, color: iconColor, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+                              }}
+                            >
+                              <Sparkles size={9} /> AI
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                              onClick={() => removeExp(idx)}
+                              style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 4, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                            >
+                              <Trash2 size={12} />
+                            </motion.button>
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                            <input placeholder="Company" value={item.company} onChange={e => updateExp(idx, "company", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="Role" value={item.role} onChange={e => updateExp(idx, "role", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.5rem" }}>
+                            <input placeholder="Start Date" value={item.startDate} onChange={e => updateExp(idx, "startDate", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                          <textarea
+                            placeholder="Description (responsibilities, achievements)..."
+                            value={item.description} onChange={e => updateExp(idx, "description", e.target.value)}
+                            style={{ ...inputStyle, height: 60, resize: "vertical", fontSize: "0.78rem", padding: "0.5rem 0.7rem", marginTop: "0.5rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                        </motion.div>
+                      ))}
+                    </Section>
 
-                  {/* Achievements */}
-                  <Section title="Achievements" onAdd={addAchievement} custom={6}>
-                    {achievements.map((ach, idx) => (
-                      <div key={idx} className="flex gap-2 items-center">
-                        <input placeholder="e.g. Secured 1st place in National Hackathon 2025" value={ach} onChange={e => updateAchievement(idx, e.target.value)} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                        <button onClick={() => removeAchievement(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={15} /></button>
-                      </div>
-                    ))}
-                  </Section>
+                    {/* Projects */}
+                    <Section title="Projects" icon={<Code2 size={14} />} onAdd={addProj} color={iconColor} t={t}>
+                      {projects.map((item, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{
+                          background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: "0.85rem",
+                          position: "relative", marginBottom: "0.5rem",
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: "0.5rem" }}>
+                            <motion.button
+                              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                              onClick={() => handleAIProject(idx)} disabled={generatingAI}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.55rem",
+                                background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)",
+                                borderRadius: 6, color: iconColor, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+                              }}
+                            >
+                              <Sparkles size={9} /> AI
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                              onClick={() => removeProj(idx)}
+                              style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 4, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                            >
+                              <Trash2 size={12} />
+                            </motion.button>
+                          </div>
+                          <input placeholder="Project Name" value={item.name} onChange={e => updateProj(idx, "name", e.target.value)}
+                            style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                          <input placeholder="Technologies (comma separated)" value={item.techStack} onChange={e => updateProj(idx, "techStack", e.target.value)}
+                            style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem", marginTop: "0.5rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                          <textarea
+                            placeholder="Description..."
+                            value={item.description} onChange={e => updateProj(idx, "description", e.target.value)}
+                            style={{ ...inputStyle, height: 60, resize: "vertical", fontSize: "0.78rem", padding: "0.5rem 0.7rem", marginTop: "0.5rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                        </motion.div>
+                      ))}
+                    </Section>
 
-                  {/* Languages */}
-                  <Section title="Languages" onAdd={addLanguage} custom={7}>
-                    {languages.map((lang, idx) => (
-                      <div key={idx} className="flex gap-2 items-center">
-                        <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
-                        <button onClick={() => removeLanguage(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={15} /></button>
+                    {/* Skills */}
+                    <motion.div variants={fadeUp} style={{
+                      background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16,
+                      padding: "1.1rem", marginBottom: "0.85rem",
+                    }}>
+                      <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: t.text, margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                        <Zap size={14} style={{ color: iconColor }} /> Skills
+                      </h3>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && addSkill()}
+                          style={{ ...inputStyle, flex: 1, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                          onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                        />
+                        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                          onClick={addSkill}
+                          style={{
+                            padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                            border: "none", borderRadius: 10, color: "#000", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer",
+                          }}
+                        >Add</motion.button>
                       </div>
-                    ))}
-                  </Section>
-                </motion.div>
+                      <motion.div variants={staggerContainer} initial="hidden" animate="visible" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: "0.65rem" }}>
+                        {skills.map((s) => (
+                          <motion.span key={s} variants={scaleIn} style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            padding: "0.3rem 0.65rem", background: "rgba(245,158,11,0.08)",
+                            border: "1px solid rgba(245,158,11,0.2)", borderRadius: 20,
+                            fontSize: "0.72rem", color: t.textSecondary, fontWeight: 600,
+                          }}>
+                            {s}
+                            <motion.button whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.8 }}
+                              onClick={() => removeSkill(s)}
+                              style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.8rem", lineHeight: 1 }}
+                            >&times;</motion.button>
+                          </motion.span>
+                        ))}
+                      </motion.div>
+                    </motion.div>
+
+                    {/* Certifications */}
+                    <Section title="Certifications" icon={<Award size={14} />} onAdd={addCert} color={iconColor} t={t}>
+                      {certifications.map((item, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{
+                          background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12,
+                          padding: "0.85rem", position: "relative", marginBottom: "0.5rem",
+                        }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                            <input placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                            <input placeholder="Issuer" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)}
+                              style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                              onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                            />
+                          </div>
+                          <input placeholder="Date" value={item.date} onChange={e => updateCert(idx, "date", e.target.value)}
+                            style={{ ...inputStyle, fontSize: "0.78rem", padding: "0.5rem 0.7rem", marginTop: "0.5rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                          <motion.button
+                            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={() => removeCert(idx)}
+                            style={{ position: "absolute", top: 8, right: 8, background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 4, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                          >
+                            <Trash2 size={12} />
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </Section>
+
+                    {/* Achievements */}
+                    <Section title="Achievements" icon={<Trophy size={14} />} onAdd={addAchievement} color={iconColor} t={t}>
+                      {achievements.map((ach, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: "0.4rem" }}>
+                          <input placeholder="e.g. Secured 1st place in National Hackathon" value={ach} onChange={e => updateAchievement(idx, e.target.value)}
+                            style={{ ...inputStyle, flex: 1, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={() => removeAchievement(idx)}
+                            style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                          >
+                            <Trash2 size={13} />
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </Section>
+
+                    {/* Languages */}
+                    <Section title="Languages" icon={<Languages size={14} />} onAdd={addLanguage} color={iconColor} t={t}>
+                      {languages.map((lang, idx) => (
+                        <motion.div key={idx} variants={fadeUp} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: "0.4rem" }}>
+                          <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)}
+                            style={{ ...inputStyle, flex: 1, fontSize: "0.78rem", padding: "0.5rem 0.7rem" }}
+                            onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          />
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={() => removeLanguage(idx)}
+                            style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "#ef4444", display: "flex" }}
+                          >
+                            <Trash2 size={13} />
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </Section>
+                  </motion.div>
+                </div>
 
                 {/* Navigation */}
-                <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
-                  <button onClick={() => { setView("resume-hub"); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
-                    <ArrowLeft size={14} /> Back
-                  </button>
-                  <motion.button whileHover={{ scale: canContinue(2) ? 1.02 : 1 }} whileTap={{ scale: canContinue(2) ? 0.98 : 1 }}
-                    onClick={() => { if (canContinue(2)) { setScreen(3); handleGenerate(); } }} disabled={!canContinue(2)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all"
-                    style={{
-                      background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
-                      color: canContinue(2) ? "#000" : t.textDim,
-                      cursor: canContinue(2) ? "pointer" : "not-allowed",
-                    }}
-                  >Continue <Sparkles size={14} /></motion.button>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "0.75rem 1.25rem", borderTop: `1px solid ${t.border}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => setScreen(1)}
+                    style={{ ...navBtn, background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}
+                  >
+                    <ChevronLeft size={14} /> Back
+                  </motion.button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={handleSaveDraft} disabled={saving}
+                      style={{ ...navBtn, background: "transparent", border: `1px solid ${t.borderLight}`, color: t.textSecondary }}
+                    >
+                      <Save size={13} /> {saving ? "Saving..." : "Save Draft"}
+                    </motion.button>
+                    <motion.button
+                      whileHover={canContinue(2) ? { scale: 1.02, boxShadow: "0 8px 25px rgba(245,158,11,0.3)" } : {}}
+                      whileTap={canContinue(2) ? { scale: 0.98 } : {}}
+                      onClick={() => { if (canContinue(2)) { setScreen(3); handleGenerate(); } }}
+                      disabled={!canContinue(2)}
+                      style={{
+                        ...navBtn, padding: "0.45rem 1.2rem",
+                        background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.surface,
+                        color: canContinue(2) ? "#000" : t.textDim,
+                        border: "none", cursor: canContinue(2) ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      Generate Resume <Sparkles size={13} />
+                    </motion.button>
+                  </div>
+                </motion.div>
               </div>
             )}
 
-            {/* ========== SCREEN 3 — AI Resume Generation ========== */}
+            {/* ========== SCREEN 3 — AI Generation ========== */}
             {screen === 3 && (
-              <div className="h-full flex items-center justify-center p-8">
-                <div className="w-full max-w-md space-y-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
-                    {genStep >= 4 ? <Check size={30} className="text-amber-500" /> : <Loader2 size={30} className="text-amber-500 animate-spin" />}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-extrabold text-white">{genStep >= 4 ? "Resume Ready!" : "Generating Resume..."}</h2>
-                    <p className="text-sm text-white/50 mt-1">AI is crafting your optimized resume</p>
-                  </div>
+              <div className="h-full flex items-center justify-center" style={{ padding: "1.5rem" }}>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="w-full max-w-sm"
+                  style={{ textAlign: "center" }}
+                >
+                  <motion.div
+                    animate={{ rotate: genStep >= 4 ? 0 : 360 }}
+                    transition={{ repeat: genStep >= 4 ? 0 : Infinity, duration: 1.5, ease: "linear" }}
+                    style={{
+                      width: 64, height: 64, borderRadius: "50%",
+                      background: genStep >= 4 ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
+                      border: `2px solid ${genStep >= 4 ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem",
+                    }}
+                  >
+                    {genStep >= 4
+                      ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}><Check size={30} style={{ color: "#10b981" }} /></motion.div>
+                      : <Loader2 size={30} style={{ color: iconColor }} />
+                    }
+                  </motion.div>
+                  <motion.h2 variants={fadeUp} style={{ fontSize: "1.25rem", fontWeight: 800, color: t.text, margin: 0 }}>
+                    {genStep >= 4 ? "Resume Ready!" : "Generating Resume..."}
+                  </motion.h2>
+                  <motion.p variants={fadeUp} style={{ fontSize: "0.82rem", color: t.textMuted, margin: "0.3rem 0 1.25rem" }}>
+                    AI is crafting your optimized ATS resume
+                  </motion.p>
 
-                  <div className="space-y-3 text-left">
+                  <motion.div variants={fadeUp} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {genSteps.map((step, i) => (
-                      <div key={step.label} className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{ background: i <= genStep ? t.genBg : t.mutedBg, border: `1px solid ${i <= genStep ? t.genBorder : t.mutedBg}` }}>
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ background: i < genStep ? "#f59e0b" : i === genStep ? "rgba(245,158,11,0.2)" : t.stepCircle }}>
-                          {i < genStep ? <Check size={13} className="text-black" /> : i === genStep ? <Loader2 size={12} className="text-amber-500 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
-                        </div>
-                        <span className="text-xs font-semibold" style={{ color: i <= genStep ? t.text : t.textDim }}>{step.label}</span>
-                      </div>
+                      <motion.div
+                        key={step.label}
+                        variants={fadeUp}
+                        animate={{
+                          background: i <= genStep ? t.genBg : t.surface,
+                          borderColor: i <= genStep ? "rgba(245,158,11,0.2)" : t.border,
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 12,
+                          padding: "0.75rem 1rem", borderRadius: 12,
+                          border: "1px solid", transition: "all 0.3s ease",
+                        }}
+                      >
+                        <motion.div
+                          animate={{
+                            background: i < genStep ? "#f59e0b" : i === genStep ? "rgba(245,158,11,0.2)" : t.surface,
+                            scale: i === genStep ? [1, 1.15, 1] : 1,
+                          }}
+                          transition={{ repeat: i === genStep ? Infinity : 0, duration: 1 }}
+                          style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                          }}
+                        >
+                          {i < genStep
+                            ? <Check size={13} style={{ color: "#000" }} />
+                            : i === genStep
+                            ? <Loader2 size={11} style={{ color: iconColor }} className="animate-spin" />
+                            : <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.textDim }} />
+                          }
+                        </motion.div>
+                        <span style={{
+                          display: "flex", alignItems: "center", gap: 8,
+                          fontSize: "0.8rem", fontWeight: 600,
+                          color: i <= genStep ? t.text : t.textDim,
+                        }}>
+                          {i <= genStep && <span style={{ color: iconColor }}>{step.icon}</span>}
+                          {step.label}
+                        </span>
+                      </motion.div>
                     ))}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               </div>
             )}
 
-            {/* ========== SCREEN 4 — Resume Editor ========== */}
+            {/* ========== SCREEN 4 — Editor ========== */}
             {screen === 4 && (
-              <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-0">
-                {/* Left — Editor */}
-                <div className="lg:col-span-5 flex flex-col gap-3 overflow-y-auto p-4 custom-scrollbar border-r border-white/5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">Resume Editor</h3>
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveDraft} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-black text-[10px] font-bold rounded-lg hover:bg-amber-400 transition-colors">
-                        <Save size={12} /> {saving ? "Saving..." : "Save"}
-                      </button>
-                      <button onClick={handleAIOptimizeCompany} disabled={generatingAI} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-amber-500 text-[10px] font-bold rounded-lg border border-amber-500/20 hover:bg-amber-500/10 transition-colors">
-                        <Zap size={12} /> {generatingAI ? "Optimizing..." : "Optimize All"}
-                      </button>
+              <div className="h-full flex" style={{ flexDirection: showSidebar ? "row" : "column" }}>
+                {/* Left Editor Panel */}
+                {showSidebar && (
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "40%", opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    style={{
+                      borderRight: `1px solid ${t.border}`, overflowY: "auto",
+                      display: "flex", flexDirection: "column",
+                    }}
+                  >
+                    <div style={{ padding: "0.75rem 1rem", borderBottom: `1px solid ${t.border}` }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                          <Settings size={12} style={{ color: iconColor }} /> Editor
+                        </h3>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                            onClick={handleSaveDraft} disabled={saving}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "0.35rem 0.7rem", background: "rgba(245,158,11,0.12)",
+                              border: "1px solid rgba(245,158,11,0.25)", borderRadius: 8,
+                              color: iconColor, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+                            }}
+                          >
+                            <Save size={11} /> {saving ? "..." : "Save"}
+                          </motion.button>
+                          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                            onClick={handleAIOptimizeCompany} disabled={generatingAI}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "0.35rem 0.7rem", background: t.surface,
+                              border: `1px solid ${t.borderLight}`, borderRadius: 8,
+                              color: t.textSecondary, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+                            }}
+                          >
+                            <Zap size={11} /> {generatingAI ? "..." : "Optimize"}
+                          </motion.button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    <div style={{ flex: 1, overflowY: "auto", padding: "0.75rem" }}>
+                      {/* Summary */}
+                      <div style={{ marginBottom: "0.75rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                          <h4 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, margin: 0 }}>Professional Summary</h4>
+                          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                            onClick={handleAISummary} disabled={generatingAI}
+                            style={{ background: "none", border: "none", color: iconColor, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}
+                          >
+                            <Sparkles size={9} /> AI
+                          </motion.button>
+                        </div>
+                        <textarea value={summary} onChange={e => setSummary(e.target.value)}
+                          placeholder="Write a professional summary..."
+                          style={{ ...inputStyle, height: 70, resize: "vertical", fontSize: "0.75rem", padding: "0.5rem 0.7rem" }}
+                        />
+                      </div>
 
-                  {/* Summary */}
-                  <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl space-y-2">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-[11px] font-bold text-white">Professional Summary</h4>
-                      <button onClick={handleAISummary} disabled={generatingAI} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20">
-                        <Sparkles size={10} /> AI Improve
-                      </button>
-                    </div>
-                    <textarea value={summary} onChange={e => setSummary(e.target.value)} placeholder="Summarize your professional experience..." className="w-full h-24 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white focus:outline-none focus:border-amber-500/50 resize-none" />
-                  </div>
-
-                  {/* Sectioned Editor Items */}
-                  {[
-                    { label: "Experience", data: experience, fields: ["company", "role"] as const, key: "exp" as const },
-                    { label: "Projects", data: projects, fields: ["name", "techStack"] as const, key: "proj" as const },
-                    { label: "Education", data: education, fields: ["degree", "institution"] as const, key: "edu" as const },
-                  ].map((section) => (
-                    <div key={section.key} className="p-3 bg-white/[0.03] border border-white/5 rounded-xl space-y-2">
-                      <h4 className="text-[11px] font-bold text-white">{section.label}</h4>
-                      {(section.data as any[]).map((item, idx) => (
-                        <div key={idx} className="p-2 bg-black/20 border border-white/5 rounded-lg space-y-1.5">
-                          {section.fields.map((f) => (
-                            <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)} value={item[f] || ""}
-                              onChange={e => { const u = [...section.data as any[]]; (u[idx] as any)[f] = e.target.value; if (section.key === "exp") setExperience(u); else if (section.key === "proj") setProjects(u); else setEducation(u); }}
-                              className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-white" />
+                      {/* Quick edit sections */}
+                      {[
+                        { label: "Experience", data: experience, setData: setExperience, fields: ["company", "role"] },
+                        { label: "Projects", data: projects, setData: setProjects, fields: ["name", "techStack"] },
+                        { label: "Education", data: education, setData: setEducation, fields: ["degree", "institution"] },
+                      ].map((section) => (
+                        <div key={section.label} style={{ marginBottom: "0.75rem" }}>
+                          <h4 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, margin: "0 0 0.4rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{section.label}</h4>
+                          {(section.data as any[]).map((item, idx) => (
+                            <div key={idx} style={{
+                              background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8,
+                              padding: "0.5rem", marginBottom: "0.35rem",
+                            }}>
+                              {section.fields.map((f) => (
+                                <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
+                                  value={item[f] || ""}
+                                  onChange={e => {
+                                    const u = [...section.data as any[]];
+                                    (u[idx] as any)[f] = e.target.value;
+                                    (section.setData as any)(u);
+                                  }}
+                                  style={{ ...inputStyle, fontSize: "0.7rem", padding: "0.35rem 0.55rem", marginBottom: "0.25rem" }}
+                                />
+                              ))}
+                            </div>
                           ))}
                         </div>
                       ))}
-                    </div>
-                  ))}
 
-                  {/* Skills Chip */}
-                  <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl space-y-2">
-                    <h4 className="text-[11px] font-bold text-white">Skills</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {skills.map((s) => (
-                        <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-[10px] text-gray-300">{s} <button onClick={() => removeSkill(s)} className="text-red-400">&times;</button></span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right — Live Preview */}
-                <div className="lg:col-span-7 flex flex-col gap-3 p-4 overflow-hidden relative" style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 999, background: t.fullscreenBg, padding: "2rem" } as any : {}}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5"><Eye size={13} className="text-amber-500" /> Live Preview</h2>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1">
-                        <button onClick={() => setZoom(prev => Math.max(50, prev - 10))} className="p-1 text-gray-400 hover:text-white"><ZoomOut size={12} /></button>
-                        <span className="text-[10px] font-bold text-gray-300 min-w-[30px] text-center">{zoom}%</span>
-                        <button onClick={() => setZoom(prev => Math.min(150, prev + 10))} className="p-1 text-gray-400 hover:text-white"><ZoomIn size={12} /></button>
+                      {/* Skills */}
+                      <div>
+                        <h4 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, margin: "0 0 0.4rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>Skills</h4>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {skills.map((s) => (
+                            <span key={s} style={{
+                              display: "inline-flex", alignItems: "center", gap: 3,
+                              padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)",
+                              border: "1px solid rgba(245,158,11,0.15)", borderRadius: 14,
+                              fontSize: "0.65rem", color: t.textSecondary, fontWeight: 600,
+                            }}>
+                              {s}
+                              <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}>&times;</button>
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <button onClick={() => setChatOpen(true)} className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 hover:bg-amber-500/20 transition-colors"><MessageCircle size={14} /></button>
-                      <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Maximize2 size={13} /></button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Right Preview Panel */}
+                <div
+                  className="flex flex-col"
+                  style={{
+                    flex: 1, overflow: "hidden",
+                    ...(isFullscreen ? { position: "fixed", inset: 0, zIndex: 999, background: t.bg } as any : {}),
+                  }}
+                >
+                  {/* Toolbar */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "0.6rem 1rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                        onClick={() => setShowSidebar(!showSidebar)}
+                        style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: 6, cursor: "pointer", color: t.textSecondary, display: "flex" }}
+                      >
+                        <Settings size={13} />
+                      </motion.button>
+                      <span style={{ fontSize: "0.7rem", fontWeight: 600, color: t.textSecondary, display: "flex", alignItems: "center", gap: 5 }}>
+                        <Eye size={13} style={{ color: iconColor }} /> Preview
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {/* Device switcher */}
+                      <div style={{ display: "flex", gap: 2, background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: 2 }}>
+                        {(["desktop", "tablet", "mobile"] as const).map((d) => (
+                          <motion.button key={d} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => setPreviewDevice(d)}
+                            style={{
+                              padding: "0.3rem 0.5rem", borderRadius: 6, border: "none", cursor: "pointer",
+                              background: previewDevice === d ? "rgba(245,158,11,0.15)" : "transparent",
+                              color: previewDevice === d ? iconColor : t.textMuted, display: "flex",
+                            }}
+                          >
+                            {d === "desktop" ? <Monitor size={12} /> : d === "tablet" ? <Tablet size={12} /> : <Smartphone size={12} />}
+                          </motion.button>
+                        ))}
+                      </div>
+                      {/* Zoom */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 2, background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: "2px 4px" }}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                          onClick={() => setZoom(prev => Math.max(40, prev - 10))}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, padding: 4, display: "flex" }}
+                        >
+                          <ZoomOut size={12} />
+                        </motion.button>
+                        <span style={{ fontSize: "0.6rem", fontWeight: 700, color: t.textMuted, minWidth: 28, textAlign: "center" }}>{zoom}%</span>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                          onClick={() => setZoom(prev => Math.min(160, prev + 10))}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, padding: 4, display: "flex" }}
+                        >
+                          <ZoomIn size={12} />
+                        </motion.button>
+                      </div>
+                      {/* Chat button */}
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                        onClick={() => setChatOpen(true)}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          padding: "0.35rem 0.7rem", background: "rgba(245,158,11,0.1)",
+                          border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8,
+                          color: iconColor, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+                        }}
+                      >
+                        <MessageCircle size={12} /> AI Chat
+                      </motion.button>
+                      {/* Fullscreen */}
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                        onClick={toggleFullscreen}
+                        style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: 6, cursor: "pointer", color: t.textSecondary, display: "flex" }}
+                      >
+                        {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                      </motion.button>
                     </div>
                   </div>
 
-                  <div className="flex-1 bg-black/40 border border-white/10 rounded-2xl p-4 overflow-auto flex justify-center items-start min-h-[400px]">
-                    <div className="bg-white text-black p-8 shadow-2xl transition-all duration-300 w-[595px] min-h-[842px]"
-                      style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
-                      <ResumePreviewTemplate personalInfo={personalInfo} summary={summary} education={education} experience={experience} projects={projects} skills={skills} certifications={certifications} achievements={achievements} languages={languages} template={setup.resumeStyle} />
-                    </div>
+                  {/* Preview content */}
+                  <div className="flex-1" style={{ overflow: "auto", padding: "1rem", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+                    <motion.div
+                      layout
+                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                      style={{
+                        background: "#ffffff", color: "#1e293b", borderRadius: previewDevice === "mobile" ? 20 : 12,
+                        boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.1)",
+                        width: previewWidth, minHeight: 842,
+                        transform: `scale(${zoom / 100})`, transformOrigin: "top center",
+                        overflow: "hidden", transition: "width 0.3s ease, border-radius 0.3s ease",
+                        margin: "0 auto",
+                      }}
+                    >
+                      <div style={{ padding: 40 }}>
+                        <ResumePreviewTemplate personalInfo={personalInfo} summary={summary} education={education} experience={experience} projects={projects} skills={skills} certifications={certifications} achievements={achievements} languages={languages} template={setup.resumeStyle} />
+                      </div>
+                    </motion.div>
                   </div>
 
-                  {/* Bottom Nav */}
-                  <div className="flex items-center justify-between">
-                    <button onClick={() => setScreen(2)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 text-white/70 text-[10px] font-bold border border-white/5 hover:bg-white/10 transition-colors">
-                      <ChevronLeft size={13} /> Back
-                    </button>
-                    <button onClick={() => setScreen(6)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-black text-[10px] font-bold hover:from-amber-400 hover:to-amber-500 transition-all">
-                      Review &amp; Export <ChevronRight size={13} />
-                    </button>
-                  </div>
+                  {/* Bottom nav */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "0.6rem 1rem", borderTop: `1px solid ${t.border}`, flexShrink: 0,
+                    }}
+                  >
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => setScreen(2)}
+                      style={{ ...navBtn, background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}
+                    >
+                      <ChevronLeft size={14} /> Edit Info
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 25px rgba(245,158,11,0.3)" }} whileTap={{ scale: 0.98 }}
+                      onClick={() => setScreen(5)}
+                      style={{ ...navBtn, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}
+                    >
+                      Review & Export <ChevronRight size={14} />
+                    </motion.button>
+                  </motion.div>
                 </div>
               </div>
             )}
 
-            {/* ========== SCREEN 5 — AI Chat (Slide-in over Screen 4) ========== */}
-            {screen === 5 && null}
-
-            {/* ========== SCREEN 6 — Final Review & Export ========== */}
-            {screen === 6 && (
-              <div className="h-full flex items-center justify-center p-8">
-                <div className="w-full max-w-lg space-y-6">
-                  <div className="text-center space-y-2">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12 }} className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
-                      <Check size={28} className="text-amber-500" />
+            {/* ========== SCREEN 5 — Review & Export ========== */}
+            {screen === 5 && (
+              <div className="h-full flex items-center justify-center" style={{ padding: "1.5rem", overflowY: "auto" }}>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="w-full max-w-lg"
+                >
+                  <motion.div variants={fadeUp} className="text-center" style={{ marginBottom: "1.5rem" }}>
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                      style={{
+                        width: 64, height: 64, borderRadius: "50%",
+                        background: "rgba(16,185,129,0.1)", border: "2px solid rgba(16,185,129,0.25)",
+                        display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem",
+                      }}
+                    >
+                      <Check size={28} style={{ color: "#10b981" }} />
                     </motion.div>
-                    <h2 className="text-2xl font-extrabold text-white">Resume Ready</h2>
-                    <p className="text-sm text-white/50">Your AI-powered resume is complete</p>
-                  </div>
+                    <h2 style={{ fontSize: "1.35rem", fontWeight: 800, color: t.text, margin: 0 }}>Resume Complete</h2>
+                    <p style={{ fontSize: "0.82rem", color: t.textMuted, margin: "0.25rem 0 0" }}>Your AI-powered resume is ready to export</p>
+                  </motion.div>
 
-                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-3">
+                  <motion.div variants={fadeUp} style={{
+                    background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16,
+                    padding: "1.1rem", marginBottom: "1rem",
+                  }}>
+                    <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>Resume Details</h3>
                     {[
                       { label: "Template", value: setup.resumeStyle },
-                      { label: "Target", value: setup.company },
-                      { label: "Profession", value: setup.profession },
+                      { label: "Target Company", value: setup.company },
+                      { label: "Target Profession", value: setup.profession },
                       { label: "Career Level", value: setup.careerLevel },
+                      { label: "Sections", value: `${[personalInfo.fullName && "Personal", summary && "Summary", experience.some(e => e.company) && "Experience", projects.some(p => p.name) && "Projects", education.some(e => e.institution) && "Education", skills.length && "Skills"].filter(Boolean).join(", ")}` },
                     ].map((item) => (
-                      <div key={item.label} className="flex justify-between items-center py-1 border-b border-white/5 last:border-0">
-                        <span className="text-[11px] font-semibold text-white/50">{item.label}</span>
-                        <span className="text-xs font-bold text-white">{item.value}</span>
+                      <div key={item.label} style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        padding: "0.4rem 0", borderBottom: `1px solid ${t.border}`,
+                      }}>
+                        <span style={{ fontSize: "0.72rem", fontWeight: 600, color: t.textMuted }}>{item.label}</span>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: t.text }}>{item.value}</span>
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
 
-                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-3">
-                    <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">Export Options</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button onClick={() => handleExport("pdf")} disabled={exporting !== null} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all">
-                        <FileText size={22} className="text-amber-500" />
-                        <span className="text-[10px] font-bold text-white">{exporting === "pdf" ? "..." : "PDF"}</span>
-                      </button>
-                      <button onClick={() => handleExport("docx")} disabled={exporting !== null} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all">
-                        <FileText size={22} className="text-blue-400" />
-                        <span className="text-[10px] font-bold text-white">{exporting === "docx" ? "..." : "DOCX"}</span>
-                      </button>
-                      <button onClick={handleSaveDraft} disabled={saving} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all">
-                        <Save size={22} className="text-green-400" />
-                        <span className="text-[10px] font-bold text-white">{saving ? "..." : "Save"}</span>
-                      </button>
+                  <motion.div variants={fadeUp} style={{
+                    background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16,
+                    padding: "1.1rem", marginBottom: "1rem",
+                  }}>
+                    <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                      <Download size={13} style={{ color: iconColor }} /> Export Options
+                    </h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      {[
+                        { type: "pdf" as const, label: "PDF", color: iconColor, bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)" },
+                        { type: "docx" as const, label: "DOCX", color: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.25)" },
+                        { type: "txt" as const, label: "Save", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)", action: "save" },
+                      ].map((opt) => (
+                        <motion.button
+                          key={opt.label}
+                          whileHover={{ scale: 1.04, y: -3 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => {
+                            if (opt.action === "save") handleSaveDraft();
+                            else if (opt.type === "pdf" || opt.type === "docx") handleExport(opt.type);
+                          }}
+                          disabled={exporting !== null || saving}
+                          style={{
+                            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                            padding: "1rem", borderRadius: 12, cursor: "pointer",
+                            background: opt.bg, border: `1px solid ${opt.border}`,
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {opt.type === "pdf" || opt.type === "docx"
+                            ? <FileText size={24} style={{ color: opt.color }} />
+                            : <Save size={24} style={{ color: opt.color }} />
+                          }
+                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: t.text }}>
+                            {exporting === opt.type || saving ? "..." : opt.label}
+                          </span>
+                        </motion.button>
+                      ))}
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className="flex gap-3">
-                    <button onClick={() => setScreen(4)} className="flex-1 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-bold border border-white/5 hover:bg-white/10 transition-colors">
+                  <motion.div variants={fadeUp} style={{ display: "flex", gap: 10 }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => setScreen(4)}
+                      style={{
+                        flex: 1, ...navBtn, justifyContent: "center", padding: "0.6rem",
+                        background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary,
+                      }}
+                    >
                       Back to Editor
-                    </button>
-                    <button onClick={() => setView("resume-hub")} className="flex-1 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 transition-colors">
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 25px rgba(245,158,11,0.3)" }} whileTap={{ scale: 0.98 }}
+                      onClick={() => setView("resume-hub")}
+                      style={{
+                        flex: 1, ...navBtn, justifyContent: "center", padding: "0.6rem",
+                        background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none",
+                      }}
+                    >
                       Done
-                    </button>
-                  </div>
-                </div>
+                    </motion.button>
+                  </motion.div>
+                </motion.div>
               </div>
             )}
 
@@ -759,72 +1382,184 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
         </AnimatePresence>
       </div>
 
-      {/* ========== AI CHAT PANEL (Screen 5 overlay) ========== */}
+      {/* AI Chat Panel */}
       <AnimatePresence>
         {chatOpen && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", justifyContent: "flex-end" }}
           >
-            <div className="absolute inset-0 bg-black/40" onClick={() => setChatOpen(false)} />
             <motion.div
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChatOpen(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-md h-full border-l border-white/10 flex flex-col" style={{ background: t.chatBg }}
+              className="flex flex-col"
+              style={{
+                width: "100%", maxWidth: 420, height: "100%",
+                background: t.chatBg, borderLeft: `1px solid ${t.borderLight}`,
+                position: "relative", zIndex: 1,
+              }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <Bot size={18} className="text-amber-500" />
-                  <span className="text-sm font-bold text-white">Resume AI Assistant</span>
+              {/* Chat Header */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "1rem 1.1rem", borderBottom: `1px solid ${t.borderLight}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 3 }}
+                    style={{
+                      width: 32, height: 32, borderRadius: 10,
+                      background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    <Bot size={16} style={{ color: iconColor }} />
+                  </motion.div>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: t.text }}>AI Assistant</span>
+                    <span style={{ fontSize: "0.65rem", color: t.textMuted, display: "block", marginTop: -1 }}>Resume Optimization</span>
+                  </div>
                 </div>
-                <button onClick={() => setChatOpen(false)} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors">
-                  <X size={18} />
-                </button>
+                <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => setChatOpen(false)}
+                  style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: 6, cursor: "pointer", color: t.textMuted, display: "flex" }}
+                >
+                  <X size={16} />
+                </motion.button>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                {chatMessages.length === 0 && (
-                  <div className="text-center space-y-3 mt-8">
-                    <Bot size={32} className="text-amber-500 mx-auto" />
-                    <p className="text-sm text-white/60">Ask AI to improve your resume</p>
-                    <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex-1 overflow-y-auto" style={{ padding: "0.75rem" }}>
+                {chatMessages.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
+                    <motion.div
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ repeat: Infinity, duration: 3 }}
+                    >
+                      <Bot size={40} style={{ color: iconColor, margin: "0 auto 0.75rem", opacity: 0.6 }} />
+                    </motion.div>
+                    <p style={{ fontSize: "0.82rem", color: t.textMuted, marginBottom: "1rem" }}>Ask AI to improve your resume</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
                       {CHAT_SUGGESTIONS.map((s) => (
-                        <button key={s} onClick={() => handleAIChat(s)}
-                          className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] text-white/70 hover:bg-white/10 hover:border-amber-500/30 transition-all">
+                        <motion.button key={s} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                          onClick={() => handleAIChat(s)}
+                          style={{
+                            padding: "0.4rem 0.75rem", background: t.surface, border: `1px solid ${t.border}`,
+                            borderRadius: 20, fontSize: "0.68rem", color: t.textSecondary, cursor: "pointer",
+                            fontWeight: 500,
+                          }}
+                        >
                           {s}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
                   </div>
-                )}
-                {chatMessages.map((msg, idx) => (
-                  <div key={idx} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "ai" && <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1"><Bot size={13} className="text-amber-500" /></div>}
-                    <div className={`max-w-[80%] p-3 rounded-xl text-xs leading-relaxed ${msg.role === "user" ? "bg-amber-500/10 border border-amber-500/20 text-white" : "bg-white/5 border border-white/10 text-white/80"}`}>
-                      {msg.text}
-                    </div>
-                    {msg.role === "user" && <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-1"><User size={13} className="text-black" /></div>}
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {chatMessages.map((msg, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                          display: "flex", gap: 8,
+                          justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+                        }}
+                      >
+                        {msg.role === "ai" && (
+                          <div style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
+                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4,
+                          }}>
+                            <Bot size={12} style={{ color: iconColor }} />
+                          </div>
+                        )}
+                        <div style={{
+                          maxWidth: "80%", padding: "0.65rem 0.85rem", borderRadius: 14,
+                          fontSize: "0.78rem", lineHeight: 1.5,
+                          background: msg.role === "user" ? "rgba(245,158,11,0.12)" : t.surface,
+                          border: `1px solid ${msg.role === "user" ? "rgba(245,158,11,0.2)" : t.border}`,
+                          color: t.text,
+                          whiteSpace: "pre-wrap",
+                        }}>
+                          {msg.text || <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }}>Thinking...</motion.span>}
+                        </div>
+                        {msg.role === "user" && (
+                          <div style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            background: "rgba(245,158,11,0.2)", border: "2px solid rgba(245,158,11,0.3)",
+                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4,
+                          }}>
+                            <User size={12} style={{ color: iconColor }} />
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                    {chatLoading && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        style={{ display: "flex", gap: 8, alignItems: "center" }}
+                      >
+                        <div style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <Bot size={12} style={{ color: iconColor }} />
+                        </div>
+                        <div style={{ padding: "0.65rem 0.85rem", borderRadius: 14, background: t.surface, border: `1px solid ${t.border}` }}>
+                          <Loader2 size={14} className="animate-spin" style={{ color: iconColor }} />
+                        </div>
+                      </motion.div>
+                    )}
+                    <div ref={chatEndRef} />
                   </div>
-                ))}
-                {chatLoading && (
-                  <div className="flex gap-2 items-center">
-                    <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center"><Bot size={13} className="text-amber-500" /></div>
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-3"><Loader2 size={14} className="text-amber-500 animate-spin" /></div>
-                  </div>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
-              {/* Input */}
-              <div className="p-4 border-t border-white/10">
-                <div className="flex gap-2">
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAIChat()}
-                    placeholder="Ask AI to improve your resume..." disabled={chatLoading}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50" />
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleAIChat()} disabled={chatLoading || !chatInput.trim()}
-                    className="p-3 rounded-xl bg-amber-500 text-black disabled:opacity-30 transition-all">
+              {/* Chat Input */}
+              <div style={{ padding: "0.75rem 1rem", borderTop: `1px solid ${t.borderLight}` }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleAIChat()}
+                    placeholder="Ask AI to improve..."
+                    disabled={chatLoading}
+                    style={{
+                      flex: 1, ...inputStyle, fontSize: "0.78rem", padding: "0.55rem 0.75rem",
+                    }}
+                    onFocus={(e) => { Object.assign(e.currentTarget.style, inputFocusStyle); }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                    onClick={() => handleAIChat()}
+                    disabled={chatLoading || !chatInput.trim()}
+                    style={{
+                      padding: "0.55rem 0.75rem", borderRadius: 10,
+                      background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                      border: "none", color: "#000", cursor: "pointer",
+                      opacity: chatLoading || !chatInput.trim() ? 0.4 : 1,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
                     <Send size={16} />
                   </motion.button>
                 </div>
@@ -837,22 +1572,61 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   );
 }
 
-// --- Section Wrapper ---
-function Section({ title, children, onAdd, custom: customDelay = 0 }: { title: string; children: React.ReactNode; onAdd?: () => void; custom?: number }) {
+// Section Wrapper
+function Section({ title, icon, children, onAdd, t, color }: {
+  title: string; icon: React.ReactNode; children: React.ReactNode;
+  onAdd?: () => void; t: any; color: string;
+}) {
   const [open, setOpen] = useState(true);
   return (
-    <motion.div variants={fadeUp} custom={customDelay} initial="hidden" animate="visible" className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between p-3 cursor-pointer select-none" onClick={() => setOpen(!open)}>
-        <h3 className="text-xs font-bold text-white uppercase tracking-wider">{title}</h3>
-        <div className="flex items-center gap-2">
-          {onAdd && <button onClick={(e) => { e.stopPropagation(); onAdd(); }} className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12} /> Add</button>}
-          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}><ChevronRight size={14} className="text-white/30" /></motion.div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        background: t.cardBg, border: `1px solid ${t.border}`,
+        borderRadius: 16, overflow: "hidden", marginBottom: "0.85rem",
+      }}
+    >
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0.7rem 1rem", cursor: "pointer", userSelect: "none",
+        }}
+      >
+        <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ color }}>{icon}</span>
+          {title}
+        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {onAdd && (
+            <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+              onClick={(e) => { e.stopPropagation(); onAdd(); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.15)", borderRadius: 6,
+                color: color, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              <Plus size={11} /> Add
+            </motion.button>
+          )}
+          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}>
+            <ChevronRight size={13} style={{ color: t.textMuted }} />
+          </motion.div>
         </div>
       </div>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }} className="overflow-hidden">
-            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="p-3 pt-0 space-y-3">{children}</motion.div>
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{ padding: "0 1rem 1rem" }}>{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -860,7 +1634,7 @@ function Section({ title, children, onAdd, custom: customDelay = 0 }: { title: s
   );
 }
 
-// --- Preview Template ---
+// Preview Template
 interface PreviewProps {
   personalInfo: any; summary: string; education: any[]; experience: any[]; projects: any[];
   skills: string[]; certifications: any[]; achievements: string[]; languages: string[]; template: string;
@@ -873,13 +1647,13 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
         <h4 className={`text-lg font-extrabold text-black tracking-wide ${template.includes("Developer") ? "text-amber-600" : ""}`}>{personalInfo.fullName || "Candidate Name"}</h4>
         <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
           {personalInfo.email && <span>{personalInfo.email}</span>}
-          {personalInfo.phone && <span>• {personalInfo.phone}</span>}
-          {personalInfo.location && <span>• {personalInfo.location}</span>}
+          {personalInfo.phone && <span> &bull; {personalInfo.phone}</span>}
+          {personalInfo.location && <span> &bull; {personalInfo.location}</span>}
         </div>
         <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
           {personalInfo.linkedin && <span>LinkedIn: {personalInfo.linkedin}</span>}
-          {personalInfo.github && <span>• GitHub: {personalInfo.github}</span>}
-          {personalInfo.portfolio && <span>• Web: {personalInfo.portfolio}</span>}
+          {personalInfo.github && <span> &bull; GitHub: {personalInfo.github}</span>}
+          {personalInfo.portfolio && <span> &bull; Web: {personalInfo.portfolio}</span>}
         </div>
       </div>
 
