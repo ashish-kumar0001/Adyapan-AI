@@ -35,7 +35,7 @@ import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
 import { ProgressDashboard } from "@/components/progress-hub/ProgressDashboard";
 import { CommunityProfileView } from "@/components/account-hub/CommunityProfileView";
 import { ManageAccountView } from "@/components/account-hub/ManageAccountView";
-import { LearningProgressView } from "@/components/account-hub/LearningProgressView";
+
 import { BillingView } from "@/components/account-hub/BillingView";
 import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
 import type { ResumeHubViewType } from "@/types/resume";
@@ -172,7 +172,7 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "analytics", label: "Analytics", icon: <LineChart size={18} />,
     submenu: [
-      { label: "Learning Progress", href: "#" }, { label: "Progress Tracker", href: "#" },
+      { label: "Progress Tracker", href: "#" },
       { label: "Interview Progress", href: "#" },
       { label: "Resume Score", href: "#" }, { label: "Skill Growth", href: "#" },
     ],
@@ -312,7 +312,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "SOP Generator") onViewTool("prod-sop");
                       else if (sub.label === "LinkedIn Post Gen") onViewTool("prod-linkedin");
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
-                      else if (sub.label === "Learning Progress") onViewTool("progress-hub");
                       else if (sub.label === "Progress Tracker") onViewTool("progress-hub");
                       else if (sub.label === "Study Planner") onViewTool("study-planner");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
@@ -1748,8 +1747,6 @@ function UserDashboardContent() {
           <CommunityProfileView />
         ) : activeView === "settings" ? (
           <ManageAccountView />
-        ) : activeView === "profile-learning" ? (
-          <LearningProgressView />
         ) : activeView === "billing" ? (
           <BillingView />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
