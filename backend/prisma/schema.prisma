@@ -65,6 +65,10 @@ model User {
   topicProgress       TopicProgress[]
   conceptMastery      ConceptMastery[]
 
+  // Study Planner Relations
+  studyPlans          StudyPlan[]
+  studyRevisions      StudyRevision[]
+
   @@map("users")
 }
 
@@ -674,4 +678,54 @@ model ConceptMastery {
 
   @@map("concept_mastery")
 }
+
+model StudyPlan {
+  id                   String      @id @default(cuid())
+  userId               String      @map("user_id")
+  title                String
+  examDate             DateTime?   @map("exam_date")
+  studyMode            String      @map("study_mode")
+  dailyHours           Int         @map("daily_hours")
+  targetScore          String      @map("target_score")
+  completionPercentage Int         @default(0) @map("completion_percentage")
+  planJson             Json        @map("plan_json")
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
+
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks                StudyTask[]
+
+  @@map("study_plans")
+}
+
+model StudyTask {
+  id            String    @id @default(cuid())
+  studyPlanId   String    @map("study_plan_id")
+  topicName     String    @map("topic_name")
+  scheduledDate DateTime  @map("scheduled_date")
+  priority      String
+  status        String    @default("Pending")
+  estimatedTime Int       @map("estimated_time")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  studyPlan     StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  @@map("study_tasks")
+}
+
+model StudyRevision {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  topicName    String   @map("topic_name")
+  revisionDate DateTime @map("revision_date")
+  revisionType String   @map("revision_type")
+  status       String   @default("Pending")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_revisions")
+}
+
 

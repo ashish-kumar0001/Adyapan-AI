@@ -25,6 +25,7 @@ import { notificationRouter } from "./notification.routes";
 import { flashcardsRouter } from "./flashcards.routes";
 import { analyticsRouter } from "./analytics.routes";
 import { progressRouter } from "./progress.routes";
+import { studyPlannerRouter } from "./study-planner.routes";
 
 export const apiRouter = Router();
 
@@ -56,4 +57,5 @@ apiRouter.use("/payment", paymentRouter);
 apiRouter.use("/notifications", notificationRouter);
 apiRouter.use("/analytics", analyticsRouter);
 apiRouter.use("/progress", progressRouter);
+apiRouter.use("/study-planner", studyPlannerRouter);
 

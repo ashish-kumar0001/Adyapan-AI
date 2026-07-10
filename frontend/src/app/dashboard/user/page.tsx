@@ -104,6 +104,7 @@ const sidebarItems: SidebarItem[] = [
       { label: "PPT Generator", href: "#" },
       { label: "Mind Maps", href: "#" },
       { label: "Flashcards", href: "#" },
+      { label: "Study Planner", href: "/dashboard/study-planner" },
     ],
   },
   {
@@ -311,6 +312,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
                       else if (sub.label === "Learning Progress") router.push("/dashboard/learning-analytics");
                       else if (sub.label === "Progress Tracker") router.push("/dashboard/progress");
+                      else if (sub.label === "Study Planner") router.push("/dashboard/study-planner");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");

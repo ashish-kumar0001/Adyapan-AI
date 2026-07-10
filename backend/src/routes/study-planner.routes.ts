@@ -1,0 +1,617 @@
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth";
+import { prisma } from "../config/prisma";
+import { generateJSON, MODELS } from "../lib/ai/openrouter";
+
+export const studyPlannerRouter = Router();
+
+studyPlannerRouter.use(requireAuth);
+
+const STUDY_PLANNER_SYSTEM = `You are an expert Study Planner and Learning Strategist.
+Analyze educational content, learning progress, mastery scores, weak areas, exam timelines, and available study time.
+Generate optimized study schedules that maximize learning outcomes.
+Use spaced repetition, prioritization, and cognitive learning principles.
+Avoid generic plans. Create personalized learning roadmaps.`;
+
+// POST /api/study-planner/generate
+studyPlannerRouter.post("/generate", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const { title, examDate, dailyHours, targetScore, studyMode, documentText, customTopics } = req.body;
+
+    if (!title || !dailyHours || !targetScore || !studyMode) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // 1. Calculate available days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let daysAvailable = 30; // default
+    if (examDate) {
+      const exam = new Date(examDate);
+      exam.setHours(0, 0, 0, 0);
+      const diffTime = exam.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) {
+        daysAvailable = Math.min(180, diffDays); // cap at 6 months
+      }
+    }
+
+    // 2. Query user weak topics for optimization
+    let weakTopics: string[] = [];
+    try {
+      const progresses = await prisma.topicProgress.findMany({
+        where: { userId, progressPercentage: { lt: 50 } },
+        take: 5
+      });
+      weakTopics = progresses.map(p => p.topicName);
+    } catch (e) {
+      console.error("Failed to query topic progresses for planner:", e);
+    }
+
+    // 3. Construct AI Prompt
+    const userPrompt = `Create a detailed day-by-day study plan.
+Subject/Goal: "${title}"
+Exam Date: ${examDate || "No target date"}
+Days Available: ${daysAvailable} days
+Daily Study Hours: ${dailyHours} hours
+Target Score: ${targetScore}
+Study Mode: "${studyMode}"
+${weakTopics.length > 0 ? `Weak areas to focus on: ${weakTopics.join(", ")}` : ""}
+${customTopics ? `Specific topics that must be covered: ${customTopics}` : ""}
+${documentText ? `Learning content context:\n"""\n${documentText.slice(0, 60000)}\n"""` : ""}
+
+Provide a complete day-by-day JSON schedule where "total_days" fits within the days available (minimum 3 days, maximum ${daysAvailable} days).
+Ensure topics are logically structured (fundamentals first, followed by applications and practice).
+Return a JSON object with this exact structure (no markdown wrapper, no other text):
+{
+  "total_days": ${daysAvailable},
+  "daily_hours": ${dailyHours},
+  "estimated_completion": "90%",
+  "schedule": [
+    {
+      "day": 1,
+      "topics": ["Topic A", "Topic B"],
+      "study_hours": ${dailyHours},
+      "priority": "High"
+    }
+  ]
+}`;
+
+    const fallbackPlan = {
+      total_days: daysAvailable,
+      daily_hours: Number(dailyHours),
+      estimated_completion: "85%",
+      schedule: Array.from({ length: Math.min(daysAvailable, 10) }, (_, i) => ({
+        day: i + 1,
+        topics: [`Introduction to ${title} Part ${i + 1}`, `Review and Practice Part ${i + 1}`],
+        study_hours: Number(dailyHours),
+        priority: i % 2 === 0 ? "High" : "Important"
+      }))
+    };
+
+    const planData = await generateJSON<typeof fallbackPlan>(
+      STUDY_PLANNER_SYSTEM,
+      userPrompt,
+      { model: MODELS.BALANCED },
+      fallbackPlan
+    );
+
+    // 4. Save to Database
+    // Archive previous plans by deleting their tasks
+    const existingPlans = await prisma.studyPlan.findMany({ where: { userId } });
+    for (const plan of existingPlans) {
+      await prisma.studyTask.deleteMany({ where: { studyPlanId: plan.id } });
+    }
+    await prisma.studyPlan.deleteMany({ where: { userId } });
+    // Keep study revisions clean
+    await prisma.studyRevision.deleteMany({ where: { userId } });
+
+    const newPlan = await prisma.studyPlan.create({
+      data: {
+        userId,
+        title,
+        examDate: examDate ? new Date(examDate) : null,
+        studyMode,
+        dailyHours: Number(dailyHours),
+        targetScore: String(targetScore),
+        completionPercentage: 0,
+        planJson: planData as any
+      }
+    });
+
+    // Generate Tasks and Revisions
+    const revisionIntervals = [
+      { type: "1 Day Revision", days: 1 },
+      { type: "3 Day Revision", days: 3 },
+      { type: "7 Day Revision", days: 7 },
+      { type: "14 Day Revision", days: 14 },
+      { type: "30 Day Revision", days: 30 }
+    ];
+
+    for (const item of planData.schedule) {
+      const taskDate = new Date(today);
+      taskDate.setDate(today.getDate() + (item.day - 1));
+
+      if (item.topics && item.topics.length > 0) {
+        const estTimePerTopic = Math.round((item.study_hours * 60) / item.topics.length);
+
+        for (const topic of item.topics) {
+          const task = await prisma.studyTask.create({
+            data: {
+              studyPlanId: newPlan.id,
+              topicName: topic,
+              scheduledDate: taskDate,
+              priority: item.priority || "Important",
+              status: "Pending",
+              estimatedTime: estTimePerTopic
+            }
+          });
+
+          // Schedule spaced repetition revisions
+          for (const interval of revisionIntervals) {
+            const revDate = new Date(taskDate);
+            revDate.setDate(taskDate.getDate() + interval.days);
+
+            // Cap revision creation inside exam bounds if needed
+            if (!examDate || revDate <= new Date(examDate)) {
+              await prisma.studyRevision.create({
+                data: {
+                  userId,
+                  topicName: topic,
+                  revisionDate: revDate,
+                  revisionType: interval.type,
+                  status: "Pending"
+                }
+              });
+            }
+          }
+        }
+      }
+    }
+
+    res.json({ success: true, plan: newPlan });
+  } catch (error: any) {
+    console.error("Generate Study Plan Error:", error);
+    res.status(500).json({ error: error.message || "Failed to generate study plan" });
+  }
+});
+
+// GET /api/study-planner
+studyPlannerRouter.get("/", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const plan = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!plan) {
+      return res.json({ success: true, plan: null });
+    }
+
+    const tasks = await prisma.studyTask.findMany({
+      where: { studyPlanId: plan.id },
+      orderBy: { scheduledDate: "asc" }
+    });
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.status === "Completed").length;
+    const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    // Update study plan completion percentage in database
+    if (completionPercentage !== plan.completionPercentage) {
+      await prisma.studyPlan.update({
+        where: { id: plan.id },
+        data: { completionPercentage }
+      });
+      plan.completionPercentage = completionPercentage;
+    }
+
+    // Days Remaining
+    let daysRemaining = 0;
+    if (plan.examDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffTime = new Date(plan.examDate).getTime() - today.getTime();
+      daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    // Workload Analysis
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayTasks = tasks.filter(t => t.scheduledDate.toISOString().split("T")[0] === todayStr);
+    const totalTodayHours = todayTasks.reduce((acc, t) => acc + t.estimatedTime, 0) / 60;
+    
+    let workload = "Low";
+    if (totalTodayHours > 4) workload = "High";
+    else if (totalTodayHours > 2) workload = "Moderate";
+
+    let burnoutRisk = "Low";
+    if (totalTodayHours > 5) burnoutRisk = "High";
+    else if (totalTodayHours > 3.5) burnoutRisk = "Moderate";
+
+    // Streaks
+    const progress = await prisma.progressTracking.findUnique({ where: { userId } });
+    const streak = progress?.currentStreak || 0;
+
+    res.json({
+      success: true,
+      plan: {
+        ...plan,
+        daysRemaining,
+        streak,
+        completionPercentage,
+        successProbability: `${Math.min(98, 70 + Math.round(completionPercentage * 0.28))}%`,
+        workloadAnalysis: {
+          dailyWorkload: workload,
+          burnoutRisk,
+          totalTodayHours: Math.round(totalTodayHours * 10) / 10,
+          learningCapacity: `${plan.dailyHours} hrs/day`
+        }
+      },
+      tasks
+    });
+  } catch (error: any) {
+    console.error("Fetch Study Plan Error:", error);
+    res.status(500).json({ error: "Failed to fetch study plan" });
+  }
+});
+
+// GET /api/study-planner/today
+studyPlannerRouter.get("/today", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const plan = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!plan) {
+      return res.json({ success: true, tasks: [], revisions: [] });
+    }
+
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+
+    // Query tasks for today
+    const tasks = await prisma.studyTask.findMany({
+      where: {
+        studyPlanId: plan.id,
+        scheduledDate: {
+          gte: new Date(todayStr),
+          lt: new Date(new Date(todayStr).setDate(new Date(todayStr).getDate() + 1))
+        }
+      }
+    });
+
+    // Query revisions for today
+    const revisions = await prisma.studyRevision.findMany({
+      where: {
+        userId,
+        revisionDate: {
+          gte: new Date(todayStr),
+          lt: new Date(new Date(todayStr).setDate(new Date(todayStr).getDate() + 1))
+        }
+      }
+    });
+
+    res.json({ success: true, tasks, revisions });
+  } catch (error: any) {
+    console.error("Fetch Today Schedule Error:", error);
+    res.status(500).json({ error: "Failed to fetch today's tasks" });
+  }
+});
+
+// GET /api/study-planner/calendar
+studyPlannerRouter.get("/calendar", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const plan = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!plan) {
+      return res.json({ success: true, events: [] });
+    }
+
+    const tasks = await prisma.studyTask.findMany({
+      where: { studyPlanId: plan.id }
+    });
+
+    const revisions = await prisma.studyRevision.findMany({
+      where: { userId }
+    });
+
+    // Format for full calendar events
+    const taskEvents = tasks.map(t => ({
+      id: `task-${t.id}`,
+      title: `Study: ${t.topicName}`,
+      date: t.scheduledDate.toISOString().split("T")[0],
+      type: "study",
+      priority: t.priority,
+      status: t.status,
+      time: `${t.estimatedTime}m`
+    }));
+
+    const revisionEvents = revisions.map(r => ({
+      id: `rev-${r.id}`,
+      title: `Revise: ${r.topicName} (${r.revisionType.replace(" Revision", "")})`,
+      date: r.revisionDate.toISOString().split("T")[0],
+      type: "revision",
+      priority: "Medium",
+      status: r.status,
+      time: "30m"
+    }));
+
+    res.json({ success: true, events: [...taskEvents, ...revisionEvents] });
+  } catch (error: any) {
+    console.error("Fetch Calendar Error:", error);
+    res.status(500).json({ error: "Failed to fetch calendar events" });
+  }
+});
+
+// POST /api/study-planner/task/complete
+studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const { taskId, status } = req.body;
+
+    if (!taskId || !status) {
+      return res.status(400).json({ error: "Missing task ID or status" });
+    }
+
+    const isCompleted = status === "Completed";
+
+    const task = await prisma.studyTask.update({
+      where: { id: taskId },
+      data: {
+        status,
+        completedAt: isCompleted ? new Date() : null
+      }
+    });
+
+    // Gamification & Analytics Hook: Add Learning Event
+    if (isCompleted) {
+      await prisma.learningEvent.create({
+        data: {
+          userId,
+          eventType: "study_task_completed",
+          toolUsed: "study_planner",
+          topic: task.topicName,
+          duration: task.estimatedTime
+        }
+      });
+
+      // Update Topic Progress
+      const existingProgress = await prisma.topicProgress.findFirst({
+        where: { userId, topicName: task.topicName }
+      });
+
+      if (existingProgress) {
+        await prisma.topicProgress.update({
+          where: { id: existingProgress.id },
+          data: {
+            progressPercentage: Math.min(100, existingProgress.progressPercentage + 20),
+            masteryScore: Math.min(100, existingProgress.masteryScore + 10),
+            lastActivity: new Date(),
+            status: "In Progress"
+          }
+        });
+      } else {
+        await prisma.topicProgress.create({
+          data: {
+            userId,
+            topicName: task.topicName,
+            progressPercentage: 20,
+            masteryScore: 10,
+            lastActivity: new Date(),
+            status: "In Progress"
+          }
+        });
+      }
+
+      // Add Concept Mastery Record
+      const concept = await prisma.conceptMastery.findFirst({
+        where: { userId, conceptName: task.topicName }
+      });
+      if (concept) {
+        await prisma.conceptMastery.update({
+          where: { id: concept.id },
+          data: {
+            masteryScore: Math.min(100, concept.masteryScore + 15),
+            interactions: concept.interactions + 1,
+            lastReviewed: new Date()
+          }
+        });
+      } else {
+        await prisma.conceptMastery.create({
+          data: {
+            userId,
+            conceptName: task.topicName,
+            topicName: task.topicName,
+            masteryScore: 15,
+            interactions: 1,
+            lastReviewed: new Date()
+          }
+        });
+      }
+
+      // Update Progress XP (Gamification Level Ups)
+      const progress = await prisma.progressTracking.findUnique({ where: { userId } });
+      if (progress) {
+        let nextXP = progress.overallProgress + 8;
+        let nextLevel = progress.learningLevel;
+        let nextLevelName = progress.learningLevelName;
+
+        if (nextXP >= 100) {
+          nextXP = nextXP - 100;
+          nextLevel += 1;
+          const levels = ["Beginner", "Explorer", "Learner", "Achiever", "Scholar", "Expert", "Master"];
+          nextLevelName = levels[Math.min(levels.length - 1, nextLevel - 1)];
+        }
+
+        await prisma.progressTracking.update({
+          where: { userId },
+          data: {
+            overallProgress: nextXP,
+            learningLevel: nextLevel,
+            learningLevelName: nextLevelName,
+            studySessions: progress.studySessions + 1
+          }
+        });
+      }
+    }
+
+    res.json({ success: true, task });
+  } catch (error: any) {
+    console.error("Complete Study Task Error:", error);
+    res.status(500).json({ error: "Failed to update study task status" });
+  }
+});
+
+// POST /api/study-planner/reschedule
+studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const plan = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!plan) {
+      return res.status(404).json({ error: "No active study plan found" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Fetch all pending overdue tasks
+    const overdueTasks = await prisma.studyTask.findMany({
+      where: {
+        studyPlanId: plan.id,
+        status: "Pending",
+        scheduledDate: { lt: today }
+      },
+      orderBy: { scheduledDate: "asc" }
+    });
+
+    if (overdueTasks.length === 0) {
+      return res.json({ success: true, message: "No tasks to reschedule", plan });
+    }
+
+    // Shift overdue tasks to start from today onwards
+    let datePointer = new Date(today);
+    let tasksRescheduledCount = 0;
+
+    for (let i = 0; i < overdueTasks.length; i++) {
+      if (i > 0 && i % 2 === 0) {
+        datePointer.setDate(datePointer.getDate() + 1);
+      }
+      
+      const targetTask = overdueTasks[i];
+      const targetDate = new Date(datePointer);
+
+      await prisma.studyTask.update({
+        where: { id: targetTask.id },
+        data: { scheduledDate: targetDate }
+      });
+
+      // Shift corresponding revisions
+      const revisions = await prisma.studyRevision.findMany({
+        where: { userId, topicName: targetTask.topicName, status: "Pending" }
+      });
+
+      const revisionIntervals = [1, 3, 7, 14, 30];
+      for (let rIdx = 0; rIdx < revisions.length; rIdx++) {
+        const intervalDays = revisionIntervals[Math.min(rIdx, revisionIntervals.length - 1)];
+        const newRevDate = new Date(targetDate);
+        newRevDate.setDate(targetDate.getDate() + intervalDays);
+
+        await prisma.studyRevision.update({
+          where: { id: revisions[rIdx].id },
+          data: { revisionDate: newRevDate }
+        });
+      }
+
+      tasksRescheduledCount++;
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully rescheduled ${tasksRescheduledCount} missed tasks starting from today.`,
+      plan
+    });
+  } catch (error: any) {
+    console.error("Reschedule Tasks Error:", error);
+    res.status(500).json({ error: "Failed to reschedule tasks" });
+  }
+});
+
+// GET /api/study-planner/recommendations
+studyPlannerRouter.get("/recommendations", async (req: any, res: any) => {
+  try {
+    const userId = req.user!.userId;
+    const plan = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!plan) {
+      return res.json({ success: true, recommendations: [] });
+    }
+
+    const tasks = await prisma.studyTask.findMany({
+      where: { studyPlanId: plan.id, status: "Pending" },
+      orderBy: { scheduledDate: "asc" },
+      take: 3
+    });
+
+    const revisions = await prisma.studyRevision.findMany({
+      where: { userId, status: "Pending", revisionDate: { lte: new Date() } },
+      orderBy: { revisionDate: "asc" },
+      take: 2
+    });
+
+    const recommendations = [];
+
+    // Prioritize pending tasks
+    if (tasks.length > 0) {
+      recommendations.push({
+        type: "study",
+        title: `Study: ${tasks[0].topicName}`,
+        reason: "This is scheduled next in your planner. Exam relevance is high.",
+        priority: "High",
+        action: "Study Now"
+      });
+    }
+
+    // Add revision recommendations
+    for (const rev of revisions) {
+      recommendations.push({
+        type: "revise",
+        title: `Revise: ${rev.topicName}`,
+        reason: `Your spaced repetition (${rev.revisionType.replace(" Revision", "")}) is due today to combat the forgetting curve.`,
+        priority: "High",
+        action: "Review Notes"
+      });
+    }
+
+    // Default recommendations if list is short
+    if (recommendations.length < 3) {
+      recommendations.push({
+        type: "practice",
+        title: `DSA Practice on ${plan.title}`,
+        reason: "Active recall via practice retention boost.",
+        priority: "Medium",
+        action: "Start Quiz"
+      });
+    }
+
+    res.json({ success: true, recommendations });
+  } catch (error: any) {
+    console.error("Fetch Recommendations Error:", error);
+    res.status(500).json({ error: "Failed to fetch study recommendations" });
+  }
+});

@@ -1,16 +1,17 @@
 import Link from "next/link";
-import { ChartNoAxesColumn, ShieldCheck, UserRound } from "lucide-react";
+import { ChartNoAxesColumn, ShieldCheck, UserRound, Calendar } from "lucide-react";
 import type { UserRole } from "@/types/user";
 import { cn } from "@/lib/cn";
 
 type SidebarProps = {
   role: UserRole;
-  active?: "dashboard" | "profile";
+  active?: "dashboard" | "profile" | "study-planner";
 };
 
 const roleItems = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", key: "dashboard", icon: ChartNoAxesColumn },
+    { label: "Study Planner", href: "/dashboard/study-planner", key: "study-planner", icon: Calendar },
     { label: "Profile", href: "/profile/user", key: "profile", icon: UserRound },
   ],
   admin: [
@@ -18,6 +19,7 @@ const roleItems = {
     { label: "Profile", href: "/profile/admin", key: "profile", icon: ShieldCheck },
   ],
 } as const;
+
 
 export function Sidebar({ role, active = "dashboard" }: SidebarProps) {
   return (
