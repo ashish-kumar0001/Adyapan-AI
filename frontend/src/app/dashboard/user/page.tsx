@@ -15,6 +15,7 @@ import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
 import { LinkedInView } from "@/components/resume-hub/LinkedInView";
 import { AdyChatView } from "@/components/ady-chat/AdyChatView";
 import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
+import { StudyPlannerDashboard } from "@/components/learning-hub/StudyPlannerDashboard";
 import { NotesGeneratorView } from "@/components/learning-hub/NotesGeneratorView";
 import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
 import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGeneratorView";
@@ -105,7 +106,7 @@ const sidebarItems: SidebarItem[] = [
       { label: "PPT Generator", href: "#" },
       { label: "Mind Maps", href: "#" },
       { label: "Flashcards", href: "#" },
-      { label: "Study Planner", href: "/dashboard/study-planner" },
+      { label: "Study Planner", href: "#" },
     ],
   },
   {
@@ -313,7 +314,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
                       else if (sub.label === "Learning Progress") onViewTool("progress-hub");
                       else if (sub.label === "Progress Tracker") onViewTool("progress-hub");
-                      else if (sub.label === "Study Planner") router.push("/dashboard/study-planner");
+                      else if (sub.label === "Study Planner") onViewTool("study-planner");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
@@ -1763,6 +1764,8 @@ function UserDashboardContent() {
           <StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} />
         ) : activeView === "lesson-view" && lessonResult ? (
           <StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} />
+        ) : activeView === "study-planner" ? (
+          <StudyPlannerDashboard />
         ) : activeView === "notes-generator" ? (
           <NotesGeneratorView />
         ) : activeView === "quiz-generator" ? (

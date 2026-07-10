@@ -194,7 +194,7 @@ export function StudyPlannerDashboard() {
             particleCount: 80,
             spread: 60,
             origin: { y: 0.8 },
-            colors: ["#8b5cf6", "#a78bfa", "#f59e0b"]
+            colors: ["#f59e0b", "#d97706", "#fbbf24"]
           });
           toast.success("Task completed! +8 XP Awarded.");
         } else {
@@ -203,7 +203,7 @@ export function StudyPlannerDashboard() {
         // Update local tasks
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
         setTodayTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
-        // Refresh overview metrics (overall progress percentages)
+        // Refresh overview metrics
         const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t);
         const completed = updatedTasks.filter(t => t.status === "Completed").length;
         const compPct = Math.round((completed / updatedTasks.length) * 100);
@@ -306,11 +306,9 @@ export function StudyPlannerDashboard() {
     const daysCount = new Date(year, month + 1, 0).getDate();
     
     const days = [];
-    // Pad previous month days
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
-    // Current month days
     for (let i = 1; i <= daysCount; i++) {
       days.push(new Date(year, month, i));
     }
@@ -319,7 +317,6 @@ export function StudyPlannerDashboard() {
 
   const isDark = theme === "dark";
 
-  // Dynamic light/dark theme CSS styling variables
   const backgroundStyle = isDark 
     ? "bg-[#080710] text-white" 
     : "bg-[#F8FAFC] text-slate-900";
@@ -329,12 +326,12 @@ export function StudyPlannerDashboard() {
     : "bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_24px_rgba(148,163,184,0.15)]";
 
   const bannerStyle = isDark
-    ? "bg-gradient-to-r from-violet-950/40 via-purple-950/40 to-slate-900/40 border border-white/5"
-    : "bg-gradient-to-r from-violet-500/10 via-indigo-500/5 to-sky-500/10 border border-slate-200";
+    ? "bg-gradient-to-r from-amber-950/20 via-amber-900/10 to-slate-900/40 border border-white/5"
+    : "bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/5 border border-slate-200";
 
   return (
     <div className={`w-full min-h-screen ${backgroundStyle} relative overflow-hidden transition-all duration-300`}>
-      {/* Background Aurora / Radial Glow elements */}
+      {/* Background Radial Glow elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         {isDark ? (
           <>
@@ -342,7 +339,7 @@ export function StudyPlannerDashboard() {
               animate={{ scale: [1, 1.15, 1], x: [0, 30, 0] }}
               transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
               className="absolute top-[-8%] left-[-5%] w-[45%] h-[45%] rounded-full blur-[130px]"
-              style={{ background: "radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)" }}
+              style={{ background: "radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)" }}
             />
             <motion.div
               animate={{ scale: [1, 1.1, 1], y: [0, 20, 0] }}
@@ -353,23 +350,21 @@ export function StudyPlannerDashboard() {
           </>
         ) : (
           <>
-            <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-indigo-200/50" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-purple-200/40" />
+            <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-amber-100/50" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full blur-[100px] bg-amber-50/40" />
           </>
         )}
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 sm:px-6">
         
-        {/* Loading Active Plan State */}
         {loadingPlan ? (
           <div className="flex flex-col items-center justify-center min-h-[450px] gap-4">
-            <RefreshCw className="animate-spin text-violet-500" size={32} />
+            <RefreshCw className="animate-spin text-amber-500" size={32} />
             <p className="text-sm font-semibold opacity-60">Synchronizing planner profile...</p>
           </div>
         ) : !activePlan ? (
           
-          /* Empty State / Plan Generator Form */
           <AnimatePresence>
             <motion.div 
               initial={{ opacity: 0, y: 15 }} 
@@ -378,20 +373,18 @@ export function StudyPlannerDashboard() {
               className="max-w-3xl mx-auto"
             >
               {generating ? (
-                /* AI Generation Loading View */
                 <div className={`flex flex-col items-center justify-center p-12 min-h-[450px] ${glassCardStyle} rounded-3xl text-center`}>
                   <div className="relative w-28 h-28 mb-8 flex items-center justify-center">
                     <motion.div 
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-                      className="absolute inset-0 rounded-full border-4 border-t-violet-500 border-r-indigo-500 border-b-sky-500 border-l-purple-500/10"
+                      className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-amber-600 border-b-amber-500 border-l-amber-500/10"
                     />
-                    <BookOpen className="text-violet-500 animate-pulse" size={40} />
+                    <BookOpen className="text-amber-500 animate-pulse" size={40} />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Analyzing Material & Generating Schedule</h3>
                   <p className="text-sm opacity-50 mb-8 max-w-md">Our cognitive learning priority engine is designing your personalized spaced repetition study plan.</p>
                   
-                  {/* Dynamic checklist step */}
                   <div className="w-full max-w-xs space-y-3 text-left">
                     {loadingStages.map((stage, idx) => {
                       const isActive = idx === loadingStage;
@@ -400,12 +393,12 @@ export function StudyPlannerDashboard() {
                         <div key={idx} className="flex items-center gap-3">
                           <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                             isCompleted ? "bg-emerald-500 text-white" : 
-                            isActive ? "border-2 border-violet-500 animate-pulse" : "border border-white/20"
+                            isActive ? "border-2 border-amber-500 animate-pulse" : "border border-white/20"
                           }`}>
                             {isCompleted && <span className="text-[10px] font-bold">✓</span>}
                           </div>
                           <span className={`text-xs font-semibold transition-all ${
-                            isActive ? "text-violet-400 font-bold" : isCompleted ? "opacity-40" : "opacity-20"
+                            isActive ? "text-amber-400 font-bold" : isCompleted ? "opacity-40" : "opacity-20"
                           }`}>{stage}</span>
                         </div>
                       );
@@ -413,10 +406,9 @@ export function StudyPlannerDashboard() {
                   </div>
                 </div>
               ) : (
-                /* Form to create Plan */
                 <div className={`${glassCardStyle} rounded-3xl p-8`}>
                   <div className="text-center mb-8">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-tr from-violet-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-tr from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
                       <Sparkles size={28} className="animate-pulse" />
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-black">AI Study Planner</h1>
@@ -435,7 +427,7 @@ export function StudyPlannerDashboard() {
                           value={formData.title}
                           onChange={e => setFormData({ ...formData, title: e.target.value })}
                           placeholder="e.g. Machine Learning Mid-Term or AWS Solutions Architect"
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
                         />
                       </div>
 
@@ -445,7 +437,7 @@ export function StudyPlannerDashboard() {
                           type="date"
                           value={formData.examDate}
                           onChange={e => setFormData({ ...formData, examDate: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
                         />
                       </div>
 
@@ -457,7 +449,7 @@ export function StudyPlannerDashboard() {
                           max="12"
                           value={formData.dailyHours}
                           onChange={e => setFormData({ ...formData, dailyHours: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
                         />
                       </div>
 
@@ -466,7 +458,7 @@ export function StudyPlannerDashboard() {
                         <select
                           value={formData.targetScore}
                           onChange={e => setFormData({ ...formData, targetScore: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
                         >
                           <option>95%</option>
                           <option>90%</option>
@@ -481,7 +473,7 @@ export function StudyPlannerDashboard() {
                         <select
                           value={formData.studyMode}
                           onChange={e => setFormData({ ...formData, studyMode: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm`}
                         >
                           <option>Exam Preparation</option>
                           <option>Interview Preparation</option>
@@ -493,7 +485,7 @@ export function StudyPlannerDashboard() {
 
                       <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">Upload Study Material (Optional)</label>
-                        <div className={`border-2 border-dashed ${isDark ? "border-white/10 hover:border-violet-500 bg-white/[0.01]" : "border-slate-200 hover:border-violet-500 bg-slate-50/50"} rounded-2xl p-6 text-center cursor-pointer transition-all relative`}>
+                        <div className={`border-2 border-dashed ${isDark ? "border-white/10 hover:border-amber-500 bg-white/[0.01]" : "border-slate-200 hover:border-amber-500 bg-slate-50/50"} rounded-2xl p-6 text-center cursor-pointer transition-all relative`}>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.txt"
@@ -501,7 +493,7 @@ export function StudyPlannerDashboard() {
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           />
                           <div className="flex flex-col items-center justify-center gap-2">
-                            <UploadCloud className="text-violet-500 animate-bounce" size={28} />
+                            <UploadCloud className="text-amber-500" size={28} />
                             <span className="text-xs font-bold">{selectedFile ? selectedFile.name : "Drag or drop file here"}</span>
                             <span className="text-[10px] opacity-40">Supports PDF, DOCX, TXT up to 10MB</span>
                           </div>
@@ -515,7 +507,7 @@ export function StudyPlannerDashboard() {
                           value={formData.customTopics}
                           onChange={e => setFormData({ ...formData, customTopics: e.target.value })}
                           placeholder="e.g. CPU Scheduling, Deadlocks, SQL Joins, TCP/IP basics..."
-                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-violet-500 transition-all text-sm resize-none`}
+                          className={`w-full px-4 py-3 rounded-xl border ${isDark ? "bg-[#0d131a] border-white/10" : "bg-slate-50 border-slate-200"} outline-none focus:border-amber-500 transition-all text-sm resize-none`}
                         />
                       </div>
                     </div>
@@ -523,7 +515,7 @@ export function StudyPlannerDashboard() {
                     <button
                       type="submit"
                       disabled={generating}
-                      className="w-full py-4 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 rounded-xl font-bold shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <Sparkles size={16} /> Let AI Build Study Plan
                     </button>
@@ -534,14 +526,12 @@ export function StudyPlannerDashboard() {
           </AnimatePresence>
         ) : (
           
-          /* Full Planner Dashboard View */
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             
-            {/* Header / Hero Section */}
             <div className={`p-6 rounded-3xl ${bannerStyle} flex flex-col md:flex-row md:items-center justify-between gap-6`}>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold uppercase bg-violet-500/20 text-violet-400 px-3 py-1 rounded-full">{activePlan.studyMode}</span>
+                  <span className="text-xs font-extrabold uppercase bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full">{activePlan.studyMode}</span>
                   {activePlan.daysRemaining <= 5 && (
                     <span className="text-xs font-extrabold uppercase bg-red-500/20 text-red-400 px-3 py-1 rounded-full animate-pulse">Critical Timeline</span>
                   )}
@@ -555,7 +545,6 @@ export function StudyPlannerDashboard() {
               </div>
 
               <div className="flex flex-wrap gap-4 items-center">
-                {/* Export Options */}
                 <div className="relative group">
                   <button 
                     onClick={() => handleExport("PDF")}
@@ -570,26 +559,25 @@ export function StudyPlannerDashboard() {
                 <button 
                   onClick={handleReschedule}
                   disabled={rescheduling}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white shadow-md shadow-violet-500/10`}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-md shadow-amber-500/10`}
                 >
                   {rescheduling ? <RefreshCw className="animate-spin" size={13} /> : <RefreshCw size={13} />} Smart Reschedule
                 </button>
               </div>
             </div>
 
-            {/* Quick Metrics Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
                 <span className="text-[10px] font-extrabold uppercase opacity-40">Streak</span>
                 <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black flex items-center gap-1 text-amber-500">{activePlan.streak} <Flame size={20} className="fill-amber-500" /></span>
+                  <span className="text-2xl font-black flex items-center gap-1 text-amber-500">{activePlan.streak} <Flame size={20} className="fill-amber-500 text-amber-500" /></span>
                   <span className="text-[9px] font-bold opacity-60">Active Streak</span>
                 </div>
               </div>
               <div className={`p-4 rounded-2xl ${glassCardStyle} flex flex-col justify-between min-h-[110px]`}>
                 <span className="text-[10px] font-extrabold uppercase opacity-40">Completion Rate</span>
                 <div className="flex items-end justify-between mt-2">
-                  <span className="text-2xl font-black text-violet-400">{activePlan.completionPercentage}%</span>
+                  <span className="text-2xl font-black text-amber-500">{activePlan.completionPercentage}%</span>
                   <span className="text-[9px] font-bold opacity-60">Tasks finished</span>
                 </div>
               </div>
@@ -609,17 +597,14 @@ export function StudyPlannerDashboard() {
               </div>
             </div>
 
-            {/* Main Sections Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              {/* Left Column (Workload, Today checklist, Revisions) */}
               <div className="lg:col-span-2 space-y-6">
                 
-                {/* Today's study plan checklist */}
                 <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <ListTodo className="text-violet-500" size={18} />
+                      <ListTodo className="text-amber-500" size={18} />
                       <h3 className="font-extrabold text-base">Today's Tasks</h3>
                     </div>
                     <span className="text-xs opacity-60 font-semibold">{todayTasks.length} tasks scheduled</span>
@@ -647,7 +632,7 @@ export function StudyPlannerDashboard() {
                               <button 
                                 onClick={() => handleToggleTask(t.id, t.status)}
                                 className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
-                                  isDone ? "bg-emerald-500 text-white" : "border-2 border-white/20 hover:border-violet-500"
+                                  isDone ? "bg-emerald-500 text-white" : "border-2 border-white/20 hover:border-amber-500"
                                 }`}
                               >
                                 {isDone && <CheckCircle size={14} className="fill-emerald-500 text-white" />}
@@ -657,7 +642,7 @@ export function StudyPlannerDashboard() {
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                                     t.priority === "High" ? "bg-rose-500/10 text-rose-400" : 
-                                    t.priority === "Important" ? "bg-amber-500/10 text-amber-400" : "bg-sky-500/10 text-sky-400"
+                                    t.priority === "Important" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
                                   }`}>{t.priority}</span>
                                   <span className="text-[9px] opacity-40 font-bold flex items-center gap-0.5"><Clock size={8} /> {t.estimatedTime} mins</span>
                                 </div>
@@ -669,12 +654,11 @@ export function StudyPlannerDashboard() {
                     </div>
                   )}
 
-                  {/* Spaced Repetition Queue */}
                   {todayRevisions.length > 0 && (
                     <div className="mt-6 border-t border-white/5 pt-6">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-xs font-black uppercase tracking-wider text-amber-500">Spaced Repetition Queue</h4>
-                        <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-bold">Forgetfulness curve block</span>
+                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold">Forgetfulness curve block</span>
                       </div>
                       <div className="space-y-2">
                         {todayRevisions.map(rev => (
@@ -682,7 +666,7 @@ export function StudyPlannerDashboard() {
                             isDark ? "bg-[#14121f]/50 border-amber-500/10" : "bg-amber-500/[0.02] border-amber-500/20"
                           }`}>
                             <span className="text-xs font-semibold">{rev.topicName}</span>
-                            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">{rev.revisionType}</span>
+                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full">{rev.revisionType}</span>
                           </div>
                         ))}
                       </div>
@@ -690,11 +674,10 @@ export function StudyPlannerDashboard() {
                   )}
                 </div>
 
-                {/* Calendar Monthly View */}
                 <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className="text-violet-500" size={18} />
+                      <CalendarIcon className="text-amber-500" size={18} />
                       <h3 className="font-extrabold text-base">Monthly Roadmap</h3>
                     </div>
                     <div className="flex items-center gap-2">
@@ -704,7 +687,6 @@ export function StudyPlannerDashboard() {
                     </div>
                   </div>
 
-                  {/* Calendar Grid */}
                   <div className="grid grid-cols-7 gap-1 text-center mb-2">
                     {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
                       <span key={d} className="text-[10px] font-black uppercase opacity-40 py-1">{d}</span>
@@ -726,24 +708,23 @@ export function StudyPlannerDashboard() {
                           onClick={() => setSelectedDate(day)}
                           className={`aspect-square rounded-xl flex flex-col items-center justify-between p-1 text-xs relative transition-all border ${
                             isSelected 
-                              ? "bg-violet-600 border-violet-500 text-white" 
+                              ? "bg-amber-500 border-amber-500 text-slate-950" 
                               : isDark ? "bg-white/[0.01] border-white/5 hover:bg-white/5" : "bg-slate-100/50 border-slate-200/50 hover:bg-slate-100"
                           }`}
                         >
                           <span className="font-extrabold">{day.getDate()}</span>
                           <div className="flex gap-0.5 justify-center mb-0.5 w-full">
-                            {hasStudy && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-white" : "bg-violet-500"}`} />}
-                            {hasRev && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-white" : "bg-amber-500"}`} />}
+                            {hasStudy && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-slate-950" : "bg-amber-500"}`} />}
+                            {hasRev && <span className={`w-1 h-1 rounded-full ${isSelected ? "bg-slate-950" : "bg-amber-500"}`} />}
                           </div>
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Calendar selected date tasks */}
                   {selectedDate && (
                     <div className="mt-4 p-4 rounded-xl border border-white/5 bg-white/[0.01] space-y-2">
-                      <h4 className="text-xs font-extrabold text-violet-400">Scheduled on {selectedDate.toLocaleDateString(undefined, {month: 'long', day: 'numeric'})}</h4>
+                      <h4 className="text-xs font-extrabold text-amber-500">Scheduled on {selectedDate.toLocaleDateString(undefined, {month: 'long', day: 'numeric'})}</h4>
                       {(() => {
                         const selStr = selectedDate.toISOString().split("T")[0];
                         const selEvents = calendarEvents.filter(e => e.date === selStr);
@@ -754,7 +735,7 @@ export function StudyPlannerDashboard() {
                               <div key={e.id} className="flex items-center justify-between text-[11px] font-semibold opacity-80">
                                 <span>{e.title}</span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                  e.type === "study" ? "bg-violet-500/10 text-violet-400" : "bg-amber-500/10 text-amber-400"
+                                  e.type === "study" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
                                 }`}>{e.status}</span>
                               </div>
                             ))}
@@ -766,14 +747,12 @@ export function StudyPlannerDashboard() {
                 </div>
               </div>
 
-              {/* Right Column (Gamification & Recommendations & Workload) */}
               <div className="space-y-6">
                 
-                {/* Gamification Level widget */}
                 <div className={`p-6 rounded-2xl ${glassCardStyle} text-center space-y-4`}>
                   <div className="w-20 h-20 mx-auto relative flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-4 border-dashed border-violet-500/30 animate-spin" style={{ animationDuration: "12s" }} />
-                    <Award className="text-violet-400 animate-bounce" size={32} />
+                    <div className="absolute inset-0 rounded-full border-4 border-dashed border-amber-500/30 animate-spin" style={{ animationDuration: "12s" }} />
+                    <Award className="text-amber-500 animate-bounce" size={32} />
                   </div>
                   
                   <div>
@@ -781,22 +760,20 @@ export function StudyPlannerDashboard() {
                     <p className="text-xs opacity-50 mt-0.5">Study Planner Intelligence XP</p>
                   </div>
 
-                  {/* Progress tracker state mock for level */}
                   <div className="w-full space-y-1.5 text-left">
                     <div className="flex justify-between text-xs font-extrabold">
-                      <span className="text-violet-400">Lv.{Math.round(activePlan.completionPercentage / 15) + 1} Scholar</span>
+                      <span className="text-amber-500">Lv.{Math.round(activePlan.completionPercentage / 15) + 1} Scholar</span>
                       <span>{activePlan.completionPercentage}% Completion</span>
                     </div>
                     <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 rounded-full transition-all" style={{ width: `${activePlan.completionPercentage}%` }} />
+                      <div className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all" style={{ width: `${activePlan.completionPercentage}%` }} />
                     </div>
                   </div>
                 </div>
 
-                {/* Study Workload Analysis widget */}
                 <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
                   <div className="flex items-center gap-2 mb-4">
-                    <CalendarRange className="text-violet-500" size={18} />
+                    <CalendarRange className="text-amber-500" size={18} />
                     <h3 className="font-extrabold text-base">Workload Analysis</h3>
                   </div>
 
@@ -805,7 +782,7 @@ export function StudyPlannerDashboard() {
                       <span className="opacity-60 font-semibold">Today's Intensity</span>
                       <span className={`font-bold ${
                         activePlan.workloadAnalysis.dailyWorkload === "High" ? "text-rose-400" : 
-                        activePlan.workloadAnalysis.dailyWorkload === "Moderate" ? "text-amber-400" : "text-emerald-400"
+                        activePlan.workloadAnalysis.dailyWorkload === "Moderate" ? "text-amber-500" : "text-emerald-400"
                       }`}>{activePlan.workloadAnalysis.dailyWorkload} Workload</span>
                     </div>
 
@@ -813,21 +790,20 @@ export function StudyPlannerDashboard() {
                       <span className="opacity-60 font-semibold">Burnout Risk</span>
                       <span className={`font-bold ${
                         activePlan.workloadAnalysis.burnoutRisk === "High" ? "text-rose-400 animate-pulse" : 
-                        activePlan.workloadAnalysis.burnoutRisk === "Moderate" ? "text-amber-400" : "text-emerald-400"
+                        activePlan.workloadAnalysis.burnoutRisk === "Moderate" ? "text-amber-500" : "text-emerald-400"
                       }`}>{activePlan.workloadAnalysis.burnoutRisk} Risk</span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
                       <span className="opacity-60 font-semibold">Allocated Capacity</span>
-                      <span className="font-bold text-violet-400">{activePlan.workloadAnalysis.learningCapacity}</span>
+                      <span className="font-bold text-amber-500">{activePlan.workloadAnalysis.learningCapacity}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* AI Recommendations Engine */}
                 <div className={`p-6 rounded-2xl ${glassCardStyle}`}>
                   <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="text-violet-500" size={18} />
+                    <Sparkles className="text-amber-500" size={18} />
                     <h3 className="font-extrabold text-base">AI Recommendation</h3>
                   </div>
 
@@ -836,13 +812,13 @@ export function StudyPlannerDashboard() {
                       <div key={index} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] space-y-2">
                         <div className="flex items-center justify-between">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            rec.type === "study" ? "bg-violet-500/10 text-violet-400" : "bg-amber-500/10 text-amber-400"
+                            rec.type === "study" ? "bg-amber-500/10 text-amber-500" : "bg-amber-500/10 text-amber-500"
                           }`}>{rec.type}</span>
                           <span className="text-[10px] font-bold text-rose-400">{rec.priority} Priority</span>
                         </div>
                         <h4 className="text-xs font-black">{rec.title}</h4>
                         <p className="text-[11px] opacity-60 leading-relaxed">{rec.reason}</p>
-                        <button className="text-[10px] font-bold text-violet-400 flex items-center gap-1 hover:underline">{rec.action} →</button>
+                        <button className="text-[10px] font-bold text-amber-500 flex items-center gap-1 hover:underline">{rec.action} →</button>
                       </div>
                     ))}
                   </div>
