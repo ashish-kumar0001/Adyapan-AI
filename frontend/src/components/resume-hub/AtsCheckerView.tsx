@@ -89,11 +89,13 @@ const mkColors = (theme: string) => {
   return {
     isDark,
     text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8",
-    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
+    bg: isDark ? "rgba(255,255,255,0.025)" : "linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #e8edf5 100%)",
+    bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f1f5f9",
     surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
     border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
     borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
-    cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+    cardBg: isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
+    cardShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
     amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
     green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
     red: "#ef4444",
@@ -361,7 +363,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text, background: c.bg, backgroundAttachment: "fixed", "--card-shadow": c.cardShadow } as React.CSSProperties}>
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
         {screen !== "home" && (
@@ -410,7 +412,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             className="space-y-6"
           >
             {/* Target Role */}
-            <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>
                 Target Job Role
               </label>
@@ -431,7 +433,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12 }}>
               {/* Option 1: Choose Existing Resume */}
               {resumes.length > 0 && (
-                <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                   <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
                     <FileText size={16} className="inline mr-2" style={{ color: c.amber }} />
                     Choose Existing Resume
@@ -466,7 +468,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               )}
 
               {/* Option 2: Upload Resume */}
-              <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                 <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
                   <Upload size={16} className="inline mr-2" style={{ color: c.amber }} />
                   Upload Resume
@@ -533,7 +535,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}
             className="space-y-6"
           >
-            <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
               <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.amber }} /></motion.span>
               <h2 className="text-lg font-bold mb-2" style={{ color: c.text }}>Compare with Job Description?</h2>
               <p className="text-sm mb-6" style={{ color: c.textSec }}>
@@ -573,7 +575,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 className="p-5 rounded-2xl space-y-4"
-                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
               >
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>
@@ -655,7 +657,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
             className="max-w-lg mx-auto"
           >
-            <div className="p-8 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="p-8 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -718,7 +720,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 initial="hidden"
                 animate="visible"
                 className="flex-shrink-0 p-6 rounded-2xl flex flex-col items-center justify-center text-center"
-                style={{ background: c.cardBg, border: `1px solid ${c.border}`, minWidth: 220 }}
+                style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow, minWidth: 220 }}
               >
                 <div className="relative w-36 h-36 flex items-center justify-center mb-3">
                   <svg className="w-full h-full transform -rotate-90">
@@ -764,7 +766,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     custom={i}
                     whileHover={cardHover}
                     className="p-3.5 rounded-xl"
-                    style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
                       <motion.span variants={springIcon} initial="hidden" animate="visible" style={{ color: item.color }}>{item.icon}</motion.span>
@@ -785,7 +787,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 initial="hidden"
                 animate="visible"
                 className="p-5 rounded-2xl"
-                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
               >
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
                   <Target size={16} style={{ color: c.amber }} /> Resume vs Job Description
@@ -845,7 +847,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   custom={i}
                   whileHover={cardHover}
                   className="p-4 rounded-xl"
-                  style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                  style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -873,7 +875,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               animate="visible"
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <CheckCircle size={14} style={{ color: c.green }} /> Found Keywords
                 </h3>
@@ -887,7 +889,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   ))}
                 </div>
               </motion.div>
-              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <XCircle size={14} style={{ color: c.red }} /> Missing Keywords
                 </h3>
@@ -914,7 +916,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             </motion.div>
 
             {/* Formatting Check */}
-            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
               <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                 <FileCheck2 size={14} style={{ color: c.amber }} /> Resume Formatting
               </h3>
@@ -944,7 +946,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             </motion.div>
 
             {/* Strength Bars */}
-            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
               <h3 className="text-xs font-bold mb-4" style={{ color: c.text }}>Resume Strength</h3>
               <motion.div
                 variants={staggerContainer}
@@ -985,7 +987,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               animate="visible"
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <CheckCircle size={14} style={{ color: c.green }} /> Strengths
                 </h3>
@@ -1002,7 +1004,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   ))}
                 </motion.ul>
               </motion.div>
-              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <Star size={14} style={{ color: c.amber }} /> Recommendations
                 </h3>
@@ -1213,7 +1215,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               initial="hidden"
               animate="visible"
               className="p-6 rounded-2xl"
-              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
             >
               <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textMuted }}>Updated ATS Score</div>
               <div className="flex items-center justify-center gap-3">
