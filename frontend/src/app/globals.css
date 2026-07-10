@@ -350,6 +350,9 @@ button, input, select, textarea {
   .dash-sidebar.open .sb-arrow {
     display: inline-flex;
   }
+  .dash-sidebar.open {
+    overflow-y: auto;
+  }
   .dash-sidebar.open .sb-submenu {
     display: block;
   }
