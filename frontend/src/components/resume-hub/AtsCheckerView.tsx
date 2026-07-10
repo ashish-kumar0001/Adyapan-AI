@@ -77,29 +77,31 @@ function useTheme() {
   useEffect(() => {
     const t = document.documentElement.getAttribute("data-theme") || "dark";
     setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
+    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => obs.disconnect();
   }, []);
   return theme;
 }
 
-const t = (theme: string) => ({
-  bg: theme === "dark" ? "#080710" : "#f0f4ff",
-  surface: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-  surfaceHover: theme === "dark" ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
-  border: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-  text: theme === "dark" ? "#ffffff" : "#0f172a",
-  textSec: theme === "dark" ? "rgba(255,255,255,0.7)" : "#475569",
-  textMuted: theme === "dark" ? "rgba(255,255,255,0.4)" : "#94a3b8",
-  primary: "#f59e0b",
-  green: "#10b981",
-  red: "#ef4444",
-  chatBg: theme === "dark" ? "#0a0e14" : "#f8fafc",
-  cardBg: theme === "dark" ? "rgba(255,255,255,0.03)" : "#ffffff",
-});
+const mkColors = (theme: string) => {
+  const isDark = theme === "dark";
+  return {
+    isDark,
+    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8",
+    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
+    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
+    red: "#ef4444",
+    chatBg: isDark ? "#0a0e14" : "#f8fafc",
+    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+  };
+};
 
 // ─── Screen Components ─────────────────────────────────────────────────────────
 
@@ -124,7 +126,7 @@ function LoadingDots() {
 
 export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   const theme = useTheme();
-  const c = t(theme);
+  const c = mkColors(theme);
 
   // ─── Animation Variants ──────────────────────────────────────────────────────
 
@@ -359,33 +361,39 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative h-full flex flex-col" style={{ padding: "1.25rem" }}>
-      {/* Top Navigation */}
-      <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center gap-2.5 pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <motion.button
           whileHover={buttonHover} whileTap={buttonTap}
           onClick={() => screen === "home" ? setView("resume-hub") : setScreen("home")}
-          className="flex items-center justify-center w-8 h-8 rounded-lg"
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
         </motion.button>
+        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+          <BarChart3 size={18} style={{ color: "#000" }} />
+        </motion.div>
         <div>
-          <h1 className="text-xl font-extrabold" style={{ color: c.text }}>
+          <motion.h1 key={screen} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+            className="text-base font-extrabold leading-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
             {screen === "home" ? "ATS Score Checker" :
              screen === "jd" ? "Job Description" :
              screen === "loading" ? "Analyzing Resume" :
              screen === "dashboard" ? "ATS Dashboard" :
              screen === "suggestions" ? "AI Suggestions" : "Resume Improved"}
-          </h1>
-          <p className="text-xs" style={{ color: c.textSec }}>
+          </motion.h1>
+          <motion.p key={`p-${screen}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+            className="text-xs leading-tight" style={{ color: c.textMuted }}>
             {screen === "home" ? "Upload or choose a resume to check its ATS score" :
              screen === "jd" ? "Compare your resume against a job description" :
              screen === "loading" ? "Running comprehensive ATS analysis..." :
              screen === "dashboard" ? "Detailed ATS audit results" :
              screen === "suggestions" ? "AI-powered improvements for your resume" :
              "Your resume has been improved"}
-          </p>
+          </motion.p>
         </div>
       </div>
 
@@ -413,7 +421,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   background: c.surface, border: `1px solid ${c.border}`,
                   color: c.text,
                 }}
-                onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                onFocus={e => e.currentTarget.style.borderColor = c.amber}
                 onBlur={e => e.currentTarget.style.borderColor = c.border}
               />
             </div>
@@ -423,7 +431,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               {resumes.length > 0 && (
                 <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                   <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                    <FileText size={16} className="inline mr-2" style={{ color: c.primary }} />
+                    <FileText size={16} className="inline mr-2" style={{ color: c.amber }} />
                     Choose Existing Resume
                   </h3>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -440,7 +448,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                         }}
                       >
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)" }}>
-                          <FileText size={14} style={{ color: c.primary }} />
+                          <FileText size={14} style={{ color: c.amber }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold truncate">{r.title}</div>
@@ -448,7 +456,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                             {r.template} · {new Date(r.updatedAt).toLocaleDateString()}
                           </div>
                         </div>
-                        {selectedResumeId === r.id && <CheckCircle size={16} style={{ color: c.primary }} />}
+                        {selectedResumeId === r.id && <CheckCircle size={16} style={{ color: c.amber }} />}
                       </motion.button>
                     ))}
                   </div>
@@ -458,7 +466,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               {/* Option 2: Upload Resume */}
               <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                  <Upload size={16} className="inline mr-2" style={{ color: c.primary }} />
+                  <Upload size={16} className="inline mr-2" style={{ color: c.amber }} />
                   Upload Resume
                 </h3>
                 <div
@@ -466,14 +474,14 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   onClick={() => fileRef.current?.click()}
                   className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
                   style={{
-                    borderColor: dragging ? c.primary : c.border,
+                    borderColor: dragging ? c.amber : c.border,
                     background: dragging ? "rgba(245,158,11,0.05)" : c.surface,
                   }}
                 >
                   <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
                   {file ? (
                     <div className="space-y-2">
-                      <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.primary }} /></motion.span>
+                      <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.amber }} /></motion.span>
                       <p className="text-sm font-bold" style={{ color: c.text }}>{file.name}</p>
                       <p className="text-xs" style={{ color: c.textMuted }}>
                         {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -524,7 +532,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             className="space-y-6"
           >
             <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-              <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.primary }} /></motion.span>
+              <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.amber }} /></motion.span>
               <h2 className="text-lg font-bold mb-2" style={{ color: c.text }}>Compare with Job Description?</h2>
               <p className="text-sm mb-6" style={{ color: c.textSec }}>
                 Comparing with a job description gives you a targeted match score and identifies missing keywords.
@@ -535,9 +543,9 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   onClick={() => { setIncludeJD("yes"); }}
                   className="px-6 py-2 rounded-lg font-bold text-xs"
                   style={{
-                    background: includeJD === "yes" ? c.primary : c.surface,
+                    background: includeJD === "yes" ? c.amber : c.surface,
                     color: includeJD === "yes" ? "#000" : c.text,
-                    border: `1px solid ${includeJD === "yes" ? c.primary : c.border}`,
+                    border: `1px solid ${includeJD === "yes" ? c.amber : c.border}`,
                   }}
                 >
                   Yes
@@ -579,7 +587,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                       background: c.surface, border: `1px solid ${c.border}`,
                       color: c.text,
                     }}
-                    onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                    onFocus={e => e.currentTarget.style.borderColor = c.amber}
                     onBlur={e => e.currentTarget.style.borderColor = c.border}
                   />
                 </div>
@@ -650,9 +658,9 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
-                style={{ border: `3px solid ${c.border}`, borderTopColor: c.primary }}
+                style={{ border: `3px solid ${c.border}`, borderTopColor: c.amber }}
               >
-                <BarChart3 size={24} style={{ color: c.primary }} />
+                <BarChart3 size={24} style={{ color: c.amber }} />
               </motion.div>
 
               <h2 className="text-lg font-bold mb-6" style={{ color: c.text }}>Analyzing Resume...</h2>
@@ -674,7 +682,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         className="w-4 h-4 rounded-full border-2"
-                        style={{ borderColor: `${c.primary} transparent ${c.primary} ${c.primary}` }}
+                        style={{ borderColor: `${c.amber} transparent ${c.amber} ${c.amber}` }}
                       />
                     ) : (
                       <div className="w-4 h-4 rounded-full" style={{ background: c.surface, border: `1px solid ${c.border}` }} />
@@ -741,10 +749,10 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 {[
                   { icon: <Search size={14} />, label: "Keywords Found", value: String(analysis.keywordsFound.length), color: c.green },
                   { icon: <AlertTriangle size={14} />, label: "Keywords Missing", value: String(analysis.keywordsMissing.length), color: c.red },
-                  { icon: <FileText size={14} />, label: "Readability", value: analysis.readability, color: c.primary },
+                  { icon: <FileText size={14} />, label: "Readability", value: analysis.readability, color: c.amber },
                   { icon: <FileCheck2 size={14} />, label: "Length", value: analysis.length, color: "#3b82f6" },
                   { icon: <Star size={14} />, label: "Formatting", value: analysis.formatting, color: "#8b5cf6" },
-                  { icon: <BarChart3 size={14} />, label: "Recruiter Score", value: `${analysis.recruiterScore}/10`, color: c.primary },
+                  { icon: <BarChart3 size={14} />, label: "Recruiter Score", value: `${analysis.recruiterScore}/10`, color: c.amber },
                 ].map((item, i) => (
                   <motion.div
                     key={item.label}
@@ -778,20 +786,20 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
               >
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
-                  <Target size={16} style={{ color: c.primary }} /> Resume vs Job Description
+                  <Target size={16} style={{ color: c.amber }} /> Resume vs Job Description
                 </h3>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative w-20 h-20 flex-shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="40" cy="40" r="34" stroke={c.border} strokeWidth="6" fill="transparent" />
-                      <circle cx="40" cy="40" r="34" stroke={c.primary} strokeWidth="6" fill="transparent"
+                      <circle cx="40" cy="40" r="34" stroke={c.amber} strokeWidth="6" fill="transparent"
                         strokeDasharray={2 * Math.PI * 34}
                         strokeDashoffset={2 * Math.PI * 34 * (1 - analysis.score / 100)}
                         strokeLinecap="round"
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-extrabold" style={{ color: c.primary }}>{analysis.score}%</span>
+                      <span className="text-lg font-extrabold" style={{ color: c.amber }}>{analysis.score}%</span>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -839,7 +847,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <motion.span variants={springIcon} initial="hidden" animate="visible" style={{ color: c.primary }}>{section.icon}</motion.span>
+                      <motion.span variants={springIcon} initial="hidden" animate="visible" style={{ color: c.amber }}>{section.icon}</motion.span>
                       <span className="text-xs font-bold" style={{ color: c.text }}>{section.label}</span>
                     </div>
                     <span className="text-sm font-extrabold" style={{ color: scoreColor(section.data.score * 10) }}>
@@ -848,7 +856,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   </div>
                   {section.data.suggestions?.slice(0, 2).map((s, j) => (
                     <div key={j} className="text-[10px] flex items-start gap-1.5 mb-1" style={{ color: c.textSec }}>
-                      <span style={{ color: c.primary }}>•</span>
+                      <span style={{ color: c.amber }}>•</span>
                       {s}
                     </div>
                   ))}
@@ -895,7 +903,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     whileHover={buttonHover} whileTap={buttonTap}
                     onClick={() => setScreen("suggestions")}
                     className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold"
-                    style={{ background: "rgba(245,158,11,0.1)", color: c.primary, border: "1px solid rgba(245,158,11,0.2)" }}
+                    style={{ background: "rgba(245,158,11,0.1)", color: c.amber, border: "1px solid rgba(245,158,11,0.2)" }}
                   >
                     <Sparkles size={12} /> Add Missing Keywords
                   </motion.button>
@@ -906,7 +914,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             {/* Formatting Check */}
             <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
               <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                <FileCheck2 size={14} style={{ color: c.primary }} /> Resume Formatting
+                <FileCheck2 size={14} style={{ color: c.amber }} /> Resume Formatting
               </h3>
               <motion.div
                 variants={staggerContainer}
@@ -945,7 +953,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 {[
                   { label: "Summary", value: analysis.strengthBars.summary, color: "#8b5cf6" },
                   { label: "Skills", value: analysis.strengthBars.skills, color: "#3b82f6" },
-                  { label: "Experience", value: analysis.strengthBars.experience, color: c.primary },
+                  { label: "Experience", value: analysis.strengthBars.experience, color: c.amber },
                   { label: "Projects", value: analysis.strengthBars.projects, color: "#10b981" },
                   { label: "Education", value: analysis.strengthBars.education, color: "#ec4899" },
                 ].map(bar => (
@@ -994,7 +1002,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               </motion.div>
               <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                  <Star size={14} style={{ color: c.primary }} /> Recommendations
+                  <Star size={14} style={{ color: c.amber }} /> Recommendations
                 </h3>
                 <motion.ul
                   variants={staggerContainer}
@@ -1004,7 +1012,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 >
                   {analysis.recommendations.map((r, i) => (
                     <motion.li key={i} variants={fadeUp} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
-                      <span style={{ color: c.primary }}>✦</span> {r}
+                      <span style={{ color: c.amber }}>✦</span> {r}
                     </motion.li>
                   ))}
                 </motion.ul>
@@ -1099,7 +1107,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                           <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase"
                             style={{
                               background: sugg.impact === "high" ? "rgba(239,68,68,0.1)" : sugg.impact === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                              color: sugg.impact === "high" ? c.red : sugg.impact === "medium" ? c.primary : "#3b82f6",
+                              color: sugg.impact === "high" ? c.red : sugg.impact === "medium" ? c.amber : "#3b82f6",
                             }}
                           >
                             {sugg.impact} impact
@@ -1137,7 +1145,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                               whileHover={buttonHover} whileTap={buttonTap}
                               onClick={() => handleApplySuggestion(sugg)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                              style={{ background: c.primary, color: "#000" }}
+                              style={{ background: c.amber, color: "#000" }}
                             >
                               <Sparkles size={10} /> Apply
                             </motion.button>
@@ -1271,7 +1279,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setView("resume-hub")}
                 className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: c.primary, color: "#000" }}
+                style={{ background: c.amber, color: "#000" }}
               >
                 <FileText size={16} /> Open Resume Builder
               </motion.button>
@@ -1281,7 +1289,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               whileHover={buttonHover} whileTap={buttonTap}
               onClick={() => { setScreen("home"); setAnalysis(null); setFile(null); setSelectedResumeId(""); setSuggestions([]); setAppliedSuggestions(new Set()); }}
               className="inline-flex items-center gap-2 text-sm font-bold"
-              style={{ color: c.primary }}
+              style={{ color: c.amber }}
             >
               <RefreshCw size={14} /> Analyze Another Resume
             </motion.button>
@@ -1326,7 +1334,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 {/* Chat Header */}
                 <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: c.border }}>
                   <div className="flex items-center gap-2">
-                    <motion.span variants={springIcon} initial="hidden" animate="visible"><Sparkles size={14} style={{ color: c.primary }} /></motion.span>
+                    <motion.span variants={springIcon} initial="hidden" animate="visible"><Sparkles size={14} style={{ color: c.amber }} /></motion.span>
                     <span className="text-sm font-bold" style={{ color: c.text }}>AI ATS Assistant</span>
                   </div>
                   <motion.button
@@ -1356,7 +1364,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                           className="block w-full text-left p-2 rounded-lg text-[11px] font-medium transition-all"
                           style={{
                             background: "rgba(245,158,11,0.08)",
-                            color: c.primary,
+                            color: c.amber,
                             border: "1px solid rgba(245,158,11,0.15)",
                           }}
                         >
@@ -1373,7 +1381,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                           msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm"
                         }`}
                         style={{
-                          background: msg.role === "user" ? c.primary : c.surface,
+                          background: msg.role === "user" ? c.amber : c.surface,
                           color: msg.role === "user" ? "#000" : c.text,
                           border: msg.role === "user" ? "none" : `1px solid ${c.border}`,
                         }}
@@ -1411,7 +1419,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     disabled={chatLoading || !chatInput.trim()}
                     className="p-2.5 rounded-xl flex items-center justify-center"
                     style={{
-                      background: c.primary,
+                      background: c.amber,
                       color: "#000",
                       opacity: chatLoading || !chatInput.trim() ? 0.5 : 1,
                     }}
@@ -1424,6 +1432,6 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
           </AnimatePresence>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
