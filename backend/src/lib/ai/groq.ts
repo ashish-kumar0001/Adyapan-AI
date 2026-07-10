@@ -1,36 +1,16 @@
-import Groq from "groq-sdk";
-import { env } from "../../config/env";
-
-const groq = new Groq({ apiKey: env.groqApiKey });
+import { generateText, generateJSON, MODELS } from "./openrouter";
 
 async function chat(prompt: string): Promise<string> {
-  const res = await groq.chat.completions.create({
-    model: "llama3-70b-8192",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.7,
-  });
-  return res.choices[0]?.message?.content?.trim() ?? "";
+  try {
+    return await generateText("You are a helpful AI assistant.", prompt, { model: MODELS.FAST });
+  } catch (error) {
+    console.error("Groq-wrapper chat execution failed:", error);
+    throw error;
+  }
 }
 
 async function chatJson<T>(prompt: string, fallback: T): Promise<T> {
-  try {
-    const res = await groq.chat.completions.create({
-      model: "llama3-70b-8192",
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful AI assistant. Always respond with valid JSON only, no markdown, no explanation.",
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.3,
-    });
-    const text = res.choices[0]?.message?.content?.trim() ?? "";
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
-    return JSON.parse(cleaned) as T;
-  } catch {
-    return fallback;
-  }
+  return generateJSON("You are a helpful AI assistant.", prompt, { model: MODELS.FAST }, fallback);
 }
 
 export async function groqGenerateResumeSummary(

@@ -1,8 +1,6 @@
 import { env } from "../../config/env";
 import type { ChatModelId } from "./openrouter";
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-
 interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -20,72 +18,125 @@ export async function streamChat(
   callbacks: StreamCallbacks,
   signal?: AbortSignal
 ): Promise<void> {
-  try {
-    const body: Record<string, unknown> = {
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 4096,
-      stream: true,
-    };
+  const providers = [];
 
-    const res = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.openrouterApiKey}`,
-        "HTTP-Referer": env.frontendUrl,
-        "X-Title": "Adyapan AI",
-      },
-      body: JSON.stringify(body),
-      signal,
+  // 1. Add OpenRouter if key exists
+  if (env.openrouterApiKey) {
+    providers.push({
+      name: "OpenRouter",
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      key: env.openrouterApiKey,
+      model: model || "openai/gpt-4o-mini"
     });
+  }
 
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({ error: { message: res.statusText } }));
-      throw new Error(errData.error?.message ?? `HTTP ${res.status}: ${res.statusText}`);
+  // 2. Add Groq if key exists
+  if (env.groqApiKey) {
+    let groqModel = "llama-3.3-70b-versatile";
+    if (model.includes("mini") || model.includes("haiku") || model.includes("flash")) {
+      groqModel = "llama-3.1-8b-instant";
     }
+    providers.push({
+      name: "Groq",
+      url: "https://api.groq.com/openai/v1/chat/completions",
+      key: env.groqApiKey,
+      model: groqModel
+    });
+  }
 
-    const reader = res.body?.getReader();
-    if (!reader) throw new Error("No response body stream");
+  // 3. Add Google Gemini if key exists
+  if (env.geminiApiKey) {
+    let geminiModel = "gemini-1.5-flash";
+    if (model.includes("pro") || model.includes("powerful") || model.includes("large") || model.includes("gpt-4o")) {
+      geminiModel = "gemini-1.5-pro";
+    }
+    providers.push({
+      name: "Gemini",
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      key: env.geminiApiKey,
+      model: geminiModel
+    });
+  }
 
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let fullText = "";
+  if (providers.length === 0) {
+    throw new Error("No AI providers configured. Please check environment keys.");
+  }
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+  let lastError: Error | null = null;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+  for (const provider of providers) {
+    try {
+      console.log(`[Chat Stream] Calling ${provider.name} with model ${provider.model}...`);
+      
+      const body: Record<string, unknown> = {
+        model: provider.model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4096,
+        stream: true,
+      };
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("data: ")) continue;
-        const data = trimmed.slice(6);
-        if (data === "[DONE]") continue;
+      const res = await fetch(provider.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider.key}`,
+        },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) {
-            fullText += delta;
-            callbacks.onChunk(delta);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: { message: res.statusText } }));
+        throw new Error(`${provider.name} error: ${errData.error?.message ?? res.statusText}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body stream");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          const data = trimmed.slice(6);
+          if (data === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullText += delta;
+              callbacks.onChunk(delta);
+            }
+          } catch {
+            // skip unparseable lines
           }
-        } catch {
-          // skip unparseable lines
         }
       }
-    }
 
-    callbacks.onDone(fullText);
-  } catch (error: any) {
-    if (error.name === "AbortError") {
-      callbacks.onDone("");
-      return;
+      callbacks.onDone(fullText);
+      console.log(`[Chat Stream] Successfully completed stream via ${provider.name}.`);
+      return; // Success! Return immediately.
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        callbacks.onDone("");
+        return;
+      }
+      console.warn(`[Chat Stream] ${provider.name} stream failed:`, error.message || error);
+      lastError = error;
     }
-    callbacks.onError(error instanceof Error ? error : new Error(String(error)));
   }
+
+  callbacks.onError(new Error(`All AI streaming providers failed. Last Error: ${lastError?.message}`));
 }
