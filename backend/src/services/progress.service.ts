@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma";
+import { PrismaClient } from "@prisma/client";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ export class ProgressService {
   /**
    * Full calculation + save of progress tracking data for a user
    */
-  static async calculateProgress(userId: string): Promise<ProgressDashboardPayload> {
+  static async calculateProgress(userId: string, prisma: PrismaClient): Promise<ProgressDashboardPayload> {
     // ── 1. Fetch all raw data ──────────────────────────────────────────────
     const [docs, notes, quizzes, quizAttempts, flashcards, mindMaps, events, chatSessions] =
       await Promise.all([
@@ -782,10 +782,10 @@ export class ProgressService {
 
   // ─── Get Dashboard (fetch or compute) ────────────────────────────────────
 
-  static async getDashboard(userId: string): Promise<ProgressDashboardPayload> {
+  static async getDashboard(userId: string, prisma: PrismaClient): Promise<ProgressDashboardPayload> {
     const existing = await prisma.progressTracking.findUnique({ where: { userId } });
     if (!existing) {
-      return ProgressService.calculateProgress(userId);
+      return ProgressService.calculateProgress(userId, prisma);
     }
 
     // Return cached data + re-fetch topic/concept tables

@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
-import { prisma } from "../config/prisma";
+import { getUserPrisma } from "../config/dynamicPrisma";
 import {
   generateNotes,
   generateQuiz,
@@ -60,6 +60,7 @@ export function initSocketServer(server: HttpServer) {
           return;
         }
 
+        const userPrisma = await getUserPrisma(userId);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const prompt = `
           You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
@@ -82,7 +83,7 @@ export function initSocketServer(server: HttpServer) {
           io.to(sessionId).emit("study:chunk", { text: chunkText });
         }
 
-        const session = await prisma.studySession.findUnique({
+        const session = await userPrisma.studySession.findUnique({
           where: { id: sessionId },
         });
 
@@ -92,11 +93,11 @@ export function initSocketServer(server: HttpServer) {
         }
 
         if (!session) {
-          await prisma.studySession.create({
+          await userPrisma.studySession.create({
             data: { id: sessionId, userId, topic: "General Study" },
           });
         }
-        await prisma.studyMessage.createMany({
+        await userPrisma.studyMessage.createMany({
           data: [
             { sessionId, role: "user", content: query },
             { sessionId, role: "model", content: fullResponse },
@@ -128,6 +129,7 @@ export function initSocketServer(server: HttpServer) {
 
       try {
         const userId = await resolveUserId(payload);
+        const userPrisma = await getUserPrisma(userId);
 
         switch (moduleName) {
           case "notes": {
@@ -135,7 +137,7 @@ export function initSocketServer(server: HttpServer) {
             const content = await generateNotes(payload.topic || "General", payload.difficulty || "Intermediate", payload.type || "Detailed Notes");
 
             emitProgress("Structuring content with headings and bullet points...");
-            const note = await prisma.generatedNote.create({
+            const note = await userPrisma.generatedNote.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -160,7 +162,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Formatting questions and answer keys...");
-            const quiz = await prisma.quiz.create({
+            const quiz = await userPrisma.quiz.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -183,7 +185,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Structuring introduction, body, and conclusion...");
-            const assignment = await prisma.assignment.create({
+            const assignment = await userPrisma.assignment.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -206,7 +208,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Polishing slide content and speaker notes...");
-            const presentation = await prisma.presentation.create({
+            const presentation = await userPrisma.presentation.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -224,7 +226,7 @@ export function initSocketServer(server: HttpServer) {
             const result: MindMapResult = await generateMindMapSchema(payload.topic || "General");
 
             emitProgress("Linking nodes and rendering connections...");
-            const mindMap = await prisma.mindMap.create({
+            const mindMap = await userPrisma.mindMap.create({
               data: {
                 userId,
                 topic: payload.topic || "General",

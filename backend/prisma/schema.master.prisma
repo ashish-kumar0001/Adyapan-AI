@@ -1,7 +1,3 @@
-// Master schema — only User, Profile, Payment, BlacklistedToken
-// User-specific tables (resumes, quizzes, etc.) live in schema.user.prisma
-// and are migrated per-user by scripts/migrate-all.ts
-
 generator client {
   provider = "prisma-client-js"
 }

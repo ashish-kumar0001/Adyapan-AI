@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateAssignment } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 export const assignmentRouter = Router();
 
 assignmentRouter.use(requireAuth);
@@ -10,8 +10,9 @@ assignmentRouter.post("/generate", async (req, res) => {
   try {
     const { topic, academicLevel, wordCount } = req.body;
     const result = await generateAssignment(topic, academicLevel, wordCount);
+    const userPrisma = await getUserPrismaFromRequest(req);
     
-    const assignment = await prisma.assignment.create({
+    const assignment = await userPrisma.assignment.create({
       data: {
         userId: req.user!.userId,
         topic,
@@ -28,7 +29,8 @@ assignmentRouter.post("/generate", async (req, res) => {
 
 assignmentRouter.get("/history", async (req, res) => {
   try {
-    const assignments = await prisma.assignment.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const assignments = await userPrisma.assignment.findMany({
       where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });

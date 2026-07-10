@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { adminDbService } from "../services/admin-db.service";
 import { httpError } from "../utils/httpError";
 import bcrypt from "bcrypt";
 
@@ -12,6 +13,7 @@ export async function getDashboardStats(_req: Request, res: Response, next: Next
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+    // Master DB queries (users, payments)
     const [
       totalUsers,
       adminUsers,
@@ -22,21 +24,6 @@ export async function getDashboardStats(_req: Request, res: Response, next: Next
       payments,
       totalRevenue,
       monthRevenue,
-      resumeCount,
-      atsCount,
-      coverLetterCount,
-      linkedinCount,
-      studySessions,
-      notesCount,
-      quizzesCount,
-      assignmentsCount,
-      pptsCount,
-      mindmapsCount,
-      codingSessions,
-      submissionsCount,
-      challengesCount,
-      interviewSessions,
-      chatSessions,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: "ADMIN" } }),
@@ -47,22 +34,26 @@ export async function getDashboardStats(_req: Request, res: Response, next: Next
       prisma.payment.findMany({ select: { amount: true, status: true, createdAt: true } }),
       prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "paid" } }),
       prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "paid", createdAt: { gte: monthAgo } } }),
-      prisma.resume.count(),
-      prisma.aTSReport.count(),
-      prisma.coverLetter.count(),
-      prisma.linkedInReport.count(),
-      prisma.studySession.count(),
-      prisma.generatedNote.count(),
-      prisma.quiz.count(),
-      prisma.assignment.count(),
-      prisma.presentation.count(),
-      prisma.mindMap.count(),
-      prisma.codingSession.count(),
-      prisma.submission.count(),
-      prisma.challengeSubmission.count(),
-      prisma.interviewSession.count(),
-      prisma.chatSession.count(),
     ]);
+
+    // Cross-DB queries for user-hub tables
+    const userHubTables = [
+      "resume", "aTSReport", "coverLetter", "linkedInReport",
+      "studySession", "generatedNote", "quiz", "assignment",
+      "presentation", "mindMap", "codingSession", "submission",
+      "challengeSubmission", "interviewSession", "chatSession",
+    ];
+
+    const hubCounts = await Promise.all(
+      userHubTables.map((table) => adminDbService.countAcrossAllUserDbs(table))
+    );
+
+    const [
+      resumeCount, atsCount, coverLetterCount, linkedinCount,
+      studySessions, notesCount, quizzesCount, assignmentsCount,
+      pptsCount, mindmapsCount, codingSessions, submissionsCount,
+      challengesCount, interviewSessions, chatSessions,
+    ] = hubCounts;
 
     const revenueTotal = totalRevenue._sum.amount ?? 0;
     const revenueMonth = monthRevenue._sum.amount ?? 0;
@@ -109,46 +100,56 @@ export async function getDashboardStats(_req: Request, res: Response, next: Next
 
 export async function getActivityFeed(_req: Request, res: Response, next: NextFunction) {
   try {
-    const [
-      recentUsers, recentResumes, recentCoverLetters, recentAts,
-      recentStudy, recentNotes, recentQuizzes, recentAssignments,
-      recentPpts, recentMindmaps, recentCoding, recentSubmissions,
-      recentInterviews, recentChats, recentPayments,
-    ] = await Promise.all([
+    // Master DB: recent users + payments
+    const [recentUsers, recentPayments] = await Promise.all([
       prisma.user.findMany({ take: 5, orderBy: { createdAt: "desc" }, select: { id: true, name: true, createdAt: true } }),
-      prisma.resume.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.coverLetter.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.aTSReport.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.studySession.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.generatedNote.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.quiz.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.assignment.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.presentation.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.mindMap.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.codingSession.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.submission.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.interviewSession.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
-      prisma.chatSession.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
       prisma.payment.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
     ]);
+
+    // Cross-DB: recent items from user-hub tables (no user include needed since we tag with _dbUserId)
+    const hubTables = [
+      { table: "resume", action: "Generated Resume", module: "Resume Hub" },
+      { table: "coverLetter", action: "Created Cover Letter", module: "Resume Hub" },
+      { table: "aTSReport", action: "Ran ATS Check", module: "Resume Hub" },
+      { table: "studySession", action: "Started Study Session", module: "Learning Hub" },
+      { table: "generatedNote", action: "Generated Notes", module: "Learning Hub" },
+      { table: "quiz", action: "Created Quiz", module: "Learning Hub" },
+      { table: "assignment", action: "Generated Assignment", module: "Learning Hub" },
+      { table: "presentation", action: "Created PPT", module: "Learning Hub" },
+      { table: "mindMap", action: "Built Mind Map", module: "Learning Hub" },
+      { table: "codingSession", action: "Started Coding Session", module: "Coding Hub" },
+      { table: "submission", action: "Submitted Code", module: "Coding Hub" },
+      { table: "interviewSession", action: "Completed Interview", module: "Interview Hub" },
+      { table: "chatSession", action: "AI Chat Session", module: "Ady Chat" },
+    ];
+
+    // Fetch recent items from each hub table across all user DBs
+    const hubResults = await Promise.all(
+      hubTables.map(({ table }) =>
+        adminDbService.findRecentAcrossAllUserDbs(table, { take: 5, orderBy: { createdAt: "desc" } })
+      )
+    );
+
+    // Build a userId→name map from master DB for resolving names
+    const userIds = new Set<string>();
+    hubResults.forEach(items => items.forEach((item: any) => { if (item.userId) userIds.add(item.userId); }));
+    const users = userIds.size > 0
+      ? await prisma.user.findMany({ where: { id: { in: Array.from(userIds) } }, select: { id: true, name: true } })
+      : [];
+    const userNameMap = new Map(users.map(u => [u.id, u.name]));
 
     const activities: { time: Date; user: string; action: string; module: string; id: string }[] = [];
 
     recentUsers.forEach(u => activities.push({ time: u.createdAt, user: u.name, action: "Registered", module: "Platform", id: u.id }));
-    recentResumes.forEach(r => activities.push({ time: r.createdAt, user: r.user.name, action: "Generated Resume", module: "Resume Hub", id: r.id }));
-    recentCoverLetters.forEach(c => activities.push({ time: c.createdAt, user: c.user.name, action: "Created Cover Letter", module: "Resume Hub", id: c.id }));
-    recentAts.forEach(a => activities.push({ time: a.createdAt, user: a.user.name, action: "Ran ATS Check", module: "Resume Hub", id: a.id }));
-    recentStudy.forEach(s => activities.push({ time: s.createdAt, user: s.user.name, action: "Started Study Session", module: "Learning Hub", id: s.id }));
-    recentNotes.forEach(n => activities.push({ time: n.createdAt, user: n.user.name, action: "Generated Notes", module: "Learning Hub", id: n.id }));
-    recentQuizzes.forEach(q => activities.push({ time: q.createdAt, user: q.user.name, action: "Created Quiz", module: "Learning Hub", id: q.id }));
-    recentAssignments.forEach(a => activities.push({ time: a.createdAt, user: a.user.name, action: "Generated Assignment", module: "Learning Hub", id: a.id }));
-    recentPpts.forEach(p => activities.push({ time: p.createdAt, user: p.user.name, action: "Created PPT", module: "Learning Hub", id: p.id }));
-    recentMindmaps.forEach(m => activities.push({ time: m.createdAt, user: m.user.name, action: "Built Mind Map", module: "Learning Hub", id: m.id }));
-    recentCoding.forEach(c => activities.push({ time: c.createdAt, user: c.user.name, action: "Started Coding Session", module: "Coding Hub", id: c.id }));
-    recentSubmissions.forEach(s => activities.push({ time: s.createdAt, user: s.user.name, action: "Submitted Code", module: "Coding Hub", id: s.id }));
-    recentInterviews.forEach(i => activities.push({ time: i.createdAt, user: i.user.name, action: "Completed Interview", module: "Interview Hub", id: i.id }));
-    recentChats.forEach(c => activities.push({ time: c.createdAt, user: c.user.name, action: "AI Chat Session", module: "Ady Chat", id: c.id }));
     recentPayments.forEach(p => activities.push({ time: p.createdAt, user: p.user.name, action: `Payment ${p.status}`, module: "Billing", id: p.id }));
+
+    hubResults.forEach((items, idx) => {
+      const { action, module } = hubTables[idx];
+      items.forEach((item: any) => {
+        const userName = userNameMap.get(item.userId) || "Unknown User";
+        activities.push({ time: item.createdAt, user: userName, action, module, id: item.id });
+      });
+    });
 
     activities.sort((a, b) => b.time.getTime() - a.time.getTime());
 
@@ -190,13 +191,30 @@ export async function getAdminUsers(req: Request, res: Response, next: NextFunct
           subscriptionStatus: true, subscriptionEnd: true,
           createdAt: true, updatedAt: true,
           profile: { select: { college: true, branch: true, location: true, phone: true } },
-          _count: { select: { resumes: true, chatSessions: true, interviewSessions: true, codingSessions: true, studySessions: true } },
         },
       }),
       prisma.user.count({ where }),
     ]);
 
-    res.json({ success: true, users, pagination: { total, page, limit, pages: Math.ceil(total / limit) } });
+    // Get per-user hub counts from cross-DB
+    const hubCountTables = ["resume", "chatSession", "interviewSession", "codingSession", "studySession"];
+    const perUserCounts = await adminDbService.getPerUserCounts(hubCountTables);
+
+    const enrichedUsers = users.map(user => {
+      const counts = perUserCounts.get(user.id) || {};
+      return {
+        ...user,
+        _count: {
+          resumes: counts["resume"] || 0,
+          chatSessions: counts["chatSession"] || 0,
+          interviewSessions: counts["interviewSession"] || 0,
+          codingSessions: counts["codingSession"] || 0,
+          studySessions: counts["studySession"] || 0,
+        },
+      };
+    });
+
+    res.json({ success: true, users: enrichedUsers, pagination: { total, page, limit, pages: Math.ceil(total / limit) } });
   } catch (error) {
     next(error);
   }
@@ -254,21 +272,22 @@ export async function updateUserPlan(req: Request, res: Response, next: NextFunc
 
 export async function getAiAnalytics(_req: Request, res: Response, next: NextFunction) {
   try {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const hubTables = [
+      "resume", "aTSReport", "coverLetter", "linkedInReport",
+      "studySession", "generatedNote", "quiz", "assignment",
+      "presentation", "mindMap", "codingSession", "submission",
+      "interviewSession", "chatSession",
+    ];
+
+    const counts = await Promise.all(
+      hubTables.map((table) => adminDbService.countAcrossAllUserDbs(table))
+    );
 
     const [
       totalResume, totalAts, totalCover, totalLinkedin,
       totalStudy, totalNotes, totalQuiz, totalAssign, totalPpt, totalMindmap,
       totalCoding, totalSubmit, totalInterview, totalChat,
-    ] = await Promise.all([
-      prisma.resume.count(), prisma.aTSReport.count(), prisma.coverLetter.count(), prisma.linkedInReport.count(),
-      prisma.studySession.count(), prisma.generatedNote.count(), prisma.quiz.count(), prisma.assignment.count(),
-      prisma.presentation.count(), prisma.mindMap.count(),
-      prisma.codingSession.count(), prisma.submission.count(), prisma.interviewSession.count(), prisma.chatSession.count(),
-    ]);
+    ] = counts;
 
     const totalRequests = totalResume + totalAts + totalCover + totalLinkedin + totalStudy + totalNotes + totalQuiz + totalAssign + totalPpt + totalMindmap + totalCoding + totalSubmit + totalInterview + totalChat;
 
@@ -353,66 +372,70 @@ export async function getSystemHealth(_req: Request, res: Response) {
 
 export async function getModuleAnalytics(_req: Request, res: Response, next: NextFunction) {
   try {
-    const resumeModule = await Promise.all([
-      prisma.resume.count(),
-      prisma.aTSReport.count(),
-      prisma.coverLetter.count(),
-      prisma.linkedInReport.count(),
-      prisma.resume.groupBy({ by: ["template"], _count: true }),
+    // Resume Hub counts
+    const [resumeCount, atsCount, coverCount, linkedinCount] = await Promise.all([
+      adminDbService.countAcrossAllUserDbs("resume"),
+      adminDbService.countAcrossAllUserDbs("aTSReport"),
+      adminDbService.countAcrossAllUserDbs("coverLetter"),
+      adminDbService.countAcrossAllUserDbs("linkedInReport"),
+    ]);
+    const resumeTemplates = await adminDbService.groupByAcrossAllUserDbs("resume", "template");
+
+    // Learning Hub counts
+    const [studyCount, notesCount, quizCount, assignCount, pptCount, mindmapCount] = await Promise.all([
+      adminDbService.countAcrossAllUserDbs("studySession"),
+      adminDbService.countAcrossAllUserDbs("generatedNote"),
+      adminDbService.countAcrossAllUserDbs("quiz"),
+      adminDbService.countAcrossAllUserDbs("assignment"),
+      adminDbService.countAcrossAllUserDbs("presentation"),
+      adminDbService.countAcrossAllUserDbs("mindMap"),
     ]);
 
-    const learningModule = await Promise.all([
-      prisma.studySession.count(),
-      prisma.generatedNote.count(),
-      prisma.quiz.count(),
-      prisma.assignment.count(),
-      prisma.presentation.count(),
-      prisma.mindMap.count(),
+    // Coding Hub counts
+    const [codingCount, submissionCount, challengeCount] = await Promise.all([
+      adminDbService.countAcrossAllUserDbs("codingSession"),
+      adminDbService.countAcrossAllUserDbs("submission"),
+      adminDbService.countAcrossAllUserDbs("challengeSubmission"),
     ]);
 
-    const codingModule = await Promise.all([
-      prisma.codingSession.count(),
-      prisma.submission.count(),
-      prisma.challengeSubmission.count(),
+    // Interview Hub counts
+    const [interviewTotal, interviewCompleted] = await Promise.all([
+      adminDbService.countAcrossAllUserDbs("interviewSession"),
+      adminDbService.countAcrossAllUserDbs("interviewSession", { status: "completed" }),
     ]);
-
-    const interviewModule = await Promise.all([
-      prisma.interviewSession.count(),
-      prisma.interviewSession.count({ where: { status: "completed" } }),
-      prisma.interviewSession.groupBy({ by: ["type"], _count: true }),
-    ]);
+    const interviewByType = await adminDbService.groupByAcrossAllUserDbs("interviewSession", "type");
 
     res.json({
       success: true,
       modules: {
         resumeHub: {
-          total: resumeModule[0] + resumeModule[1] + resumeModule[2] + resumeModule[3],
-          resumes: resumeModule[0],
-          atsReports: resumeModule[1],
-          coverLetters: resumeModule[2],
-          linkedinReports: resumeModule[3],
-          templates: resumeModule[4],
+          total: resumeCount + atsCount + coverCount + linkedinCount,
+          resumes: resumeCount,
+          atsReports: atsCount,
+          coverLetters: coverCount,
+          linkedinReports: linkedinCount,
+          templates: Object.entries(resumeTemplates).map(([template, count]) => ({ template, _count: { template: count } })),
         },
         learningHub: {
-          total: learningModule.reduce((a, b) => a + b, 0),
-          studySessions: learningModule[0],
-          notes: learningModule[1],
-          quizzes: learningModule[2],
-          assignments: learningModule[3],
-          ppts: learningModule[4],
-          mindmaps: learningModule[5],
+          total: studyCount + notesCount + quizCount + assignCount + pptCount + mindmapCount,
+          studySessions: studyCount,
+          notes: notesCount,
+          quizzes: quizCount,
+          assignments: assignCount,
+          ppts: pptCount,
+          mindmaps: mindmapCount,
         },
         codingHub: {
-          total: codingModule.reduce((a, b) => a + b, 0),
-          sessions: codingModule[0],
-          submissions: codingModule[1],
-          challenges: codingModule[2],
+          total: codingCount + submissionCount + challengeCount,
+          sessions: codingCount,
+          submissions: submissionCount,
+          challenges: challengeCount,
         },
         interviewHub: {
-          total: interviewModule[0],
-          completed: interviewModule[1],
-          completionRate: interviewModule[0] > 0 ? Math.round((interviewModule[1] / interviewModule[0]) * 100) : 0,
-          byType: interviewModule[2],
+          total: interviewTotal,
+          completed: interviewCompleted,
+          completionRate: interviewTotal > 0 ? Math.round((interviewCompleted / interviewTotal) * 100) : 0,
+          byType: Object.entries(interviewByType).map(([type, count]) => ({ type, _count: { type: count } })),
         },
       },
     });

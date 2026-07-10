@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import {
   generateCoverLetterText,
   generateCoverLetterChat,
 } from "../lib/ai/gemini";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 function serializeResumeToText(resume: any): string {
   const p = resume.personalInfo || {};
@@ -69,10 +69,12 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
     if (!companyName) throw httpError(400, "Company name is required");
     if (!role) throw httpError(400, "Role/Title is required");
 
+    const userPrisma = await getUserPrismaFromRequest(req);
+
     // Get resume data
     let resumeText = "";
     if (resumeId) {
-      const resume = await prisma.resume.findFirst({ where: { id: resumeId, userId } });
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
       if (resume) resumeText = serializeResumeToText(resume);
     }
 
@@ -91,7 +93,7 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
     const content = [result.greeting, result.introduction, result.body, result.closing]
       .filter(Boolean).join("\n\n");
 
-    const coverLetter = await prisma.coverLetter.create({
+    const coverLetter = await userPrisma.coverLetter.create({
       data: {
         userId,
         resumeId: resumeId || null,
@@ -125,7 +127,8 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
     const { coverLetterId, message } = req.body;
     if (!message) throw httpError(400, "Message is required");
 
-    const letter = await prisma.coverLetter.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
       where: { id: coverLetterId, userId },
     });
     if (!letter) throw httpError(404, "Cover letter not found");
@@ -133,7 +136,7 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
     // Fetch resume text for context
     let resumeText = "";
     if (letter.resumeId) {
-      const resume = await prisma.resume.findFirst({ where: { id: letter.resumeId, userId } });
+      const resume = await userPrisma.resume.findFirst({ where: { id: letter.resumeId, userId } });
       if (resume) resumeText = serializeResumeToText(resume);
     }
 
@@ -151,7 +154,7 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
     const content = [result.greeting, result.introduction, result.body, result.closing]
       .filter(Boolean).join("\n\n");
 
-    const updated = await prisma.coverLetter.update({
+    const updated = await userPrisma.coverLetter.update({
       where: { id: coverLetterId },
       data: {
         greeting: result.greeting,
@@ -179,7 +182,8 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
     const { coverLetterId, greeting, introduction, body, closing } = req.body;
     if (!coverLetterId) throw httpError(400, "coverLetterId is required");
 
-    const letter = await prisma.coverLetter.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
       where: { id: coverLetterId, userId },
     });
     if (!letter) throw httpError(404, "Cover letter not found");
@@ -187,7 +191,7 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
     const content = [greeting, introduction, body, closing]
       .filter(Boolean).join("\n\n");
 
-    const updated = await prisma.coverLetter.update({
+    const updated = await userPrisma.coverLetter.update({
       where: { id: coverLetterId },
       data: {
         greeting: greeting ?? letter.greeting,
@@ -212,7 +216,8 @@ export async function listCoverLetters(req: Request, res: Response, next: NextFu
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const coverLetters = await prisma.coverLetter.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const coverLetters = await userPrisma.coverLetter.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
@@ -231,7 +236,8 @@ export async function getCoverLetter(req: Request, res: Response, next: NextFunc
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const coverLetter = await prisma.coverLetter.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const coverLetter = await userPrisma.coverLetter.findFirst({
       where: { id: req.params.id as string, userId },
     });
 
@@ -255,12 +261,13 @@ export async function deleteCoverLetter(req: Request, res: Response, next: NextF
 
     const letterId = req.params.id as string;
 
-    const letter = await prisma.coverLetter.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
       where: { id: letterId, userId },
     });
     if (!letter) throw httpError(404, "Cover letter not found");
 
-    await prisma.coverLetter.delete({
+    await userPrisma.coverLetter.delete({
       where: { id: letterId },
     });
 

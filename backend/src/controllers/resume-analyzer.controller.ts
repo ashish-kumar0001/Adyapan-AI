@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 import { httpError } from "../utils/httpError";
 import { analyzeResumeSWOT, analyzeJobMatch } from "../lib/ai/gemini";
 
@@ -48,7 +48,8 @@ export async function analyzeSWOT(req: Request, res: Response, next: NextFunctio
     const { resumeId } = req.body;
     if (!resumeId) throw httpError(400, "resumeId is required");
 
-    const resume = await prisma.resume.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await userPrisma.resume.findFirst({
       where: { id: resumeId, userId },
     });
     if (!resume) throw httpError(404, "Resume draft not found");
@@ -57,7 +58,7 @@ export async function analyzeSWOT(req: Request, res: Response, next: NextFunctio
     const swot = await analyzeResumeSWOT(resumeText);
 
     // Save ResumeAnalysis to DB
-    const analysis = await prisma.resumeAnalysis.create({
+    const analysis = await userPrisma.resumeAnalysis.create({
       data: {
         userId,
         resumeId,
@@ -85,7 +86,8 @@ export async function matchJob(req: Request, res: Response, next: NextFunction) 
     if (!resumeId) throw httpError(400, "resumeId is required");
     if (!jobDescription) throw httpError(400, "jobDescription is required");
 
-    const resume = await prisma.resume.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await userPrisma.resume.findFirst({
       where: { id: resumeId, userId },
     });
     if (!resume) throw httpError(404, "Resume draft not found");
@@ -107,7 +109,8 @@ export async function getResumeAnalysis(req: Request, res: Response, next: NextF
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const analysis = await prisma.resumeAnalysis.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analysis = await userPrisma.resumeAnalysis.findFirst({
       where: { id: req.params.id as string, userId },
       include: {
         resume: {
@@ -134,7 +137,8 @@ export async function listResumeAnalyses(req: Request, res: Response, next: Next
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const analyses = await prisma.resumeAnalysis.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analyses = await userPrisma.resumeAnalysis.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {

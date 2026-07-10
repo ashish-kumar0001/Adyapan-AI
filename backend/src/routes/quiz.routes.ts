@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateEnhancedQuiz, generateQuiz } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 export const quizRouter = Router();
 
 quizRouter.use(requireAuth);
@@ -9,10 +9,11 @@ quizRouter.use(requireAuth);
 quizRouter.post("/generate", async (req, res) => {
   try {
     const { topic, mode, duration } = req.body;
+    const userPrisma = await getUserPrismaFromRequest(req);
     
     if (mode && ["beginner", "intermediate", "interview", "revision"].includes(mode)) {
       const result = await generateEnhancedQuiz(topic, mode, duration || "10m");
-      const quiz = await prisma.quiz.create({
+      const quiz = await userPrisma.quiz.create({
         data: {
           userId: req.user!.userId,
           topic,
@@ -23,7 +24,7 @@ quizRouter.post("/generate", async (req, res) => {
       res.json({ success: true, quiz: result, id: quiz.id });
     } else {
       const result = await generateQuiz(topic, 5, "medium");
-      const quiz = await prisma.quiz.create({
+      const quiz = await userPrisma.quiz.create({
         data: {
           userId: req.user!.userId,
           topic,
@@ -32,7 +33,7 @@ quizRouter.post("/generate", async (req, res) => {
         },
       });
       for (const fc of result.flashcards) {
-        await prisma.flashcard.create({
+        await userPrisma.flashcard.create({
           data: { userId: req.user!.userId, quizId: quiz.id, topic, front: fc.front, back: fc.back },
         });
       }
@@ -45,7 +46,8 @@ quizRouter.post("/generate", async (req, res) => {
 
 quizRouter.get("/history", async (req, res) => {
   try {
-    const quizzes = await prisma.quiz.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const quizzes = await userPrisma.quiz.findMany({
       where: { userId: req.user!.userId },
       include: { attempts: true, flashcards: true },
       orderBy: { createdAt: "desc" },

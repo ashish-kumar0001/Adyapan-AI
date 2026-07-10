@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateNotes } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 export const notesRouter = Router();
 
 notesRouter.use(requireAuth);
@@ -10,8 +10,9 @@ notesRouter.post("/generate", async (req, res) => {
   try {
     const { topic, difficulty, type } = req.body;
     const content = await generateNotes(topic, difficulty, type);
+    const userPrisma = await getUserPrismaFromRequest(req);
     
-    const note = await prisma.generatedNote.create({
+    const note = await userPrisma.generatedNote.create({
       data: {
         userId: req.user!.userId,
         topic,
@@ -28,7 +29,8 @@ notesRouter.post("/generate", async (req, res) => {
 
 notesRouter.get("/history", async (req, res) => {
   try {
-    const notes = await prisma.generatedNote.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const notes = await userPrisma.generatedNote.findMany({
       where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });

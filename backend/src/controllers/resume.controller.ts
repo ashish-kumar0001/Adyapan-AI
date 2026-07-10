@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent, resumeAIChat } from "../lib/ai/gemini";
 import { groqGenerateResumeSummary, groqEnhanceProjectDescription, groqEnhanceExperienceDescription, groqOptimizeResumeContent, groqResumeAIChat } from "../lib/ai/groq";
@@ -7,6 +6,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null;
 
@@ -35,8 +35,8 @@ async function aiResumeChat(resumeData: object, message: string) {
 /**
  * Helper to ensure a resume belongs to the logged-in user
  */
-async function getResumeForUser(resumeId: string, userId: string) {
-  const resume = await prisma.resume.findFirst({
+async function getResumeForUser(resumeId: string, userId: string, userPrisma: any) {
+  const resume = await userPrisma.resume.findFirst({
     where: { id: resumeId, userId },
   });
   if (!resume) {
@@ -57,7 +57,8 @@ export async function createResume(req: Request, res: Response, next: NextFuncti
 
     if (!title) throw httpError(400, "Resume title is required");
 
-    const resume = await prisma.resume.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await userPrisma.resume.create({
       data: {
         userId,
         title,
@@ -85,7 +86,8 @@ export async function listResumes(req: Request, res: Response, next: NextFunctio
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const resumes = await prisma.resume.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resumes = await userPrisma.resume.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
     });
@@ -104,7 +106,8 @@ export async function getResume(req: Request, res: Response, next: NextFunction)
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const resume = await getResumeForUser(req.params.id as string, userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await getResumeForUser(req.params.id as string, userId, userPrisma);
     res.json({ success: true, resume });
   } catch (error) {
     next(error);
@@ -120,11 +123,12 @@ export async function updateResume(req: Request, res: Response, next: NextFuncti
     if (!userId) throw httpError(401, "Unauthorized");
 
     const resumeId = req.params.id as string;
-    await getResumeForUser(resumeId, userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    await getResumeForUser(resumeId, userId, userPrisma);
 
     const { title, template, personalInfo, education, experience, projects, skills, certifications } = req.body;
 
-    const updated = await prisma.resume.update({
+    const updated = await userPrisma.resume.update({
       where: { id: resumeId },
       data: {
         ...(title && { title }),
@@ -153,9 +157,10 @@ export async function deleteResume(req: Request, res: Response, next: NextFuncti
     if (!userId) throw httpError(401, "Unauthorized");
 
     const resumeId = req.params.id as string;
-    await getResumeForUser(resumeId, userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    await getResumeForUser(resumeId, userId, userPrisma);
 
-    await prisma.resume.delete({
+    await userPrisma.resume.delete({
       where: { id: resumeId },
     });
 
@@ -318,7 +323,8 @@ export async function exportResumePdf(req: Request, res: Response, next: NextFun
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const resume = await getResumeForUser(req.body.resumeId, userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
 
     const p = resume.personalInfo as any;
     const edu = (resume.education as any[]) || [];
@@ -447,7 +453,8 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const resume = await getResumeForUser(req.body.resumeId, userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
 
     const p = resume.personalInfo as any;
     const edu = (resume.education as any[]) || [];

@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma";
+import { PrismaClient } from "@prisma/client";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
 // Interfaces for structured data
@@ -40,8 +40,9 @@ export class AnalyticsService {
     toolUsed?: string;
     topic?: string;
     duration?: number;
+    prisma: PrismaClient;
   }) {
-    return prisma.learningEvent.create({
+    return params.prisma.learningEvent.create({
       data: {
         userId: params.userId,
         eventType: params.eventType,
@@ -56,7 +57,7 @@ export class AnalyticsService {
   /**
    * Aggregates and generates/regenerates analytics for a user
    */
-  static async generateAnalytics(userId: string): Promise<any> {
+  static async generateAnalytics(userId: string, prisma: PrismaClient): Promise<any> {
     // 1. Fetch user's data from multiple tables
     const docsCount = await prisma.uploadedDocument.count({ where: { userId } });
     const notes = await prisma.generatedNote.findMany({ where: { userId } });
@@ -445,14 +446,14 @@ Provide the structured analysis in JSON.`;
   /**
    * Fetches dashboard data, generating it if it does not exist
    */
-  static async getDashboardData(userId: string): Promise<any> {
+  static async getDashboardData(userId: string, prisma: PrismaClient): Promise<any> {
     let analytics = await prisma.learningAnalytics.findUnique({
       where: { userId },
     });
 
     // Auto-generate if not found
     if (!analytics) {
-      analytics = await this.generateAnalytics(userId);
+      analytics = await this.generateAnalytics(userId, prisma);
     }
 
     return analytics;
@@ -461,7 +462,7 @@ Provide the structured analysis in JSON.`;
   /**
    * Helper to seed demo/mock events for a user so they can visualize charts/heatmap instantly
    */
-  static async seedDemoData(userId: string): Promise<void> {
+  static async seedDemoData(userId: string, prisma: PrismaClient): Promise<void> {
     // Check if the user already has mock events. If so, clear them or bypass.
     // For safety, we will just insert a complete history of learning events over the last 30 days.
     const eventsToCreate = [];
@@ -541,6 +542,6 @@ Provide the structured analysis in JSON.`;
     });
 
     // Re-generate analytics
-    await this.generateAnalytics(userId);
+    await this.generateAnalytics(userId, prisma);
   }
 }

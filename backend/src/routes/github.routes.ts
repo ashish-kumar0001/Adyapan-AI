@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { analyzeGithubProfile, generateReadme, generatePortfolio } from "../lib/ai/github";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const router = Router();
 router.use(requireAuth);
@@ -12,8 +12,9 @@ router.post("/analyze", async (req: any, res) => {
     if (!username) return res.status(400).json({ error: "Username is required" });
     
     const analysis = await analyzeGithubProfile(username);
+    const userPrisma = await getUserPrismaFromRequest(req);
     
-    const profile = await prisma.githubProfile.create({
+    const profile = await userPrisma.githubProfile.create({
       data: {
         userId: req.user.id,
         username,
@@ -36,8 +37,9 @@ router.post("/readme", async (req: any, res) => {
     if (!projectName) return res.status(400).json({ error: "Project name is required" });
     
     const result = await generateReadme(projectName, extraContext);
+    const userPrisma = await getUserPrismaFromRequest(req);
 
-    await prisma.generatedReadme.create({
+    await userPrisma.generatedReadme.create({
       data: {
         userId: req.user.id,
         projectName,
@@ -55,8 +57,9 @@ router.post("/portfolio", async (req: any, res) => {
   try {
     const { profileData } = req.body;
     const result = await generatePortfolio(profileData);
+    const userPrisma = await getUserPrismaFromRequest(req);
 
-    const portfolio = await prisma.portfolio.create({
+    const portfolio = await userPrisma.portfolio.create({
       data: {
         userId: req.user.id,
         content: result,

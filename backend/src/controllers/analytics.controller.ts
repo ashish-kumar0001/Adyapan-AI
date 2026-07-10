@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
 import { AnalyticsService } from "../services/analytics.service";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 export async function generateAnalytics(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const analytics = await AnalyticsService.generateAnalytics(userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analytics = await AnalyticsService.generateAnalytics(userId, userPrisma);
     res.json({ success: true, analytics });
   } catch (error: any) {
     console.error("Generate analytics controller error:", error);
@@ -16,7 +17,8 @@ export async function generateAnalytics(req: Request, res: Response): Promise<vo
 export async function getDashboardData(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const analytics = await AnalyticsService.getDashboardData(userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analytics = await AnalyticsService.getDashboardData(userId, userPrisma);
     res.json({ success: true, analytics });
   } catch (error: any) {
     console.error("Get dashboard analytics error:", error);
@@ -27,7 +29,8 @@ export async function getDashboardData(req: Request, res: Response): Promise<voi
 export async function getRecommendations(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const analytics = await AnalyticsService.getDashboardData(userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analytics = await AnalyticsService.getDashboardData(userId, userPrisma);
     res.json({
       success: true,
       recommendations: analytics.recommendationsJson,
@@ -43,7 +46,8 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
 export async function getTopicInsights(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const analytics = await AnalyticsService.getDashboardData(userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const analytics = await AnalyticsService.getDashboardData(userId, userPrisma);
     const insights = analytics.insightsJson as any;
     res.json({
       success: true,
@@ -60,25 +64,26 @@ export async function getTopicInsights(req: Request, res: Response): Promise<voi
 export async function getLearningTrends(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
     
     // Fetch events, notes, quizzes, documents in the last 90 days
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
     const [events, notes, quizAttempts, docs] = await Promise.all([
-      prisma.learningEvent.findMany({
+      userPrisma.learningEvent.findMany({
         where: { userId, createdAt: { gte: ninetyDaysAgo } },
         orderBy: { createdAt: "asc" }
       }),
-      prisma.generatedNote.findMany({
+      userPrisma.generatedNote.findMany({
         where: { userId, createdAt: { gte: ninetyDaysAgo } },
         orderBy: { createdAt: "asc" }
       }),
-      prisma.quizAttempt.findMany({
+      userPrisma.quizAttempt.findMany({
         where: { userId, createdAt: { gte: ninetyDaysAgo } },
         orderBy: { createdAt: "asc" }
       }),
-      prisma.uploadedDocument.findMany({
+      userPrisma.uploadedDocument.findMany({
         where: { userId, createdAt: { gte: ninetyDaysAgo } },
         orderBy: { createdAt: "asc" }
       })
@@ -181,7 +186,8 @@ export async function getLearningTrends(req: Request, res: Response): Promise<vo
 export async function seedMockData(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    await AnalyticsService.seedDemoData(userId);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    await AnalyticsService.seedDemoData(userId, userPrisma);
     res.json({ success: true, message: "Demo learning analytics data populated successfully." });
   } catch (error: any) {
     console.error("Seed mock data controller error:", error);

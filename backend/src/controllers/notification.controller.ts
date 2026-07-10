@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { emitNotification } from "../lib/notificationEmitter";
+import { getUserPrismaFromRequest, masterPrisma } from "../utils/prisma";
 
 // ─── 1. List Notifications (paginated) ────────────────────────────
 
@@ -14,14 +14,15 @@ export async function listNotifications(req: Request, res: Response, next: NextF
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
     const skip = (page - 1) * limit;
 
+    const userPrisma = await getUserPrismaFromRequest(req);
     const [notifications, total] = await Promise.all([
-      prisma.notification.findMany({
+      userPrisma.notification.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.notification.count({ where: { userId } }),
+      userPrisma.notification.count({ where: { userId } }),
     ]);
 
     res.json({
@@ -46,7 +47,8 @@ export async function getUnreadCount(req: Request, res: Response, next: NextFunc
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const count = await prisma.notification.count({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const count = await userPrisma.notification.count({
       where: { userId, read: false },
     });
 
@@ -65,11 +67,12 @@ export async function markAsRead(req: Request, res: Response, next: NextFunction
 
     const id = req.params.id as string;
 
-    const notification = await prisma.notification.findUnique({ where: { id } });
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const notification = await userPrisma.notification.findUnique({ where: { id } });
     if (!notification) throw httpError(404, "Notification not found");
     if (notification.userId !== userId) throw httpError(403, "Not your notification");
 
-    await prisma.notification.update({
+    await userPrisma.notification.update({
       where: { id },
       data: { read: true },
     });
@@ -87,7 +90,8 @@ export async function markAllAsRead(req: Request, res: Response, next: NextFunct
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    await prisma.notification.updateMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    await userPrisma.notification.updateMany({
       where: { userId, read: false },
       data: { read: true },
     });
@@ -107,11 +111,12 @@ export async function deleteNotification(req: Request, res: Response, next: Next
 
     const id = req.params.id as string;
 
-    const notification = await prisma.notification.findUnique({ where: { id } });
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const notification = await userPrisma.notification.findUnique({ where: { id } });
     if (!notification) throw httpError(404, "Notification not found");
     if (notification.userId !== userId) throw httpError(403, "Not your notification");
 
-    await prisma.notification.delete({ where: { id } });
+    await userPrisma.notification.delete({ where: { id } });
 
     res.json({ success: true });
   } catch (error) {
@@ -126,7 +131,8 @@ export async function clearAllNotifications(req: Request, res: Response, next: N
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    await prisma.notification.deleteMany({ where: { userId } });
+    const userPrisma = await getUserPrismaFromRequest(req);
+    await userPrisma.notification.deleteMany({ where: { userId } });
 
     res.json({ success: true });
   } catch (error) {
@@ -141,8 +147,7 @@ export async function createNotification(req: Request, res: Response, next: Next
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    // Only admins can create notifications for other users
-    const requester = await prisma.user.findUnique({ where: { id: userId } });
+    const requester = await masterPrisma.user.findUnique({ where: { id: userId } });
     const { targetUserId, type, title, message, link } = req.body;
 
     if (!targetUserId || !type || !title || !message) {
@@ -153,7 +158,8 @@ export async function createNotification(req: Request, res: Response, next: Next
       throw httpError(403, "Only admins can create notifications for other users");
     }
 
-    const notification = await prisma.notification.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const notification = await userPrisma.notification.create({
       data: { userId: targetUserId, type, title, message, link },
     });
 

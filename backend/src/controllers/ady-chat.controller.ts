@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { streamChat } from "../lib/ai/ady-chat";
 import type { ChatModelId } from "../lib/ai/openrouter";
 import multer from "multer";
 const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 // ─── File Upload Middleware ────────────────────────────────────────────
 
@@ -49,7 +49,8 @@ export async function listSessions(req: Request, res: Response, next: NextFuncti
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const sessions = await prisma.chatSession.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.chatSession.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
       select: { id: true, title: true, model: true, createdAt: true, updatedAt: true },
@@ -70,7 +71,8 @@ export async function createSession(req: Request, res: Response, next: NextFunct
 
     const { title, model } = req.body;
 
-    const session = await prisma.chatSession.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.chatSession.create({
       data: {
         userId,
         title: title || "New Chat",
@@ -92,12 +94,13 @@ export async function getSession(req: Request, res: Response, next: NextFunction
     if (!userId) throw httpError(401, "Unauthorized");
     const id = req.params.id as string;
 
-    const session = await prisma.chatSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.chatSession.findFirst({
       where: { id, userId },
     });
     if (!session) throw httpError(404, "Session not found");
 
-    const messages = await prisma.chatMessage.findMany({
+    const messages = await userPrisma.chatMessage.findMany({
       where: { sessionId: session.id },
       orderBy: { createdAt: "asc" },
     });
@@ -116,12 +119,13 @@ export async function deleteSession(req: Request, res: Response, next: NextFunct
     if (!userId) throw httpError(401, "Unauthorized");
     const id = req.params.id as string;
 
-    const session = await prisma.chatSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.chatSession.findFirst({
       where: { id, userId },
     });
     if (!session) throw httpError(404, "Session not found");
 
-    await prisma.chatSession.delete({ where: { id: session.id } });
+    await userPrisma.chatSession.delete({ where: { id: session.id } });
     res.json({ success: true, message: "Session deleted" });
   } catch (error) {
     next(error);
@@ -137,12 +141,13 @@ export async function updateSession(req: Request, res: Response, next: NextFunct
     const id = req.params.id as string;
 
     const { title, model } = req.body;
-    const session = await prisma.chatSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.chatSession.findFirst({
       where: { id, userId },
     });
     if (!session) throw httpError(404, "Session not found");
 
-    const updated = await prisma.chatSession.update({
+    const updated = await userPrisma.chatSession.update({
       where: { id: session.id },
       data: {
         ...(title !== undefined ? { title } : {}),
@@ -166,7 +171,8 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
     const { sessionId, message, model } = req.body;
     if (!sessionId || !message) throw httpError(400, "sessionId and message are required");
 
-    const session = await prisma.chatSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.chatSession.findFirst({
       where: { id: sessionId, userId },
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
@@ -175,13 +181,13 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
     const selectedModel = model || session.model;
 
     // Save user message
-    await prisma.chatMessage.create({
+    await userPrisma.chatMessage.create({
       data: { sessionId: session.id, role: "user", content: message },
     });
 
     // Update session title from first message if still default
     if (session.title === "New Chat" && session.messages.length === 0) {
-      await prisma.chatSession.update({
+      await userPrisma.chatSession.update({
         where: { id: session.id },
         data: { title: message.slice(0, 80) + (message.length > 80 ? "..." : ""), model: selectedModel },
       });
@@ -209,7 +215,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
       },
       onDone() {
         // Save assistant message
-        prisma.chatMessage.create({
+        userPrisma.chatMessage.create({
           data: { sessionId: session.id, role: "assistant", content: fullResponse },
         }).catch(err => console.error("Failed to save chat message:", err));
 

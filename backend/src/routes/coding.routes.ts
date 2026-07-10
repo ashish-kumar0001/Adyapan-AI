@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateCode, debugCode, explainCode, generateProject } from "../lib/ai/coding";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const router = Router();
 router.use(requireAuth);
@@ -56,7 +56,8 @@ router.post("/project", async (req, res) => {
 
 router.get("/history", async (req: any, res) => {
   try {
-    const sessions = await prisma.codingSession.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.codingSession.findMany({
       where: { userId: req.user!.userId },
       orderBy: { updatedAt: 'desc' },
       include: { messages: true }

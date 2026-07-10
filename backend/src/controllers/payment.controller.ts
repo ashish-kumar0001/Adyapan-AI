@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { getUserPrisma } from "../config/dynamicPrisma";
 import { env } from "../config/env";
 import { httpError } from "../utils/httpError";
 import { emitNotification } from "../lib/notificationEmitter";
@@ -132,7 +133,8 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
     });
 
     // Create notification and emit real-time event
-    const notif = await prisma.notification.create({
+    const userPrisma = await getUserPrisma(userId);
+    const notif = await userPrisma.notification.create({
       data: {
         userId,
         type: "subscription",
@@ -213,7 +215,8 @@ export async function cancelSubscription(req: Request, res: Response, next: Next
     });
 
     // Create notification and emit real-time event
-    const notif = await prisma.notification.create({
+    const userPrisma = await getUserPrisma(userId);
+    const notif = await userPrisma.notification.create({
       data: {
         userId,
         type: "subscription",

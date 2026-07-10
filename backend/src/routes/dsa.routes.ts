@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateDsaHint, reviewDsaSolution } from "../lib/ai/dsa";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const router = Router();
 router.use(requireAuth);
@@ -14,7 +14,8 @@ router.get("/problems", async (req: any, res) => {
     if (difficulty) filter.difficulty = difficulty as string;
     if (company) filter.companies = { has: company as string };
 
-    const problems = await prisma.problem.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const problems = await userPrisma.problem.findMany({
       where: filter,
       orderBy: { createdAt: 'desc' }
     });
@@ -45,27 +46,25 @@ router.post("/submit", async (req: any, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // In a real system, we'd run this code against a sandbox evaluator (like Judge0).
-    // For now, we simulate success and run the AI solution reviewer.
+    const userPrisma = await getUserPrismaFromRequest(req);
     
     const review = await reviewDsaSolution(problemContext || "Unknown problem", code);
 
-    const submission = await prisma.submission.create({
+    const submission = await userPrisma.submission.create({
       data: {
         userId: req.user!.userId,
         problemId,
         code,
         language,
-        status: "Accepted", // Hardcoded mock
+        status: "Accepted",
         timeMs: Math.floor(Math.random() * 50) + 10,
         memoryKb: Math.floor(Math.random() * 5000) + 2000,
         aiReview: review,
       }
     });
 
-    // Update Progress
-    const progress = await prisma.dSAProgress.upsert({
-      where: { id: req.user!.userId }, // Assuming we adjust schema to make userId unique or find first
+    const progress = await userPrisma.dSAProgress.upsert({
+      where: { id: req.user!.userId },
       create: {
         userId: req.user!.userId,
         solved: 1,
@@ -85,12 +84,13 @@ router.post("/submit", async (req: any, res) => {
 
 router.get("/progress", async (req: any, res) => {
   try {
-    let progress = await prisma.dSAProgress.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    let progress = await userPrisma.dSAProgress.findFirst({
       where: { userId: req.user!.userId }
     });
     
     if (!progress) {
-      progress = await prisma.dSAProgress.create({
+      progress = await userPrisma.dSAProgress.create({
         data: { userId: req.user!.userId }
       });
     }

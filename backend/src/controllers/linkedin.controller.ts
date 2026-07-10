@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { optimizeLinkedInProfile, generateResumeSummary } from "../lib/ai/gemini";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const genAI = new GoogleGenerativeAI(env.geminiApiKey);
 
@@ -25,7 +25,8 @@ export async function analyzeLinkedIn(req: Request, res: Response, next: NextFun
       targetRole: targetRole || "Software Engineer",
     });
 
-    const report = await prisma.linkedInReport.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const report = await userPrisma.linkedInReport.create({
       data: {
         userId,
         headline: reportData.headline,
@@ -101,7 +102,8 @@ export async function listLinkedInReports(req: Request, res: Response, next: Nex
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const reports = await prisma.linkedInReport.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const reports = await userPrisma.linkedInReport.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     });

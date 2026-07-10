@@ -1,11 +1,13 @@
 import bcrypt from "bcrypt";
 import jwt, { type SignOptions } from "jsonwebtoken";
+import { execSync } from "child_process";
 import type { User } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { httpError } from "../utils/httpError";
 import type { AuthRole } from "../middleware/auth";
 import { RateLimiterMemory } from "rate-limiter-flexible";
+import { databaseService } from "./database.service";
 
 type RegisterInput = {
   name: string;
@@ -105,6 +107,25 @@ export async function registerUser(input: RegisterInput) {
       },
     },
   });
+
+  try {
+    const userDbName = `user_${user.id}`;
+    
+    await databaseService.createDatabase(userDbName);
+    
+    const dbUrl = await databaseService.getConnectionString(userDbName);
+    
+    execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+      cwd: process.cwd(),
+      stdio: "pipe",
+      env: { ...process.env, USER_DATABASE_URL: dbUrl },
+    });
+    console.log(`Migrated database ${userDbName} for user ${user.id}`);
+    
+    console.log(`Created database ${userDbName} for user ${user.id}`);
+  } catch (error) {
+    console.error(`Failed to create database for user ${user.id}:`, error);
+  }
 
   return {
     user: publicUser(user),

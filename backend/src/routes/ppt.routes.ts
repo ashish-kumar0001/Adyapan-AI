@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generatePPTContent } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 export const pptRouter = Router();
 
 pptRouter.use(requireAuth);
@@ -10,8 +10,9 @@ pptRouter.post("/generate", async (req, res) => {
   try {
     const { topic, slideCount, audience, style } = req.body;
     const slides = await generatePPTContent(topic, parseInt(slideCount));
+    const userPrisma = await getUserPrismaFromRequest(req);
     
-    const ppt = await prisma.presentation.create({
+    const ppt = await userPrisma.presentation.create({
       data: {
         userId: req.user!.userId,
         topic,
@@ -29,7 +30,8 @@ pptRouter.post("/generate", async (req, res) => {
 
 pptRouter.get("/history", async (req, res) => {
   try {
-    const ppts = await prisma.presentation.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const ppts = await userPrisma.presentation.findMany({
       where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });

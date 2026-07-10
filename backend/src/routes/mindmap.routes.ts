@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateEnhancedMindMap } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 export const mindMapRouter = Router();
 
 mindMapRouter.use(requireAuth);
@@ -10,8 +10,9 @@ mindMapRouter.post("/generate", async (req, res) => {
   try {
     const { topic, mode } = req.body;
     const result = await generateEnhancedMindMap(topic, mode || "intermediate");
+    const userPrisma = await getUserPrismaFromRequest(req);
     
-    const mindmap = await prisma.mindMap.create({
+    const mindmap = await userPrisma.mindMap.create({
       data: {
         userId: req.user!.userId,
         topic,
@@ -37,7 +38,8 @@ mindMapRouter.post("/expand", async (req, res) => {
 
 mindMapRouter.get("/history", async (req, res) => {
   try {
-    const mindmaps = await prisma.mindMap.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const mindmaps = await userPrisma.mindMap.findMany({
       where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });

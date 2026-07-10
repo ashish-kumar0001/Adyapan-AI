@@ -11,6 +11,13 @@ import {
   getSecurityLogs,
 } from "../controllers/admin.controller";
 import { requireAuth, requireRole } from "../middleware/auth";
+import {
+  getUserDatabases,
+  getUserDatabaseStats,
+  queryUserDb,
+  deleteUserDatabase,
+  getAggregatedStats,
+} from "../controllers/admin-db.controller";
 
 export const adminRouter = Router();
 
@@ -25,3 +32,9 @@ adminRouter.get("/analytics/revenue", ...guard, getRevenueAnalytics);
 adminRouter.get("/system-health", ...guard, getSystemHealth);
 adminRouter.get("/modules", ...guard, getModuleAnalytics);
 adminRouter.get("/security", ...guard, getSecurityLogs);
+
+adminRouter.get("/databases", ...guard, getUserDatabases);
+adminRouter.get("/databases/stats", ...guard, getUserDatabaseStats);
+adminRouter.get("/databases/aggregated", ...guard, getAggregatedStats);
+adminRouter.post("/databases/:userId/query", ...guard, queryUserDb);
+adminRouter.delete("/databases/:userId", ...guard, deleteUserDatabase);

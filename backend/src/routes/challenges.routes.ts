@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const router = Router();
 router.use(requireAuth);
 
 router.get("/", async (req: any, res) => {
   try {
-    const challenges = await prisma.challenge.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const challenges = await userPrisma.challenge.findMany({
       orderBy: { createdAt: 'desc' }
     });
     res.json({ challenges });
@@ -21,11 +22,12 @@ router.post("/submit", async (req: any, res) => {
     const { challengeId, code, language } = req.body;
     if (!challengeId || !code) return res.status(400).json({ error: "Missing required fields" });
 
-    // Mock validation logic
+    const userPrisma = await getUserPrismaFromRequest(req);
+
     const status = Math.random() > 0.3 ? "Accepted" : "Failed";
     const score = status === "Accepted" ? 100 : 0;
 
-    const submission = await prisma.challengeSubmission.create({
+    const submission = await userPrisma.challengeSubmission.create({
       data: {
         userId: req.user.id,
         challengeId,
@@ -37,9 +39,8 @@ router.post("/submit", async (req: any, res) => {
     });
 
     if (status === "Accepted") {
-      // Update leaderboard
-      await prisma.leaderboard.upsert({
-        where: { id: req.user.id }, // Simplification
+      await userPrisma.leaderboard.upsert({
+        where: { id: req.user.id },
         create: {
           userId: req.user.id,
           score: score,
@@ -58,7 +59,8 @@ router.post("/submit", async (req: any, res) => {
 
 router.get("/leaderboard", async (req, res) => {
   try {
-    const leaderboard = await prisma.leaderboard.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const leaderboard = await userPrisma.leaderboard.findMany({
       orderBy: { score: 'desc' },
       take: 10,
       include: { user: { select: { name: true } } }

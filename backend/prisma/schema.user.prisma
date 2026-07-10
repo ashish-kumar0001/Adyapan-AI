@@ -1,0 +1,519 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Resume {
+  id             String           @id @default(cuid())
+  userId         String           @map("user_id")
+  title          String
+  template       String
+  personalInfo   Json             @map("personal_info")
+  education      Json
+  experience     Json
+  projects       Json
+  skills         Json
+  certifications Json
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  achievements   Json?
+  docxUrl        String?          @map("docx_url")
+  languages      Json?
+  pdfUrl         String?          @map("pdf_url")
+  targetCompany  String?          @map("target_company")
+  atsReports     ATSReport[]
+  coverLetters   CoverLetter[]
+  resumeAnalyses ResumeAnalysis[]
+
+  @@map("resumes")
+}
+
+model ATSReport {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  resumeId        String   @map("resume_id")
+  score           Int
+  missingKeywords Json     @map("missing_keywords")
+  recommendations Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("ats_reports")
+}
+
+model ResumeAnalysis {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  resumeId        String   @map("resume_id")
+  strengths       Json
+  weaknesses      Json
+  recommendations Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("resume_analyses")
+}
+
+model CoverLetter {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  companyName    String   @map("company_name")
+  role           String
+  content        String
+  createdAt      DateTime @default(now()) @map("created_at")
+  resumeId       String?  @map("resume_id")
+  jobDescription String?  @map("job_description")
+  tone           String   @default("Professional")
+  letterType     String   @default("Full-Time") @map("letter_type")
+  greeting       String?
+  introduction   String?
+  body           String?
+  closing        String?
+  pdfUrl         String?  @map("pdf_url")
+  docxUrl        String?  @map("docx_url")
+  resume         Resume?  @relation(fields: [resumeId], references: [id])
+
+  @@map("cover_letters")
+}
+
+model LinkedInReport {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  headline        String
+  aboutSection    String   @map("about_section")
+  skills          Json
+  recommendations Json
+  score           Int
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("linkedin_reports")
+}
+
+model StudySession {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  topic     String
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  messages  StudyMessage[]
+  documents UploadedDocument[]
+
+  @@map("study_sessions")
+}
+
+model StudyMessage {
+  id        String       @id @default(cuid())
+  sessionId String       @map("session_id")
+  role      String
+  content   String
+  createdAt DateTime     @default(now()) @map("created_at")
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("study_messages")
+}
+
+model UploadedDocument {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  sessionId String?       @map("session_id")
+  fileName  String        @map("file_name")
+  fileUrl   String        @map("file_url")
+  fileType  String        @map("file_type")
+  createdAt DateTime      @default(now()) @map("created_at")
+  session   StudySession? @relation(fields: [sessionId], references: [id])
+
+  @@map("uploaded_documents")
+}
+
+model GeneratedNote {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  topic      String
+  subject    String?
+  difficulty String?
+  type       String
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("generated_notes")
+}
+
+model Quiz {
+  id         String        @id @default(cuid())
+  userId     String        @map("user_id")
+  topic      String
+  difficulty String?
+  questions  Json
+  createdAt  DateTime      @default(now()) @map("created_at")
+  flashcards Flashcard[]
+  attempts   QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  quizId       String   @map("quiz_id")
+  score        Int
+  total        Int
+  accuracy     Float
+  weakTopics   String[] @map("weak_topics")
+  strongTopics String[] @map("strong_topics")
+  createdAt    DateTime @default(now()) @map("created_at")
+  quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model Flashcard {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  quizId    String?  @map("quiz_id")
+  topic     String
+  front     String
+  back      String
+  createdAt DateTime @default(now()) @map("created_at")
+  quiz      Quiz?    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("flashcards")
+}
+
+model Assignment {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  topic         String
+  academicLevel String   @map("academic_level")
+  wordCount     Int      @map("word_count")
+  content       Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("assignments")
+}
+
+model Presentation {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  topic      String
+  slideCount Int      @map("slide_count")
+  audience   String?
+  style      String?
+  slides     Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("presentations")
+}
+
+model MindMap {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  topic     String
+  nodes     Json
+  edges     Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mind_maps")
+}
+
+model CodingSession {
+  id        String          @id @default(cuid())
+  userId    String          @map("user_id")
+  title     String
+  language  String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  messages  CodingMessage[]
+
+  @@map("coding_sessions")
+}
+
+model CodingMessage {
+  id        String        @id @default(cuid())
+  sessionId String        @map("session_id")
+  role      String
+  content   String
+  createdAt DateTime      @default(now()) @map("created_at")
+  session   CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("coding_messages")
+}
+
+model Problem {
+  id          String       @id @default(cuid())
+  title       String
+  difficulty  String
+  category    String
+  companies   String[]
+  statement   String
+  constraints String
+  examples    Json
+  hints       String[]
+  editorial   String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  submissions Submission[]
+
+  @@map("problems")
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  problemId String   @map("problem_id")
+  code      String
+  language  String
+  status    String
+  timeMs    Int?
+  memoryKb  Int?
+  aiReview  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
+}
+
+model DSAProgress {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  solved    Int      @default(0)
+  accuracy  Float    @default(0)
+  streak    Int      @default(0)
+  ranking   Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("dsa_progress")
+}
+
+model Challenge {
+  id          String                @id @default(cuid())
+  title       String
+  difficulty  String
+  points      Int
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime              @default(now()) @map("created_at")
+  submissions ChallengeSubmission[]
+
+  @@map("challenges")
+}
+
+model ChallengeSubmission {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  challengeId String    @map("challenge_id")
+  code        String
+  language    String
+  score       Int       @default(0)
+  status      String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("challenge_submissions")
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  score     Int      @default(0)
+  rank      Int?
+  badges    String[]
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("leaderboards")
+}
+
+model GithubProfile {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  username   String
+  repos      Json
+  languages  Json
+  stars      Int      @default(0)
+  commits    Int      @default(0)
+  lastSynced DateTime @default(now()) @map("last_synced")
+
+  @@map("github_profiles")
+}
+
+model GeneratedReadme {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  projectName String
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("generated_readmes")
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  theme       String   @default("default")
+  content     Json
+  isPublished Boolean  @default(false)
+  url         String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("portfolios")
+}
+
+model InterviewSession {
+  id         String             @id @default(cuid())
+  userId     String             @map("user_id")
+  role       String
+  company    String?
+  type       String
+  difficulty String             @default("medium")
+  status     String             @default("in_progress")
+  feedback   Json?
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+  messages   InterviewMessage[]
+
+  @@map("interview_sessions")
+}
+
+model InterviewMessage {
+  id        String           @id @default(cuid())
+  sessionId String           @map("session_id")
+  role      String
+  content   String
+  createdAt DateTime         @default(now()) @map("created_at")
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("interview_messages")
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  title     String        @default("New Chat")
+  model     String        @default("openai/gpt-4o-mini")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  messages  ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String      @map("session_id")
+  role      String
+  content   String
+  createdAt DateTime    @default(now()) @map("created_at")
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model LearningAnalytics {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  documentsCount     Int      @default(0) @map("documents_count")
+  studyTimeMinutes   Int      @default(0) @map("study_time_minutes")
+  conceptsLearned    Int      @default(0) @map("concepts_learned")
+  learningScore      Int      @default(0) @map("learning_score")
+  examReadiness      Int      @default(0) @map("exam_readiness")
+  currentStreak      Int      @default(0) @map("current_streak")
+  longestStreak      Int      @default(0) @map("longest_streak")
+  toolUsageJson      Json     @map("tool_usage_json")
+  topicAnalyticsJson Json     @map("topic_analytics_json")
+  recommendationsJson Json    @map("recommendations_json")
+  insightsJson       Json     @map("insights_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("learning_analytics")
+}
+
+model LearningEvent {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  eventType  String   @map("event_type")
+  documentId String?  @map("document_id")
+  toolUsed   String?  @map("tool_used")
+  topic      String?
+  duration   Int?     @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("learning_events")
+}
+
+model ProgressTracking {
+  id                  String   @id @default(cuid())
+  userId              String   @unique @map("user_id")
+  overallProgress     Int      @default(0) @map("overall_progress")
+  learningLevel       Int      @default(1) @map("learning_level")
+  learningLevelName   String   @default("Beginner") @map("learning_level_name")
+  masteryScore        Int      @default(0) @map("mastery_score")
+  masteryGrade        String   @default("Beginner") @map("mastery_grade")
+  topicsCompleted     Int      @default(0) @map("topics_completed")
+  documentsCompleted  Int      @default(0) @map("documents_completed")
+  questionsPracticed  Int      @default(0) @map("questions_practiced")
+  studySessions       Int      @default(0) @map("study_sessions")
+  currentStreak       Int      @default(0) @map("current_streak")
+  status              String   @default("Getting Started") @map("status")
+  milestonesJson      Json     @default("[]") @map("milestones_json")
+  revisionQueueJson   Json     @default("[]") @map("revision_queue_json")
+  timelineJson        Json     @default("[]") @map("timeline_json")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("progress_tracking")
+}
+
+model TopicProgress {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  documentId          String?  @map("document_id")
+  topicName           String   @map("topic_name")
+  progressPercentage  Int      @default(0) @map("progress_percentage")
+  masteryScore        Int      @default(0) @map("mastery_score")
+  revisionStatus      Boolean  @default(false) @map("revision_status")
+  questionsPracticed  Int      @default(0) @map("questions_practiced")
+  conceptsCovered     Int      @default(0) @map("concepts_covered")
+  totalConcepts       Int      @default(10) @map("total_concepts")
+  lastActivity        DateTime @default(now()) @map("last_activity")
+  status              String   @default("In Progress") @map("status")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("topic_progress")
+}
+
+model ConceptMastery {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  conceptName    String   @map("concept_name")
+  topicName      String?  @map("topic_name")
+  masteryScore   Int      @default(0) @map("mastery_score")
+  interactions   Int      @default(0)
+  revisionCount  Int      @default(0) @map("revision_count")
+  practiceCount  Int      @default(0) @map("practice_count")
+  lastReviewed   DateTime @default(now()) @map("last_reviewed")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("concept_mastery")
+}

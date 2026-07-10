@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import {
   analyzeResumeATS,
@@ -11,6 +10,7 @@ import {
 } from "../lib/ai/gemini";
 const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -72,14 +72,14 @@ ${languages.filter(Boolean).join(", ")}
   `.trim();
 }
 
-async function getOrCreateResumeId(userId: string, resumeId?: string): Promise<string> {
+async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma?: any): Promise<string> {
   if (resumeId) return resumeId;
-  const latestResume = await prisma.resume.findFirst({
+  const latestResume = await userPrisma.resume.findFirst({
     where: { userId },
     orderBy: { updatedAt: "desc" },
   });
   if (latestResume) return latestResume.id;
-  const placeholder = await prisma.resume.create({
+  const placeholder = await userPrisma.resume.create({
     data: {
       userId,
       title: `Imported Resume (${new Date().toLocaleDateString()})`,
@@ -109,17 +109,18 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
     const resumeId = req.body.resumeId || "";
     const jobDescription = req.body.jobDescription || "";
 
+    const userPrisma = await getUserPrismaFromRequest(req);
     let resumeText = "";
 
     if (req.file) {
       resumeText = await extractTextFromFile(req.file);
     } else if (resumeId) {
-      const resume = await prisma.resume.findFirst({ where: { id: resumeId, userId } });
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
       if (!resume) throw httpError(404, "Resume not found");
       resumeText = serializeResumeToText(resume);
     } else {
       // Try to find saved resume
-      const latestResume = await prisma.resume.findFirst({
+      const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
         orderBy: { updatedAt: "desc" },
       });
@@ -137,10 +138,10 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
     // Deep ATS Analysis
     const analysis = await analyzeResumeDeep(resumeText, targetRole, jobDescription);
 
-    const associatedResumeId = await getOrCreateResumeId(userId, resumeId);
+    const associatedResumeId = await getOrCreateResumeId(userId, resumeId, userPrisma);
 
     // Save ATS report to DB
-    const report = await prisma.aTSReport.create({
+    const report = await userPrisma.aTSReport.create({
       data: {
         userId,
         resumeId: associatedResumeId,
@@ -181,16 +182,17 @@ export async function analyzeJDMatch(req: Request, res: Response, next: NextFunc
     const { resumeId, jobDescription } = req.body;
     if (!jobDescription) throw httpError(400, "jobDescription is required");
 
+    const userPrisma = await getUserPrismaFromRequest(req);
     let resumeText = "";
 
     if (req.file) {
       resumeText = await extractTextFromFile(req.file);
     } else if (resumeId) {
-      const resume = await prisma.resume.findFirst({ where: { id: resumeId, userId } });
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
       if (!resume) throw httpError(404, "Resume not found");
       resumeText = serializeResumeToText(resume);
     } else {
-      const latestResume = await prisma.resume.findFirst({
+      const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
         orderBy: { updatedAt: "desc" },
       });
@@ -218,15 +220,16 @@ export async function getATSSuggestions(req: Request, res: Response, next: NextF
     if (!userId) throw httpError(401, "Unauthorized");
 
     const { targetRole } = req.body;
+    const userPrisma = await getUserPrismaFromRequest(req);
     let resumeText = "";
     let analysis: any = null;
 
     if (req.body.resumeId) {
-      const resume = await prisma.resume.findFirst({ where: { id: req.body.resumeId, userId } });
+      const resume = await userPrisma.resume.findFirst({ where: { id: req.body.resumeId, userId } });
       if (!resume) throw httpError(404, "Resume not found");
       resumeText = serializeResumeToText(resume);
     } else {
-      const latestResume = await prisma.resume.findFirst({
+      const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
         orderBy: { updatedAt: "desc" },
       });
@@ -285,9 +288,10 @@ export async function atsChatHandler(req: Request, res: Response, next: NextFunc
     const { message, resumeText, analysis } = req.body;
     if (!message) throw httpError(400, "message is required");
 
+    const userPrisma = await getUserPrismaFromRequest(req);
     let text = resumeText || "";
     if (!text && req.body.resumeId) {
-      const resume = await prisma.resume.findFirst({
+      const resume = await userPrisma.resume.findFirst({
         where: { id: req.body.resumeId, userId },
       });
       if (resume) text = serializeResumeToText(resume);
@@ -309,7 +313,8 @@ export async function listATSReports(req: Request, res: Response, next: NextFunc
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const reports = await prisma.aTSReport.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const reports = await userPrisma.aTSReport.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
@@ -333,7 +338,8 @@ export async function getATSReport(req: Request, res: Response, next: NextFuncti
     const userId = req.user?.userId;
     if (!userId) throw httpError(401, "Unauthorized");
 
-    const report = await prisma.aTSReport.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const report = await userPrisma.aTSReport.findFirst({
       where: { id: req.params.id as string, userId },
       include: {
         resume: {

@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { prisma } from "../config/prisma";
 import type { Prisma } from "@prisma/client";
 import {
   generateInterviewQuestion,
   generateInterviewFeedback,
 } from "../lib/ai/gemini";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 export const interviewRouter = Router();
 
@@ -20,7 +20,8 @@ interviewRouter.post("/start", async (req, res) => {
       return;
     }
 
-    const session = await prisma.interviewSession.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.interviewSession.create({
       data: {
         userId: req.user!.userId,
         role,
@@ -34,7 +35,7 @@ interviewRouter.post("/start", async (req, res) => {
     const question = await generateInterviewQuestion(role, company, type, difficulty || "medium", []);
 
     // Save interviewer message
-    await prisma.interviewMessage.create({
+    await userPrisma.interviewMessage.create({
       data: {
         sessionId: session.id,
         role: "interviewer",
@@ -42,7 +43,7 @@ interviewRouter.post("/start", async (req, res) => {
       },
     });
 
-    const messages = await prisma.interviewMessage.findMany({
+    const messages = await userPrisma.interviewMessage.findMany({
       where: { sessionId: session.id },
       orderBy: { createdAt: "asc" },
     });
@@ -65,8 +66,10 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
       return;
     }
 
+    const userPrisma = await getUserPrismaFromRequest(req);
+
     // Verify session belongs to user
-    const session = await prisma.interviewSession.findFirst({
+    const session = await userPrisma.interviewSession.findFirst({
       where: { id: sessionId, userId: req.user!.userId },
     });
 
@@ -81,7 +84,7 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
     }
 
     // Save user answer
-    await prisma.interviewMessage.create({
+    await userPrisma.interviewMessage.create({
       data: {
         sessionId,
         role: "user",
@@ -90,7 +93,7 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
     });
 
     // Get conversation history
-    const messages = await prisma.interviewMessage.findMany({
+    const messages = await userPrisma.interviewMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
     });
@@ -106,7 +109,7 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
     );
 
     // Save interviewer message
-    await prisma.interviewMessage.create({
+    await userPrisma.interviewMessage.create({
       data: {
         sessionId,
         role: "interviewer",
@@ -114,7 +117,7 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
       },
     });
 
-    const updatedMessages = await prisma.interviewMessage.findMany({
+    const updatedMessages = await userPrisma.interviewMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
     });
@@ -131,7 +134,8 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
   try {
     const { sessionId } = req.params;
 
-    const session = await prisma.interviewSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.interviewSession.findFirst({
       where: { id: sessionId, userId: req.user!.userId },
     });
 
@@ -146,7 +150,7 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
     }
 
     // Get all messages
-    const messages = await prisma.interviewMessage.findMany({
+    const messages = await userPrisma.interviewMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
     });
@@ -161,7 +165,7 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
     );
 
     // Save feedback message
-    await prisma.interviewMessage.create({
+    await userPrisma.interviewMessage.create({
       data: {
         sessionId,
         role: "feedback",
@@ -170,7 +174,7 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
     });
 
     // Update session
-    const updated = await prisma.interviewSession.update({
+    const updated = await userPrisma.interviewSession.update({
       where: { id: sessionId },
       data: {
         status: "completed",
@@ -188,7 +192,8 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
 // Get interview history
 interviewRouter.get("/history", async (req, res) => {
   try {
-    const sessions = await prisma.interviewSession.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.interviewSession.findMany({
       where: { userId: req.user!.userId },
       include: { messages: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },
@@ -204,7 +209,8 @@ interviewRouter.get("/history", async (req, res) => {
 interviewRouter.get("/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = await prisma.interviewSession.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.interviewSession.findFirst({
       where: { id: sessionId, userId: req.user!.userId },
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
