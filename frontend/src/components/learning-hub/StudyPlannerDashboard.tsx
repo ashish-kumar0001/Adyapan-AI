@@ -301,11 +301,11 @@ export function StudyPlannerDashboard() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       <style>{`.sp-scroll { scrollbar-width: none; -ms-overflow-style: none; } .sp-scroll::-webkit-scrollbar { display: none; }`}</style>
 
       {/* HEADER */}
-      <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
+      <div className="flex-shrink-0 flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <div className="flex items-center gap-2.5">
           <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
             <CalendarIcon size={18} style={{ color: "#000" }} />
@@ -330,6 +330,7 @@ export function StudyPlannerDashboard() {
         )}
       </div>
 
+      <div className="flex-1 overflow-y-auto sp-scroll" style={{ minHeight: 0 }}>
       {loadingPlan ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <RefreshCw className="animate-spin" size={32} style={{ color: c.amber }} />
@@ -705,6 +706,7 @@ export function StudyPlannerDashboard() {
           </div>
         </motion.div>
       )}
+      </div>
     </motion.div>
   );
 }
