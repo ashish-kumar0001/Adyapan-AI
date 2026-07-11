@@ -606,11 +606,15 @@ export async function generateNotes(
   difficulty: string,
   type: string
 ): Promise<string> {
-  const prompt = `Generate comprehensive study notes on "${topic}".
-Difficulty: ${difficulty}
-Style: ${type}
+  const prompt = `Generate study notes on: "${topic}".
+Requested Difficulty: ${difficulty}
+Requested Style: ${type}
 
-Use clear headings, bullet points, markdown. Highlight key definitions. Structure from basics to advanced. Return ONLY valid markdown.`;
+Instructions:
+1. Pay close attention to the input topic string. If the user has specified any custom style, detail level, format, or depth (such as "detailed notes", "advanced notes", "deep-dive", "cheat sheet", "short revision", etc.) in the topic string, strictly prioritize and follow those specifications.
+2. If "detailed" or "advanced" is requested, make sure the notes are highly comprehensive, include advanced explanations, mathematical or code details where applicable, and deep concepts.
+3. Structure the notes logically with clear headings, bullet points, and markdown. Highlight key definitions and formulas.
+4. Return ONLY valid markdown.`;
   try {
     console.log("[Notes Generator] Starting for topic:", topic, "Difficulty:", difficulty);
     const result = await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL });
