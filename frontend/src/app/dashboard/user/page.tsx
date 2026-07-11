@@ -36,6 +36,7 @@ import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
 import { ProgressDashboard } from "@/components/progress-hub/ProgressDashboard";
 import { CommunityProfileView } from "@/components/account-hub/CommunityProfileView";
 import { ManageAccountView } from "@/components/account-hub/ManageAccountView";
+import { UnifiedLearningDashboard } from "@/components/learning-hub/UnifiedLearningDashboard";
 
 import { BillingView } from "@/components/account-hub/BillingView";
 import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
@@ -100,7 +101,7 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
-      { label: "Dashboard", href: "/dashboard/learning" },
+      { label: "Dashboard", href: "#" },
       { label: "Study Assistant", href: "#" },
       { label: "Notes Generator", href: "#" },
       { label: "Quiz Generator", href: "#" },
@@ -246,7 +247,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
               onClick={() => {
                 toggleItem(item.id);
                 if (item.id === "learning") {
-                  router.push("/dashboard/learning");
+                  onViewTool("learning-hub");
                 }
               }}
               style={{
@@ -286,7 +287,8 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                         setSidebarOpen(false);
                         return;
                       }
-                      if (sub.label === "Resume Builder") onViewTool("resume-hub");
+                      if (sub.label === "Dashboard" && item.id === "learning") onViewTool("learning-hub");
+                      else if (sub.label === "Resume Builder") onViewTool("resume-hub");
                       else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
@@ -1787,6 +1789,8 @@ function UserDashboardContent() {
           <StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} />
         ) : activeView === "lesson-view" && lessonResult ? (
           <StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} />
+        ) : activeView === "learning-hub" ? (
+          <UnifiedLearningDashboard />
         ) : activeView === "study-planner" ? (
           <StudyPlannerDashboard />
         ) : activeView === "learning-streak" ? (
