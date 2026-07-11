@@ -100,6 +100,7 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
+      { label: "Dashboard", href: "/dashboard/learning" },
       { label: "Study Assistant", href: "#" },
       { label: "Notes Generator", href: "#" },
       { label: "Quiz Generator", href: "#" },
@@ -244,6 +245,9 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
             <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
               onClick={() => {
                 toggleItem(item.id);
+                if (item.id === "learning") {
+                  router.push("/dashboard/learning");
+                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
@@ -277,6 +281,11 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                     href={sub.href}
                     onClick={(e) => {
                       e.preventDefault();
+                      if (sub.href && sub.href !== "#") {
+                        router.push(sub.href);
+                        setSidebarOpen(false);
+                        return;
+                      }
                       if (sub.label === "Resume Builder") onViewTool("resume-hub");
                       else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
