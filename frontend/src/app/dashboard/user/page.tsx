@@ -101,7 +101,6 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
-      { label: "Dashboard", href: "#" },
       { label: "Study Assistant", href: "#" },
       { label: "Notes Generator", href: "#" },
       { label: "Quiz Generator", href: "#" },
@@ -246,9 +245,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
             <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
               onClick={() => {
                 toggleItem(item.id);
-                if (item.id === "learning") {
-                  onViewTool("learning-hub");
-                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
