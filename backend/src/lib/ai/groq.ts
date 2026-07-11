@@ -27,7 +27,8 @@ Skills: ${skills.join(", ")}
 Return ONLY the summary text, nothing else.`;
   try {
     return await chat(prompt);
-  } catch {
+  } catch (error) {
+    console.warn("[Groq] groqGenerateResumeSummary failed, using fallback:", error);
     return "Results-driven professional seeking to leverage technical skills and academic excellence to contribute to organizational success.";
   }
 }
@@ -44,7 +45,8 @@ Context: ${description}
 Use action verbs. Return 3 plain text lines separated by newlines, no bullets or numbers.`;
   try {
     return await chat(prompt);
-  } catch {
+  } catch (error) {
+    console.warn("[Groq] groqEnhanceProjectDescription failed, using fallback:", error);
     return `Built ${name} using ${techStack}.\nImplemented core features and optimized performance.\nDeployed and maintained production-ready solution.`;
   }
 }
@@ -60,7 +62,8 @@ Context: ${description}
 Use action verbs. Return 3 plain text lines separated by newlines, no bullets or numbers.`;
   try {
     return await chat(prompt);
-  } catch {
+  } catch (error) {
+    console.warn("[Groq] groqEnhanceExperienceDescription failed, using fallback:", error);
     return `Led key initiatives as ${role} at ${company}.\nCollaborated with cross-functional teams to deliver results.\nImproved processes and contributed to business growth.`;
   }
 }
@@ -74,7 +77,8 @@ Resume: ${JSON.stringify(resumeJson)}
 Return the same JSON structure with improved summary, experience bullet points, and skills. Return ONLY valid JSON.`;
   try {
     return await chatJson(prompt, resumeJson);
-  } catch {
+  } catch (error) {
+    console.warn("[Groq] groqOptimizeResumeContent failed, returning original resume:", error);
     return resumeJson;
   }
 }

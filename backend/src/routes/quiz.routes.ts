@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateEnhancedQuiz, generateQuiz } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 
 export const quizRouter = Router();
 
@@ -66,7 +67,7 @@ quizRouter.post("/generate", async (req, res) => {
       res.json({ success: true, quiz: { questions: result.questions }, flashcards: result.flashcards });
     }
   } catch (error) {
-    res.status(500).json({ error: "Quiz generation failed" });
+    handleRouteError(res, error, "Quiz.generate", "Quiz generation failed");
   }
 });
 
@@ -80,6 +81,6 @@ quizRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, quizzes });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Quiz.history", "Failed to fetch history");
   }
 });

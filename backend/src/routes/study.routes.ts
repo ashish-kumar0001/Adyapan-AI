@@ -8,6 +8,7 @@ const { PDFParse } = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 
 const uploadMemory = multer({
   storage: multer.memoryStorage(),
@@ -61,7 +62,7 @@ studyRouter.post("/upload", async (req, res) => {
 
     res.json({ success: true, doc });
   } catch (error) {
-    res.status(500).json({ error: "Failed to upload document" });
+    handleRouteError(res, error, "Study.upload", "Failed to upload document");
   }
 });
 
@@ -84,7 +85,7 @@ studyRouter.post("/chat", async (req, res) => {
 
     res.json({ success: true, response: responseText });
   } catch (error) {
-    res.status(500).json({ error: "Chat processing failed" });
+    handleRouteError(res, error, "Study.chat", "Chat processing failed");
   }
 });
 
@@ -169,8 +170,7 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
 
     res.json({ success: true, analysis });
   } catch (error) {
-    console.error("Document analysis error:", error);
-    res.status(500).json({ error: "Failed to analyze document. Please try again." });
+    handleRouteError(res, error, "Study.analyze", "Failed to analyze document. Please try again.");
   }
 });
 
@@ -194,7 +194,7 @@ studyRouter.post("/generate-lesson", async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ error: "Lesson generation failed" });
+    handleRouteError(res, error, "Study.generateLesson", "Lesson generation failed");
   }
 });
 
@@ -209,7 +209,7 @@ studyRouter.get("/sessions", async (req, res) => {
     });
     res.json({ success: true, sessions });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch sessions" });
+    handleRouteError(res, error, "Study.sessions", "Failed to fetch sessions");
   }
 });
 
@@ -222,6 +222,6 @@ studyRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, sessions });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Study.history", "Failed to fetch history");
   }
 });
