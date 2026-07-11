@@ -670,6 +670,56 @@ model StreakAchievement {
   @@map("streak_achievements")
 }
 
+model WeakTopic {
+  id                   String   @id @default(cuid())
+  userId               String   @map("user_id")
+  topicName            String   @map("topic_name")
+  strengthScore        Int      @default(0) @map("strength_score")        // 0-100
+  riskLevel            String   @default("Low") @map("risk_level")        // Low | Medium | High | Critical
+  revisionPriority     String   @default("Optional") @map("revision_priority") // Immediate | This Week | This Month | Optional
+  retentionProbability Int      @default(100) @map("retention_probability") // 0-100
+  lastStudied          DateTime? @map("last_studied")
+  status               String   @default("Average") @map("status")        // Excellent | Strong | Average | Weak | Critical
+  questionAccuracy     Int      @default(0) @map("question_accuracy")     // 0-100 %
+  revisionCount        Int      @default(0) @map("revision_count")
+  studyTimeMinutes     Int      @default(0) @map("study_time_minutes")
+  aiInteractionCount   Int      @default(0) @map("ai_interaction_count")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, topicName])
+  @@map("weak_topics")
+}
+
+model WeakConcept {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  topicName         String   @map("topic_name")
+  conceptName       String   @map("concept_name")
+  masteryScore      Int      @default(0) @map("mastery_score")   // 0-100
+  riskLevel         String   @default("Low") @map("risk_level")  // Low | Medium | High | Critical
+  recommendedAction String   @default("") @map("recommended_action")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, topicName, conceptName])
+  @@map("weak_concepts")
+}
+
+model RevisionQueue {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  topicName         String    @map("topic_name")
+  priority          String    @default("Optional") @map("priority") // Immediate | This Week | This Month | Optional
+  recommendedDate   DateTime? @map("recommended_date")
+  reason            String    @default("") @map("reason")
+  status            String    @default("Pending") @map("status")   // Pending | Done | Skipped
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("revision_queue")
+}
+
 // Master database models mapped in user database schema to prevent Prisma dropping tables/columns in local dev
 model User {
   id        String   @id @default(cuid())
