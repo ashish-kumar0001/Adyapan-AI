@@ -306,47 +306,10 @@ export function StudyPlannerDashboard() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* ── Tab Bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-5 pt-4 pb-0 relative z-20">
-        <motion.button
-          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => setActiveTab("planner")}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all"
-          style={{
-            background: activeTab === "planner" ? c.amberBg : c.surface,
-            color: activeTab === "planner" ? c.amber : c.textSec,
-            border: `1px solid ${activeTab === "planner" ? c.amberBorder : c.border}`,
-          }}
-        >
-          <CalendarIcon size={13} />
-          Study Plan
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => setActiveTab("weak-topics")}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all"
-          style={{
-            background: activeTab === "weak-topics" ? "rgba(244,63,94,0.10)" : c.surface,
-            color: activeTab === "weak-topics" ? "#f43f5e" : c.textSec,
-            border: `1px solid ${activeTab === "weak-topics" ? "rgba(244,63,94,0.22)" : c.border}`,
-          }}
-        >
-          <AlertTriangle size={13} />
-          Weak Topics
-        </motion.button>
-      </div>
-
-      {/* ── Tab Content ──────────────────────────────────────────────────── */}
-      {activeTab === "weak-topics" ? (
-        <div className="flex-1 overflow-y-auto sp-scroll" style={{ minHeight: 0 }}>
-          <WeakTopicDetectionDashboard />
-        </div>
-      ) : (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       <style>{`.sp-scroll { scrollbar-width: none; -ms-overflow-style: none; } .sp-scroll::-webkit-scrollbar { display: none; }`}</style>
 
       {/* HEADER */}
-      <div className="flex-shrink-0 flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
+      <div className="flex-shrink-0 flex flex-col md:flex-row md:items-center justify-between pb-3 mb-3 gap-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <div className="flex items-center gap-2.5">
           <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
             <CalendarIcon size={18} style={{ color: "#000" }} />
@@ -356,7 +319,38 @@ export function StudyPlannerDashboard() {
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="text-xs leading-tight" style={{ color: c.textMuted }}>AI-powered spaced repetition study schedules</motion.p>
           </div>
         </div>
-        {activePlan && (
+
+        {/* Tab Switcher inside the Header */}
+        <div className="flex items-center gap-2 px-1 py-1 rounded-xl bg-white/[0.02] border border-white/5 relative z-20">
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab("planner")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all"
+            style={{
+              background: activeTab === "planner" ? c.amberBg : "transparent",
+              color: activeTab === "planner" ? c.amber : c.textSec,
+              border: `1px solid ${activeTab === "planner" ? c.amberBorder : "transparent"}`,
+            }}
+          >
+            <CalendarIcon size={12} />
+            Study Plan
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab("weak-topics")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all"
+            style={{
+              background: activeTab === "weak-topics" ? "rgba(244,63,94,0.10)" : "transparent",
+              color: activeTab === "weak-topics" ? "#f43f5e" : c.textSec,
+              border: `1px solid ${activeTab === "weak-topics" ? "rgba(244,63,94,0.22)" : "transparent"}`,
+            }}
+          >
+            <AlertTriangle size={12} />
+            Weak Topics
+          </motion.button>
+        </div>
+
+        {activePlan && activeTab === "planner" && (
           <div className="flex items-center gap-2">
             <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={() => { setActivePlan(null); setTasks([]); }} className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
@@ -371,7 +365,12 @@ export function StudyPlannerDashboard() {
         )}
       </div>
 
+      {/* ── Tab Content ──────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto sp-scroll" style={{ minHeight: 0 }}>
+      {activeTab === "weak-topics" ? (
+        <WeakTopicDetectionDashboard />
+      ) : (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       {loadingPlan ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <RefreshCw className="animate-spin" size={32} style={{ color: c.amber }} />
@@ -747,9 +746,9 @@ export function StudyPlannerDashboard() {
           </div>
         </motion.div>
       )}
-      </div>
       </motion.div>
       )}
+      </div>
     </motion.div>
   );
 }
