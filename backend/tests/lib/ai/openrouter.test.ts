@@ -27,8 +27,8 @@ function mockFetchOnce(content: string, ok = true) {
 describe("openrouter constants", () => {
   it("exposes model presets", () => {
     const { MODELS } = loadModule();
-    expect(MODELS.FAST).toBe("openai/gpt-4o-mini");
-    expect(MODELS.POWERFUL).toBe("openai/gpt-4o");
+    expect(MODELS.FAST).toBe("google/gemini-2.5-flash");
+    expect(MODELS.POWERFUL).toBe("google/gemini-2.5-flash");
   });
 
   it("exposes a non-empty chat model catalogue with required fields", () => {

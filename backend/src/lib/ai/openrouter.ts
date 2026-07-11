@@ -19,7 +19,21 @@ async function callAIRobust(
 ): Promise<string> {
   const providers = [];
 
-  // 1. Add OpenRouter if key exists
+  // 1. Add Google Gemini if key exists
+  if (env.geminiApiKey) {
+    let geminiModel = "gemini-2.5-flash";
+    if (options.model?.includes("gemini")) {
+      geminiModel = options.model.split("/").pop() || "gemini-2.5-flash";
+    }
+    providers.push({
+      name: "Gemini",
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      key: env.geminiApiKey,
+      model: geminiModel
+    });
+  }
+
+  // 2. Add OpenRouter if key exists
   if (env.openrouterApiKey) {
     providers.push({
       name: "OpenRouter",
@@ -29,7 +43,7 @@ async function callAIRobust(
     });
   }
 
-  // 2. Add Groq if key exists
+  // 3. Add Groq if key exists
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
     const modelLower = options.model?.toLowerCase() ?? "";
@@ -44,20 +58,6 @@ async function callAIRobust(
       url: "https://api.groq.com/openai/v1/chat/completions",
       key: env.groqApiKey,
       model: groqModel
-    });
-  }
-
-  // 3. Add Google Gemini if key exists
-  if (env.geminiApiKey) {
-    let geminiModel = "gemini-2.5-flash";
-    if (options.model?.includes("gemini")) {
-      geminiModel = options.model.split("/").pop() || "gemini-2.5-flash";
-    }
-    providers.push({
-      name: "Gemini",
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      key: env.geminiApiKey,
-      model: geminiModel
     });
   }
 
@@ -172,11 +172,11 @@ export async function generateJSON<T>(
 
 // Default model presets for different task categories
 export const MODELS = {
-  FAST: "openai/gpt-4o-mini",
-  BALANCED: "openai/gpt-4o-mini",
-  POWERFUL: "openai/gpt-4o",
-  CODE: "openai/gpt-4o",
-  CHEAP: "openai/gpt-4o-mini",
+  FAST: "google/gemini-2.5-flash",
+  BALANCED: "google/gemini-2.5-flash",
+  POWERFUL: "google/gemini-2.5-flash",
+  CODE: "google/gemini-2.5-flash",
+  CHEAP: "google/gemini-2.5-flash",
 } as const;
 
 // Available models for Ady Chat

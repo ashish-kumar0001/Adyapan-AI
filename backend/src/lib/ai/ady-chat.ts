@@ -20,7 +20,21 @@ export async function streamChat(
 ): Promise<void> {
   const providers = [];
 
-  // 1. Add OpenRouter if key exists
+  // 1. Add Google Gemini if key exists
+  if (env.geminiApiKey) {
+    let geminiModel = "gemini-2.5-flash";
+    if (model.includes("gemini")) {
+      geminiModel = model.split("/").pop() || "gemini-2.5-flash";
+    }
+    providers.push({
+      name: "Gemini",
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      key: env.geminiApiKey,
+      model: geminiModel
+    });
+  }
+
+  // 2. Add OpenRouter if key exists
   if (env.openrouterApiKey) {
     providers.push({
       name: "OpenRouter",
@@ -30,7 +44,7 @@ export async function streamChat(
     });
   }
 
-  // 2. Add Groq if key exists
+  // 3. Add Groq if key exists
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
     const modelLower = model.toLowerCase();
@@ -45,20 +59,6 @@ export async function streamChat(
       url: "https://api.groq.com/openai/v1/chat/completions",
       key: env.groqApiKey,
       model: groqModel
-    });
-  }
-
-  // 3. Add Google Gemini if key exists
-  if (env.geminiApiKey) {
-    let geminiModel = "gemini-2.5-flash";
-    if (model.includes("gemini")) {
-      geminiModel = model.split("/").pop() || "gemini-2.5-flash";
-    }
-    providers.push({
-      name: "Gemini",
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      key: env.geminiApiKey,
-      model: geminiModel
     });
   }
 
