@@ -16,6 +16,7 @@ import { LinkedInView } from "@/components/resume-hub/LinkedInView";
 import { AdyChatView } from "@/components/ady-chat/AdyChatView";
 import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
 import { StudyPlannerDashboard } from "@/components/learning-hub/StudyPlannerDashboard";
+import { LearningStreakDashboard } from "@/components/learning-hub/LearningStreakDashboard";
 import { NotesGeneratorView } from "@/components/learning-hub/NotesGeneratorView";
 import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
 import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGeneratorView";
@@ -107,6 +108,7 @@ const sidebarItems: SidebarItem[] = [
       { label: "Mind Maps", href: "#" },
       { label: "Flashcards", href: "#" },
       { label: "Study Planner", href: "#" },
+      { label: "Learning Streak", href: "#" },
     ],
   },
   {
@@ -314,6 +316,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
                       else if (sub.label === "Progress Tracker") onViewTool("progress-hub");
                       else if (sub.label === "Study Planner") onViewTool("study-planner");
+                      else if (sub.label === "Learning Streak") onViewTool("learning-streak");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
@@ -399,7 +402,6 @@ function DashboardTopNav({
     background: navBtnBg, color: navBtnColor,
     transition: "border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease",
   };
-  const btnGlow = "0 0 12px rgba(245,158,11,0.25), 0 0 30px rgba(245,158,11,0.1)";
   const genItems = ["Notes", "Assignment", "PPT", "Quiz", "Research Paper", "Resume"];
   const evalItems = ["ATS Score", "Skill Assessment", "Placement Readiness"];
   return (
@@ -697,7 +699,8 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSetti
 
   const menuItems = [
     { icon: <User size={15} />, label: "My Profile", href: "#", onClickFn: onViewProfile },
-    { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", onClickFn: () => onViewTool("profile-learning") },
+    { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", onClickFn: () => onViewTool("progress-hub") },
+    { icon: <Award size={15} />, label: "Learning Streak", href: "#", onClickFn: () => onViewTool("learning-streak") },
     null,
     { icon: <Settings size={15} />, label: "Settings", href: "#", onClickFn: onViewSettings },
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", onClickFn: () => onViewTool("billing") },
@@ -1512,9 +1515,9 @@ function UserDashboardContent() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<ResumeHubViewType>(() => {
+  const [activeView, setActiveView] = useState<any>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("dashboard-active-view") as ResumeHubViewType | null;
+      const saved = localStorage.getItem("dashboard-active-view");
       if (saved) return saved;
     }
     return "dashboard";
@@ -1773,6 +1776,8 @@ function UserDashboardContent() {
           <StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} />
         ) : activeView === "study-planner" ? (
           <StudyPlannerDashboard />
+        ) : activeView === "learning-streak" ? (
+          <LearningStreakDashboard />
         ) : activeView === "notes-generator" ? (
           <NotesGeneratorView />
         ) : activeView === "quiz-generator" ? (

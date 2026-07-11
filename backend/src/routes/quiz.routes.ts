@@ -2,6 +2,8 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateEnhancedQuiz, generateQuiz } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { StreakService } from "../services/streak.service";
+
 export const quizRouter = Router();
 
 quizRouter.use(requireAuth);
@@ -21,6 +23,18 @@ quizRouter.post("/generate", async (req, res) => {
           questions: result.questions as any,
         },
       });
+
+      // Track Streak Activity
+      StreakService.trackActivity(
+        req.user!.userId,
+        "GENERATE_QUESTIONS",
+        "quiz_generator",
+        quiz.id,
+        20, // 20 points
+        (req.headers["x-timezone"] as string) || "UTC",
+        userPrisma
+      ).catch(err => console.error("Streak tracking error:", err));
+
       res.json({ success: true, quiz: result, id: quiz.id });
     } else {
       const result = await generateQuiz(topic, 5, "medium");
@@ -37,6 +51,18 @@ quizRouter.post("/generate", async (req, res) => {
           data: { userId: req.user!.userId, quizId: quiz.id, topic, front: fc.front, back: fc.back },
         });
       }
+
+      // Track Streak Activity
+      StreakService.trackActivity(
+        req.user!.userId,
+        "GENERATE_QUESTIONS",
+        "quiz_generator",
+        quiz.id,
+        20, // 20 points
+        (req.headers["x-timezone"] as string) || "UTC",
+        userPrisma
+      ).catch(err => console.error("Streak tracking error:", err));
+
       res.json({ success: true, quiz: { questions: result.questions }, flashcards: result.flashcards });
     }
   } catch (error) {

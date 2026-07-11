@@ -7,6 +7,7 @@ import multer from "multer";
 const { PDFParse } = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { StreakService } from "../services/streak.service";
 
 const uploadMemory = multer({
   storage: multer.memoryStorage(),
@@ -46,6 +47,18 @@ studyRouter.post("/upload", async (req, res) => {
         fileUrl,
       },
     });
+
+    // Track Streak Activity
+    StreakService.trackActivity(
+      req.user!.userId,
+      "UPLOAD_DOCUMENT",
+      "study_assistant",
+      doc.id,
+      10, // 10 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
+
     res.json({ success: true, doc });
   } catch (error) {
     res.status(500).json({ error: "Failed to upload document" });
@@ -56,6 +69,19 @@ studyRouter.post("/chat", async (req, res) => {
   try {
     const { query, context } = req.body;
     const responseText = await generateStudyResponse(context || "", query);
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Track Streak Activity
+    StreakService.trackActivity(
+      req.user!.userId,
+      "AI_CHAT_SESSION",
+      "study_assistant",
+      null,
+      10, // 10 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
+
     res.json({ success: true, response: responseText });
   } catch (error) {
     res.status(500).json({ error: "Chat processing failed" });
@@ -129,6 +155,18 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
       };
     }
 
+    const userPrisma = await getUserPrismaFromRequest(req);
+    // Track Streak Activity
+    StreakService.trackActivity(
+      req.user!.userId,
+      "GENERATE_SUMMARY",
+      "study_assistant",
+      null,
+      15, // 15 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
+
     res.json({ success: true, analysis });
   } catch (error) {
     console.error("Document analysis error:", error);
@@ -141,6 +179,19 @@ studyRouter.post("/generate-lesson", async (req, res) => {
   try {
     const { topic, duration, level } = req.body;
     const result = await generateLearnLesson(topic, duration || "10m", level || "intermediate");
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Track Streak Activity
+    StreakService.trackActivity(
+      req.user!.userId,
+      "GENERATE_NOTES",
+      "study_assistant",
+      null,
+      15, // 15 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
+
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ error: "Lesson generation failed" });

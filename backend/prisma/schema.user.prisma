@@ -620,4 +620,137 @@ model StudyRevision {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("study_revisions")
-}
+}
+
+model LearningStreak {
+  id                String    @id @default(cuid())
+  userId            String    @unique @map("user_id")
+  currentStreak     Int       @default(0) @map("current_streak")
+  longestStreak     Int       @default(0) @map("longest_streak")
+  previousStreak    Int       @default(0) @map("previous_streak")
+  consistencyScore  Int       @default(0) @map("consistency_score")
+  lastActiveDate    DateTime? @map("last_active_date")
+  activeDaysCount   Int       @default(0) @map("active_days_count")
+  monthlyActivity   Json?     @map("monthly_activity") // format: { "YYYY-MM": [day1, day2, ...] }
+  yearlyActivity    Json?     @map("yearly_activity")  // format: { "YYYY": count }
+  streakRule        String    @default("action") @map("streak_rule") // "action" or "time"
+  timeRequirement   Int       @default(10) @map("time_requirement") // in minutes
+  streakFreezes     Int       @default(1) @map("streak_freezes")
+  freezeActive      Boolean   @default(false) @map("freeze_active")
+  globalRank        Int?      @map("global_rank")
+  campusRank        Int?      @map("campus_rank")
+  points            Int       @default(0) @map("points")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("learning_streaks")
+}
+
+model StreakEvent {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  eventType      String   @map("event_type")
+  eventSource    String   @map("event_source")
+  documentId     String?  @map("document_id")
+  activityPoints Int      @default(0) @map("activity_points") // represents minutes of study or equivalent
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("streak_events")
+}
+
+model StreakAchievement {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  achievementName String   @map("achievement_name")
+  achievementType String   @map("achievement_type")
+  rarity          String   @map("rarity") // Common, Rare, Epic, Legendary
+  unlockedAt      DateTime @default(now()) @map("unlocked_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("streak_achievements")
+}
+
+// Master database models mapped in user database schema to prevent Prisma dropping tables/columns in local dev
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  profile   Profile?
+
+  // Payment / Subscription Relations
+  plan                String    @default("free")
+  razorpayCustomerId  String?   @map("razorpay_customer_id")
+  razorpaySubscriptionId String? @map("razorpay_subscription_id")
+  subscriptionStatus  String?   @map("subscription_status")
+  subscriptionEnd     DateTime? @map("subscription_end")
+  payments            Payment[]
+
+  @@map("users")
+}
+
+model Profile {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  college           String?
+  branch            String?
+  phone             String?
+  year              String?
+  careerGoal        String?  @map("career_goal")
+  skills            String[] @default([])
+  linkedin          String?
+  github            String?
+  resumeUrl         String?  @map("resume_url")
+  resumeName        String?  @map("resume_name")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  aboutMe           String?  @map("about_me")
+  careerObjective   String?  @map("career_objective")
+  degree            String?
+  graduationYear    String?  @map("graduation_year")
+  interestedDomains String[] @default([]) @map("interested_domains")
+  location          String?
+  portfolio         String?
+  targetRole        String?  @map("target_role")
+  username          String?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  orderId   String   @unique @map("order_id")
+  paymentId String?  @unique @map("payment_id")
+  signature String?  @map("signature")
+  amount    Int
+  currency  String   @default("INR")
+  plan      String
+  status    String   @default("created")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model BlacklistedToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("blacklisted_tokens")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+
+

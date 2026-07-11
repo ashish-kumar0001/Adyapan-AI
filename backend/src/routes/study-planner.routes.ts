@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
+import { StreakService } from "../services/streak.service";
 
 export const studyPlannerRouter = Router();
 
@@ -172,6 +173,17 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
         }
       }
     }
+
+    // Track Streak Activity
+    StreakService.trackActivity(
+      userId,
+      "GENERATE_STUDY_PLAN",
+      "study_planner",
+      newPlan.id,
+      30, // 30 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
 
     res.json({ success: true, plan: newPlan });
   } catch (error: any) {
@@ -392,6 +404,17 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
           duration: task.estimatedTime
         }
       });
+
+      // Track Streak Activity
+      StreakService.trackActivity(
+        userId,
+        "STUDY_TASK_COMPLETED",
+        "study_planner",
+        task.id,
+        task.estimatedTime || 15,
+        (req.headers["x-timezone"] as string) || "UTC",
+        userPrisma
+      ).catch(err => console.error("Streak tracking error:", err));
 
       // Update Topic Progress
       const existingProgress = await userPrisma.topicProgress.findFirst({

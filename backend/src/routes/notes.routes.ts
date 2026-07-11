@@ -2,6 +2,8 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateNotes } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { StreakService } from "../services/streak.service";
+
 export const notesRouter = Router();
 
 notesRouter.use(requireAuth);
@@ -21,6 +23,18 @@ notesRouter.post("/generate", async (req, res) => {
         content,
       },
     });
+
+    // Track Streak Activity
+    StreakService.trackActivity(
+      req.user!.userId,
+      "GENERATE_NOTES",
+      "notes_generator",
+      note.id,
+      15, // 15 points
+      (req.headers["x-timezone"] as string) || "UTC",
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
+
     res.json({ success: true, note });
   } catch (error) {
     res.status(500).json({ error: "Note generation failed" });

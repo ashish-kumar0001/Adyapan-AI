@@ -6,6 +6,7 @@ import multer from "multer";
 const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { StreakService } from "../services/streak.service";
 
 // ─── File Upload Middleware ────────────────────────────────────────────
 
@@ -184,6 +185,18 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
     await userPrisma.chatMessage.create({
       data: { sessionId: session.id, role: "user", content: message },
     });
+
+    // Track Streak Activity
+    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    StreakService.trackActivity(
+      userId,
+      "AI_CHAT_SESSION",
+      "ady_chat",
+      null,
+      10, // 10 points
+      tz,
+      userPrisma
+    ).catch(err => console.error("Streak tracking error:", err));
 
     // Update session title from first message if still default
     if (session.title === "New Chat" && session.messages.length === 0) {
