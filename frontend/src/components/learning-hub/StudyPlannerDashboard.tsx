@@ -307,7 +307,7 @@ export function StudyPlannerDashboard() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* ── Tab Bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-5 pt-4 pb-0">
+      <div className="flex items-center gap-2 px-5 pt-4 pb-0 relative z-20">
         <motion.button
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
           onClick={() => setActiveTab("planner")}

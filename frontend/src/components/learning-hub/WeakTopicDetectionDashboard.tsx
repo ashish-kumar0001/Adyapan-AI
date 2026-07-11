@@ -314,7 +314,7 @@ function LoadingScreen({ step }: { step: number }) {
 function EmptyState({ onAnalyze, analyzing }: { onAnalyze: () => void; analyzing: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-      <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="mb-6">
+      <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="mb-6 relative">
         <motion.div
           animate={{ y: [0, -12, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
