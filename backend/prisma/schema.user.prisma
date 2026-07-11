@@ -366,17 +366,32 @@ model Portfolio {
 }
 
 model InterviewSession {
-  id         String             @id @default(cuid())
-  userId     String             @map("user_id")
-  role       String
-  company    String?
-  type       String
-  difficulty String             @default("medium")
-  status     String             @default("in_progress")
-  feedback   Json?
-  createdAt  DateTime           @default(now()) @map("created_at")
-  updatedAt  DateTime           @updatedAt @map("updated_at")
-  messages   InterviewMessage[]
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  role                 String
+  company              String?
+  type                 String
+  difficulty           String             @default("medium")
+  language             String             @default("english")
+  durationMinutes      Int                @default(30)
+  technology           String?
+  aiVoiceEnabled       Boolean            @default(true) @map("ai_voice_enabled")
+  videoEnabled         Boolean            @default(true) @map("video_enabled")
+  status               String             @default("in_progress")
+  violationPoints      Int                @default(0) @map("violation_points")
+  violationThreshold   Int                @default(10) @map("violation_threshold")
+  feedback             Json?
+  configuration        Json?
+  identityVerification Json?              @map("identity_verification")
+  deviceInfo           Json?              @map("device_info")
+  systemCheck          Json?              @map("system_check")
+  startedAt            DateTime?          @map("started_at")
+  endedAt              DateTime?          @map("ended_at")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  messages             InterviewMessage[]
+  violations           ProctoringEvent[]
+  evaluations          InterviewEvaluation[]
 
   @@map("interview_sessions")
 }
@@ -386,10 +401,52 @@ model InterviewMessage {
   sessionId String           @map("session_id")
   role      String
   content   String
+  audioUrl  String?          @map("audio_url")
+  duration  Int?             @default(0)
   createdAt DateTime         @default(now()) @map("created_at")
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("interview_messages")
+}
+
+model ProctoringEvent {
+  id              String           @id @default(cuid())
+  sessionId       String           @map("session_id")
+  eventType       String           @map("event_type")
+  category        String
+  description     String
+  confidence      Float            @default(0)
+  screenshotData  String?          @map("screenshot_data")
+  severity        String           @default("info")
+  actionTaken     String?          @map("action_taken")
+  pointsDeducted  Int              @default(0) @map("points_deducted")
+  metadata        Json?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("proctoring_events")
+}
+
+model InterviewEvaluation {
+  id                String           @id @default(cuid())
+  sessionId         String           @map("session_id")
+  overallScore      Int              @map("overall_score")
+  communicationScore Int             @map("communication_score")
+  technicalScore    Int?             @map("technical_score")
+  hrScore           Int?             @map("hr_score")
+  confidenceScore   Int?             @map("confidence_score")
+  fluencyScore      Int?             @map("fluency_score")
+  bodyLanguageScore Int?             @map("body_language_score")
+  strengths         Json
+  weaknesses        Json
+  improvements      Json
+  summary           String
+  hiringRecommendation String        @map("hiring_recommendation")
+  detailedAnalysis  Json?            @map("detailed_analysis")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  session           InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("interview_evaluations")
 }
 
 model ChatSession {

@@ -11,6 +11,9 @@ import {
   generateMindMapSchema,
 } from "./ai/gemini";
 import type { QuizGenerationResult, AssignmentResult, PptSlide, MindMapResult } from "./ai/gemini";
+import { analyzeProctoringEvent, generateViolationReport } from "./ai/proctoring";
+import { logProctoringEvent } from "../services/interview-session.service";
+import { generateInterviewQuestion } from "./ai/gemini";
 
 let io: Server;
 
@@ -335,6 +338,159 @@ Keep responses concise for short durations and detailed for longer durations.`;
       } catch (error) {
         console.error("Lesson generation error:", error);
         socket.emit("lesson:error", { error: "Failed to generate lesson. Please try again." });
+      }
+    });
+
+    // ─── Proctoring: Real-time proctoring events during interview ────────
+    socket.on("proctor:event", async ({ sessionId, event, userId }: { sessionId: string; event: any; userId?: string }) => {
+      try {
+        const uid = userId || socket.data?.userId || "unknown";
+        if (uid === "unknown") {
+          socket.emit("proctor:error", { error: "Authentication required." });
+          return;
+        }
+
+        const userPrisma = await getUserPrisma(uid);
+
+        const analysis = analyzeProctoringEvent(event.eventType || "unknown", event);
+        const results = Array.isArray(analysis) ? analysis : [analysis];
+
+        for (const a of results) {
+          if (a && a.eventType) {
+            const proctoringEvent = await logProctoringEvent(sessionId, {
+              eventType: a.eventType,
+              category: a.category || event.category || "camera",
+              description: a.description || `Proctoring: ${a.eventType}`,
+              confidence: a.confidence ?? 0.5,
+              severity: a.severity || event.severity || "info",
+              pointsDeducted: a.pointsDeducted || 0,
+              actionTaken: event.actionTaken || a.actionTaken || "logged",
+              screenshotData: event.screenshotData,
+              metadata: event.metadata || a.metadata,
+            }, userPrisma);
+
+            // Broadcast to all room members
+            io.to(sessionId).emit("proctor:update", {
+              event: proctoringEvent,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+
+        socket.emit("proctor:ack", { received: true });
+      } catch (error) {
+        console.error("[Socket] Proctoring event error:", error);
+        socket.emit("proctor:error", { error: "Failed to process proctoring event" });
+      }
+    });
+
+    // ─── Proctoring: Join proctoring room ────────────────────────────────
+    socket.on("proctor:join", async ({ sessionId, userId }: { sessionId: string; userId: string }) => {
+      socket.join(sessionId);
+      console.log(`Socket ${socket.id} joined proctoring room: ${sessionId}`);
+    });
+
+    // ─── Proctoring: Get current violation state ─────────────────────────
+    socket.on("proctor:state", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
+      try {
+        const uid = userId || socket.data?.userId || "unknown";
+        if (uid === "unknown") {
+          socket.emit("proctor:state_update", { error: "Authentication required." });
+          return;
+        }
+
+        const userPrisma = await getUserPrisma(uid);
+        const session = await userPrisma.interviewSession.findFirst({
+          where: { id: sessionId },
+          select: { violationPoints: true, violationThreshold: true, status: true },
+        });
+
+        if (!session) {
+          socket.emit("proctor:state_update", { error: "Session not found" });
+          return;
+        }
+
+        const p = userPrisma as any;
+        const recentEvents = await p.proctoringEvent.findMany({
+          where: { sessionId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { eventType: true, severity: true, description: true, createdAt: true },
+        });
+
+        socket.emit("proctor:state_update", {
+          violationPoints: session.violationPoints,
+          violationThreshold: session.violationThreshold,
+          remainingPoints: session.violationThreshold - session.violationPoints,
+          recentEvents,
+          terminated: session.status === "terminated",
+        });
+      } catch (error) {
+        console.error("[Socket] Proctoring state error:", error);
+        socket.emit("proctor:state_update", { error: "Failed to get proctoring state" });
+      }
+    });
+
+    // ─── Interview: Start interview session ─────────────────────────────
+    socket.on("interview:start", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
+      try {
+        const uid = userId || socket.data?.userId || "unknown";
+        if (uid === "unknown") {
+          socket.emit("interview:error", { error: "Authentication required." });
+          return;
+        }
+
+        socket.join(sessionId);
+        io.to(sessionId).emit("interview:started", { sessionId, timestamp: new Date().toISOString() });
+      } catch (error) {
+        console.error("[Socket] Interview start error:", error);
+        socket.emit("interview:error", { error: "Failed to start interview via socket" });
+      }
+    });
+
+    // ─── Interview: Stream next question ────────────────────────────────
+    socket.on("interview:next", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
+      try {
+        const uid = userId || socket.data?.userId || "unknown";
+        if (uid === "unknown") {
+          socket.emit("interview:error", { error: "Authentication required." });
+          return;
+        }
+
+        const userPrisma = await getUserPrisma(uid);
+
+        const session = await userPrisma.interviewSession.findFirst({
+          where: { id: sessionId },
+          select: { role: true, company: true, type: true, difficulty: true },
+        });
+        if (!session) {
+          socket.emit("interview:error", { error: "Session not found" });
+          return;
+        }
+
+        const messages = await userPrisma.interviewMessage.findMany({
+          where: { sessionId },
+          orderBy: { createdAt: "asc" },
+          select: { role: true, content: true },
+        });
+
+        const history = messages.map((m: any) => ({ role: m.role, content: m.content }));
+        const nextQuestion = await generateInterviewQuestion(
+          session.role, session.company, session.type, session.difficulty, history
+        );
+
+        // Save question to DB
+        await userPrisma.interviewMessage.create({
+          data: { sessionId, role: "interviewer", content: nextQuestion },
+        });
+
+        io.to(sessionId).emit("interview:question", {
+          question: nextQuestion,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("[Socket] Interview next question error:", error);
+        socket.emit("interview:error", { error: "Failed to generate next question" });
       }
     });
 
