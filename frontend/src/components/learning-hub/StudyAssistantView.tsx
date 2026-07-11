@@ -1363,7 +1363,8 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
               style={{
                 position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 999,
                 width: "min(420px, 90vw)",
-                background: c.bg,
+                background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)",
+                backdropFilter: "blur(20px)",
                 borderLeft: `1px solid ${c.border}`,
                 display: "flex", flexDirection: "column",
                 boxShadow: "-8px 0 40px rgba(0,0,0,0.3)",
@@ -1462,7 +1463,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
             exit={{ opacity: 0, height: 0, y: -10 }}
             transition={{ duration: 0.3 }}
             className="mb-4 rounded-2xl overflow-hidden"
-            style={{ border: `1px solid ${c.amberBorder}`, background: c.amberBg }}
+            style={{ border: `1px solid ${c.amberBorder}`, background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(12px)" }}
           >
             <div className="p-4">
               <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>

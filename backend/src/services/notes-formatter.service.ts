@@ -1,25 +1,4 @@
-import { Marked } from "marked";
-
-const marked = new Marked();
-
-marked.use({
-  renderer: {
-    code({ text, lang }: { text: string; lang?: string }) {
-      const langClass = lang ? ` class="language-${lang}"` : "";
-      return `<pre class="code-block"><code${langClass}>${escapeHtml(text)}</code></pre>`;
-    },
-    table({ header, body }: { header: string; body: string }) {
-      return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
-    },
-    heading({ text, depth }: { text: string; depth: number }) {
-      const id = text
-        .toLowerCase()
-        .replace(/[^\w]+/g, "-")
-        .replace(/^-|-$/g, "");
-      return `<h${depth} id="${id}">${text}</h${depth}>`;
-    },
-  },
-});
+import { marked } from "marked";
 
 function escapeHtml(text: string): string {
   return text
@@ -53,6 +32,27 @@ function cleanMarkdown(raw: string): string {
 
   return cleaned;
 }
+
+// Configure marked to produce clean HTML
+marked.setOptions({
+  gfm: true,
+  breaks: false,
+});
+
+// Override renderer for better code blocks and tables
+const renderer = new marked.Renderer();
+
+renderer.code = function (code: string, language: string | undefined): string {
+  const langClass = language ? ` class="language-${language}"` : "";
+  const escapedCode = escapeHtml(code);
+  return `<pre class="code-block"><code${langClass}>${escapedCode}</code></pre>`;
+};
+
+renderer.table = function (header: string, body: string): string {
+  return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
+};
+
+marked.setOptions({ renderer });
 
 /**
  * Convert raw AI-generated markdown into clean, styled HTML.

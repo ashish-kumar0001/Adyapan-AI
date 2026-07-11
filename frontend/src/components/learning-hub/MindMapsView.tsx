@@ -750,7 +750,7 @@ export function MindMapsView() {
       {/* HISTORY PANEL */}
       <AnimatePresence>
         {showHistory && (
-          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.amberBg }}>
+          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(12px)" }}>
             <div className="p-4">
               <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><History size={15} style={{ color: c.amber }} /> Recent Mind Maps</h3>
               {history.length === 0 ? (

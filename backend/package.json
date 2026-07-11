@@ -58,6 +58,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/marked": "^4.3.2",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.0",
     "@types/pdfkit": "^0.17.6",

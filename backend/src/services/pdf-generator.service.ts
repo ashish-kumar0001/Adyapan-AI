@@ -106,7 +106,7 @@ export async function generateNotesPdf(
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
-      waitUntil: "networkidle0",
+      waitUntil: "domcontentloaded",
       timeout: 30000,
     });
 
@@ -211,7 +211,7 @@ export async function generatePdfFromHtml(
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
-      waitUntil: "networkidle0",
+      waitUntil: "domcontentloaded",
       timeout: 30000,
     });
 

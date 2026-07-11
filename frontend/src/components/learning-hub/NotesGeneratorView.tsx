@@ -230,7 +230,7 @@ export function NotesGeneratorView() {
       {/* HISTORY PANEL */}
       <AnimatePresence>
         {showHistory && (
-          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.amberBg }}>
+          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(12px)" }}>
             <div className="p-4">
               <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><History size={15} style={{ color: c.amber }} /> Recent Notes</h3>
               {history.length === 0 ? (
@@ -488,6 +488,12 @@ export function NotesGeneratorView() {
                     }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
                     <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download Markdown
+                  </motion.button>
+                  <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
+                    onClick={handleDownloadPdf}
+                    disabled={downloadingPdf}
+                    className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: downloadingPdf ? c.surface : "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))", border: `1px solid ${downloadingPdf ? c.border : "rgba(139,92,246,0.2)"}`, color: downloadingPdf ? c.textMuted : "#8b5cf6", opacity: downloadingPdf ? 0.7 : 1 }}>
+                    <span className="shrink-0">{downloadingPdf ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}</span> {downloadingPdf ? "Generating PDF..." : "Download PDF"}
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }}
                     onClick={() => { setNotesData(null); setSearchQuery(""); }}
