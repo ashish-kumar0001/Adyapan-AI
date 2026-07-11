@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateFlashcards } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
 
 export const flashcardsRouter = Router();
@@ -28,6 +29,6 @@ flashcardsRouter.post("/generate", async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ error: "Flashcard generation failed" });
+    handleRouteError(res, error, "Flashcards.generate", "Flashcard generation failed");
   }
 });

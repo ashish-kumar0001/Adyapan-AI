@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { handleRouteError } from "../utils/routeError";
 
 const router = Router();
 router.use(requireAuth);
@@ -13,7 +14,7 @@ router.get("/", async (req: any, res) => {
     });
     res.json({ challenges });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch challenges" });
+    handleRouteError(res, error, "Challenges.list", "Failed to fetch challenges");
   }
 });
 
@@ -53,7 +54,7 @@ router.post("/submit", async (req: any, res) => {
 
     res.json({ submission });
   } catch (error) {
-    res.status(500).json({ error: "Failed to submit challenge" });
+    handleRouteError(res, error, "Challenges.submit", "Failed to submit challenge");
   }
 });
 
@@ -66,7 +67,7 @@ router.get("/leaderboard", async (req, res) => {
     });
     res.json({ leaderboard });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch leaderboard" });
+    handleRouteError(res, error, "Challenges.leaderboard", "Failed to fetch leaderboard");
   }
 });
 

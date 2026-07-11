@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateNotes } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
 
 export const notesRouter = Router();
@@ -38,7 +39,7 @@ notesRouter.post("/generate", async (req, res) => {
 
     res.json({ success: true, note });
   } catch (error) {
-    res.status(500).json({ error: "Note generation failed" });
+    handleRouteError(res, error, "Notes.generate", "Note generation failed");
   }
 });
 
@@ -51,6 +52,6 @@ notesRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, notes });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Notes.history", "Failed to fetch history");
   }
 });

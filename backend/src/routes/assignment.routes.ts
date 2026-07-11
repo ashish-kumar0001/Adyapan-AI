@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateAssignment } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { handleRouteError } from "../utils/routeError";
 export const assignmentRouter = Router();
 
 assignmentRouter.use(requireAuth);
@@ -23,7 +24,7 @@ assignmentRouter.post("/generate", async (req, res) => {
     });
     res.json({ success: true, assignment });
   } catch (error) {
-    res.status(500).json({ error: "Assignment generation failed" });
+    handleRouteError(res, error, "Assignment.generate", "Assignment generation failed");
   }
 });
 
@@ -36,6 +37,6 @@ assignmentRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, assignments });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Assignment.history", "Failed to fetch history");
   }
 });

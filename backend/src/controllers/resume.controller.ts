@@ -14,23 +14,23 @@ const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null
 // AI wrapper — tries Gemini first, falls back to Groq
 async function aiResumeSummary(p: object, e: object[], ex: object[], s: string[]) {
   try { return await generateResumeSummary(p, e, ex, s); }
-  catch { return groqGenerateResumeSummary(p, e, ex, s); }
+  catch (error) { console.warn("[Resume] Gemini summary failed, falling back to Groq:", error); return groqGenerateResumeSummary(p, e, ex, s); }
 }
 async function aiEnhanceProject(name: string, tech: string, desc: string) {
   try { return await enhanceProjectDescription(name, tech, desc); }
-  catch { return groqEnhanceProjectDescription(name, tech, desc); }
+  catch (error) { console.warn("[Resume] Gemini project enhance failed, falling back to Groq:", error); return groqEnhanceProjectDescription(name, tech, desc); }
 }
 async function aiEnhanceExperience(role: string, company: string, desc: string) {
   try { return await enhanceExperienceDescription(role, company, desc); }
-  catch { return groqEnhanceExperienceDescription(role, company, desc); }
+  catch (error) { console.warn("[Resume] Gemini experience enhance failed, falling back to Groq:", error); return groqEnhanceExperienceDescription(role, company, desc); }
 }
 async function aiOptimizeResume(resumeJson: object, company: string) {
   try { return await optimizeResumeContent(resumeJson, company); }
-  catch { return groqOptimizeResumeContent(resumeJson, company); }
+  catch (error) { console.warn("[Resume] Gemini optimize failed, falling back to Groq:", error); return groqOptimizeResumeContent(resumeJson, company); }
 }
 async function aiResumeChat(resumeData: object, message: string) {
   try { return await resumeAIChat(resumeData, message); }
-  catch { return groqResumeAIChat(resumeData, message); }
+  catch (error) { console.warn("[Resume] Gemini chat failed, falling back to Groq:", error); return groqResumeAIChat(resumeData, message); }
 }
 
 /**
@@ -295,7 +295,7 @@ Only include fields that actually changed. Omit unchanged fields.`;
     if (jsonMatch) {
       try {
         updates = JSON.parse(jsonMatch[1]);
-      } catch { /* ignore parse errors */ }
+      } catch (error) { console.warn("[Resume] Failed to parse streamed suggestion JSON:", error); }
     }
 
     res.write(`data: ${JSON.stringify({ type: "result", ...updates })}\n\n`);

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generatePPTContent } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { handleRouteError } from "../utils/routeError";
 export const pptRouter = Router();
 
 pptRouter.use(requireAuth);
@@ -24,7 +25,7 @@ pptRouter.post("/generate", async (req, res) => {
     });
     res.json({ success: true, presentation: ppt });
   } catch (error) {
-    res.status(500).json({ error: "PPT generation failed" });
+    handleRouteError(res, error, "Ppt.generate", "PPT generation failed");
   }
 });
 
@@ -37,6 +38,6 @@ pptRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, presentations: ppts });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Ppt.history", "Failed to fetch history");
   }
 });

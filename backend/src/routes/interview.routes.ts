@@ -18,6 +18,7 @@ import {
 } from "../services/identity.service";
 import { analyzeProctoringEvent } from "../lib/ai/proctoring";
 import { generateViolationReport } from "../lib/ai/proctoring";
+import { handleRouteError } from "../utils/routeError";
 import { getSessionState } from "../services/interview-session.service";
 
 export const interviewRouter = Router();
@@ -64,10 +65,8 @@ interviewRouter.post("/start", async (req, res) => {
     });
 
     res.json({ success: true, session, messages, lastQuestion: firstQuestion });
-  } catch (error: any) {
-    console.error("Error starting interview:", error);
-    const status = error.status || error.statusCode || 500;
-    res.status(status).json({ error: error.message || "Failed to start interview" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.start", "Failed to start interview");
   }
 });
 
@@ -92,9 +91,8 @@ interviewRouter.put("/:sessionId/config", async (req, res) => {
     });
 
     res.json({ success: true, session: updated });
-  } catch (error: any) {
-    console.error("Error updating config:", error);
-    res.status(500).json({ error: "Failed to update configuration" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.updateConfig", "Failed to update configuration");
   }
 });
 
@@ -133,9 +131,8 @@ interviewRouter.post("/:sessionId/verify-identity", async (req, res) => {
     });
 
     res.json({ success: true, verification });
-  } catch (error: any) {
-    console.error("Identity verification error:", error);
-    res.status(500).json({ error: "Identity verification failed" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.verifyIdentity", "Identity verification failed");
   }
 });
 
@@ -144,8 +141,8 @@ interviewRouter.get("/system-check/:sessionId", async (req, res) => {
   try {
     const systemCheck = performSystemCheck();
     res.json({ success: true, systemCheck });
-  } catch (error: any) {
-    res.status(500).json({ error: "System check failed" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.systemCheck", "System check failed");
   }
 });
 
@@ -164,8 +161,8 @@ interviewRouter.post("/:sessionId/system-check/result", async (req, res) => {
     });
 
     res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: "Failed to store system check" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.storeSystemCheck", "Failed to store system check");
   }
 });
 
@@ -220,9 +217,8 @@ interviewRouter.post("/:sessionId/environment-scan", async (req, res) => {
     }
 
     res.json({ success: true, scanResult });
-  } catch (error: any) {
-    console.error("Environment scan error:", error);
-    res.status(500).json({ error: "Environment scan failed" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.environmentScan", "Environment scan failed");
   }
 });
 
@@ -251,8 +247,8 @@ interviewRouter.post("/:sessionId/accept-rules", async (req, res) => {
     });
 
     res.json({ success: true, session: updated });
-  } catch (error: any) {
-    res.status(500).json({ error: "Failed to accept rules" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.acceptRules", "Failed to accept rules");
   }
 });
 
@@ -296,10 +292,8 @@ interviewRouter.post("/:sessionId/answer", async (req, res) => {
       nextQuestion: processResult.nextQuestion,
       messages: messages,
     });
-  } catch (error: any) {
-    console.error("Error processing answer:", error);
-    const status = error.status || error.statusCode || 500;
-    res.status(status).json({ error: error.message || "Failed to process answer" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.processAnswer", "Failed to process answer");
   }
 });
 
@@ -350,9 +344,8 @@ interviewRouter.post("/:sessionId/voice", async (req, res) => {
     });
 
     res.json({ success: true, nextQuestion, messages: updatedMessages });
-  } catch (error: any) {
-    console.error("Error processing voice input:", error);
-    res.status(500).json({ error: "Failed to process voice input" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.voiceInput", "Failed to process voice input");
   }
 });
 
@@ -387,9 +380,8 @@ interviewRouter.post("/:sessionId/proctor", async (req, res) => {
     }
 
     res.json({ success: true, events: logged });
-  } catch (error: any) {
-    console.error("Error logging proctoring event:", error);
-    res.status(500).json({ error: "Failed to log proctoring event" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.logProctoringEvent", "Failed to log proctoring event");
   }
 });
 
@@ -410,8 +402,8 @@ interviewRouter.get("/:sessionId/proctor", async (req, res) => {
     });
 
     res.json({ success: true, events, totalPoints: session?.violationPoints || 0, threshold: session?.violationThreshold || 10 });
-  } catch (error: any) {
-    res.status(500).json({ error: "Failed to get proctoring events" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.getProctoringEvents", "Failed to get proctoring events");
   }
 });
 
@@ -445,8 +437,8 @@ interviewRouter.get("/:sessionId/violation-report", async (req, res) => {
     );
 
     res.json({ success: true, report });
-  } catch (error: any) {
-    res.status(500).json({ error: "Failed to generate violation report" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.violationReport", "Failed to generate violation report");
   }
 });
 
@@ -458,10 +450,8 @@ interviewRouter.post("/:sessionId/end", async (req, res) => {
     const p = prisma as any;
     const result = await endInterviewSession(sessionId, p);
     res.json({ success: true, session: result.session, evaluation: result.evaluation });
-  } catch (error: any) {
-    console.error("Error ending interview:", error);
-    const status = error.status || error.statusCode || 500;
-    res.status(status).json({ error: error.message || "Failed to end interview" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.end", "Failed to end interview");
   }
 });
 
@@ -502,9 +492,8 @@ interviewRouter.get("/history", async (req, res) => {
     }));
 
     res.json({ success: true, sessions: summaries });
-  } catch (error: any) {
-    console.error("Error fetching interview history:", error);
-    res.status(500).json({ error: "Failed to fetch interview history" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.history", "Failed to fetch interview history");
   }
 });
 
@@ -546,9 +535,7 @@ interviewRouter.get("/:sessionId", async (req, res) => {
       success: true,
       session: { ...session, state, violationReport },
     });
-  } catch (error: any) {
-    console.error("Error fetching session:", error);
-    const status = error.status || error.statusCode || 500;
-    res.status(status).json({ error: error.message || "Failed to fetch session" });
+  } catch (error) {
+    handleRouteError(res, error, "Interview.getSession", "Failed to fetch session");
   }
 });
