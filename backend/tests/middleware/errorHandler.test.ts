@@ -44,7 +44,7 @@ describe("errorHandler", () => {
     errorHandler(err, {} as Request, res, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Bad request" });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Bad request", error: "Bad request" });
   });
 
   it("defaults to status 500 when no statusCode is present", () => {
@@ -55,7 +55,7 @@ describe("errorHandler", () => {
     errorHandler(new Error("kaboom") as HttpError, {} as Request, res, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: "kaboom" });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: "kaboom", error: "kaboom" });
   });
 
   it("masks 500 error messages in production", () => {
@@ -67,7 +67,7 @@ describe("errorHandler", () => {
     errorHandler(new Error("stack detail") as HttpError, {} as Request, res, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Internal server error" });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Internal server error", error: "Internal server error" });
   });
 
   it("does not mask non-500 messages in production", () => {
@@ -80,6 +80,6 @@ describe("errorHandler", () => {
     errorHandler(err, {} as Request, res, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Unauthorized" });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: "Unauthorized", error: "Unauthorized" });
   });
 });

@@ -36,7 +36,8 @@ Skills: ${JSON.stringify(skills)}
 Focus on key achievements, years of experience, and core competencies. Write in a confident, professional third-person tone. Return ONLY the summary text.`;
   try {
     return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] generateResumeSummary failed, using fallback:", error);
     return "Results-driven professional with a proven track record of academic and practical excellence, seeking to leverage skills in technology and problem-solving to contribute to organizational success.";
   }
 }
@@ -57,7 +58,8 @@ Role: ${role}
 Use the XYZ formula (Accomplished X as measured by Y, by doing Z) where possible. Start each with a strong action verb. Focus on measurable outcomes. Return bullet points separated by newlines, NO bullet symbols.`;
   try {
     return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] generateProjectDescription failed, using fallback:", error);
     return `Designed and built ${title} utilizing ${techStack} to solve core system requirements.\nOptimized backend performance and frontend usability for enhanced scalability.\nCollaborated with developers to integrate data endpoints and ensure seamless deployment.`;
   }
 }
@@ -78,7 +80,8 @@ Draft: ${description}
 Generate 3 highly professional, result-oriented bullet points. Start each with a strong action verb. Quantify achievements where possible. Return separated by newlines, NO bullet symbols.`;
   try {
     return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] generateExperienceBulletPoints failed, using fallback:", error);
     return `Spearheaded software development initiatives as a ${role} at ${company}, improving deployment velocity.\nArchitected scalable database architectures and clean REST APIs to serve client applications.\nDebugged critical production bugs, reducing latency and boosting customer satisfaction rates.`;
   }
 }
@@ -438,7 +441,8 @@ Return ONLY the improved content. Be concise and professional.`;
 
   try {
     return await generateText(ATS_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] applyATSSuggestion failed, returning original content:", error);
     return currentContent;
   }
 }
@@ -593,7 +597,8 @@ Student's Query: ${query}
 Answer clearly using markdown. Break down concepts simply if needed.`;
   try {
     return await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] generateStudyResponse failed, using fallback:", error);
     return "I am currently unable to process your query due to a system error. Please try again later.";
   }
 }
@@ -750,7 +755,8 @@ Raw: "${description}"
 Rewrite to be extremely professional, action-oriented, highlight impact/metrics. Use 2-3 strong bullet points. No intro/outro.`;
   try {
     return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] enhanceProjectDescription failed, returning original description:", error);
     return description;
   }
 }
@@ -769,7 +775,8 @@ Raw: "${description}"
 Rewrite using STAR method. Focus on achievements, technical contributions, metrics. Output 3-4 bullet points starting with strong action verbs. Return ONLY bullet points.`;
   try {
     return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] enhanceExperienceDescription failed, returning original description:", error);
     return description;
   }
 }
@@ -850,7 +857,8 @@ Only include fields that actually changed. Omit unchanged fields entirely.`;
     return await generateJSON<{ summary?: string; experience?: any[]; projects?: any[]; skills?: string[] }>(
       RESUME_SYSTEM, prompt, { model: MODELS.POWERFUL }, defaultResult
     );
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] resumeAIChat failed, returning empty result:", error);
     return {};
   }
 }
@@ -892,7 +900,8 @@ Based on their answer, ask the next appropriate ${type} interview question. If y
       model: MODELS.POWERFUL,
       temperature: 0.8,
     });
-  } catch {
+  } catch (error) {
+    console.warn("[Gemini] generateInterviewQuestion failed, using fallback:", error);
     return "Tell me about yourself and your experience relevant to this role.";
   }
 }

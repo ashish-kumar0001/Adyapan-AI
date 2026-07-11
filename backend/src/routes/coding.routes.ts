@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateCode, debugCode, explainCode, generateProject } from "../lib/ai/coding";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { handleRouteError } from "../utils/routeError";
 
 const router = Router();
 router.use(requireAuth);
@@ -14,7 +15,7 @@ router.post("/generate", async (req, res) => {
     const result = await generateCode(prompt);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate code" });
+    handleRouteError(res, error, "Coding.generate", "Failed to generate code");
   }
 });
 
@@ -26,7 +27,7 @@ router.post("/debug", async (req, res) => {
     const result = await debugCode(errorMsg, codeSnippet);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to debug code" });
+    handleRouteError(res, error, "Coding.debug", "Failed to debug code");
   }
 });
 
@@ -38,7 +39,7 @@ router.post("/explain", async (req, res) => {
     const result = await explainCode(codeSnippet);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to explain code" });
+    handleRouteError(res, error, "Coding.explain", "Failed to explain code");
   }
 });
 
@@ -50,7 +51,7 @@ router.post("/project", async (req, res) => {
     const result = await generateProject(projectName);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate project" });
+    handleRouteError(res, error, "Coding.project", "Failed to generate project");
   }
 });
 
@@ -64,7 +65,7 @@ router.get("/history", async (req: any, res) => {
     });
     res.json({ sessions });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "Coding.history", "Failed to fetch history");
   }
 });
 

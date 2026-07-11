@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
 
 export const studyPlannerRouter = Router();
@@ -187,9 +188,8 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
     ).catch(err => console.error("Streak tracking error:", err));
 
     res.json({ success: true, plan: newPlan });
-  } catch (error: any) {
-    console.error("Generate Study Plan Error:", error);
-    res.status(500).json({ error: error.message || "Failed to generate study plan" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.generate", "Failed to generate study plan");
   }
 });
 
@@ -269,9 +269,8 @@ studyPlannerRouter.get("/", async (req: any, res: any) => {
       },
       tasks
     });
-  } catch (error: any) {
-    console.error("Fetch Study Plan Error:", error);
-    res.status(500).json({ error: "Failed to fetch study plan" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.fetchPlan", "Failed to fetch study plan");
   }
 });
 
@@ -316,9 +315,8 @@ studyPlannerRouter.get("/today", async (req: any, res: any) => {
     });
 
     res.json({ success: true, tasks, revisions });
-  } catch (error: any) {
-    console.error("Fetch Today Schedule Error:", error);
-    res.status(500).json({ error: "Failed to fetch today's tasks" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.today", "Failed to fetch today's tasks");
   }
 });
 
@@ -367,9 +365,8 @@ studyPlannerRouter.get("/calendar", async (req: any, res: any) => {
     }));
 
     res.json({ success: true, events: [...taskEvents, ...revisionEvents] });
-  } catch (error: any) {
-    console.error("Fetch Calendar Error:", error);
-    res.status(500).json({ error: "Failed to fetch calendar events" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.calendar", "Failed to fetch calendar events");
   }
 });
 
@@ -498,9 +495,8 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
     }
 
     res.json({ success: true, task });
-  } catch (error: any) {
-    console.error("Complete Study Task Error:", error);
-    res.status(500).json({ error: "Failed to update study task status" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.completeTask", "Failed to update study task status");
   }
 });
 
@@ -578,9 +574,8 @@ studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
       message: `Successfully rescheduled ${tasksRescheduledCount} missed tasks starting from today.`,
       plan
     });
-  } catch (error: any) {
-    console.error("Reschedule Tasks Error:", error);
-    res.status(500).json({ error: "Failed to reschedule tasks" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.reschedule", "Failed to reschedule tasks");
   }
 });
 
@@ -647,8 +642,7 @@ studyPlannerRouter.get("/recommendations", async (req: any, res: any) => {
     }
 
     res.json({ success: true, recommendations });
-  } catch (error: any) {
-    console.error("Fetch Recommendations Error:", error);
-    res.status(500).json({ error: "Failed to fetch study recommendations" });
+  } catch (error) {
+    handleRouteError(res, error, "StudyPlanner.recommendations", "Failed to fetch study recommendations");
   }
 });

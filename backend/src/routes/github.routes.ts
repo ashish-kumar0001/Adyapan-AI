@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { analyzeGithubProfile, generateReadme, generatePortfolio } from "../lib/ai/github";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { handleRouteError } from "../utils/routeError";
 
 const router = Router();
 router.use(requireAuth);
@@ -27,7 +28,7 @@ router.post("/analyze", async (req: any, res) => {
 
     res.json({ analysis, profile });
   } catch (error) {
-    res.status(500).json({ error: "Failed to analyze profile" });
+    handleRouteError(res, error, "Github.analyze", "Failed to analyze profile");
   }
 });
 
@@ -49,7 +50,7 @@ router.post("/readme", async (req: any, res) => {
 
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate README" });
+    handleRouteError(res, error, "Github.readme", "Failed to generate README");
   }
 });
 
@@ -68,7 +69,7 @@ router.post("/portfolio", async (req: any, res) => {
 
     res.json({ portfolio, ...result });
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate portfolio" });
+    handleRouteError(res, error, "Github.portfolio", "Failed to generate portfolio");
   }
 });
 

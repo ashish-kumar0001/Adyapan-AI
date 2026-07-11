@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateDsaHint, reviewDsaSolution } from "../lib/ai/dsa";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
 
 const router = Router();
@@ -23,7 +24,7 @@ router.get("/problems", async (req: any, res) => {
     });
     res.json({ problems });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch problems" });
+    handleRouteError(res, error, "Dsa.problems", "Failed to fetch problems");
   }
 });
 
@@ -37,7 +38,7 @@ router.post("/hint", async (req, res) => {
     const result = await generateDsaHint(problemContext, currentCode);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate hint" });
+    handleRouteError(res, error, "Dsa.hint", "Failed to generate hint");
   }
 });
 
@@ -91,7 +92,7 @@ router.post("/submit", async (req: any, res) => {
 
     res.json({ submission, review, progress });
   } catch (error) {
-    res.status(500).json({ error: "Failed to submit code" });
+    handleRouteError(res, error, "Dsa.submit", "Failed to submit code");
   }
 });
 
@@ -110,7 +111,7 @@ router.get("/progress", async (req: any, res) => {
     
     res.json({ progress });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch progress" });
+    handleRouteError(res, error, "Dsa.progress", "Failed to fetch progress");
   }
 });
 

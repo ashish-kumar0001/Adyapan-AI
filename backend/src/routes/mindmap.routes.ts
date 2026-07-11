@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateEnhancedMindMap } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
 
 export const mindMapRouter = Router();
@@ -37,7 +38,7 @@ mindMapRouter.post("/generate", async (req, res) => {
 
     res.json({ success: true, mindmap: result.mindmap, id: mindmap.id });
   } catch (error) {
-    res.status(500).json({ error: "Mind map generation failed" });
+    handleRouteError(res, error, "MindMap.generate", "Mind map generation failed");
   }
 });
 
@@ -60,7 +61,7 @@ mindMapRouter.post("/expand", async (req, res) => {
 
     res.json({ success: true, expansion: result.mindmap });
   } catch (error) {
-    res.status(500).json({ error: "Expansion failed" });
+    handleRouteError(res, error, "MindMap.expand", "Expansion failed");
   }
 });
 
@@ -73,6 +74,6 @@ mindMapRouter.get("/history", async (req, res) => {
     });
     res.json({ success: true, mindmaps });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch history" });
+    handleRouteError(res, error, "MindMap.history", "Failed to fetch history");
   }
 });
