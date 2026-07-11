@@ -11,6 +11,7 @@ import {
 const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { requireUserId } from "../utils/request";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -102,8 +103,7 @@ async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma
  */
 export async function analyzeATSReport(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const targetRole = req.body.targetRole || "Software Engineer";
     const resumeId = req.body.resumeId || "";
@@ -176,8 +176,7 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
  */
 export async function analyzeJDMatch(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { resumeId, jobDescription } = req.body;
     if (!jobDescription) throw httpError(400, "jobDescription is required");
@@ -216,8 +215,7 @@ export async function analyzeJDMatch(req: Request, res: Response, next: NextFunc
  */
 export async function getATSSuggestions(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { targetRole } = req.body;
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -261,8 +259,7 @@ export async function getATSSuggestions(req: Request, res: Response, next: NextF
  */
 export async function applyImprovement(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { section, originalContent, suggestionText } = req.body;
     if (!section || !originalContent || !suggestionText) {
@@ -282,8 +279,7 @@ export async function applyImprovement(req: Request, res: Response, next: NextFu
  */
 export async function atsChatHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { message, resumeText, analysis } = req.body;
     if (!message) throw httpError(400, "message is required");
@@ -310,8 +306,7 @@ export async function atsChatHandler(req: Request, res: Response, next: NextFunc
  */
 export async function listATSReports(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const reports = await userPrisma.aTSReport.findMany({
@@ -335,8 +330,7 @@ export async function listATSReports(req: Request, res: Response, next: NextFunc
  */
 export async function getATSReport(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const report = await userPrisma.aTSReport.findFirst({

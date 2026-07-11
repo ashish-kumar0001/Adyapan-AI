@@ -11,6 +11,7 @@ import {
   ArrowLeft, Download, Plus, AlertTriangle, BookOpenCheck, Flame, 
   CalendarRange, ListTodo, Star, UploadCloud, FileText, CheckSquare, Square, Zap
 } from "lucide-react";
+import { WeakTopicDetectionDashboard } from "@/components/learning-hub/WeakTopicDetectionDashboard";
 
 function useTheme() {
   const [theme, setTheme] = useState("dark");
@@ -88,6 +89,9 @@ const slideRight = { hidden: { opacity: 0, x: -24 }, visible: (i = 0) => ({ opac
 export function StudyPlannerDashboard() {
   const theme = useTheme();
   const c = mkColors(theme);
+
+  // Top-level tab: "planner" | "weak-topics"
+  const [activeTab, setActiveTab] = useState<"planner" | "weak-topics">("planner");
 
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -301,7 +305,44 @@ export function StudyPlannerDashboard() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* ── Tab Bar ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 px-5 pt-4 pb-0">
+        <motion.button
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+          onClick={() => setActiveTab("planner")}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all"
+          style={{
+            background: activeTab === "planner" ? c.amberBg : c.surface,
+            color: activeTab === "planner" ? c.amber : c.textSec,
+            border: `1px solid ${activeTab === "planner" ? c.amberBorder : c.border}`,
+          }}
+        >
+          <CalendarIcon size={13} />
+          Study Plan
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+          onClick={() => setActiveTab("weak-topics")}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all"
+          style={{
+            background: activeTab === "weak-topics" ? "rgba(244,63,94,0.10)" : c.surface,
+            color: activeTab === "weak-topics" ? "#f43f5e" : c.textSec,
+            border: `1px solid ${activeTab === "weak-topics" ? "rgba(244,63,94,0.22)" : c.border}`,
+          }}
+        >
+          <AlertTriangle size={13} />
+          Weak Topics
+        </motion.button>
+      </div>
+
+      {/* ── Tab Content ──────────────────────────────────────────────────── */}
+      {activeTab === "weak-topics" ? (
+        <div className="flex-1 overflow-y-auto sp-scroll" style={{ minHeight: 0 }}>
+          <WeakTopicDetectionDashboard />
+        </div>
+      ) : (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       <style>{`.sp-scroll { scrollbar-width: none; -ms-overflow-style: none; } .sp-scroll::-webkit-scrollbar { display: none; }`}</style>
 
       {/* HEADER */}
@@ -707,6 +748,8 @@ export function StudyPlannerDashboard() {
         </motion.div>
       )}
       </div>
+      </motion.div>
+      )}
     </motion.div>
   );
 }

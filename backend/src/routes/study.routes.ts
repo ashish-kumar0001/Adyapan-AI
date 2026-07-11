@@ -8,6 +8,7 @@ const { PDFParse } = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { getTimezone } from "../utils/request";
 
 const uploadMemory = multer({
   storage: multer.memoryStorage(),
@@ -55,7 +56,7 @@ studyRouter.post("/upload", async (req, res) => {
       "study_assistant",
       doc.id,
       10, // 10 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
@@ -78,7 +79,7 @@ studyRouter.post("/chat", async (req, res) => {
       "study_assistant",
       null,
       10, // 10 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
@@ -163,7 +164,7 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
       "study_assistant",
       null,
       15, // 15 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
@@ -188,7 +189,7 @@ studyRouter.post("/generate-lesson", async (req, res) => {
       "study_assistant",
       null,
       15, // 15 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 

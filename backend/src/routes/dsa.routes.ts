@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateDsaHint, reviewDsaSolution } from "../lib/ai/dsa";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { getTimezone } from "../utils/request";
 
 const router = Router();
 router.use(requireAuth);
@@ -84,7 +85,7 @@ router.post("/submit", async (req: any, res) => {
       "dsa_practice",
       submission.id,
       25, // 25 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 

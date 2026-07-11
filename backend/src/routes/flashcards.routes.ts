@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateFlashcards } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { getTimezone } from "../utils/request";
 
 export const flashcardsRouter = Router();
 
@@ -21,7 +22,7 @@ flashcardsRouter.post("/generate", async (req, res) => {
       "flashcards_generator",
       null,
       15, // 15 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 

@@ -5,6 +5,7 @@ import {
   generateCoverLetterChat,
 } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { requireUserId } from "../utils/request";
 
 function serializeResumeToText(resume: any): string {
   const p = resume.personalInfo || {};
@@ -54,8 +55,7 @@ ${languages.filter(Boolean).join(", ")}
  */
 export async function generateCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const {
       resumeId,
@@ -121,8 +121,7 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
  */
 export async function chatCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { coverLetterId, message } = req.body;
     if (!message) throw httpError(400, "Message is required");
@@ -176,8 +175,7 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
  */
 export async function saveCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { coverLetterId, greeting, introduction, body, closing } = req.body;
     if (!coverLetterId) throw httpError(400, "coverLetterId is required");
@@ -213,8 +211,7 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
  */
 export async function listCoverLetters(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const coverLetters = await userPrisma.coverLetter.findMany({
@@ -233,8 +230,7 @@ export async function listCoverLetters(req: Request, res: Response, next: NextFu
  */
 export async function getCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const coverLetter = await userPrisma.coverLetter.findFirst({
@@ -256,8 +252,7 @@ export async function getCoverLetter(req: Request, res: Response, next: NextFunc
  */
 export async function deleteCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const letterId = req.params.id as string;
 

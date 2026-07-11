@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateEnhancedQuiz, generateQuiz } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { getTimezone } from "../utils/request";
 
 export const quizRouter = Router();
 
@@ -31,7 +32,7 @@ quizRouter.post("/generate", async (req, res) => {
         "quiz_generator",
         quiz.id,
         20, // 20 points
-        (req.headers["x-timezone"] as string) || "UTC",
+        getTimezone(req),
         userPrisma
       ).catch(err => console.error("Streak tracking error:", err));
 
@@ -59,7 +60,7 @@ quizRouter.post("/generate", async (req, res) => {
         "quiz_generator",
         quiz.id,
         20, // 20 points
-        (req.headers["x-timezone"] as string) || "UTC",
+        getTimezone(req),
         userPrisma
       ).catch(err => console.error("Streak tracking error:", err));
 

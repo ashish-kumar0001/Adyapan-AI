@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { generateEnhancedMindMap } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { getTimezone } from "../utils/request";
 
 export const mindMapRouter = Router();
 
@@ -30,7 +31,7 @@ mindMapRouter.post("/generate", async (req, res) => {
       "mindmap_generator",
       mindmap.id,
       15, // 15 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
@@ -53,7 +54,7 @@ mindMapRouter.post("/expand", async (req, res) => {
       "mindmap_generator",
       null,
       10, // 10 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 

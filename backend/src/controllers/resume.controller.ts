@@ -7,6 +7,7 @@ import { env } from "../config/env";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { requireUserId } from "../utils/request";
 
 const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null;
 
@@ -50,8 +51,7 @@ async function getResumeForUser(resumeId: string, userId: string, userPrisma: an
  */
 export async function createResume(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { title, template, personalInfo, education, experience, projects, skills, certifications } = req.body;
 
@@ -83,8 +83,7 @@ export async function createResume(req: Request, res: Response, next: NextFuncti
  */
 export async function listResumes(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const resumes = await userPrisma.resume.findMany({
@@ -103,8 +102,7 @@ export async function listResumes(req: Request, res: Response, next: NextFunctio
  */
 export async function getResume(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.params.id as string, userId, userPrisma);
@@ -119,8 +117,7 @@ export async function getResume(req: Request, res: Response, next: NextFunction)
  */
 export async function updateResume(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const resumeId = req.params.id as string;
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -153,8 +150,7 @@ export async function updateResume(req: Request, res: Response, next: NextFuncti
  */
 export async function deleteResume(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const resumeId = req.params.id as string;
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -320,8 +316,7 @@ Only include fields that actually changed. Omit unchanged fields.`;
  */
 export async function exportResumePdf(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
@@ -450,8 +445,7 @@ export async function exportResumePdf(req: Request, res: Response, next: NextFun
  */
 export async function exportResumeDocx(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);

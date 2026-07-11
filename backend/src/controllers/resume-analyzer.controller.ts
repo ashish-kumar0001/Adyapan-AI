@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { httpError } from "../utils/httpError";
 import { analyzeResumeSWOT, analyzeJobMatch } from "../lib/ai/gemini";
+import { requireUserId } from "../utils/request";
 
 /**
  * Serializes a structured draft resume to a single plain-text string
@@ -42,8 +43,7 @@ ${certs.map(c => `• ${c.name || c.title || "Certification"} from ${c.issuer ||
  */
 export async function analyzeSWOT(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { resumeId } = req.body;
     if (!resumeId) throw httpError(400, "resumeId is required");
@@ -79,8 +79,7 @@ export async function analyzeSWOT(req: Request, res: Response, next: NextFunctio
  */
 export async function matchJob(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { resumeId, jobDescription } = req.body;
     if (!resumeId) throw httpError(400, "resumeId is required");
@@ -106,8 +105,7 @@ export async function matchJob(req: Request, res: Response, next: NextFunction) 
  */
 export async function getResumeAnalysis(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const analysis = await userPrisma.resumeAnalysis.findFirst({
@@ -134,8 +132,7 @@ export async function getResumeAnalysis(req: Request, res: Response, next: NextF
  */
 export async function listResumeAnalyses(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const analyses = await userPrisma.resumeAnalysis.findMany({

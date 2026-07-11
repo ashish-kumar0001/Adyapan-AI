@@ -1,12 +1,13 @@
 import type { Request, Response } from "express";
 import { StreakService } from "../services/streak.service";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { getTimezone } from "../utils/request";
 
 export async function getDashboard(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
     const userPrisma = await getUserPrismaFromRequest(req);
-    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    const tz = getTimezone(req);
     const data = await StreakService.getDashboardData(userId, tz, userPrisma);
     res.json({ success: true, data });
   } catch (error: any) {
@@ -26,7 +27,7 @@ export async function updateStreak(req: Request, res: Response): Promise<void> {
     }
     
     const userPrisma = await getUserPrismaFromRequest(req);
-    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    const tz = getTimezone(req);
     const result = await StreakService.trackActivity(
       userId,
       eventType,
@@ -60,7 +61,7 @@ export async function getHeatmap(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
     const daysRange = req.query.days ? Number(req.query.days) : 365;
     const userPrisma = await getUserPrismaFromRequest(req);
-    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    const tz = getTimezone(req);
     const heatmap = await StreakService.getHeatmapData(userId, daysRange, tz, userPrisma);
     res.json({ success: true, heatmap });
   } catch (error: any) {
@@ -73,7 +74,7 @@ export async function getInsights(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
     const userPrisma = await getUserPrismaFromRequest(req);
-    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    const tz = getTimezone(req);
     const insights = await StreakService.getStreakInsights(userId, tz, userPrisma);
     res.json({ success: true, insights });
   } catch (error: any) {

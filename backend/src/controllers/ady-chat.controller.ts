@@ -7,6 +7,7 @@ const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
+import { requireUserId, getTimezone } from "../utils/request";
 
 // ─── File Upload Middleware ────────────────────────────────────────────
 
@@ -47,8 +48,7 @@ function buildChatHistory(messages: { role: string; content: string }[]) {
 
 export async function listSessions(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const userPrisma = await getUserPrismaFromRequest(req);
     const sessions = await userPrisma.chatSession.findMany({
@@ -67,8 +67,7 @@ export async function listSessions(req: Request, res: Response, next: NextFuncti
 
 export async function createSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { title, model } = req.body;
 
@@ -91,8 +90,7 @@ export async function createSession(req: Request, res: Response, next: NextFunct
 
 export async function getSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
     const id = req.params.id as string;
 
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -116,8 +114,7 @@ export async function getSession(req: Request, res: Response, next: NextFunction
 
 export async function deleteSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
     const id = req.params.id as string;
 
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -137,8 +134,7 @@ export async function deleteSession(req: Request, res: Response, next: NextFunct
 
 export async function updateSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
     const id = req.params.id as string;
 
     const { title, model } = req.body;
@@ -166,8 +162,7 @@ export async function updateSession(req: Request, res: Response, next: NextFunct
 
 export async function sendMessage(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { sessionId, message, model } = req.body;
     if (!sessionId || !message) throw httpError(400, "sessionId and message are required");
@@ -187,7 +182,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
     });
 
     // Track Streak Activity
-    const tz = (req.headers["x-timezone"] as string) || "UTC";
+    const tz = getTimezone(req);
     StreakService.trackActivity(
       userId,
       "AI_CHAT_SESSION",
@@ -259,8 +254,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
 
 export async function uploadFile(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     if (!req.file) throw httpError(400, "No file uploaded");
 
