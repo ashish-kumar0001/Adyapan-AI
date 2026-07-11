@@ -1351,7 +1351,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
               transition={{ duration: 0.2 }}
               onClick={() => setShowHistory(false)}
               style={{
-                position: "fixed", inset: 0, zIndex: 998,
+                position: "fixed", top: "70px", left: 0, right: 0, bottom: 0, zIndex: 98,
                 background: "rgba(0,0,0,0.4)",
               }}
             />
@@ -1361,7 +1361,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
               style={{
-                position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 999,
+                position: "fixed", top: "70px", right: 0, bottom: 0, zIndex: 99,
                 width: "min(420px, 90vw)",
                 background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)",
                 backdropFilter: "blur(20px)",
