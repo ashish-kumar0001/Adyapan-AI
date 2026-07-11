@@ -475,9 +475,19 @@ export class StreakService {
     let totalPoints = 0;
     
     allEvents.forEach(e => {
-      // Adjust to user timezone
-      const localHour = new Date(e.createdAt.toLocaleString("en-US", { timeZone: timezone })).getHours();
-      const localDay = new Date(e.createdAt.toLocaleString("en-US", { timeZone: timezone })).getDay();
+      let localHour = e.createdAt.getUTCHours();
+      let localDay = e.createdAt.getUTCDay();
+
+      try {
+        const localStr = e.createdAt.toLocaleString("en-US", { timeZone: timezone });
+        const localDate = new Date(localStr);
+        if (!isNaN(localDate.getTime())) {
+          localHour = localDate.getHours();
+          localDay = localDate.getDay();
+        }
+      } catch (err) {
+        // Safe fallback to UTC
+      }
 
       if (localHour >= 5 && localHour < 12) hourCounts.Morning++;
       else if (localHour >= 12 && localHour < 17) hourCounts.Afternoon++;

@@ -468,7 +468,25 @@ export function LearningStreakDashboard() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 animate-in fade-in duration-300">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-6">
+          <Info size={32} />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Failed to load streak dashboard</h2>
+        <p className="text-sm text-white/50 max-w-sm mb-6 leading-relaxed">
+          There was an error communicating with the Adyapan AI servers. Please ensure your backend server is running and database is fully active.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-black text-xs font-black transition-all cursor-pointer shadow-lg hover:shadow-orange-500/20 active:scale-95"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">

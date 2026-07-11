@@ -101,7 +101,7 @@ export default function LearningStreakPage() {
             className="flex items-center gap-2 text-xs font-bold text-white/30 tracking-widest uppercase mb-2"
           >
             <GraduationCap size={14} className="text-orange-400" />
-            Day 4 Feature · Adyapan AI
+            Learning Consistency · Adyapan AI
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: -8 }}
@@ -129,7 +129,7 @@ export default function LearningStreakPage() {
 
       {/* Footer */}
       <footer className="relative z-10 text-center py-6 text-white/20 text-[10px] font-bold tracking-widest border-t border-white/[0.04]">
-        © {new Date().getFullYear()} ADYAPAN AI · LEARNING STREAK SYSTEM · DAY 4
+        © {new Date().getFullYear()} ADYAPAN AI · LEARNING STREAK SYSTEM
       </footer>
     </div>
   );
