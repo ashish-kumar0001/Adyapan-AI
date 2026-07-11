@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
-  CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, Layers
+  CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, Layers, Download, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
@@ -55,7 +55,7 @@ export function NotesGeneratorView() {
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
-  const [notesData, setNotesData] = useState<{ topic: string; sections: NoteSection[]; wordCount: number; studyTime: string; difficulty: string; } | null>(null);
+  const [notesData, setNotesData] = useState<{ topic: string; sections: NoteSection[]; wordCount: number; studyTime: string; difficulty: string; rawContent?: string; formattedHtml?: string; } | null>(null);
   const [topic, setTopic] = useState("Database Management Systems");
   const [difficulty, setDifficulty] = useState("Intermediate");
   const [noteType, setNoteType] = useState("Detailed Notes");
@@ -63,6 +63,7 @@ export function NotesGeneratorView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<Array<{ name: string; date: string; type: string; sections: number; data: any }>>([]);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -109,10 +110,10 @@ export function NotesGeneratorView() {
   useEffect(() => {
     if (!socket) return;
     const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => { setProgress(p); setStatusMsg(statusMessage); };
-    const handleComplete = ({ content }: { content: string }) => {
+    const handleComplete = ({ content, formattedContent }: { content: string; formattedContent?: string }) => {
       setGenerating(false);
       const parsedSections = parseMarkdownToSections(content);
-      const newNotes = { topic: topicRef.current, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty: difficultyRef.current };
+      const newNotes = { topic: topicRef.current, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty: difficultyRef.current, rawContent: content, formattedHtml: formattedContent || "" };
       setNotesData(newNotes);
       if (parsedSections.length > 0) setActiveSection(parsedSections[0].title);
       addToHistory(newNotes, content, parsedSections);
@@ -134,8 +135,9 @@ export function NotesGeneratorView() {
         const res = await api.post("/notes/generate", { topic, difficulty, type: noteType });
         if (res.data?.success && res.data?.note?.content) {
           const content = res.data.note.content;
+          const formattedContent = res.data.note.formattedContent || "";
           const parsedSections = parseMarkdownToSections(content);
-          const newNotes = { topic, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty };
+          const newNotes = { topic, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty, rawContent: content, formattedHtml: formattedContent };
           setNotesData(newNotes);
           if (parsedSections.length > 0) setActiveSection(parsedSections[0].title);
           addToHistory(newNotes, content, parsedSections);
@@ -151,6 +153,38 @@ export function NotesGeneratorView() {
   const handleScrollToSection = (title: string) => {
     setActiveSection(prev => (prev === title ? "" : title));
   };
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!notesData?.rawContent) {
+      toast.error("No notes content available for PDF export.");
+      return;
+    }
+    setDownloadingPdf(true);
+    try {
+      const res = await api.post("/notes/export/pdf", {
+        content: notesData.rawContent,
+        topic: notesData.topic,
+        difficulty: notesData.difficulty,
+        type: noteType,
+      }, { responseType: "blob" });
+
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${notesData.topic.replace(/\s+/g, "_")}_AdyapanAI_Notes.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully!");
+    } catch (err: any) {
+      console.error("PDF download error:", err);
+      toast.error(err?.response?.data?.error || "Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [notesData, noteType]);
 
   const loadHistoryItem = (item: typeof history[0]) => {
     setTopic(item.name); setNoteType(item.type); setNotesData(item.data); setActiveSection(item.data.sections[0]?.title || ""); setShowHistory(false);

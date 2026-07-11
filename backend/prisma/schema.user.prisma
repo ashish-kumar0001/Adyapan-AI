@@ -137,6 +137,8 @@ model GeneratedNote {
   difficulty String?
   type       String
   content    String
+  formattedContent String? @map("formatted_content")
+  pdfUrl     String?  @map("pdf_url")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 

@@ -12,6 +12,7 @@ import {
   generateMindMapSchema,
 } from "./ai/gemini";
 import type { QuizGenerationResult, AssignmentResult, PptSlide, MindMapResult } from "./ai/gemini";
+import { formatNotesBodyHtml } from "../services/notes-formatter.service";
 import { analyzeProctoringEvent, generateViolationReport } from "./ai/proctoring";
 import { logProctoringEvent } from "../services/interview-session.service";
 import { generateInterviewQuestion } from "./ai/gemini";
@@ -165,19 +166,22 @@ export function initSocketServer(server: HttpServer) {
             emitProgress("Parsing topic and difficulty preferences...");
             const content = await generateNotes(payload.topic || "General", payload.difficulty || "Intermediate", payload.type || "Detailed Notes");
 
-            emitProgress("Structuring content with headings and bullet points...");
+            emitProgress("Formatting content into clean HTML...");
+            const formattedContent = formatNotesBodyHtml(content);
+
             const note = await userPrisma.generatedNote.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
                 difficulty: payload.difficulty || "Intermediate",
-                type: payload.type || "detailed",
+                type: payload.type || "Detailed Notes",
                 content,
+                formattedContent,
               },
             });
 
             emitProgress("Finalizing and saving notes...");
-            socket.emit("generate:complete", { content, noteId: note.id });
+            socket.emit("generate:complete", { content, formattedContent, noteId: note.id });
             break;
           }
 
