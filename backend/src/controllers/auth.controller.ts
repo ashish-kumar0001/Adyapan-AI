@@ -25,6 +25,9 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 
 export async function registerAdmin(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!env.adminRegisterSecret) {
+      throw httpError(403, "Admin registration is disabled");
+    }
     const secret = requireString(req.body.adminSecret, "adminSecret");
     if (secret !== env.adminRegisterSecret) {
       throw httpError(403, "Invalid admin registration secret");

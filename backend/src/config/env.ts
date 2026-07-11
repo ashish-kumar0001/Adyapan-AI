@@ -6,7 +6,7 @@ export const env = {
   directUrl: process.env.DIRECT_URL ?? "",
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:3000",
   jwtSecret: process.env.JWT_SECRET ?? "replace-this-local-secret-before-production",
-  adminRegisterSecret: process.env.ADMIN_REGISTER_SECRET ?? "adyapan-admin-2024",
+  adminRegisterSecret: process.env.ADMIN_REGISTER_SECRET ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   groqApiKey: process.env.GROQ_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
@@ -31,6 +31,10 @@ export const env = {
 
 if (env.nodeEnv === "production" && env.jwtSecret === "replace-this-local-secret-before-production") {
   throw new Error("JWT_SECRET must be set in production");
+}
+
+if (env.nodeEnv === "production" && !env.adminRegisterSecret) {
+  throw new Error("ADMIN_REGISTER_SECRET must be set in production");
 }
 
 // Trigger restart to load latest environment variables

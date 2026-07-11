@@ -90,15 +90,23 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
       throw httpError(400, "Missing payment verification fields");
     }
 
-    const expectedSig = env.razorpay.keySecret
-      ? crypto
-          .createHmac("sha256", env.razorpay.keySecret)
-          .update(`${orderId}|${paymentId}`)
-          .digest("hex")
-      : "mock_signature_bypass";
+    if (env.razorpay.keySecret) {
+      const expectedSig = crypto
+        .createHmac("sha256", env.razorpay.keySecret)
+        .update(`${orderId}|${paymentId}`)
+        .digest("hex");
 
-    if (signature !== "mock_signature_bypass" && expectedSig !== signature) {
-      throw httpError(400, "Invalid payment signature");
+      const expectedBuf = Buffer.from(expectedSig);
+      const providedBuf = Buffer.from(String(signature));
+      if (
+        expectedBuf.length !== providedBuf.length ||
+        !crypto.timingSafeEqual(expectedBuf, providedBuf)
+      ) {
+        throw httpError(400, "Invalid payment signature");
+      }
+    } else if (env.nodeEnv === "production") {
+      // Never allow the dummy-payment bypass in production.
+      throw httpError(500, "Payment gateway is not configured");
     }
 
     const payment = await prisma.payment.findUnique({ where: { orderId } });
