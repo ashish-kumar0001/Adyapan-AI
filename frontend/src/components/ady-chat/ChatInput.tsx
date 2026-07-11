@@ -62,7 +62,7 @@ export function ChatInput({
   const focusBorder = "rgba(245,158,11,0.5)";
   const bg = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.85)";
   const text = isDark ? "#ffffff" : "#0f172a";
-  const textMuted = isDark ? "rgba(255,255,255,0.35)" : "#94a3b8";
+  const textMuted = isDark ? "rgba(255,255,255,0.6)" : "#5f6368";
   const canSend = (input.trim().length > 0 || uploadedFile) && !loading;
 
   return (

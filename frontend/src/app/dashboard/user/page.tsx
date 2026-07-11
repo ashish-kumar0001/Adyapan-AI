@@ -35,7 +35,7 @@ import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
 import { ProgressDashboard } from "@/components/progress-hub/ProgressDashboard";
 import { CommunityProfileView } from "@/components/account-hub/CommunityProfileView";
 import { ManageAccountView } from "@/components/account-hub/ManageAccountView";
-import { LearningProgressView } from "@/components/account-hub/LearningProgressView";
+
 import { BillingView } from "@/components/account-hub/BillingView";
 import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
 import type { ResumeHubViewType } from "@/types/resume";
@@ -173,7 +173,7 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "analytics", label: "Analytics", icon: <LineChart size={18} />,
     submenu: [
-      { label: "Learning Progress", href: "#" }, { label: "Progress Tracker", href: "#" },
+      { label: "Progress Tracker", href: "#" },
       { label: "Interview Progress", href: "#" },
       { label: "Resume Score", href: "#" }, { label: "Skill Growth", href: "#" },
     ],
@@ -313,7 +313,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "SOP Generator") onViewTool("prod-sop");
                       else if (sub.label === "LinkedIn Post Gen") onViewTool("prod-linkedin");
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
-                      else if (sub.label === "Learning Progress") onViewTool("progress-hub");
                       else if (sub.label === "Progress Tracker") onViewTool("progress-hub");
                       else if (sub.label === "Study Planner") onViewTool("study-planner");
                       else if (sub.label === "Learning Streak") router.push("/dashboard/learning-streak");
@@ -1515,7 +1514,13 @@ function UserDashboardContent() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
+  const [activeView, setActiveView] = useState<ResumeHubViewType>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("dashboard-active-view") as ResumeHubViewType | null;
+      if (saved) return saved;
+    }
+    return "dashboard";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: any; duration: string; level: string } | null>(null);
   const selectedTemplate = "ATS Modern";
@@ -1523,6 +1528,10 @@ function UserDashboardContent() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("dashboard-active-view", activeView);
+  }, [activeView]);
 
   // ─── Fetch notifications from API ──────────────────────────────
   const fetchNotifications = useCallback(async () => {
@@ -1743,19 +1752,17 @@ function UserDashboardContent() {
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <main className={`dash-main resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" ? "!p-0 !overflow-hidden" : ""}`}>
+      <main className={`dash-main resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" || activeView === "ats-checker" ? "!p-0 !overflow-hidden" : ""}`}>
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
         ) : activeView === "community-profile" ? (
           <CommunityProfileView />
         ) : activeView === "settings" ? (
           <ManageAccountView />
-        ) : activeView === "profile-learning" ? (
-          <LearningProgressView />
         ) : activeView === "billing" ? (
           <BillingView />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
+          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
         ) : activeView === "cover-letter" ? (

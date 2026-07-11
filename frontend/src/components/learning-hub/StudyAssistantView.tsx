@@ -37,7 +37,7 @@ const mkColors = (theme: string) => {
     isDark,
     text:         isDark ? "#e5e7eb"              : "#0f172a",
     textSec:      isDark ? "#9ca3af"              : "#475569",
-    textMuted:    isDark ? "#6b7280"              : "#94a3b8",
+    textMuted:    isDark ? "#828fa3"              : "#5f6368",
     textOnAmber:  isDark ? "#000000"              : "#000000",
     bg:           isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
     bgHover:      isDark ? "rgba(255,255,255,0.04)"  : "#f8fafc",

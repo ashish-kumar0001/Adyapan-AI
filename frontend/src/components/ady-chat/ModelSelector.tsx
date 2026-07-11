@@ -65,7 +65,7 @@ export function ModelSelector({ selectedModel, isDark, onModelChange }: ModelSel
   const bg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)";
   const dropdownBg = isDark ? "rgba(12,10,28,0.97)" : "rgba(255,255,255,0.99)";
   const text = isDark ? "#ffffff" : "#0f172a";
-  const textMuted = isDark ? "rgba(255,255,255,0.45)" : "#94a3b8";
+  const textMuted = isDark ? "rgba(255,255,255,0.6)" : "#5f6368";
   const hoverBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
 
   return (

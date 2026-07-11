@@ -66,7 +66,7 @@ export function ChatSidebar({
   const bg = isDark ? "rgba(8,6,20,0.92)" : "rgba(248,250,252,0.95)";
   const border = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)";
   const text = isDark ? "#ffffff" : "#0f172a";
-  const textMuted = isDark ? "rgba(255,255,255,0.4)" : "#94a3b8";
+  const textMuted = isDark ? "rgba(255,255,255,0.6)" : "#5f6368";
   const textSec = isDark ? "rgba(255,255,255,0.65)" : "#475569";
   const surfaceHover = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
   const activeItem = isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)";

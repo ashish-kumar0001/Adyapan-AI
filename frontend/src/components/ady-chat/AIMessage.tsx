@@ -409,7 +409,7 @@ function ActionBar({
     },
   ];
 
-  const textMuted = isDark ? "rgba(255,255,255,0.35)" : "#94a3b8";
+  const textMuted = isDark ? "rgba(255,255,255,0.6)" : "#5f6368";
 
   return (
     <motion.div

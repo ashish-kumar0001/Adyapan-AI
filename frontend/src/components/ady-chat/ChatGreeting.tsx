@@ -105,7 +105,7 @@ export function ChatGreeting({ userName, isDark, onSuggestionClick }: ChatGreeti
 
   // Colors
   const headingColor  = isDark ? "#f1f5f9" : "#0f172a";
-  const subtitleColor = isDark ? "rgba(255,255,255,0.48)" : "#64748b";
+  const subtitleColor = isDark ? "rgba(255,255,255,0.6)" : "#5f6368";
   const cardBg        = isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.85)";
   const cardBorder    = isDark ? "rgba(255,255,255,0.11)" : "rgba(0,0,0,0.09)";
   const cardText      = isDark ? "rgba(255,255,255,0.8)" : "#334155";
