@@ -1457,71 +1457,112 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
           </>
         )}
         {mode === "topic" && showTopicHistory && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="mb-4 rounded-2xl overflow-hidden"
-            style={{ border: `1px solid ${c.amberBorder}`, background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(12px)" }}
-          >
-            <div className="p-4">
-              <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                <History size={15} style={{ color: c.amber }} /> Topic Learning History
-              </h3>
-              {topicHistory.length === 0 ? (
-                <p className="text-sm py-2" style={{ color: c.textMuted }}>No topics studied yet. Generate a lesson to get started.</p>
-              ) : (
-                <div className="space-y-2">
-                  {topicHistory.map((item, i) => (
-                    <motion.div
-                      key={`${item.topic}-${i}`}
-                      custom={i}
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all"
-                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-                      onClick={() => {
-                        if (onViewLesson) {
-                          onViewLesson({ topic: item.topic, lesson: item.lesson, duration: item.duration, level: item.level });
-                        } else {
-                          setLessonData(item.lesson);
-                          setCurrentTopic(item.topic);
-                          setInputTopic(item.topic);
-                          setDuration(item.duration as typeof duration);
-                          setLevel(item.level as typeof level);
-                          setQuizAnswers({});
-                          setQuizSubmitted({});
-                          setExpandedConceptIdx(null);
-                          setPracticeRevealed({});
-                        }
-                        setShowTopicHistory(false);
-                      }}
-                      whileHover={{ scale: 1.01, borderColor: c.amberBorder }}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
-                          <GraduationCap size={14} style={{ color: c.amber }} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{item.topic}</p>
-                          <p className="text-xs" style={{ color: c.textMuted }}>{item.date} · {item.duration} · {item.level}</p>
-                        </div>
-                      </div>
-                      <motion.button
-                        whileHover={{ x: 2 }}
-                        className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-all"
-                        style={{ background: c.amberActive, color: c.amber }}
-                      >
-                        Reload <ChevronRight size={12} />
-                      </motion.button>
-                    </motion.div>
-                  ))}
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowTopicHistory(false)}
+              style={{
+                position: "fixed", top: "70px", left: 0, right: 0, bottom: 0, zIndex: 98,
+                background: "rgba(0,0,0,0.4)",
+              }}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 250 }}
+              style={{
+                position: "fixed", top: "70px", right: 0, bottom: 0, zIndex: 99,
+                width: "min(420px, 90vw)",
+                background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)",
+                backdropFilter: "blur(20px)",
+                borderLeft: `1px solid ${c.border}`,
+                display: "flex", flexDirection: "column",
+                boxShadow: "-8px 0 40px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "1rem 1.25rem",
+                borderBottom: `1px solid ${c.divider}`,
+                background: c.surface,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <History size={16} style={{ color: c.amber }} />
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: c.text }}>Topic History</span>
+                  <span style={{
+                    fontSize: "0.7rem", fontWeight: 600, color: c.amber,
+                    background: c.amberBg, padding: "1px 7px", borderRadius: 999,
+                  }}>
+                    {topicHistory.length}
+                  </span>
                 </div>
-              )}
-            </div>
-          </motion.div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowTopicHistory(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: c.textMuted, padding: 4 }}
+                >
+                  <X size={18} />
+                </motion.button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "1rem 0.75rem" }}>
+                {topicHistory.length === 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "3rem 1rem", gap: 8 }}>
+                    <History size={32} style={{ color: c.textMuted, opacity: 0.3 }} />
+                    <p style={{ fontSize: "0.82rem", color: c.textMuted, textAlign: "center" }}>No topics studied yet. Generate a lesson to get started.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {topicHistory.map((item, i) => (
+                      <motion.div
+                        key={`${item.topic}-${i}`}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        onClick={() => {
+                          if (onViewLesson) {
+                            onViewLesson({ topic: item.topic, lesson: item.lesson, duration: item.duration, level: item.level });
+                          } else {
+                            setLessonData(item.lesson);
+                            setCurrentTopic(item.topic);
+                            setInputTopic(item.topic);
+                            setDuration(item.duration as typeof duration);
+                            setLevel(item.level as typeof level);
+                            setQuizAnswers({});
+                            setQuizSubmitted({});
+                            setExpandedConceptIdx(null);
+                            setPracticeRevealed({});
+                          }
+                          setShowTopicHistory(false);
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "0.65rem 0.75rem", borderRadius: 12, cursor: "pointer",
+                          background: c.cardBg, border: `1px solid ${c.border}`,
+                        }}
+                        whileHover={{ borderColor: c.amberBorder, background: c.amberBg }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                            <GraduationCap size={13} style={{ color: c.amber, margin: "auto" }} />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <p style={{ fontSize: "0.8rem", fontWeight: 600, color: c.text, margin: 0 }} className="truncate">{item.topic}</p>
+                            <p style={{ fontSize: "0.68rem", color: c.textMuted, margin: "2px 0 0" }}>{item.date} · {item.duration} · {item.level}</p>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} style={{ color: c.textMuted }} />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

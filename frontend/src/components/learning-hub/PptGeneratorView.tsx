@@ -57,6 +57,7 @@ export function PptGeneratorView() {
   const [statusMsg, setStatusMsg] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
   const [history, setHistory] = useState<Array<{ name: string; date: string; count: number; data: Slide[] }>>([]);
 
   const { socket, isConnected } = useSocket();
@@ -156,35 +157,117 @@ export function PptGeneratorView() {
       {/* HISTORY PANEL */}
       <AnimatePresence>
         {showHistory && (
-          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(12px)" }}>
-            <div className="p-4">
-              <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><History size={15} style={{ color: c.amber }} /> Recent Presentations</h3>
-              {history.length === 0 ? (
-                <p className="text-sm py-2" style={{ color: c.textMuted }}>No presentations generated yet. Submit a topic to begin.</p>
-              ) : (
-                <div className="space-y-2">
-                  {history.map((doc, i) => (
-                    <motion.div key={doc.name} custom={i} variants={fadeUp} initial="hidden" animate="visible"
-                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-                      onClick={() => loadHistoryItem(doc)} whileHover={{ scale: 1.01, borderColor: c.amberBorder }}>
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
-                          <FileText size={14} style={{ color: c.amber }} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{doc.name}</p>
-                          <p className="text-xs" style={{ color: c.textMuted }}>{doc.date} · {doc.count} slides</p>
-                        </div>
-                      </div>
-                      <motion.button whileHover={{ x: 2 }} className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-all" style={{ background: c.amberActive, color: c.amber }}>
-                        Open <ChevronRight size={12} />
-                      </motion.button>
-                    </motion.div>
-                  ))}
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowHistory(false)}
+              style={{
+                position: "fixed", top: "70px", left: 0, right: 0, bottom: 0, zIndex: 98,
+                background: "rgba(0,0,0,0.4)",
+              }}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 250 }}
+              style={{
+                position: "fixed", top: "70px", right: 0, bottom: 0, zIndex: 99,
+                width: "min(420px, 90vw)",
+                background: c.isDark ? "rgba(18, 17, 26, 0.95)" : "rgba(255, 255, 255, 0.98)",
+                backdropFilter: "blur(20px)",
+                borderLeft: `1px solid ${c.border}`,
+                display: "flex", flexDirection: "column",
+                boxShadow: "-8px 0 40px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "1rem 1.25rem",
+                borderBottom: `1px solid ${c.divider}`,
+                background: c.surface,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <History size={16} style={{ color: c.amber }} />
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: c.text }}>Recent Presentations</span>
+                  <span style={{
+                    fontSize: "0.7rem", fontWeight: 600, color: c.amber,
+                    background: c.amberBg, padding: "1px 7px", borderRadius: 999,
+                  }}>
+                    {history.length}
+                  </span>
                 </div>
-              )}
-            </div>
-          </motion.div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowHistory(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: c.textMuted, padding: 4 }}
+                >
+                  <X size={18} />
+                </motion.button>
+              </div>
+              <div style={{ padding: "0.75rem 1.25rem" }}>
+                <div style={{ position: "relative" }}>
+                  <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: c.textMuted }} />
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={e => setHistorySearch(e.target.value)}
+                    placeholder="Search history..."
+                    style={{
+                      width: "100%", padding: "0.55rem 0.75rem 0.55rem 2rem",
+                      borderRadius: 10, fontSize: "0.8rem", outline: "none",
+                      background: c.pill, border: `1px solid ${c.border}`,
+                      color: c.text, boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "0 0.75rem 1rem" }}>
+                {history.filter(doc => doc.name.toLowerCase().includes(historySearch.toLowerCase())).length === 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "3rem 1rem", gap: 8 }}>
+                    <FileText size={32} style={{ color: c.textMuted, opacity: 0.3 }} />
+                    <p style={{ fontSize: "0.82rem", color: c.textMuted, textAlign: "center" }}>No presentations generated yet. Submit a topic to begin.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {history.filter(doc => doc.name.toLowerCase().includes(historySearch.toLowerCase())).map((doc, i) => (
+                      <motion.div
+                        key={doc.name}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        onClick={() => {
+                          loadHistoryItem(doc);
+                          setShowHistory(false);
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "0.65rem 0.75rem", borderRadius: 12, cursor: "pointer",
+                          background: c.cardBg, border: `1px solid ${c.border}`,
+                        }}
+                        whileHover={{ borderColor: c.amberBorder, background: c.amberBg }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                            <FileText size={13} style={{ color: c.amber, margin: "auto" }} />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <p style={{ fontSize: "0.8rem", fontWeight: 600, color: c.text, margin: 0 }} className="truncate">{doc.name}</p>
+                            <p style={{ fontSize: "0.68rem", color: c.textMuted, margin: "2px 0 0" }}>{doc.date} · {doc.count} slides</p>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} style={{ color: c.textMuted }} />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
