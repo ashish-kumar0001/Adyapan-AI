@@ -118,6 +118,19 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     loadHistory();
   }, []);
 
+  // Stop proctoring polling and leave fullscreen when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (proctorIntervalRef.current) {
+        clearInterval(proctorIntervalRef.current);
+        proctorIntervalRef.current = null;
+      }
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (activeModule === "interview-hr") {
       setConfig(p => ({ ...p, type: "behavioral" }));

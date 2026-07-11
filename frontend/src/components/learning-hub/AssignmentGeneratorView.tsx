@@ -423,7 +423,7 @@ export function AssignmentGeneratorView() {
                       toast.success("Assignment exported as Markdown!");
                     }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
-                    <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download PDF
+                    <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download Markdown
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }}
                     onClick={() => { setResult(null); }}

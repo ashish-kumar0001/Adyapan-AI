@@ -26,10 +26,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     console.log("Connecting to WebSocket server at:", socketUrl);
 
+    const token =
+      localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
+
     const socketInstance = io(socketUrl, {
       withCredentials: true,
       autoConnect: true,
       transports: ["websocket", "polling"],
+      auth: token ? { token } : undefined,
     });
 
     socketInstance.on("connect", () => {

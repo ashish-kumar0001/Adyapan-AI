@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { getUserPrisma } from "../config/dynamicPrisma";
 import {
@@ -32,6 +33,29 @@ export function initSocketServer(server: HttpServer) {
   });
 
   const genAI = new GoogleGenerativeAI(env.geminiApiKey);
+
+  // Authenticate the socket handshake so we can trust an identity server-side
+  // instead of relying on a client-supplied userId in each event payload.
+  io.use((socket, next) => {
+    try {
+      const headerAuth = socket.handshake.headers.authorization;
+      const token =
+        (socket.handshake.auth?.token as string | undefined) ||
+        (headerAuth?.startsWith("Bearer ") ? headerAuth.slice(7) : undefined);
+      if (token) {
+        const decoded = jwt.verify(token, env.jwtSecret, { algorithms: ["HS256"] }) as {
+          userId?: string;
+        };
+        if (decoded?.userId) {
+          socket.data.userId = decoded.userId;
+        }
+      }
+    } catch {
+      // Invalid/expired token: leave socket unauthenticated, individual
+      // handlers still enforce their own auth checks.
+    }
+    next();
+  });
 
   io.on("connection", (socket) => {
     console.log(`Socket connected: ${socket.id}`);
@@ -115,8 +139,10 @@ export function initSocketServer(server: HttpServer) {
 
     // Resolve userId helper (prefer socket auth, then payload, then first user)
     async function resolveUserId(payload: any): Promise<string> {
-      if (payload.userId) return payload.userId;
+      // Prefer the authenticated identity from the handshake; only fall back to
+      // a client-supplied userId when the socket is not authenticated.
       if (socket.data?.userId) return socket.data.userId;
+      if (payload?.userId) return payload.userId;
       return "unknown";
     }
 
@@ -344,7 +370,7 @@ Keep responses concise for short durations and detailed for longer durations.`;
     // ─── Proctoring: Real-time proctoring events during interview ────────
     socket.on("proctor:event", async ({ sessionId, event, userId }: { sessionId: string; event: any; userId?: string }) => {
       try {
-        const uid = userId || socket.data?.userId || "unknown";
+        const uid = socket.data?.userId || userId || "unknown";
         if (uid === "unknown") {
           socket.emit("proctor:error", { error: "Authentication required." });
           return;
@@ -393,7 +419,7 @@ Keep responses concise for short durations and detailed for longer durations.`;
     // ─── Proctoring: Get current violation state ─────────────────────────
     socket.on("proctor:state", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
       try {
-        const uid = userId || socket.data?.userId || "unknown";
+        const uid = socket.data?.userId || userId || "unknown";
         if (uid === "unknown") {
           socket.emit("proctor:state_update", { error: "Authentication required." });
           return;
@@ -434,7 +460,7 @@ Keep responses concise for short durations and detailed for longer durations.`;
     // ─── Interview: Start interview session ─────────────────────────────
     socket.on("interview:start", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
       try {
-        const uid = userId || socket.data?.userId || "unknown";
+        const uid = socket.data?.userId || userId || "unknown";
         if (uid === "unknown") {
           socket.emit("interview:error", { error: "Authentication required." });
           return;
@@ -451,7 +477,7 @@ Keep responses concise for short durations and detailed for longer durations.`;
     // ─── Interview: Stream next question ────────────────────────────────
     socket.on("interview:next", async ({ sessionId, userId }: { sessionId: string; userId?: string }) => {
       try {
-        const uid = userId || socket.data?.userId || "unknown";
+        const uid = socket.data?.userId || userId || "unknown";
         if (uid === "unknown") {
           socket.emit("interview:error", { error: "Authentication required." });
           return;

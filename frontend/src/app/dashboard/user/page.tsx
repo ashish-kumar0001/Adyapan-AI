@@ -1517,8 +1517,10 @@ function UserDashboardContent() {
   const [toast, setToast] = useState(false);
   const [activeView, setActiveView] = useState<any>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("dashboard-active-view");
-      if (saved) return saved;
+      try {
+        const saved = localStorage.getItem("dashboard-active-view");
+        if (saved) return saved;
+      } catch { /* localStorage unavailable (e.g. privacy mode) */ }
     }
     return "dashboard";
   });
@@ -1531,7 +1533,9 @@ function UserDashboardContent() {
   const [notifLoading, setNotifLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem("dashboard-active-view", activeView);
+    try {
+      localStorage.setItem("dashboard-active-view", activeView);
+    } catch { /* localStorage unavailable (e.g. privacy mode) */ }
   }, [activeView]);
 
   // ─── Fetch notifications from API ──────────────────────────────

@@ -36,6 +36,3 @@ if (env.nodeEnv === "production" && env.jwtSecret === "replace-this-local-secret
 if (env.nodeEnv === "production" && !env.adminRegisterSecret) {
   throw new Error("ADMIN_REGISTER_SECRET must be set in production");
 }
-
-// Trigger restart to load latest environment variables
-
