@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
+import { cn } from "@/lib/cn";
 import Link from "next/link";
 import Image from "next/image";
 import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
@@ -1127,19 +1128,96 @@ function calcCompletion(p: ProfileData | null): number {
   return Math.round((fields.filter(Boolean).length/fields.length)*100);
 }
 function ProfileProgressBar({ value }: { value: number }) {
-  return <div style={{height:6,width:"100%",background:"rgba(255,255,255,0.08)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${value}%`,background:"var(--primary)",borderRadius:3,transition:"width 1s ease"}} /></div>;
+  return (
+    <div className="relative h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--border-color)" }}>
+      <div 
+        className="h-full rounded-full transition-all duration-1000 ease-out" 
+        style={{ width: `${value}%`, background: "var(--primary)" }} 
+      />
+    </div>
+  );
 }
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
-  return <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.4rem",marginBottom:"1.2rem"}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:"1.1rem"}}><span style={{color:"var(--primary)"}}>{icon}</span><h3 style={{fontSize:"0.95rem",fontWeight:700,color:"var(--text-primary)",margin:0}}>{title}</h3></div>{children}</div>;
+  return (
+    <div className="rounded-2xl p-6 mb-6 shadow-sm border transition-all hover:shadow-md" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+      <div className="flex items-center gap-2.5 mb-5">
+        <span className="p-2 rounded-xl shrink-0" style={{ background: "var(--bg-card-alt)", color: "var(--primary)", border: "1px solid var(--border-color)" }}>
+          {icon}
+        </span>
+        <h3 className="text-sm font-extrabold tracking-tight" style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}>
+          {title}
+        </h3>
+      </div>
+      {children}
+    </div>
+  );
 }
 function FieldRow({ label, value, placeholder }: { label: string; value?: string; placeholder?: string }) {
-  return <div style={{marginBottom:"0.8rem"}}><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:3,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>{label}</div><div style={{fontSize:"0.88rem",color:value?"var(--text-primary)":"var(--text-muted)",fontWeight:value?500:400}}>{value||placeholder||"—"}</div></div>;
+  return (
+    <div className="mb-4">
+      <div className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </div>
+      <div className={cn(
+        "mt-1.5 px-4 py-3 rounded-xl text-xs font-semibold border transition-all duration-200",
+        value ? "" : "italic"
+      )} style={{
+        background: value ? "var(--bg-card-alt)" : "transparent",
+        borderColor: "var(--border-color)",
+        color: value ? "var(--text-primary)" : "var(--text-muted)"
+      }}>
+        {value || placeholder || "—"}
+      </div>
+    </div>
+  );
 }
 function ProfileFormInput({ label, value, onChange, placeholder, type="text", hint }: { label:string; value:string; onChange:(v:string)=>void; placeholder?:string; type?:string; hint?:string }) {
-  return <div style={{marginBottom:"0.9rem"}}><label style={{display:"block",fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:4,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>{label}</label>{hint&&<div style={{fontSize:"0.71rem",color:"var(--text-muted)",marginBottom:4}}>{hint}</div>}<input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:"100%",padding:"0.58rem 0.85rem",background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:8,color:"var(--text-primary)",fontSize:"0.84rem",outline:"none",boxSizing:"border-box" as const}} onFocus={e=>(e.currentTarget.style.borderColor="var(--primary)")} onBlur={e=>(e.currentTarget.style.borderColor="var(--border-color)")} /></div>;
+  return (
+    <div className="mb-4">
+      <label className="block text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+        {label}
+      </label>
+      {hint && <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>{hint}</div>}
+      <input 
+        type={type} 
+        value={value} 
+        onChange={e => onChange(e.target.value)} 
+        placeholder={placeholder} 
+        className="w-full px-4 py-3 rounded-xl text-xs font-medium outline-none transition-all" 
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-color)",
+          color: "var(--text-primary)"
+        }}
+        onFocus={e => e.currentTarget.style.borderColor = "var(--primary)"}
+        onBlur={e => e.currentTarget.style.borderColor = "var(--border-color)"}
+      />
+    </div>
+  );
 }
 function ProfileFormTextarea({ label, value, onChange, placeholder, hint }: { label:string; value:string; onChange:(v:string)=>void; placeholder?:string; hint?:string }) {
-  return <div style={{marginBottom:"0.9rem"}}><label style={{display:"block",fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:4,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>{label}</label>{hint&&<div style={{fontSize:"0.71rem",color:"var(--text-muted)",marginBottom:4}}>{hint}</div>}<textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={3} style={{width:"100%",padding:"0.58rem 0.85rem",background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:8,color:"var(--text-primary)",fontSize:"0.84rem",outline:"none",boxSizing:"border-box" as const,resize:"vertical"}} onFocus={e=>(e.currentTarget.style.borderColor="var(--primary)")} onBlur={e=>(e.currentTarget.style.borderColor="var(--border-color)")} /></div>;
+  return (
+    <div className="mb-4">
+      <label className="block text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+        {label}
+      </label>
+      {hint && <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>{hint}</div>}
+      <textarea 
+        value={value} 
+        onChange={e => onChange(e.target.value)} 
+        placeholder={placeholder} 
+        rows={3} 
+        className="w-full px-4 py-3 rounded-xl text-xs font-medium outline-none transition-all resize-y" 
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-color)",
+          color: "var(--text-primary)"
+        }}
+        onFocus={e => e.currentTarget.style.borderColor = "var(--primary)"}
+        onBlur={e => e.currentTarget.style.borderColor = "var(--border-color)"}
+      />
+    </div>
+  );
 }
 
 // ─── Profile View (inline, no nav/sidebar) ───────────────────────────────────
@@ -1165,58 +1243,296 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
   const initials = displayName.split(" ").map((n:string)=>n[0]).join("").toUpperCase().slice(0,2);
   const skills = profile?.skills??[];
   const domains = profile?.interestedDomains??[];
-  if (loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:300,color:"var(--text-muted)"}}>Loading profile…</div>;
+  if (loading) return <div className="flex items-center justify-center min-h-[300px] font-semibold animate-pulse" style={{ color: "var(--text-muted)" }}>Loading profile…</div>;
+
   return (
-    <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.5rem",flexWrap:"wrap",gap:"0.75rem"}}>
-        <div><p style={{fontSize:"0.78rem",color:"var(--primary)",fontWeight:600,marginBottom:2}}>USER PROFILE</p><h1 style={{fontSize:"1.4rem",fontWeight:800,color:"var(--text-primary)",margin:0}}>{displayName}</h1></div>
-        <div style={{display:"flex",gap:"0.6rem"}}>
-          {editMode ? (<><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={()=>setEditMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:600,cursor:"pointer",background:"transparent",border:"1px solid var(--border-color)",color:"var(--text-secondary)"}}><X size={14}/> Cancel</motion.button><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={handleSave} disabled={saving} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000",opacity:saving?0.65:1}}><Save size={14}/> {saving?"Saving…":"Save Changes"}</motion.button></>) : (<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={()=>setEditMode(true)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000"}}><Edit3 size={14}/> Edit Profile</motion.button>)}
+    <div className="space-y-6">
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b" style={{ borderColor: "var(--border-color)" }}>
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--primary)" }}>USER PROFILE</span>
+          <h1 className="text-2xl font-black mt-1" style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}>
+            {displayName}
+          </h1>
+        </div>
+        <div className="flex gap-2.5">
+          {editMode ? (
+            <>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }} 
+                onClick={() => setEditMode(false)} 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer bg-transparent"
+                style={{ borderColor: "var(--border-color)", color: "var(--text-secondary)" }}>
+                <X size={14} /> Cancel
+              </motion.button>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }} 
+                onClick={handleSave} disabled={saving} 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border-none cursor-pointer disabled:opacity-50"
+                style={{ background: "var(--primary)", color: "#000" }}>
+                <Save size={14} /> {saving ? "Saving…" : "Save Changes"}
+              </motion.button>
+            </>
+          ) : (
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }} 
+              onClick={() => setEditMode(true)} 
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border-none cursor-pointer"
+              style={{ background: "var(--primary)", color: "#000" }}>
+              <Edit3 size={14} /> Edit Profile
+            </motion.button>
+          )}
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:"1.2rem",alignItems:"start"}} className="profile-grid">
-        <div>
-          <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.5rem",marginBottom:"1rem",textAlign:"center"}}>
-            <div style={{width:80,height:80,borderRadius:"50%",border:"3px solid var(--primary)",background:"rgba(245,158,11,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"1.8rem",color:"var(--primary)",margin:"0 auto 0.85rem"}}>{initials}</div>
-            <div style={{fontWeight:800,fontSize:"1.05rem",color:"var(--text-primary)",marginBottom:2}}>{displayName}</div>
-            <div style={{fontSize:"0.78rem",color:"var(--text-muted)",marginBottom:"0.4rem"}}>{profile?.user?.email}</div>
-            {profile?.targetRole&&<div style={{fontSize:"0.78rem",color:"var(--primary)",fontWeight:600,marginBottom:"1rem"}}>{profile.targetRole}</div>}
-            <div style={{marginTop:"0.85rem"}}><div style={{display:"flex",justifyContent:"space-between",fontSize:"0.76rem",marginBottom:4}}><span style={{color:"var(--text-secondary)"}}>Profile Completion</span><span style={{color:"var(--primary)",fontWeight:700}}>{completion}%</span></div><ProfileProgressBar value={completion} /></div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
+        {/* Left Side Summary Card */}
+        <div className="space-y-6">
+          <div className="border rounded-3xl p-6 text-center shadow-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+            <div className="relative w-20 h-20 rounded-full border-4 flex items-center justify-center text-2xl font-black shadow-md mb-4 mx-auto cursor-default"
+              style={{ borderColor: "var(--primary)", background: "var(--bg-card-alt)", color: "var(--primary)" }}>
+              {initials}
+            </div>
+            <h2 className="text-base font-extrabold" style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}>
+              {displayName}
+            </h2>
+            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>{profile?.user?.email}</p>
+            {profile?.targetRole && (
+              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm"
+                style={{ background: "var(--bg-card-alt)", color: "var(--primary)", borderColor: "var(--border-color)" }}>
+                {profile.targetRole}
+              </span>
+            )}
+            <div className="border-t pt-4 mt-2" style={{ borderColor: "var(--border-color)" }}>
+              <div className="flex justify-between items-center text-xs font-bold mb-2">
+                <span style={{ color: "var(--text-muted)" }}>Profile Completion</span>
+                <span style={{ color: "var(--primary)" }}>{completion}%</span>
+              </div>
+              <ProfileProgressBar value={completion} />
+            </div>
           </div>
-          <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.1rem",marginBottom:"1rem"}}>
-            <div style={{fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",marginBottom:"0.75rem"}}>Quick Actions</div>
-            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</motion.button>))}
+
+          {/* Quick Actions Panel */}
+          <div className="border rounded-3xl p-5 shadow-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+            <h3 className="text-xs font-black uppercase tracking-wider mb-3.5 px-1" style={{ color: "var(--text-muted)" }}>
+              Quick Actions
+            </h3>
+            <div className="space-y-1.5">
+              {[
+                { label: "Edit Profile", icon: <Edit3 size={14} />, fn: () => setEditMode(true) },
+                { label: "Back to Dashboard", icon: <LayoutDashboard size={14} />, fn: onViewDashboard },
+                { label: "Download Profile", icon: <Download size={14} />, fn: () => setProfileToast("Coming Soon!") },
+                { label: "Add Portfolio Links", icon: <Globe size={14} />, fn: () => setEditMode(true) }
+              ].map(action => (
+                <motion.button 
+                  whileHover={{ scale: 1.02, x: 4 }} 
+                  whileTap={{ scale: 0.97 }} 
+                  transition={{ duration: 0.12 }} 
+                  key={action.label} 
+                  onClick={action.fn} 
+                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all border-none text-xs font-bold cursor-pointer text-left bg-transparent"
+                  style={{ color: "var(--text-secondary)" }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = "var(--primary)";
+                    e.currentTarget.style.background = "var(--bg-card-alt)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = "var(--text-secondary)";
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <span style={{ color: "var(--primary)" }}>{action.icon}</span>
+                  {action.label}
+                </motion.button>
+              ))}
+            </div>
           </div>
         </div>
-        <div>
+
+        {/* Right Side Content Cards */}
+        <div className="space-y-6">
           {!editMode ? (
             <>
-              <SectionCard title="Personal Information" icon={<User size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="Full Name" value={profile?.user?.name} placeholder="Not set"/><FieldRow label="Username" value={profile?.username} placeholder="Not set"/><FieldRow label="Email" value={profile?.user?.email}/><FieldRow label="Phone" value={profile?.phone} placeholder="Not set"/><FieldRow label="Location" value={profile?.location} placeholder="Not set"/></div><FieldRow label="About Me" value={profile?.aboutMe} placeholder="Tell us about yourself..."/></SectionCard>
-              <SectionCard title="Academic Information" icon={<GraduationCap size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="College / University" value={profile?.college} placeholder="Not set"/><FieldRow label="Degree & Branch" value={profile?.degree&&profile?.branch?`${profile.degree} – ${profile.branch}`:(profile?.branch||profile?.degree)} placeholder="Not set"/><FieldRow label="Graduation Year" value={profile?.graduationYear} placeholder="Not set"/></div></SectionCard>
-              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}>
-                <div style={{marginBottom:"1rem"}}><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>Skills</div>{skills.length?<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{skills.map(s=><span key={s} style={{padding:"0.25rem 0.75rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,background:"rgba(245,158,11,0.1)",color:"var(--primary)",border:"1px solid rgba(245,158,11,0.25)"}}>{s}</span>)}</div>:<span style={{fontSize:"0.82rem",color:"var(--text-muted)"}}>No skills added yet</span>}</div>
-                <div><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>Interested Domains</div>{domains.length?<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{domains.map(d=><span key={d} style={{padding:"0.25rem 0.75rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.25)"}}>{d}</span>)}</div>:<span style={{fontSize:"0.82rem",color:"var(--text-muted)"}}>No domains selected yet</span>}</div>
+              <SectionCard title="Personal Information" icon={<User size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                  <FieldRow label="Full Name" value={profile?.user?.name} placeholder="Not set" />
+                  <FieldRow label="Username" value={profile?.username} placeholder="Not set" />
+                  <FieldRow label="Email" value={profile?.user?.email} />
+                  <FieldRow label="Phone" value={profile?.phone} placeholder="Not set" />
+                  <FieldRow label="Location" value={profile?.location} placeholder="Not set" />
+                </div>
+                <FieldRow label="About Me" value={profile?.aboutMe} placeholder="Tell us about yourself..." />
               </SectionCard>
-              <SectionCard title="Career Goals" icon={<Target size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="Target Role" value={profile?.targetRole} placeholder="Not set"/></div><FieldRow label="Career Objective" value={profile?.careerObjective} placeholder="Describe your professional goals..."/></SectionCard>
-              <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="LinkedIn" value={profile?.linkedin} placeholder="Not set"/><FieldRow label="GitHub" value={profile?.github} placeholder="Not set"/><FieldRow label="Portfolio" value={profile?.portfolio} placeholder="Not set"/></div></SectionCard>
-              <SectionCard title="Resume" icon={<FileText size={16}/>}>
-                {profile?.resumeUrl?(<div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.75rem",background:"rgba(245,158,11,0.05)",borderRadius:10,border:"1px solid rgba(245,158,11,0.15)"}}><FileText size={20} style={{color:"var(--primary)",flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:"0.85rem",fontWeight:600,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.resumeName||"Resume"}</div></div><a href={profile.resumeUrl} target="_blank" rel="noreferrer" style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.2)",fontSize:"0.78rem",fontWeight:600,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Download size={12}/> View</a><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={handleRemoveResume} style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(239,68,68,0.1)",color:"#ef4444",border:"1px solid rgba(239,68,68,0.2)",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Trash2 size={12}/> Remove</motion.button></div>):(<div style={{textAlign:"center",padding:"1.5rem"}}><Upload size={28} style={{color:"var(--text-muted)",marginBottom:8}}/><p style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:"0.75rem"}}>No resume uploaded yet</p><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={()=>fileRef.current?.click()} disabled={uploading} style={{padding:"0.5rem 1.2rem",borderRadius:8,background:"var(--primary)",border:"none",color:"#000",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"}}>{uploading?"Uploading…":"Upload Resume"}</motion.button></div>)}
-                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];if(file)handleResume(file);e.target.value="";}}/>
+
+              <SectionCard title="Academic Information" icon={<GraduationCap size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                  <FieldRow label="College / University" value={profile?.college} placeholder="Not set" />
+                  <FieldRow label="Degree & Branch" value={profile?.degree && profile?.branch ? `${profile.degree} – ${profile.branch}` : (profile?.branch || profile?.degree)} placeholder="Not set" />
+                  <FieldRow label="Graduation Year" value={profile?.graduationYear} placeholder="Not set" />
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Skills & Interests" icon={<Star size={16} />}>
+                <div className="mb-5">
+                  <div className="text-[10px] font-black uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+                    Skills
+                  </div>
+                  {skills.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {skills.map(s => (
+                        <span key={s} className="px-3 py-1 rounded-full text-xs font-bold border shadow-sm transition-all hover:scale-105"
+                          style={{ background: "var(--bg-card-alt)", color: "var(--primary)", borderColor: "var(--border-color)" }}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs italic" style={{ color: "var(--text-muted)" }}>No skills added yet</span>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+                    Interested Domains
+                  </div>
+                  {domains.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {domains.map(d => (
+                        <span key={d} className="px-3 py-1 rounded-full text-xs font-bold border shadow-sm transition-all hover:scale-105"
+                          style={{ background: "var(--bg-card-alt)", color: "var(--primary)", borderColor: "var(--border-color)" }}>
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs italic" style={{ color: "var(--text-muted)" }}>No domains selected yet</span>
+                  )}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Career Goals" icon={<Target size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                  <FieldRow label="Target Role" value={profile?.targetRole} placeholder="Not set" />
+                </div>
+                <FieldRow label="Career Objective" value={profile?.careerObjective} placeholder="Describe your professional goals..." />
+              </SectionCard>
+
+              <SectionCard title="Professional Links" icon={<Globe size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                  <FieldRow label="LinkedIn" value={profile?.linkedin} placeholder="Not set" />
+                  <FieldRow label="GitHub" value={profile?.github} placeholder="Not set" />
+                  <FieldRow label="Portfolio" value={profile?.portfolio} placeholder="Not set" />
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Resume" icon={<FileText size={16} />}>
+                {profile?.resumeUrl ? (
+                  <div className="flex items-center gap-3.5 p-4 rounded-2xl border shadow-sm" style={{ background: "var(--bg-card-alt)", borderColor: "var(--border-color)" }}>
+                    <div className="p-3 rounded-xl shrink-0" style={{ background: "var(--bg-card)", color: "var(--primary)" }}>
+                      <FileText size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate" style={{ color: "var(--text-primary)" }}>
+                        {profile.resumeName || "Resume.pdf"}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a href={profile.resumeUrl} target="_blank" rel="noreferrer" 
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-center cursor-pointer transition-all flex items-center gap-1.5 border"
+                        style={{ background: "var(--bg-card)", color: "var(--text-primary)", borderColor: "var(--border-color)" }}>
+                        <Download size={13} /> View
+                      </a>
+                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }} 
+                        onClick={handleRemoveResume} 
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 border-none"
+                        style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444" }}>
+                        <Trash2 size={13} /> Remove
+                      </motion.button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-8 rounded-2xl border border-dashed" style={{ background: "var(--bg-card-alt)", borderColor: "var(--border-color)" }}>
+                    <Upload size={28} className="mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
+                    <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>No resume uploaded yet</p>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }} 
+                      onClick={() => fileRef.current?.click()} disabled={uploading} 
+                      className="px-4.5 py-2.5 rounded-xl border-none text-xs font-bold cursor-pointer disabled:opacity-50 transition-all shadow-md"
+                      style={{ background: "var(--primary)", color: "#000" }}>
+                      {uploading ? "Uploading…" : "Upload Resume"}
+                    </motion.button>
+                  </div>
+                )}
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (file) handleResume(file); e.target.value = ""; }} />
               </SectionCard>
             </>
           ) : (
             <>
-              <SectionCard title="Personal Information" icon={<User size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="Username" value={f.username} onChange={setField("username")} placeholder="@username"/><ProfileFormInput label="Phone" value={f.phone} onChange={setField("phone")} placeholder="+91 XXXXX XXXXX"/><ProfileFormInput label="Location" value={f.location} onChange={setField("location")} placeholder="City, Country"/></div><ProfileFormTextarea label="About Me" value={f.aboutMe} onChange={setField("aboutMe")} placeholder="Tell us about yourself..."/></SectionCard>
-              <SectionCard title="Academic Information" icon={<GraduationCap size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="College / University" value={f.college} onChange={setField("college")} placeholder="e.g. IIT Delhi"/><ProfileFormInput label="Branch / Specialization" value={f.branch} onChange={setField("branch")} placeholder="e.g. CSE"/><ProfileFormInput label="Degree" value={f.degree} onChange={setField("degree")} placeholder="e.g. B.Tech"/><ProfileFormInput label="Graduation Year" value={f.graduationYear} onChange={setField("graduationYear")} placeholder="e.g. 2025"/></div></SectionCard>
-              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}><ProfileFormInput label="Skills" value={f.skills} onChange={setField("skills")} placeholder="Python, React, Machine Learning" hint="Separate with commas"/><div><div style={{fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>Interested Domains</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{DOMAINS.map(d=>{const sel=f.interestedDomains.includes(d);return(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={d} onClick={()=>toggleDomain(d)} style={{padding:"0.3rem 0.8rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,cursor:"pointer",background:sel?"rgba(245,158,11,0.15)":"transparent",color:sel?"var(--primary)":"var(--text-secondary)",border:sel?"1px solid rgba(245,158,11,0.35)":"1px solid var(--border-color)",transition:"all 0.15s"}}>{d}</motion.button>);})}</div></div></SectionCard>
-              <SectionCard title="Career Goals" icon={<Target size={16}/>}><ProfileFormInput label="Target Role" value={f.targetRole} onChange={setField("targetRole")} placeholder="e.g. Full Stack Developer"/><ProfileFormTextarea label="Career Objective" value={f.careerObjective} onChange={setField("careerObjective")} placeholder="Describe your professional goals..."/></SectionCard>
-              <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="LinkedIn" value={f.linkedin} onChange={setField("linkedin")} placeholder="https://linkedin.com/in/..."/><ProfileFormInput label="GitHub" value={f.github} onChange={setField("github")} placeholder="https://github.com/..."/><ProfileFormInput label="Portfolio" value={f.portfolio} onChange={setField("portfolio")} placeholder="https://yoursite.com"/></div></SectionCard>
+              <SectionCard title="Personal Information" icon={<User size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <ProfileFormInput label="Username" value={f.username} onChange={setField("username")} placeholder="@username" />
+                  <ProfileFormInput label="Phone" value={f.phone} onChange={setField("phone")} placeholder="+91 XXXXX XXXXX" />
+                  <ProfileFormInput label="Location" value={f.location} onChange={setField("location")} placeholder="City, Country" />
+                </div>
+                <ProfileFormTextarea label="About Me" value={f.aboutMe} onChange={setField("aboutMe")} placeholder="Tell us about yourself..." />
+              </SectionCard>
+
+              <SectionCard title="Academic Information" icon={<GraduationCap size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <ProfileFormInput label="College / University" value={f.college} onChange={setField("college")} placeholder="e.g. IIT Delhi" />
+                  <ProfileFormInput label="Branch / Specialization" value={f.branch} onChange={setField("branch")} placeholder="e.g. CSE" />
+                  <ProfileFormInput label="Degree" value={f.degree} onChange={setField("degree")} placeholder="e.g. B.Tech" />
+                  <ProfileFormInput label="Graduation Year" value={f.graduationYear} onChange={setField("graduationYear")} placeholder="e.g. 2025" />
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Skills & Interests" icon={<Star size={16} />}>
+                <ProfileFormInput label="Skills" value={f.skills} onChange={setField("skills")} placeholder="Python, React, Machine Learning" hint="Separate with commas" />
+                <div className="mt-4">
+                  <label className="block text-[10px] font-black uppercase tracking-wider mb-2.5" style={{ color: "var(--text-secondary)" }}>
+                    Interested Domains
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {DOMAINS.map(d => {
+                      const sel = f.interestedDomains.includes(d);
+                      return (
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }} 
+                          whileTap={{ scale: 0.97 }} 
+                          transition={{ duration: 0.12 }} 
+                          key={d} 
+                          type="button"
+                          onClick={() => toggleDomain(d)} 
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border transition-all duration-200",
+                            sel ? "" : "bg-transparent"
+                          )}
+                          style={{
+                            background: sel ? "var(--bg-card-alt)" : "transparent",
+                            color: sel ? "var(--primary)" : "var(--text-secondary)",
+                            borderColor: sel ? "var(--primary)" : "var(--border-color)"
+                          }}
+                        >
+                          {d}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Career Goals" icon={<Target size={16} />}>
+                <ProfileFormInput label="Target Role" value={f.targetRole} onChange={setField("targetRole")} placeholder="e.g. Full Stack Developer" />
+                <ProfileFormTextarea label="Career Objective" value={f.careerObjective} onChange={setField("careerObjective")} placeholder="Describe your professional goals..." />
+              </SectionCard>
+
+              <SectionCard title="Professional Links" icon={<Globe size={16} />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <ProfileFormInput label="LinkedIn" value={f.linkedin} onChange={setField("linkedin")} placeholder="https://linkedin.com/in/..." />
+                  <ProfileFormInput label="GitHub" value={f.github} onChange={setField("github")} placeholder="https://github.com/..." />
+                  <ProfileFormInput label="Portfolio" value={f.portfolio} onChange={setField("portfolio")} placeholder="https://yoursite.com" />
+                </div>
+              </SectionCard>
             </>
           )}
         </div>
       </div>
-      {profileToast && <Toast message={profileToast} onClose={()=>setProfileToast("")} />}
-      <style>{`.profile-grid { grid-template-columns: 280px 1fr; } @media(max-width:768px){.profile-grid{grid-template-columns:1fr!important;}}`}</style>
+      {profileToast && <Toast message={profileToast} onClose={() => setProfileToast("")} />}
     </div>
   );
 }
