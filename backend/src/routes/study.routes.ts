@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
-import { generateJSON, MODELS } from "../lib/ai/openrouter";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
 import multer from "multer";
 const { PDFParse } = require("pdf-parse");
@@ -24,6 +24,28 @@ function escapeXml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+const genAI = new GoogleGenerativeAI(env.geminiApiKey);
+
+async function geminiJsonCall<T>(systemPrompt: string, userPrompt: string, maxOutputTokens: number): Promise<T | null> {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: systemPrompt,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.7,
+        maxOutputTokens,
+      },
+    });
+    const result = await model.generateContent(userPrompt);
+    const text = result.response.text();
+    return JSON.parse(text) as T;
+  } catch (err: any) {
+    console.error("[Gemini JSON Call] Error:", err?.message || err);
+    return null;
+  }
 }
 
 export const studyRouter = Router();
@@ -100,12 +122,167 @@ studyRouter.post("/chat", async (req, res) => {
   }
 });
 
-// Analyze uploaded document using Gemini - returns structured summary
+// ─── Two-Phase Document Analysis ─────────────────────────────────────────────
+// Phase 1: Extract document structure (title, stats, insights, topic list)
+// Phase 2: Generate detailed analysis per topic with relevant excerpts
+
+interface TopicSummary {
+  name: string;
+  summary: string;
+}
+
+interface TopicDetail {
+  name: string;
+  overview: string;
+  subtopics: Array<{ name: string; content: string }>;
+  keyConcepts: string[];
+  importantPoints: string[];
+  questions: string[];
+  quickRevision: string;
+  keywords: string[];
+}
+
+/** Find the most relevant 40K-char excerpt for a topic from the document text */
+function findRelevantExcerpt(documentText: string, topicName: string, topicSummary: string): string {
+  const excerptBudget = 40000;
+  if (documentText.length <= excerptBudget) return documentText;
+
+  const searchText = `${topicName} ${topicSummary}`.toLowerCase();
+  const keywords = searchText.split(/\s+/).filter(w => w.length > 3);
+
+  let bestScore = 0;
+  let bestStart = 0;
+  const windowSize = excerptBudget;
+  const step = 5000;
+
+  for (let i = 0; i <= documentText.length - windowSize; i += step) {
+    const window = documentText.substring(i, i + windowSize).toLowerCase();
+    let score = 0;
+    for (const kw of keywords) {
+      const matches = window.split(kw).length - 1;
+      score += matches;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestStart = i;
+    }
+  }
+
+  return documentText.substring(bestStart, bestStart + windowSize);
+}
+
+/** Phase 1: Extract document structure — title, stats, insights, topic list with brief summaries */
+async function extractDocumentStructure(documentText: string): Promise<{
+  title: string;
+  stats: { pages: number; words: number; topicsFound: number; readingTime: string; summaryLength: string };
+  insights: { mainSubject: string; difficultyLevel: string; estimatedStudyTime: string; importantChapters: string[]; repeatedTopics: string[] };
+  topics: TopicSummary[];
+} | null> {
+  const truncated = documentText.slice(0, 120000);
+  const wordCount = truncated.split(/\s+/).length;
+
+  const prompt = `Analyze the following document text. Extract the document metadata and identify the 3-6 major topics.
+
+Document Text:
+"""
+${truncated}
+"""
+
+Return a JSON object:
+{
+  "title": "document title or main subject name",
+  "stats": {
+    "pages": ${Math.max(1, Math.round(wordCount / 300))},
+    "words": ${wordCount},
+    "topicsFound": <number of topics you found>,
+    "readingTime": "<estimated reading time>",
+    "summaryLength": "Detailed"
+  },
+  "insights": {
+    "mainSubject": "the primary subject of this document",
+    "difficultyLevel": "Beginner|Intermediate|Advanced",
+    "estimatedStudyTime": "<time to study all topics>",
+    "importantChapters": ["list of key sections or chapters"],
+    "repeatedTopics": ["topics that appear multiple times"]
+  },
+  "topics": [
+    {
+      "name": "topic name",
+      "summary": "2-3 sentence summary of what this topic covers in the document"
+    }
+  ]
+}
+
+Rules:
+- Extract 3-6 major topics, ordered by importance
+- Each topic name should be concise (3-8 words)
+- Each summary should be 2-3 sentences describing what the document says about this topic
+- title should be specific to the document content, not generic
+- Return ONLY valid JSON`;
+
+  return geminiJsonCall(
+    "You are an expert document analyst. Extract document structure and identify major topics. Return ONLY valid JSON.",
+    prompt,
+    4096
+  );
+}
+
+/** Phase 2: Analyze a single topic in detail using a relevant document excerpt */
+async function analyzeTopicDetail(
+  documentText: string,
+  topicName: string,
+  topicSummary: string,
+  mainSubject: string
+): Promise<TopicDetail | null> {
+  const excerpt = findRelevantExcerpt(documentText, topicName, topicSummary);
+
+  const prompt = `You are an expert academic tutor. Provide a detailed analysis of the topic "${topicName}" based on the document excerpt below.
+
+Main subject of the document: ${mainSubject}
+
+Topic summary from document: ${topicSummary}
+
+Document excerpt (most relevant section):
+"""
+${excerpt}
+"""
+
+Return a JSON object:
+{
+  "overview": "400-600 word detailed explanation of this topic as covered in the document. Write as a thorough educational overview that connects this topic to the document's main subject: ${mainSubject}. Be specific and reference concrete details from the document.",
+  "subtopics": [
+    { "name": "subtopic name", "content": "200-300 word explanation of this subtopic with concrete details" }
+  ],
+  "keyConcepts": ["concept explained in 1-2 sentences"],
+  "importantPoints": ["specific important point from the document"],
+  "questions": ["exam-style question testing understanding"],
+  "quickRevision": "3-5 sentence summary capturing the essence of this topic",
+  "keywords": ["key term"]
+}
+
+Rules:
+- overview MUST be 400-600 words, specific to the document content, not generic
+- Include 3-5 subtopics, each 200-300 words with concrete details
+- Include 5-8 keyConcepts, each a meaningful 1-2 sentence explanation
+- Include 5-8 importantPoints with specific details from the document
+- Include 5+ exam-style questions
+- quickRevision: 3-5 sentences summarizing the topic
+- Include 5-8 keywords
+- Write everything in context of the document's main subject: ${mainSubject}
+- Return ONLY valid JSON`;
+
+  return geminiJsonCall<TopicDetail>(
+    `You are an expert academic tutor analyzing the topic "${topicName}" from a document about ${mainSubject}. Provide detailed, specific analysis. Return ONLY valid JSON.`,
+    prompt,
+    8192
+  );
+}
+
+// Analyze uploaded document — two-phase approach for reliable, detailed summaries
 studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
   try {
     let documentText = req.body.documentText as string | undefined;
 
-    // If a file was uploaded, extract text from it
     if (!documentText && req.file) {
       documentText = await extractTextFromFile(req.file);
     }
@@ -115,94 +292,87 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
     }
 
     const wordCount = documentText.split(/\s+/).length;
-    const prompt = `You are an expert academic tutor. Analyze the following document and produce a comprehensive, topic-focused JSON summary. Every topic must be explained in the context of the document's main subject.
 
-Document Text:
-"""
-${documentText.slice(0, 200000)}
-"""
+    // ── Phase 1: Extract document structure ──
+    console.log("[Study Analyze] Phase 1: Extracting document structure...");
+    const structure = await extractDocumentStructure(documentText);
 
-Return a JSON object with this exact structure:
-{
-  "title": "Document title or subject",
-  "stats": { "pages": number, "words": number, "topicsFound": number, "readingTime": string, "summaryLength": string },
-  "insights": { "mainSubject": string, "difficultyLevel": string, "estimatedStudyTime": string, "importantChapters": [string], "repeatedTopics": [string] },
-  "topics": [
-    {
-      "name": string,
-      "overview": string (very detailed, at least 400-600 words, written as a thorough explanation of this topic within the context of the document's subject),
-      "subtopics": [
-        {
-          "name": string,
-          "content": string (detailed explanation of this subtopic, at least 200-300 words, connecting it back to the main topic)
-        }
-      ] (at least 3-5 subtopics per topic),
-      "keyConcepts": [string] (at least 5-8 concepts, each explained in 1-2 sentences),
-      "importantPoints": [string] (at least 5-10 important points),
-      "questions": [string] (at least 5 exam-style questions that test understanding),
-      "quickRevision": string (a concise 3-5 sentence revision summary of this topic),
-      "keywords": [string] (at least 5-8 key terms)
-    }
-  ]
-}
-
-CRITICAL INSTRUCTIONS:
-- Extract 5-8 major topics. Each topic must be explained thoroughly in the context of "${wordCount > 5000 ? "this substantial document" : "this document"}".
-- Each overview MUST be 400-600 words, explaining the topic deeply and connecting it to the document's main subject. Do NOT be brief or generic.
-- Each subtopic MUST be 200-300 words with concrete details from the document.
-- Include 5-8 keyConcepts per topic, each with a meaningful 1-2 sentence explanation.
-- Include 5-10 importantPoints per topic with specific details.
-- Include 5+ exam-style questions per topic that test real understanding.
-- quickRevision must be a concise summary capturing the essence of the topic.
-- Return ONLY valid JSON. No markdown, no code fences, no commentary.`;
-
-    let analysis: any = await generateJSON(
-      "You are an expert academic tutor. Analyze the provided document thoroughly and return a detailed structured JSON summary. Focus on explaining each topic in the context of the document's main subject. Provide comprehensive overviews, detailed subtopics, and meaningful practice questions.",
-      prompt,
-      { model: "google/gemini-2.5-flash", maxTokens: 16384, responseFormat: { type: "json_object" } },
-      null
-    );
-
-    if (!analysis) {
-      analysis = await generateJSON(
-        "You are an expert academic tutor. Analyze the provided document thoroughly and return a detailed structured JSON summary. Focus on explaining each topic in the context of the document's main subject. Provide comprehensive overviews, detailed subtopics, and meaningful practice questions.",
-        prompt,
-        { model: MODELS.FAST, maxTokens: 16384, responseFormat: { type: "json_object" } },
-        null
-      );
-    }
-
-    if (!analysis) {
-      analysis = {
+    if (!structure || !structure.topics || structure.topics.length === 0) {
+      // Fallback: create minimal structure from raw text
+      const fallbackAnalysis = {
         title: "Document Analysis",
-        stats: { pages: 1, words: documentText.split(/\s+/).length, topicsFound: 3, readingTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, summaryLength: "Complete" },
-        insights: { mainSubject: "Study Material", difficultyLevel: "Intermediate", estimatedStudyTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, importantChapters: ["Chapter 1"], repeatedTopics: [] },
-        topics: [
-          { 
-            name: "Main Content", 
-            overview: documentText.slice(0, 1500) + "...", 
-            subtopics: [
-              { name: "Document Overview", content: "General contents and structural layout extracted from the document." },
-              { name: "Key Sections", content: "Key educational units and chapters identified for studying." }
-            ],
-            keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples provided"], 
-            importantPoints: ["Read through each section carefully", "Take notes on important definitions", "Review examples and case studies"], 
-            questions: ["What are the main themes covered in this document?", "Explain the key concepts in your own words.", "How do the different sections relate to each other?", "What practical applications can you derive from the content?", "Summarize the document in 3-5 sentences."], 
-            quickRevision: "This document covers important academic content. Review each section systematically and practice with the provided questions to reinforce understanding.", 
-            keywords: documentText.split(/\s+/).filter(w => w.length > 1 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 20) 
-          }
-        ]
+        stats: { pages: Math.max(1, Math.round(wordCount / 300)), words: wordCount, topicsFound: 1, readingTime: `${Math.max(1, Math.round(wordCount / 200))} min`, summaryLength: "Complete" },
+        insights: { mainSubject: "Study Material", difficultyLevel: "Intermediate", estimatedStudyTime: `${Math.max(1, Math.round(wordCount / 200))} min`, importantChapters: [], repeatedTopics: [] },
+        topics: [{
+          name: "Document Content",
+          overview: documentText.slice(0, 2000),
+          subtopics: [{ name: "Overview", content: documentText.slice(0, 1000) }],
+          keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples"],
+          importantPoints: ["Read through each section carefully", "Take notes on important definitions"],
+          questions: ["What are the main themes?", "Explain the key concepts.", "How do sections relate?"],
+          quickRevision: "This document covers important academic content. Review systematically.",
+          keywords: documentText.split(/\s+/).filter(w => w.length > 3 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 15),
+        }],
       };
+      return res.json({ success: true, analysis: fallbackAnalysis });
     }
+
+    console.log(`[Study Analyze] Phase 1 complete: found ${structure.topics.length} topics`);
+
+    // ── Phase 2: Generate detailed analysis for each topic (3 at a time) ──
+    console.log("[Study Analyze] Phase 2: Generating detailed topic analysis...");
+    const mainSubject = structure.insights?.mainSubject || structure.title;
+    const maxTopics = Math.min(structure.topics.length, 6);
+    const topicsToAnalyze = structure.topics.slice(0, maxTopics);
+    const concurrency = 3;
+
+    const detailedTopics: TopicDetail[] = [];
+    for (let i = 0; i < topicsToAnalyze.length; i += concurrency) {
+      const batch = topicsToAnalyze.slice(i, i + concurrency);
+      const results = await Promise.all(
+        batch.map(t => analyzeTopicDetail(documentText, t.name, t.summary, mainSubject).catch(err => {
+          console.error(`[Study Analyze] Phase 2 failed for topic "${t.name}":`, err);
+          return null;
+        }))
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        if (results[j]) {
+          detailedTopics.push(results[j]!);
+        } else {
+          // Graceful degradation: use Phase 1 summary as the overview
+          const t = batch[j];
+          detailedTopics.push({
+            name: t.name,
+            overview: t.summary,
+            subtopics: [],
+            keyConcepts: [],
+            importantPoints: [],
+            questions: [],
+            quickRevision: t.summary,
+            keywords: [],
+          });
+        }
+      }
+    }
+
+    console.log(`[Study Analyze] Phase 2 complete: ${detailedTopics.length} topics analyzed`);
+
+    // ── Combine results ──
+    const analysis = {
+      title: structure.title,
+      stats: structure.stats,
+      insights: structure.insights,
+      topics: detailedTopics,
+    };
 
     const userPrisma = await getUserPrismaFromRequest(req);
-    // Track Streak Activity
     StreakService.trackActivity(
       req.user!.userId,
       "GENERATE_SUMMARY",
       "study_assistant",
       null,
-      15, // 15 points
+      15,
       getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
