@@ -70,8 +70,8 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
           height: 600,
           background: isDark
             ? "radial-gradient(circle, rgba(245,158,11,0.3) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)",
-          opacity: isDark ? 0.2 : 0.35,
+            : "radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)",
+          opacity: isDark ? 0.2 : 0.4,
           top: "-10%",
           left: "-5%",
         }}
@@ -91,8 +91,8 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
           height: 500,
           background: isDark
             ? "radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)",
-          opacity: isDark ? 0.15 : 0.3,
+            : "radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)",
+          opacity: isDark ? 0.15 : 0.35,
           bottom: "10%",
           right: "5%",
         }}
@@ -112,8 +112,8 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
           height: 400,
           background: isDark
             ? "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)",
-          opacity: isDark ? 0.1 : 0.25,
+            : "radial-gradient(circle, rgba(139,92,246,0.03) 0%, transparent 70%)",
+          opacity: isDark ? 0.1 : 0.3,
           top: "40%",
           left: "40%",
         }}
@@ -134,14 +134,18 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
             height: p.size,
             left: `${p.x}%`,
             top: `${p.y}%`,
-            background: p.color,
-            opacity: p.opacity,
+            background: isDark ? p.darkColor : p.lightColor,
+            opacity: isDark ? p.darkOpacity : p.lightOpacity,
             filter: "blur(0.5px)",
           }}
           animate={{
             y: [0, -p.drift, 0],
             x: [0, p.driftX, 0],
-            opacity: [p.opacity, p.opacity * 1.5, p.opacity],
+            opacity: [
+              isDark ? p.darkOpacity : p.lightOpacity,
+              (isDark ? p.darkOpacity : p.lightOpacity) * 1.5,
+              isDark ? p.darkOpacity : p.lightOpacity,
+            ],
           }}
           transition={{
             duration: p.duration,
@@ -162,8 +166,10 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
           y: springY,
           translateX: "-50%",
           translateY: "-50%",
-          background: "radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)",
-          opacity: 0.8,
+          background: isDark
+            ? "radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(245,158,11,0.03) 0%, transparent 70%)",
+          opacity: isDark ? 0.8 : 0.6,
         }}
       />
 
@@ -183,16 +189,16 @@ export function ChatBackground({ isDark }: ChatBackgroundProps) {
 // ─── Pre-generated particles for consistent SSR ──────────────────────────────
 
 const PARTICLES = [
-  { x: 10, y: 20, size: 3, opacity: 0.4, color: "rgba(245,158,11,0.6)", drift: 30, driftX: 15, duration: 8, delay: 0 },
-  { x: 85, y: 15, size: 2, opacity: 0.3, color: "rgba(59,130,246,0.6)", drift: 25, driftX: -10, duration: 10, delay: 1 },
-  { x: 25, y: 70, size: 4, opacity: 0.2, color: "rgba(245,158,11,0.4)", drift: 20, driftX: 20, duration: 12, delay: 2 },
-  { x: 70, y: 60, size: 2, opacity: 0.35, color: "rgba(139,92,246,0.5)", drift: 35, driftX: -15, duration: 9, delay: 0.5 },
-  { x: 50, y: 85, size: 3, opacity: 0.25, color: "rgba(59,130,246,0.5)", drift: 28, driftX: 10, duration: 11, delay: 3 },
-  { x: 90, y: 45, size: 2, opacity: 0.4, color: "rgba(245,158,11,0.5)", drift: 22, driftX: -20, duration: 7, delay: 1.5 },
-  { x: 15, y: 55, size: 2, opacity: 0.3, color: "rgba(139,92,246,0.4)", drift: 40, driftX: 5, duration: 14, delay: 4 },
-  { x: 60, y: 30, size: 3, opacity: 0.2, color: "rgba(245,158,11,0.3)", drift: 18, driftX: 12, duration: 13, delay: 2.5 },
-  { x: 35, y: 40, size: 2, opacity: 0.45, color: "rgba(59,130,246,0.4)", drift: 32, driftX: -8, duration: 8.5, delay: 0.8 },
-  { x: 78, y: 80, size: 4, opacity: 0.15, color: "rgba(245,158,11,0.3)", drift: 15, driftX: 25, duration: 16, delay: 5 },
-  { x: 5, y: 90, size: 2, opacity: 0.3, color: "rgba(139,92,246,0.5)", drift: 26, driftX: -18, duration: 9.5, delay: 1.2 },
-  { x: 95, y: 75, size: 3, opacity: 0.25, color: "rgba(59,130,246,0.4)", drift: 38, driftX: 8, duration: 11.5, delay: 3.5 },
+  { x: 10, y: 20, size: 3, darkColor: "#f59e0b", lightColor: "#d97706", darkOpacity: 0.4, lightOpacity: 0.08, drift: 30, driftX: 15, duration: 8, delay: 0 },
+  { x: 85, y: 15, size: 2, darkColor: "#3b82f6", lightColor: "#2563eb", darkOpacity: 0.3, lightOpacity: 0.06, drift: 25, driftX: -10, duration: 10, delay: 1 },
+  { x: 25, y: 70, size: 4, darkColor: "#f59e0b", lightColor: "#b45309", darkOpacity: 0.2, lightOpacity: 0.05, drift: 20, driftX: 20, duration: 12, delay: 2 },
+  { x: 70, y: 60, size: 2, darkColor: "#8b5cf6", lightColor: "#7c3aed", darkOpacity: 0.35, lightOpacity: 0.07, drift: 35, driftX: -15, duration: 9, delay: 0.5 },
+  { x: 50, y: 85, size: 3, darkColor: "#3b82f6", lightColor: "#1d4ed8", darkOpacity: 0.25, lightOpacity: 0.05, drift: 28, driftX: 10, duration: 11, delay: 3 },
+  { x: 90, y: 45, size: 2, darkColor: "#f59e0b", lightColor: "#d97706", darkOpacity: 0.4, lightOpacity: 0.08, drift: 22, driftX: -20, duration: 7, delay: 1.5 },
+  { x: 15, y: 55, size: 2, darkColor: "#8b5cf6", lightColor: "#6d28d9", darkOpacity: 0.3, lightOpacity: 0.06, drift: 40, driftX: 5, duration: 14, delay: 4 },
+  { x: 60, y: 30, size: 3, darkColor: "#f59e0b", lightColor: "#b45309", darkOpacity: 0.2, lightOpacity: 0.04, drift: 18, driftX: 12, duration: 13, delay: 2.5 },
+  { x: 35, y: 40, size: 2, darkColor: "#3b82f6", lightColor: "#2563eb", darkOpacity: 0.45, lightOpacity: 0.09, drift: 32, driftX: -8, duration: 8.5, delay: 0.8 },
+  { x: 78, y: 80, size: 4, darkColor: "#f59e0b", lightColor: "#92400e", darkOpacity: 0.15, lightOpacity: 0.03, drift: 15, driftX: 25, duration: 16, delay: 5 },
+  { x: 5, y: 90, size: 2, darkColor: "#8b5cf6", lightColor: "#5b21b6", darkOpacity: 0.3, lightOpacity: 0.06, drift: 26, driftX: -18, duration: 9.5, delay: 1.2 },
+  { x: 95, y: 75, size: 3, darkColor: "#3b82f6", lightColor: "#1e40af", darkOpacity: 0.25, lightOpacity: 0.05, drift: 38, driftX: 8, duration: 11.5, delay: 3.5 },
 ];
