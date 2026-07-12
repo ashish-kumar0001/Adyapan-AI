@@ -945,7 +945,7 @@ function StatCard({
           {trend}
         </span>
       </div>
-      <div className="text-xl font-extrabold text-slate-800 dark:text-gray-150 leading-none mb-1">
+      <div className="text-xl font-extrabold text-slate-800 dark:text-gray-200 leading-none mb-1">
         {value}
       </div>
       <div className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
@@ -959,7 +959,7 @@ function StatCard({
 function PanelCard({ title, children, flagStyle }: { title: string; children: React.ReactNode; flagStyle?: boolean }) {
   return (
     <PremiumCard glow={true} variant={flagStyle ? "bordered" : "glass"} className="p-5 h-full">
-      <h3 className="text-xs font-bold text-slate-850 dark:text-gray-150 uppercase tracking-wider mb-4">
+      <h3 className="text-xs font-bold text-slate-800 dark:text-gray-200 uppercase tracking-wider mb-4">
         {title}
       </h3>
       {children}
@@ -976,7 +976,7 @@ function ProgressBar({ value, color = "var(--primary)", height = 5 }: { value: n
 function CompactItem({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
     <div className="flex justify-between items-center text-xs py-2 border-b border-black/5 dark:border-white/5 last:border-0 last:pb-0">
-      <span className="text-slate-500 dark:text-gray-450">{label}</span>
+      <span className="text-slate-500 dark:text-gray-400">{label}</span>
       <strong className={cn("font-semibold", highlight ? "text-amber-500" : "text-slate-800 dark:text-gray-100")}>{value}</strong>
     </div>
   );
@@ -1953,7 +1953,7 @@ function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreC
             <Zap size={14} className="animate-pulse" />
             AI Daily Briefing
           </h4>
-          <p className="text-xs text-slate-800 dark:text-gray-150 leading-relaxed font-medium">
+          <p className="text-xs text-slate-800 dark:text-gray-200 leading-relaxed font-medium">
             {typedText}
           </p>
         </div>
@@ -2030,7 +2030,7 @@ function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { r
                     {rec.priority}
                   </PremiumBadge>
                 </div>
-                <h4 className="text-xs font-bold text-slate-850 dark:text-gray-150 mb-1 group-hover:text-amber-500 transition-colors">
+                <h4 className="text-xs font-bold text-slate-800 dark:text-gray-200 mb-1 group-hover:text-amber-500 transition-colors">
                   {rec.topicName}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-gray-400 leading-normal">

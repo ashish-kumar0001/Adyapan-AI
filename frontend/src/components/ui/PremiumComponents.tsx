@@ -589,7 +589,7 @@ export function EmptyState({
         <div className="absolute top-0 left-0 w-2 h-2 bg-amber-500 rounded-full blur-[2px] animate-ping opacity-35" />
       </div>
 
-      <h4 className="text-sm font-bold text-slate-800 dark:text-gray-155 mb-1.5">{title}</h4>
+      <h4 className="text-sm font-bold text-slate-800 dark:text-gray-200 mb-1.5">{title}</h4>
       <p className="text-[11px] text-slate-500 dark:text-gray-400 max-w-xs leading-relaxed mb-6">{description}</p>
 
       {actionLabel && onAction && (
@@ -679,7 +679,7 @@ export function ErrorState({
         <AlertTriangle size={18} />
       </div>
       <div className="flex-1 text-center sm:text-left space-y-1.5">
-        <h4 className="text-xs font-bold text-slate-800 dark:text-gray-150">{title}</h4>
+        <h4 className="text-xs font-bold text-slate-800 dark:text-gray-200">{title}</h4>
         <p className="text-[11px] leading-relaxed text-slate-500 dark:text-gray-400">{description}</p>
         {onRetry && (
           <button

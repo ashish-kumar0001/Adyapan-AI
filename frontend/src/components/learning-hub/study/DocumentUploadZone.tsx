@@ -94,7 +94,7 @@ export function DocumentUploadZone({ c, isDragging, onDragOver, onDragLeave, onD
                 </div>
                 <div>
                   <span className="text-[9px] font-black uppercase tracking-widest block text-amber-500">Step {item.step}</span>
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-gray-150">{item.title}</h4>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-gray-200">{item.title}</h4>
                 </div>
               </div>
               <p className="text-xs leading-relaxed text-slate-500 dark:text-gray-400">{item.desc}</p>
@@ -110,7 +110,7 @@ export function DocumentUploadZone({ c, isDragging, onDragOver, onDragLeave, onD
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {["Topic Detection", "AI Summary", "Key Points", "Quick Revision", "Smart Search", "Multi-format Support", "Copy Summary", "Export PDF", "Export DOCX"].map((feat, i) => (
-            <div key={feat} className="flex items-center gap-2 text-xs text-slate-600 dark:text-gray-450 font-medium">
+            <div key={feat} className="flex items-center gap-2 text-xs text-slate-600 dark:text-gray-400 font-medium">
               <CheckCircle2 size={13} style={{ color: c.amber }} className="shrink-0" />
               <span>{feat}</span>
             </div>
