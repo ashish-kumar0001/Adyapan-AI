@@ -28,24 +28,62 @@ function escapeXml(text: string): string {
 
 const genAI = new GoogleGenerativeAI(env.geminiApiKey);
 
-async function geminiJsonCall<T>(systemPrompt: string, userPrompt: string, maxOutputTokens: number): Promise<T | null> {
-  try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: systemPrompt,
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.7,
-        maxOutputTokens,
-      },
-    });
-    const result = await model.generateContent(userPrompt);
-    const text = result.response.text();
-    return JSON.parse(text) as T;
-  } catch (err: any) {
-    console.error("[Gemini JSON Call] Error:", err?.message || err);
+/** Clean garbled PDF text: fix broken words, collapse whitespace, remove artifacts */
+function cleanExtractedText(text: string): string {
+  let cleaned = text
+    // Fix broken words: "D a t a S t r u c t u r e s" → "Data Structures"
+    .replace(/(?:^|\s)([a-zA-Z](?: [a-zA-Z]){2,})/g, (_match, group: string) => {
+      const joined = group.replace(/\s+/g, "");
+      if (joined.length < 30) return " " + joined;
+      return " " + group;
+    })
+    // Collapse multiple spaces/newlines
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    // Remove common PDF artifacts
+    .replace(/^--?\s*\d+\s+of\s+\d+\s*--?\s*$/gm, "")
+    .replace(/^\s*\d+\s+of\s+\d+\s*$/gm, "")
+    .trim();
+  return cleaned;
+}
+
+async function geminiJsonCall<T>(systemPrompt: string, userPrompt: string, maxOutputTokens: number, retries = 2): Promise<T | null> {
+  if (!env.geminiApiKey) {
+    console.error("[Gemini JSON Call] GEMINI_API_KEY is not configured");
     return null;
   }
+
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[Gemini JSON Call] Attempt ${attempt}/${retries}, maxTokens=${maxOutputTokens}`);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: systemPrompt,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+          maxOutputTokens,
+        },
+      });
+      const result = await model.generateContent(userPrompt);
+      const text = result.response.text();
+      if (!text || text.trim().length === 0) {
+        throw new Error("Gemini returned empty response");
+      }
+      const parsed = JSON.parse(text) as T;
+      console.log(`[Gemini JSON Call] Success on attempt ${attempt}`);
+      return parsed;
+    } catch (err: any) {
+      lastError = err;
+      console.error(`[Gemini JSON Call] Attempt ${attempt} failed:`, err?.message || err);
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+    }
+  }
+  console.error(`[Gemini JSON Call] All ${retries} attempts failed. Last error:`, lastError?.message);
+  return null;
 }
 
 export const studyRouter = Router();
@@ -54,19 +92,21 @@ studyRouter.use(requireAuth);
 
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
+  let rawText: string;
   if (mimeType === "application/pdf") {
     const pdf = new PDFParse({ data: file.buffer });
     const result = await pdf.getText();
-    return result.text;
+    rawText = result.text;
   } else if (
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     mimeType === "application/msword"
   ) {
     const parsed = await mammoth.extractRawText({ buffer: file.buffer });
-    return parsed.value;
+    rawText = parsed.value;
   } else {
-    return file.buffer.toString("utf-8");
+    rawText = file.buffer.toString("utf-8");
   }
+  return cleanExtractedText(rawText);
 }
 
 studyRouter.post("/upload", async (req, res) => {
@@ -291,33 +331,47 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
       return res.status(400).json({ error: "Document text or file is required" });
     }
 
+    // Clean text from request body too (for pasted text)
+    if (req.body.documentText) {
+      documentText = cleanExtractedText(documentText);
+    }
+
     const wordCount = documentText.split(/\s+/).length;
+    const readingTime = `${Math.max(1, Math.round(wordCount / 200))} min`;
 
     // ── Phase 1: Extract document structure ──
-    console.log("[Study Analyze] Phase 1: Extracting document structure...");
+    console.log(`[Study Analyze] Phase 1: Extracting structure from ${wordCount} words...`);
     const structure = await extractDocumentStructure(documentText);
 
     if (!structure || !structure.topics || structure.topics.length === 0) {
-      // Fallback: create minimal structure from raw text
+      console.log("[Study Analyze] Phase 1 returned no structure, using heuristic fallback");
+      // Heuristic fallback: split text into rough topic blocks
+      const paragraphs = documentText.split(/\n\s*\n/).filter(p => p.trim().length > 50);
+      const title = paragraphs[0]?.trim().slice(0, 120) || "Document Analysis";
+      const overview = paragraphs.slice(0, 5).join("\n\n").slice(0, 3000);
+
       const fallbackAnalysis = {
-        title: "Document Analysis",
-        stats: { pages: Math.max(1, Math.round(wordCount / 300)), words: wordCount, topicsFound: 1, readingTime: `${Math.max(1, Math.round(wordCount / 200))} min`, summaryLength: "Complete" },
-        insights: { mainSubject: "Study Material", difficultyLevel: "Intermediate", estimatedStudyTime: `${Math.max(1, Math.round(wordCount / 200))} min`, importantChapters: [], repeatedTopics: [] },
+        title,
+        stats: { pages: Math.max(1, Math.round(wordCount / 300)), words: wordCount, topicsFound: Math.max(1, paragraphs.length), readingTime, summaryLength: "Complete" },
+        insights: { mainSubject: title, difficultyLevel: "Intermediate", estimatedStudyTime: readingTime, importantChapters: [], repeatedTopics: [] },
         topics: [{
-          name: "Document Content",
-          overview: documentText.slice(0, 2000),
-          subtopics: [{ name: "Overview", content: documentText.slice(0, 1000) }],
-          keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples"],
-          importantPoints: ["Read through each section carefully", "Take notes on important definitions"],
-          questions: ["What are the main themes?", "Explain the key concepts.", "How do sections relate?"],
-          quickRevision: "This document covers important academic content. Review systematically.",
-          keywords: documentText.split(/\s+/).filter(w => w.length > 3 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 15),
+          name: title.slice(0, 60),
+          overview,
+          subtopics: paragraphs.slice(1, 4).map((p, i) => ({
+            name: `Section ${i + 1}`,
+            content: p.trim().slice(0, 500),
+          })).filter(s => s.content.length > 20),
+          keyConcepts: [],
+          importantPoints: [],
+          questions: [],
+          quickRevision: overview.slice(0, 500),
+          keywords: documentText.split(/\s+/).filter(w => w.length > 4 && /^[A-Z]/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 15),
         }],
       };
       return res.json({ success: true, analysis: fallbackAnalysis });
     }
 
-    console.log(`[Study Analyze] Phase 1 complete: found ${structure.topics.length} topics`);
+    console.log(`[Study Analyze] Phase 1 complete: "${structure.title}" with ${structure.topics.length} topics`);
 
     // ── Phase 2: Generate detailed analysis for each topic (3 at a time) ──
     console.log("[Study Analyze] Phase 2: Generating detailed topic analysis...");
@@ -340,12 +394,17 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
         if (results[j]) {
           detailedTopics.push(results[j]!);
         } else {
-          // Graceful degradation: use Phase 1 summary as the overview
           const t = batch[j];
+          // Try to extract relevant text for this topic from the document
+          const excerpt = findRelevantExcerpt(documentText, t.name, t.summary);
+          const topicParagraphs = excerpt.split(/\n\s*\n/).filter(p => p.trim().length > 30);
           detailedTopics.push({
             name: t.name,
-            overview: t.summary,
-            subtopics: [],
+            overview: t.summary + "\n\n" + topicParagraphs.slice(0, 3).join("\n\n").slice(0, 2000),
+            subtopics: topicParagraphs.slice(0, 3).map((p, i) => ({
+              name: `Section ${i + 1}`,
+              content: p.trim().slice(0, 500),
+            })).filter(s => s.content.length > 20),
             keyConcepts: [],
             importantPoints: [],
             questions: [],
