@@ -713,10 +713,10 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                         </div>
                         {h.status === "terminated" && <span className="text-[9px] font-bold text-red-500">Terminated</span>}
                       </div>
-                      {h.overallScore ? (
+                      {h.evaluation?.overallScore ? (
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-[11px] shrink-0"
-                          style={{ background: scoreBg(h.overallScore), color: scoreColor(h.overallScore) }}>
-                          {h.overallScore}%
+                          style={{ background: scoreBg(h.evaluation.overallScore), color: scoreColor(h.evaluation.overallScore) }}>
+                          {h.evaluation.overallScore}%
                         </div>
                       ) : (
                         <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">In Progress</span>
