@@ -846,7 +846,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
   };
 
   // Safe checks for empty datasets
-  const hasNotes = analytics?.toolUsageJson?.notesGenerator > 0 || analytics?.toolUsageJson?.questionsGenerator > 0 || analytics?.documentsCount > 0;
+  const hasNotes = (analytics?.toolUsageJson?.notesGenerator ?? 0) > 0 || (analytics?.toolUsageJson?.questionsGenerator ?? 0) > 0 || (analytics?.documentsCount ?? 0) > 0;
   const isDashboardEmpty = !analytics || !hasNotes;
 
   const currentTrendList =
@@ -1119,7 +1119,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
           <h4 className="text-xs font-bold uppercase tracking-wider text-white/80 mb-4 flex items-center gap-1.5">
             <Layers size={14} className="text-amber-500" /> Interactive Skill Tree Nodes
           </h4>
-          <KnowledgeSkillTree distribution={insightsJson?.knowledgeDistribution} />
+          <KnowledgeSkillTree distribution={insightsJson?.knowledgeDistribution ?? { beginner: [], intermediate: [], advanced: [] }} />
         </div>
       </div>
 

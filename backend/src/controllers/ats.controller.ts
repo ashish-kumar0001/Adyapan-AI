@@ -17,17 +17,32 @@ import { requireUserId } from "../utils/request";
 
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
-  if (mimeType === "application/pdf") {
-    const parsed = await pdfParse(file.buffer);
-    return parsed.text;
-  } else if (
-    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    mimeType === "application/msword"
-  ) {
-    const parsed = await mammoth.extractRawText({ buffer: file.buffer });
-    return parsed.value;
+  let rawText: string;
+  
+  try {
+    if (mimeType === "application/pdf") {
+      const parsed = await pdfParse(file.buffer);
+      rawText = parsed.text;
+    } else if (
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mimeType === "application/msword"
+    ) {
+      const parsed = await mammoth.extractRawText({ buffer: file.buffer });
+      rawText = parsed.value;
+    } else {
+      throw httpError(400, "Unsupported file format. Please upload a PDF or DOCX file.");
+    }
+  } catch (parseErr: any) {
+    if (parseErr.statusCode === 400) throw parseErr;
+    console.error("[ATS upload] Document parsing error:", parseErr);
+    throw httpError(400, "Failed to parse document. Ensure the file is not corrupted or password-protected.");
   }
-  throw httpError(400, "Unsupported file format. Please upload a PDF or DOCX file.");
+
+  if (!rawText || rawText.trim().length === 0) {
+    throw httpError(400, "The document appears to be empty. Scanned image layers with no readable text are not supported.");
+  }
+
+  return rawText;
 }
 
 function serializeResumeToText(resume: any): string {

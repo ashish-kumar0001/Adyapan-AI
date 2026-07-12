@@ -20,10 +20,20 @@ export function handleRouteError(
   context: string,
   fallbackMessage: string
 ): void {
-  const httpErr = error as Partial<HttpError> & { status?: number };
+  const httpErr = error as Partial<HttpError> & { status?: number; stack?: string };
   const statusCode = httpErr?.statusCode ?? httpErr?.status ?? 500;
 
-  console.error(`[${context}] request failed (${statusCode}):`, error);
+  if (statusCode >= 500) {
+    const { PlatformLogger } = require("./logger");
+    PlatformLogger.logError({
+      module: context,
+      errorType: "ROUTE_ERROR",
+      message: `${context} request failed with code ${statusCode}: ${httpErr.message || String(error)}`,
+      stackTrace: httpErr.stack,
+    });
+  } else {
+    console.warn(`[${context}] request warning (${statusCode}):`, httpErr.message || error);
+  }
 
   // For client errors, surface the real message so the caller can act on it.
   // For unexpected server errors, keep the caller-facing message generic and
@@ -31,5 +41,9 @@ export function handleRouteError(
   const message =
     statusCode < 500 && error instanceof Error ? error.message : fallbackMessage;
 
-  res.status(statusCode).json({ success: false, error: message });
+  res.status(statusCode).json({
+    success: false,
+    message,
+    error: message,
+  });
 }

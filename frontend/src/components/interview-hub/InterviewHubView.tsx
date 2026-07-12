@@ -487,15 +487,17 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     if (!activeSession) return;
     try {
       // For now, use browser's SpeechRecognition
-      const SpeechRecognitionClass = (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).SpeechRecognition
-        ?? (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).webkitSpeechRecognition;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const w = window as any;
+      const SpeechRecognitionClass = w.SpeechRecognition ?? w.webkitSpeechRecognition;
       if (SpeechRecognitionClass) {
         const recognition = new SpeechRecognitionClass();
         recognition.lang = config.language === "hindi" ? "hi-IN" : "en-US";
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
-        recognition.onresult = async (event) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onresult = async (event: any) => {
           const text = event.results[0][0].transcript;
           if (text.trim()) {
             const res = await api.post(`/interview/${activeSession.id}/voice`, { text, duration: 0 });
@@ -713,10 +715,10 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                         </div>
                         {h.status === "terminated" && <span className="text-[9px] font-bold text-red-500">Terminated</span>}
                       </div>
-                      {h.overallScore ? (
+                      {h.evaluation?.overallScore ? (
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-[11px] shrink-0"
-                          style={{ background: scoreBg(h.overallScore), color: scoreColor(h.overallScore) }}>
-                          {h.overallScore}%
+                          style={{ background: scoreBg(h.evaluation.overallScore), color: scoreColor(h.evaluation.overallScore) }}>
+                          {h.evaluation.overallScore}%
                         </div>
                       ) : (
                         <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">In Progress</span>

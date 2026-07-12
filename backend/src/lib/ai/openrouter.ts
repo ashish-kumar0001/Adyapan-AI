@@ -190,10 +190,11 @@ export async function generateJSON<T>(
   const cached = getCachedAIResponse(modifiedSys, userPrompt, options);
   if (cached) {
     try {
-      const cleaned = stripMarkdownJson(cached);
-      return JSON.parse(cleaned) as T;
+      const repaired = tryRepairJSON(cached);
+      const parsed = JSON.parse(repaired);
+      return enforceSchema(parsed, fallback);
     } catch {
-      // In case parsing fails, let it fallback or recalculate
+      // In case parsing fails, recalculate
     }
   }
 
@@ -210,20 +211,118 @@ export async function generateJSON<T>(
     try {
       const { PerformanceMonitor } = require("../../utils/monitoring");
       PerformanceMonitor.record("ai", options.model || "unknown", duration);
-    } catch (err) {
-      // Ignore monitoring import errors
-    }
+    } catch (err) {}
 
-    const cleaned = stripMarkdownJson(text);
-    const parsed = JSON.parse(cleaned) as T;
+    const repaired = tryRepairJSON(text);
+    const parsed = JSON.parse(repaired);
+    const validated = enforceSchema(parsed, fallback);
     
     setCachedAIResponse(modifiedSys, userPrompt, options, text);
-    return parsed;
+    return validated;
   } catch (error) {
-    console.error(`[AI Engine] JSON generation error (${options.model}):`, error);
-    console.error(`[AI Engine] Original LLM Response text was:\n${text}`);
+    console.warn(`[AI Engine] Initial JSON generation/parsing failed:`, error);
+    try {
+      console.log(`[AI Engine] Attempting automatic retry...`);
+      const retryMessages: OpenRouterMessage[] = [
+        { role: "system", content: `${modifiedSys}\nIMPORTANT: Your previous output was invalid JSON. Ensure all keys and string values are double-quoted and all trailing commas are removed. Do not include markdown wraps or conversational prose.` },
+        { role: "user", content: `${userPrompt}\n\nStrict instruction: return valid JSON matching this schema: ${JSON.stringify(fallback)}` }
+      ];
+      const retryText = await callAIRobust(retryMessages, options);
+      const repaired = tryRepairJSON(retryText);
+      const parsed = JSON.parse(repaired);
+      const validated = enforceSchema(parsed, fallback);
+      
+      setCachedAIResponse(modifiedSys, userPrompt, options, retryText);
+      return validated;
+    } catch (retryError) {
+      console.error(`[AI Engine] Retry JSON generation failed too:`, retryError);
+      console.error(`[AI Engine] Returning fallback structure.`);
+      return fallback;
+    }
+  }
+}
+
+// Helper to repair common JSON malformations from LLMs
+function tryRepairJSON(text: string): string {
+  let cleaned = text.trim();
+  cleaned = stripMarkdownJson(cleaned);
+  
+  // Clean trailing commas before close characters
+  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+  
+  try {
+    JSON.parse(cleaned);
+    return cleaned;
+  } catch {}
+
+  // Repair unquoted or single quoted keys/values
+  let repaired = cleaned
+    .replace(/(['"])?(\w+)\1\s*:/g, '"$2":')
+    .replace(/:\s*'([^']*)'/g, ':"$1"');
+
+  try {
+    JSON.parse(repaired);
+    return repaired;
+  } catch {}
+
+  // Balance open/close brackets
+  let openBraces = (repaired.match(/\{/g) || []).length;
+  let closeBraces = (repaired.match(/\}/g) || []).length;
+  let openBrackets = (repaired.match(/\[/g) || []).length;
+  let closeBrackets = (repaired.match(/\]/g) || []).length;
+
+  while (openBraces > closeBraces) {
+    repaired += "}";
+    closeBraces++;
+  }
+  while (openBrackets > closeBrackets) {
+    repaired += "]";
+    closeBrackets++;
+  }
+
+  try {
+    JSON.parse(repaired);
+    return repaired;
+  } catch {}
+
+  return cleaned;
+}
+
+// Ensures parsed object has the identical keys and types as the fallback schema
+function enforceSchema<T>(parsed: any, fallback: T): T {
+  if (fallback === null || fallback === undefined) {
+    return parsed as T;
+  }
+  
+  if (Array.isArray(fallback)) {
+    if (!Array.isArray(parsed)) {
+      return fallback;
+    }
+    if (fallback.length > 0) {
+      const template = fallback[0];
+      return parsed.map((item: any) => enforceSchema(item, template)) as unknown as T;
+    }
+    return parsed as T;
+  }
+  
+  if (typeof fallback === "object") {
+    if (typeof parsed !== "object" || parsed === null) {
+      return fallback;
+    }
+    const res: any = { ...fallback };
+    for (const key of Object.keys(fallback)) {
+      if (key in parsed) {
+        res[key] = enforceSchema(parsed[key], (fallback as any)[key]);
+      }
+    }
+    return res as T;
+  }
+  
+  if (typeof parsed !== typeof fallback) {
     return fallback;
   }
+  
+  return parsed as T;
 }
 
 // Default model presets for different task categories

@@ -153,7 +153,7 @@ export class WeakTopicsService {
     ] = await Promise.all([
       prisma.generatedNote.findMany({ where: { userId }, select: { topic: true, createdAt: true } }),
       prisma.quiz.findMany({ where: { userId }, select: { topic: true, createdAt: true } }),
-      prisma.quizAttempt.findMany({ where: { userId }, select: { score: true, totalQuestions: true, createdAt: true } }),
+      prisma.quizAttempt.findMany({ where: { userId }, select: { score: true, total: true, createdAt: true } }),
       prisma.learningEvent.findMany({ where: { userId }, select: { topic: true, eventType: true, duration: true, toolUsed: true, createdAt: true } }),
       prisma.studyRevision.findMany({ where: { userId }, select: { topicName: true, status: true, revisionDate: true } }),
       prisma.streakEvent.findMany({ where: { userId }, select: { eventSource: true, eventType: true, activityPoints: true, createdAt: true } }),
@@ -217,7 +217,7 @@ export class WeakTopicsService {
     // For simplicity, compute overall accuracy and apply as baseline
     const totalAttempts = quizAttempts.length;
     const overallAccuracy = totalAttempts > 0
-      ? Math.round(quizAttempts.reduce((s: number, a: { score: number; totalQuestions: number; createdAt: Date }) => s + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0), 0) / totalAttempts)
+      ? Math.round(quizAttempts.reduce((s: number, a: { score: number; total: number; createdAt: Date }) => s + (a.total > 0 ? (a.score / a.total) * 100 : 0), 0) / totalAttempts)
       : 50;
 
     // Learning events

@@ -358,8 +358,8 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const loadHistoryItem = (item: typeof history[0]) => {
     setFile({ name: item.name } as File);
     setFileDetails({ name: item.name, size: "—", pages: item.pages, language: "English", time: "20 seconds" });
-    setStatus("ready"); setSummaryData(item.analysis); setRevealedTopics(0);
-    if (item.analysis.topics?.length > 0) setActiveTopic(item.analysis.topics[0].name);
+    setStatus("ready"); setSummaryData(item.analysis as { title: string; topics: TopicSummary[]; stats: DocStats; insights: AIInsights; }); setRevealedTopics(0);
+    if ((item.analysis as { topics?: Array<{ name: string }> }).topics?.length ?? 0 > 0) setActiveTopic(((item.analysis as { topics: Array<{ name: string }> }).topics[0].name));
     setShowHistory(false);
     setTimeout(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });

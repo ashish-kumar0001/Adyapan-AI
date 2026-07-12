@@ -39,7 +39,7 @@ interface ChatMessage {
 }
 
 interface AnalyticsHubViewProps {
-  setView: (v: ResumeHubViewType) => void;
+  setView: (v: string) => void;
   activeModule?: string;
   theme?: string;
 }

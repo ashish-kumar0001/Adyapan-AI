@@ -16,6 +16,16 @@ const scaleIn = {
 
 type Tab = "analyze" | "readme" | "portfolio";
 
+interface GithubAnalysis {
+  summary: string;
+  estimatedCommits: number;
+  estimatedStars: number;
+  topLanguages: string[];
+  strongestRepos: string[];
+  developerType: string;
+  specializations: string[];
+}
+
 export function GithubPortfolioView() {
   const [activeTab, setActiveTab] = useState<Tab>("analyze");
   
@@ -26,7 +36,7 @@ export function GithubPortfolioView() {
   const [loading, setLoading] = useState(false);
   
   // Results
-  const [analysis, setAnalysis] = useState<Record<string, unknown> | null>(null);
+  const [analysis, setAnalysis] = useState<GithubAnalysis | null>(null);
   const [readme, setReadme] = useState<string | null>(null);
   const [portfolio, setPortfolio] = useState<{ aboutSection: string; projectsToHighlight: Array<{ title: string; tech: string; summary: string }> } | null>(null);
 
@@ -360,8 +370,8 @@ export function GithubPortfolioView() {
                   
                   <div className="space-y-4">
                     <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="bg-black/40 p-4 rounded-lg">
-                      <span className="text-xs text-gray-500 uppercase font-bold block mb-1">Hero Tagline</span>
-                      <p className="text-xl font-medium">{portfolio.homeHero.tagline}</p>
+                      <span className="text-xs text-gray-500 uppercase font-bold block mb-1">About Section Preview</span>
+                      <p className="text-xl font-medium">{portfolio.aboutSection.slice(0, 120)}...</p>
                     </motion.div>
                     <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className="bg-black/40 p-4 rounded-lg">
                       <span className="text-xs text-gray-500 uppercase font-bold block mb-1">About Section</span>

@@ -22,12 +22,18 @@ const fadeUp = {
 
 type Mode = "generate" | "debug" | "explain" | "project";
 
+interface GenerateResult { folderStructure: string; setupGuide: string; code: string; }
+interface DebugResult { issue: string; rootCause: string; fixedCode: string; }
+interface ExplainResult { complexity: string; explanation: string; }
+interface ProjectResult { architecture: string; techStack: string[]; features: string[]; roadmap: Array<{ phase: string; tasks: string[] }>; }
+type CodingResult = GenerateResult | DebugResult | ExplainResult | ProjectResult;
+
 export function CodingAssistantView() {
   const [mode, setMode] = useState<Mode>("generate");
   const [input, setInput] = useState("");
   const [secondaryInput, setSecondaryInput] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [result, setResult] = useState<CodingResult | null>(null);
 
   const canSubmit = input.trim().length > 0 && (mode !== "debug" || secondaryInput.trim().length > 0);
 
@@ -241,54 +247,65 @@ export function CodingAssistantView() {
               transition={{ duration: 0.35, type: "spring", stiffness: 220, damping: 20 }}
               className="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-inner shadow-black/20 sm:p-6"
             >
-              {mode === "generate" && (
+              {mode === "generate" && (() => {
+                const r = result as GenerateResult;
+                return (
                 <div className="space-y-6">
                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Folder Structure</h4>
-                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300 font-mono">{result.folderStructure}</pre>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300 font-mono">{r.folderStructure}</pre>
                   </motion.div>
                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Setup Guide</h4>
-                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.setupGuide}</div>
+                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{r.setupGuide}</div>
                   </motion.div>
                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Source Code</h4>
-                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{result.code}</pre>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{r.code}</pre>
                   </motion.div>
                 </div>
-              )}
+                );
+              })()}
 
-              {mode === "debug" && (
+              {mode === "debug" && (() => {
+                const r = result as DebugResult;
+                return (
                 <div className="space-y-6">
                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-300">Identified Issue</h4>
-                    <p className="text-sm text-red-100">{result.issue}</p>
+                    <p className="text-sm text-red-100">{r.issue}</p>
                   </motion.div>
                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Root Cause</h4>
-                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.rootCause}</p>
+                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{r.rootCause}</p>
                   </motion.div>
                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">Fixed Code</h4>
-                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{result.fixedCode}</pre>
+                    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-emerald-300 font-mono">{r.fixedCode}</pre>
                   </motion.div>
                 </div>
-              )}
+                );
+              })()}
 
-              {mode === "explain" && (
+              {mode === "explain" && (() => {
+                const r = result as ExplainResult;
+                return (
                 <div className="space-y-6">
                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">Complexity</h4>
-                    <p className="inline-block rounded-xl border border-sky-500/20 bg-black/50 p-3 font-mono text-sm text-slate-300">{result.complexity}</p>
+                    <p className="inline-block rounded-xl border border-sky-500/20 bg-black/50 p-3 font-mono text-sm text-slate-300">{r.complexity}</p>
                   </motion.div>
                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Line-by-Line Breakdown</h4>
-                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">{result.explanation}</div>
+                    <div className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">{r.explanation}</div>
                   </motion.div>
                 </div>
-              )}
+                );
+              })()}
 
-              {mode === "project" && (
+              {mode === "project" && (() => {
+                const r = result as ProjectResult;
+                return (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -297,12 +314,12 @@ export function CodingAssistantView() {
                 >
                   <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="md:col-span-2">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Architecture Overview</h4>
-                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{result.architecture}</p>
+                    <p className="rounded-xl border border-white/10 bg-black/50 p-4 text-sm text-slate-300">{r.architecture}</p>
                   </motion.div>
                   <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Tech Stack</h4>
                     <div className="flex flex-wrap gap-2">
-                      {result.techStack.map((tool: string, index: number) => (
+                      {r.techStack.map((tool: string, index: number) => (
                         <span key={index} className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
                           {tool}
                         </span>
@@ -312,13 +329,13 @@ export function CodingAssistantView() {
                   <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Core Features</h4>
                     <ul className="list-disc space-y-2 pl-5 text-sm text-slate-300">
-                      {result.features.map((feature: string, index: number) => <li key={index}>{feature}</li>)}
+                      {r.features.map((feature: string, index: number) => <li key={index}>{feature}</li>)}
                     </ul>
                   </motion.div>
                   <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="md:col-span-2">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Development Roadmap</h4>
                     <div className="space-y-3">
-                      {result.roadmap.map((step: string, index: number) => (
+                      {r.roadmap.map((step: { phase: string; tasks: string[] }, index: number) => (
                         <motion.div
                           key={index}
                           custom={index}
@@ -331,13 +348,15 @@ export function CodingAssistantView() {
                           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-400/15 text-xs font-semibold text-cyan-300">
                             {index + 1}
                           </div>
-                          <span className="text-sm text-slate-300">{step}</span>
+                          <span className="text-sm text-slate-300">{step.phase}</span>
                         </motion.div>
                       ))}
                     </div>
                   </motion.div>
                 </motion.div>
-              )}
+                );
+              })()}
+
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,14 +2,19 @@ import type { NextFunction, Request, Response } from "express";
 import type { HttpError } from "../utils/httpError";
 import { env } from "../config/env";
 
+import { PlatformLogger } from "../utils/logger";
+
 export function errorHandler(error: HttpError, req: Request, res: Response, _next: NextFunction) {
   const statusCode = error.statusCode ?? 500;
 
-  // Never let a server-side failure disappear silently. Client errors (4xx)
-  // are expected and only logged as warnings; unexpected 5xx errors are logged
-  // with a full stack trace so they can be diagnosed.
   if (statusCode >= 500) {
-    console.error(`[errorHandler] ${req.method} ${req.originalUrl} -> ${statusCode}:`, error);
+    PlatformLogger.logError({
+      userId: (req as any).user?.userId,
+      module: "ExpressAPI",
+      errorType: "SERVER_ERROR",
+      message: `${req.method} ${req.originalUrl} failed with code ${statusCode}: ${error.message}`,
+      stackTrace: error.stack,
+    });
   } else {
     console.warn(`[errorHandler] ${req.method} ${req.originalUrl} -> ${statusCode}: ${error.message}`);
   }

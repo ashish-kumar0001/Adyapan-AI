@@ -68,20 +68,33 @@ export const studyRouter = Router();
 
 studyRouter.use(requireAuth);
 
+import { httpError } from "../utils/httpError";
+
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   let rawText: string;
-  if (mimeType === "application/pdf") {
-    rawText = await parsePdfNonBlocking(file.buffer);
-  } else if (
-    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    mimeType === "application/msword"
-  ) {
-    const parsed = await mammoth.extractRawText({ buffer: file.buffer });
-    rawText = parsed.value;
-  } else {
-    rawText = file.buffer.toString("utf-8");
+  
+  try {
+    if (mimeType === "application/pdf") {
+      rawText = await parsePdfNonBlocking(file.buffer);
+    } else if (
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mimeType === "application/msword"
+    ) {
+      const parsed = await mammoth.extractRawText({ buffer: file.buffer });
+      rawText = parsed.value;
+    } else {
+      rawText = file.buffer.toString("utf-8");
+    }
+  } catch (parseErr: any) {
+    console.error("[Study upload] Document parsing error:", parseErr);
+    throw httpError(400, "Failed to parse document. Ensure the file is not corrupted or password-protected.");
   }
+
+  if (!rawText || rawText.trim().length === 0) {
+    throw httpError(400, "The document appears to be empty. Scanned image layers with no readable text are not supported.");
+  }
+
   return cleanExtractedText(rawText);
 }
 

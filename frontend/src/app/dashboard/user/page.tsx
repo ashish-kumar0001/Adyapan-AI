@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 
 // Define a premium skeleton widget loader
 function DashboardWidgetSkeleton({ title }: { title?: string }) {
@@ -2199,15 +2200,9 @@ function UserDashboardContent() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("dashboard-active-view");
-        if (saved) return saved;
-      } catch { /* localStorage unavailable (e.g. privacy mode) */ }
-    }
-    return "dashboard";
-  });
+  // ── Start with a stable SSR-safe default to avoid hydration mismatches.
+  // The saved view is restored client-side in the first useEffect below.
+  const [activeView, setActiveView] = useState<string>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: UnifiedLesson; duration: string; level: string } | null>(null);
   const selectedTemplate = "ATS Modern";
@@ -2321,6 +2316,12 @@ function UserDashboardContent() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
+    // Restore saved active view after mount (avoids SSR hydration mismatch)
+    try {
+      const savedView = localStorage.getItem("dashboard-active-view");
+      if (savedView) setActiveView(savedView);
+    } catch { /* localStorage unavailable */ }
+
     // Load theme immediately
     const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
     setTheme(savedTheme);
@@ -2353,6 +2354,11 @@ function UserDashboardContent() {
   }, []);
 
   useEffect(() => {
+    // Persist view selection so it survives page refreshes
+    try {
+      localStorage.setItem("dashboard-active-view", activeView);
+    } catch { /* localStorage unavailable */ }
+
     if (activeView !== "dashboard") return;
 
     async function fetchDashboardStats() {
@@ -2468,68 +2474,69 @@ function UserDashboardContent() {
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className={`dash-main resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" || activeView === "ats-checker" ? "!p-0 !overflow-hidden" : ""}`}>
+        <ErrorBoundary moduleName="Dashboard">
         {activeView === "profile" ? (
-          <ProfileView onViewDashboard={handleViewDashboard} />
+          <ErrorBoundary moduleName="Profile"><ProfileView onViewDashboard={handleViewDashboard} /></ErrorBoundary>
         ) : activeView === "community-profile" ? (
-          <CommunityProfileView />
+          <ErrorBoundary moduleName="Community Profile"><CommunityProfileView /></ErrorBoundary>
         ) : activeView === "settings" ? (
-          <ManageAccountView />
+          <ErrorBoundary moduleName="Account Settings"><ManageAccountView /></ErrorBoundary>
         ) : activeView === "billing" ? (
-          <BillingView />
+          <ErrorBoundary moduleName="Billing"><BillingView /></ErrorBoundary>
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} />
+          <ErrorBoundary moduleName="Resume Builder"><ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} /></ErrorBoundary>
         ) : activeView === "ats-checker" ? (
-          <AtsCheckerView setView={setActiveView} />
+          <ErrorBoundary moduleName="ATS Checker"><AtsCheckerView setView={setActiveView} /></ErrorBoundary>
         ) : activeView === "cover-letter" ? (
-          <CoverLetterView setView={setActiveView} />
+          <ErrorBoundary moduleName="Cover Letter Builder"><CoverLetterView setView={setActiveView} /></ErrorBoundary>
         ) : activeView === "linkedin-optimizer" ? (
-          <LinkedInView setView={setActiveView} />
+          <ErrorBoundary moduleName="LinkedIn Optimizer"><LinkedInView setView={setActiveView} /></ErrorBoundary>
         ) : activeView === "study-assistant" ? (
-          <StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} />
+          <ErrorBoundary moduleName="Study Assistant"><StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} /></ErrorBoundary>
         ) : activeView === "lesson-view" && lessonResult ? (
-          <StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} />
+          <ErrorBoundary moduleName="Lesson Viewer"><StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} /></ErrorBoundary>
         ) : activeView === "study-planner" ? (
-          <StudyPlannerDashboard />
+          <ErrorBoundary moduleName="Study Planner"><StudyPlannerDashboard /></ErrorBoundary>
         ) : activeView === "learning-streak" ? (
-          <LearningStreakDashboard />
+          <ErrorBoundary moduleName="Learning Streak"><LearningStreakDashboard /></ErrorBoundary>
         ) : activeView === "notes-generator" ? (
-          <NotesGeneratorView />
+          <ErrorBoundary moduleName="Notes Generator"><NotesGeneratorView /></ErrorBoundary>
         ) : activeView === "quiz-generator" ? (
-          <QuizGeneratorView />
+          <ErrorBoundary moduleName="Quiz Generator"><QuizGeneratorView /></ErrorBoundary>
         ) : activeView === "assignment-generator" ? (
-          <AssignmentGeneratorView />
+          <ErrorBoundary moduleName="Assignment Generator"><AssignmentGeneratorView /></ErrorBoundary>
         ) : activeView === "ppt-generator" ? (
-          <PptGeneratorView />
+          <ErrorBoundary moduleName="PPT Generator"><PptGeneratorView /></ErrorBoundary>
         ) : activeView === "mind-maps" ? (
-          <MindMapsView />
+          <ErrorBoundary moduleName="Mind Maps"><MindMapsView /></ErrorBoundary>
         ) : activeView === "flashcards" ? (
-          <FlashcardsView />
+          <ErrorBoundary moduleName="Flashcards"><FlashcardsView /></ErrorBoundary>
         ) : activeView === "coding-assistant" ? (
-          <CodingAssistantView />
+          <ErrorBoundary moduleName="Coding Assistant"><CodingAssistantView /></ErrorBoundary>
         ) : activeView === "dsa-practice" ? (
-          <DsaPracticeView />
+          <ErrorBoundary moduleName="DSA Practice"><DsaPracticeView /></ErrorBoundary>
         ) : activeView === "coding-challenges" ? (
-          <CodingChallengesView />
+          <ErrorBoundary moduleName="Coding Challenges"><CodingChallengesView /></ErrorBoundary>
         ) : activeView === "ady-chat" ? (
-          <AdyChatView setView={setActiveView} />
+          <ErrorBoundary moduleName="Ady Chat"><AdyChatView setView={setActiveView} /></ErrorBoundary>
         ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
-          <InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Interview Hub"><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" ? (
-          <InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Internship Hub"><InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "job-hub" || activeView === "job-matching" || activeView === "job-jd-match" || activeView === "job-referrals" || activeView === "job-challenges" ? (
-          <JobHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Job Hub"><JobHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "placement-hub" || activeView === "placement-aptitude" || activeView === "placement-reasoning" || activeView === "placement-mcqs" || activeView === "placement-mocks" || activeView === "placement-readiness" ? (
-          <PlacementHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Placement Hub"><PlacementHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "productivity-hub" || activeView === "prod-email" || activeView === "prod-sop" || activeView === "prod-linkedin" || activeView === "prod-content" ? (
-          <ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Productivity Hub"><ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "analytics-hub" || activeView === "analytics-learning" || activeView === "analytics-interview" || activeView === "analytics-resume" || activeView === "analytics-skills" ? (
-          <AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Analytics Hub"><AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "progress-hub" ? (
-          <ProgressDashboard />
+          <ErrorBoundary moduleName="Progress Tracking"><ProgressDashboard /></ErrorBoundary>
         ) : activeView === "research-hub" || activeView === "research-paper-ai" || activeView === "research-plagiarism" ? (
-          <ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+          <ErrorBoundary moduleName="Research Hub"><ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "github-portfolio" ? (
-          <GithubPortfolioView />
+          <ErrorBoundary moduleName="Github Portfolio"><GithubPortfolioView /></ErrorBoundary>
         ) : activeView === "notifications" ? (
           <NotificationsView
             notifications={notifications}
@@ -2583,6 +2590,7 @@ function UserDashboardContent() {
             </>
           )
         )}
+        </ErrorBoundary>
       </main>
 
       {toast && (
