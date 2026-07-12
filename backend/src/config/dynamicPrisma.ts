@@ -2,30 +2,36 @@ import { PrismaClient } from "@prisma/user-client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { databaseService } from "../services/database.service";
 
-const clientCache = new Map<string, PrismaClient>();
+type ExtendedUserClient = any;
+const clientCache = new Map<string, ExtendedUserClient>();
 
-export function createPrismaClient(databaseUrl: string): PrismaClient {
+export function createPrismaClient(databaseUrl: string): any {
   const adapter = new PrismaPg(databaseUrl);
-  const client = new PrismaClient({
+  const base = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-  (client as any).$use(async (params: any, next: any) => {
-    const start = Date.now();
-    const result = await next(params);
-    const duration = Date.now() - start;
-    try {
-      const { PerformanceMonitor } = require("../utils/monitoring");
-      PerformanceMonitor.record("db", `user_db:${params.model || "generic"}.${params.action}`, duration);
-    } catch {}
-    return result;
-  });
-
-  return client;
+  // Prisma v5+ uses $extends instead of removed $use()
+  return base.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const start = Date.now();
+          const result = await query(args);
+          const duration = Date.now() - start;
+          try {
+            const { PerformanceMonitor } = require("../utils/monitoring");
+            PerformanceMonitor.record("db", `user_db:${model || "generic"}.${operation}`, duration);
+          } catch {}
+          return result;
+        },
+      },
+    },
+  }) as any;
 }
 
-export async function getUserPrisma(userId: string): Promise<PrismaClient> {
+export async function getUserPrisma(userId: string): Promise<any> {
   if (clientCache.has(userId)) {
     return clientCache.get(userId)!;
   }
@@ -51,7 +57,8 @@ export function clearUserPrismaCache(userId?: string): void {
   }
 }
 
-export function getMasterPrisma(): PrismaClient {
+export function getMasterPrisma(): any {
   const { prisma } = require("./prisma");
   return prisma;
 }
+
