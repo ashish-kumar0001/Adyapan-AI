@@ -487,8 +487,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     if (!activeSession) return;
     try {
       // For now, use browser's SpeechRecognition
-      const SpeechRecognitionClass = (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).SpeechRecognition
-        ?? (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).webkitSpeechRecognition;
+      const w = window as any;
+      const SpeechRecognitionClass = w.SpeechRecognition ?? w.webkitSpeechRecognition;
       if (SpeechRecognitionClass) {
         const recognition = new SpeechRecognitionClass();
         recognition.lang = config.language === "hindi" ? "hi-IN" : "en-US";
