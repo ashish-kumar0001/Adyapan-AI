@@ -421,6 +421,10 @@ Student Learning Profile:
       };
     }
 
+    if (generated.dailyBrief && typeof generated.dailyBrief.text === "string") {
+      generated.dailyBrief.text = generated.dailyBrief.text.replace(/^God morning/i, "Good morning");
+    }
+
     // Force date stamp
     generated.lastGeneratedAt = now.toISOString();
 

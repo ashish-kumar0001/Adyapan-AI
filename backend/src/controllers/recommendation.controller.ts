@@ -71,6 +71,10 @@ export async function getDashboardRecommendations(req: Request, res: Response): 
       reason: rec.reason,
     }));
 
+    if (dailyBrief && typeof dailyBrief.text === "string") {
+      dailyBrief.text = dailyBrief.text.replace(/^God morning/i, "Good morning");
+    }
+
     res.json({
       success: true,
       recommendations: payload,
