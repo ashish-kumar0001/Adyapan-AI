@@ -1,70 +1,53 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, CheckCircle2 } from "lucide-react";
-import { mkColors } from "@/utils/themeColors";
+import { AIThinkingScreen } from "@/components/ui/PremiumComponents";
 
-const uploadStages = ["Upload", "Extract Text", "Analyze Content", "Identify Topics", "Generate Summary", "Completed"];
+const cleanStages = [
+  "Uploading Document",
+  "Extracting Text Content",
+  "Analyzing Document Structure",
+  "Identifying Main Topics",
+  "Generating Detailed Summaries",
+  "Creating Key Concepts",
+  "Finalizing Topic Analysis",
+  "Almost Ready"
+];
+
+function getStageIndex(stage: string): number {
+  if (stage.includes("Uploading")) return 0;
+  if (stage.includes("Extracting")) return 1;
+  if (stage.includes("Analyzing")) return 2;
+  if (stage.includes("Identifying")) return 3;
+  if (stage.includes("Generating")) return 4;
+  if (stage.includes("Creating")) return 5;
+  if (stage.includes("Finalizing")) return 6;
+  if (stage.includes("Almost")) return 7;
+  return 0;
+}
 
 type Props = {
-  c: ReturnType<typeof mkColors>;
+  c?: any;
   currentStage: string;
 };
 
-export function DocumentUploadingState({ c, currentStage }: Props) {
-  const stageIdx = uploadStages.indexOf(currentStage);
+export function DocumentUploadingState({ currentStage }: Props) {
+  const currentStep = getStageIndex(currentStage);
 
   return (
     <motion.div
       key="uploading"
-      initial={{ opacity: 0, scale: 0.96 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center py-16 gap-8"
+      className="w-full max-w-lg mx-auto py-8"
     >
-      <div className="relative w-24 h-24">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 rounded-full"
-          style={{ border: `3px solid transparent`, borderTopColor: c.amber, borderRightColor: c.amberBg }}
-        />
-        <motion.div
-          animate={{ rotate: -360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-3 rounded-full"
-          style={{ border: `2px solid transparent`, borderTopColor: "rgba(139,92,246,0.6)", borderLeftColor: "rgba(139,92,246,0.2)" }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Brain size={28} style={{ color: c.amber }} />
-        </div>
-      </div>
-      <div className="text-center space-y-1">
-        <h3 className="text-lg font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Analyzing Document...</h3>
-        <p className="text-sm" style={{ color: c.textMuted }}>{currentStage} in progress</p>
-      </div>
-      <div className="w-full max-w-lg grid grid-cols-3 gap-3">
-        {uploadStages.map((step, idx) => {
-          const isActive = idx <= stageIdx;
-          return (
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="p-3 rounded-xl text-center space-y-1.5 transition-all duration-500"
-              style={{ background: isActive ? c.amberBg : c.surface, border: `1px solid ${isActive ? c.amberBorder : c.border}` }}
-            >
-              <span className="text-[9px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Stage {idx + 1}</span>
-              <span className="text-xs font-semibold block" style={{ color: c.text }}>{step}</span>
-              {isActive && idx === stageIdx && (
-                <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 rounded-full mx-auto" style={{ background: c.amber }} />
-              )}
-              {isActive && idx < stageIdx && <CheckCircle2 size={12} style={{ color: c.green }} className="mx-auto" />}
-            </motion.div>
-          );
-        })}
-      </div>
+      <AIThinkingScreen
+        steps={cleanStages}
+        currentStep={currentStep}
+        title="Analyzing Uploaded Document..."
+        subtitle="Extracting and index-mapping text boundaries"
+      />
     </motion.div>
   );
 }

@@ -27,6 +27,23 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import {
+  PremiumCard,
+  PremiumButton,
+  PremiumBadge,
+  PremiumInput,
+  PremiumDialog,
+  PremiumTabs,
+  PremiumProgressRing,
+  PremiumProgressBar,
+  AnimatedSkeleton,
+  AIThinkingScreen,
+  EmptyState,
+  SuccessCelebration,
+  ErrorState,
+  FloatingOrbs
+} from "@/components/ui/PremiumComponents";
+
 
 // Milestone Achievement Rarity Colors
 const rarityColorsDark = {
@@ -463,78 +480,29 @@ export function LearningStreakDashboard() {
     return isLight 
       ? "bg-emerald-500 text-black border border-emerald-600 hover:bg-emerald-600 shadow-sm" 
       : "bg-emerald-500 text-black border border-emerald-400 hover:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
-  };
+    };
 
-  if (loading) {
+    if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center relative">
-        <div className={cn(
-          "max-w-md w-full p-8 rounded-2xl border flex flex-col items-center justify-center backdrop-blur-xl",
-          theme === "light" ? "border-slate-200 bg-white/80 text-slate-900" : "border-white/5 bg-[#0e0d1b]/70 text-white"
-        )}>
-          <motion.div 
-            animate={{ scale: [1, 1.12, 1], rotate: [0, 5, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-            className="w-16 h-16 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-8"
-          >
-            <Flame size={32} className="fill-orange-500/10" />
-          </motion.div>
-          
-          <h2 className="text-xl font-bold tracking-tight mb-6">Analyzing Activity Logs</h2>
-          
-          <div className="w-full space-y-3.5">
-            {loadingChecklist.slice(0, -1).map((step, idx) => {
-              const active = idx === loadingStep;
-              const done = idx < loadingStep;
-              return (
-                <div key={idx} className="flex items-center gap-3.5 text-sm">
-                  {done ? (
-                    <CheckCircle size={16} className="text-emerald-500" />
-                  ) : active ? (
-                    <motion.div 
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-                      className="w-4 h-4 rounded-full border border-t-transparent border-orange-500"
-                    />
-                  ) : (
-                    <div className={cn("w-4 h-4 rounded-full border", theme === "light" ? "border-slate-200" : "border-white/10")} />
-                  )}
-                  <span className={cn(
-                    "font-medium transition-colors",
-                    done 
-                      ? (theme === "light" ? "text-slate-400" : "text-white/60") 
-                      : active 
-                        ? "text-orange-500 font-bold" 
-                        : (theme === "light" ? "text-slate-350" : "text-white/20")
-                  )}>
-                    {step}...
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center relative w-full max-w-lg mx-auto py-12">
+        <AIThinkingScreen
+          steps={loadingChecklist.slice(0, -1)}
+          currentStep={loadingStep}
+          title="Analyzing Learning Activity Logs..."
+          subtitle="Compiling daily briefing logs and metrics"
+        />
       </div>
     );
   }
 
-  // Graceful failure fallback screen (Error boundary)
   if (!data) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 animate-in fade-in duration-300">
-        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 mb-6">
-          <Info size={32} />
-        </div>
-        <h2 className={cn("text-xl font-bold mb-2", theme === "light" ? "text-slate-900" : "text-white")}>Failed to load streak dashboard</h2>
-        <p className={cn("text-sm max-w-sm mb-6 leading-relaxed", theme === "light" ? "text-slate-500" : "text-white/50")}>
-          There was an error communicating with the Adyapan AI servers. Please ensure your backend server is running and database is fully active.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-black text-xs font-black transition-all cursor-pointer shadow-lg hover:shadow-orange-500/20 active:scale-95 animate-pulse"
-        >
-          Retry Connection
-        </button>
+      <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8 w-full max-w-md mx-auto">
+        <ErrorState
+          title="Failed to Load Streak Dashboard"
+          description="There was a problem querying the database for your daily study activity logs."
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }

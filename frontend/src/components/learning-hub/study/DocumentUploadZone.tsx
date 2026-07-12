@@ -1,11 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Upload, Brain, Sparkles, Zap, Star, CheckCircle2,
-} from "lucide-react";
-import { mkColors } from "@/utils/themeColors";
+import { Upload, Brain, Sparkles, Zap, Star, CheckCircle2 } from "lucide-react";
+import { PremiumCard, PremiumBadge, PremiumButton } from "@/components/ui/PremiumComponents";
 import { fadeUp, scaleIn } from "@/utils/animations";
+import { mkColors } from "@/utils/themeColors";
 
 type Props = {
   c: ReturnType<typeof mkColors>;
@@ -20,112 +19,104 @@ type Props = {
 
 export function DocumentUploadZone({ c, isDragging, onDragOver, onDragLeave, onDrop, fileInputRef, onFileInputChange, onBrowseClick }: Props) {
   return (
-    <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }} className="space-y-6">
-      <motion.div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={onBrowseClick}
-        animate={{
-          borderColor: isDragging ? "rgba(245,158,11,0.6)" : c.border,
-          background: isDragging ? c.amberBg : c.surface,
-          scale: isDragging ? 1.01 : 1
-        }}
-        transition={{ duration: 0.2 }}
-        className="cursor-pointer rounded-3xl p-10 text-center relative overflow-hidden"
-        style={{ border: `2px dashed ${c.border}` }}
-        whileHover={{ borderColor: c.amberBorder, background: c.amberBg }}
+    <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }} className="space-y-8">
+      {/* Upload card with tilt and glow */}
+      <PremiumCard 
+        tilt={true} 
+        glow={true} 
+        variant="interactive"
+        className="p-0"
       >
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-4 right-8 w-24 h-24 rounded-full" style={{ opacity: c.isDark ? 0.05 : 0.08, background: "radial-gradient(circle, #f59e0b, transparent)" }} />
-          <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full" style={{ opacity: c.isDark ? 0.04 : 0.06, background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
-        </div>
-        <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.rtf" className="hidden" onChange={onFileInputChange} />
-
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={onBrowseClick}
+          className="w-full text-center relative overflow-hidden p-12 flex flex-col items-center justify-center min-h-[300px]"
+          style={{ 
+            borderColor: isDragging ? "rgba(245,158,11,0.6)" : "transparent",
+            background: isDragging ? c.amberActive : "transparent"
+          }}
         >
-          <Upload style={{ color: c.amber }} size={28} />
-        </motion.div>
+          {/* Subtle design shapes */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-4 right-8 w-28 h-28 rounded-full opacity-10 bg-[radial-gradient(circle,#f59e0b,transparent_70%)] animate-pulse" />
+            <div className="absolute bottom-4 left-8 w-24 h-24 rounded-full opacity-10 bg-[radial-gradient(circle,#8b5cf6,transparent_70%)] animate-pulse" />
+          </div>
+          
+          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.rtf" className="hidden" onChange={onFileInputChange} />
 
-        <h3 className="text-xl font-extrabold mb-2" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
-          {isDragging ? "Drop your file here!" : "Upload Your Study Material"}
-        </h3>
-        <p className="text-sm mb-1" style={{ color: c.textSec }}>
-          Drag & Drop or <span style={{ color: c.amber }} className="font-semibold">Browse Files</span>
-        </p>
-        <div className="flex flex-wrap justify-center gap-2 mt-4">
-          {["PDF", "DOCX", "PPTX", "TXT", "Markdown"].map((fmt, i) => (
-            <motion.span
-              key={fmt}
-              custom={i}
-              variants={scaleIn}
-              initial="hidden"
-              animate="visible"
-              className="px-3 py-1 rounded-full text-xs font-bold"
-              style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}
-            >
-              {fmt}
-            </motion.span>
-          ))}
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 bg-amber-500/10 border border-amber-500/20 shadow-md"
+          >
+            <Upload style={{ color: c.amber }} size={26} />
+          </motion.div>
+
+          <h3 className="text-lg font-extrabold mb-1.5 text-slate-800 dark:text-gray-100 font-sans tracking-wide">
+            {isDragging ? "Drop your file here!" : "Upload Your Study Material"}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-gray-400 mb-6 max-w-sm">
+            Drag & Drop or <span className="text-amber-500 font-bold">Browse Files</span> to unlock AI-powered study assistance. Supports PDF, DOCX, PPTX, TXT.
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-2">
+            {["PDF", "DOCX", "PPTX", "TXT", "Markdown"].map((fmt, i) => (
+              <PremiumBadge key={fmt} variant={i % 2 === 0 ? "amber" : "purple"}>
+                {fmt}
+              </PremiumBadge>
+            ))}
+          </div>
         </div>
-      </motion.div>
+      </PremiumCard>
 
+      {/* How it works grid */}
       <div>
-        <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-          <Zap size={15} style={{ color: c.amber }} /> How It Works
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <Zap size={14} style={{ color: c.amber }} className="animate-pulse" /> How It Works
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { step: "01", title: "Upload", desc: "Drop any study material — lecture notes, textbooks, or presentation slides.", icon: <Upload size={18} style={{ color: c.amber }} /> },
-            { step: "02", title: "Analyze", desc: "AI engine extracts text context and maps complex syllabus structures automatically.", icon: <Brain size={18} style={{ color: "#a78bfa" }} /> },
-            { step: "03", title: "Generate", desc: "Instantly get core concept lists, exam prep summaries, keywords, and quick revision.", icon: <Sparkles size={18} style={{ color: "#22d3ee" }} /> }
+            { step: "01", title: "Upload Source", desc: "Drop any study material — lecture notes, textbooks, or presentation slides.", icon: <Upload size={18} style={{ color: c.amber }} /> },
+            { step: "02", title: "Extract Schema", desc: "AI engine extracts text context and maps complex syllabus structures automatically.", icon: <Brain size={18} style={{ color: "#a78bfa" }} /> },
+            { step: "03", title: "Generate Insights", desc: "Instantly get core concept lists, exam prep summaries, keywords, and quick revision.", icon: <Sparkles size={18} style={{ color: "#22d3ee" }} /> }
           ].map((item, i) => (
-            <motion.div
+            <PremiumCard
               key={item.step}
-              custom={i}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              whileHover={{ y: -4, scale: 1.01 }}
-              className="p-5 rounded-2xl relative overflow-hidden group transition-all"
-              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+              glow={true}
+              variant="glass"
+              className="p-5"
             >
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+              <div className="flex items-start gap-3.5 mb-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 border border-black/5 dark:bg-white/5 dark:border-white/5">
                   {item.icon}
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Step {item.step}</span>
-                  <h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4>
+                  <span className="text-[9px] font-black uppercase tracking-widest block text-amber-500">Step {item.step}</span>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-gray-150">{item.title}</h4>
                 </div>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{item.desc}</p>
-            </motion.div>
+              <p className="text-xs leading-relaxed text-slate-500 dark:text-gray-400">{item.desc}</p>
+            </PremiumCard>
           ))}
         </div>
       </div>
 
-      <motion.div
-        variants={fadeUp} custom={3} initial="hidden" animate="visible"
-        className="p-5 rounded-2xl"
-        style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-      >
-        <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-          <Star size={14} style={{ color: c.amber }} /> Features
+      {/* Features summary panel */}
+      <PremiumCard glow={true} className="p-5">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <Star size={14} style={{ color: c.amber }} /> Core Accelerator Capabilities
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {["Topic Detection", "AI Summary", "Key Points", "Quick Revision", "Smart Search", "Multi-format Support", "Copy Summary", "Export PDF", "Export DOCX"].map((feat, i) => (
-            <motion.div key={feat} custom={i} variants={scaleIn} initial="hidden" animate="visible" className="flex items-center gap-2 text-sm" style={{ color: c.textSec }}>
-              <CheckCircle2 size={14} style={{ color: c.amber }} className="shrink-0" />
+            <div key={feat} className="flex items-center gap-2 text-xs text-slate-600 dark:text-gray-450 font-medium">
+              <CheckCircle2 size={13} style={{ color: c.amber }} className="shrink-0" />
               <span>{feat}</span>
-            </motion.div>
+            </div>
           ))}
         </div>
-      </motion.div>
+      </PremiumCard>
     </motion.div>
   );
 }

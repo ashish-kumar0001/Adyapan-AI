@@ -6,10 +6,27 @@ import { api } from "@/services/api";
 import CountUp from "react-countup";
 import {
   AlertTriangle, Brain, Target, BookOpen, Zap, TrendingUp, TrendingDown,
-  RefreshCw, CheckCircle, Clock, Activity, Award, BarChart2, ChevronRight,
+  RefreshCw, CheckCircle, Clock, Activity, Award, BarChart2, ChevronRight, Trophy,
   Flame, Shield, Cpu, Database, Sparkles, ArrowUp, ArrowDown, Circle,
   BookMarked, ListChecks, FileText, MessageSquare, Star, Eye, Play
 } from "lucide-react";
+import {
+  PremiumCard,
+  PremiumButton,
+  PremiumBadge,
+  PremiumInput,
+  PremiumDialog,
+  PremiumTabs,
+  PremiumProgressRing,
+  PremiumProgressBar,
+  AnimatedSkeleton,
+  AIThinkingScreen,
+  EmptyState as PremiumEmptyState,
+  SuccessCelebration,
+  ErrorState,
+  FloatingOrbs
+} from "@/components/ui/PremiumComponents";
+
 
 // ─── Theme Hook ───────────────────────────────────────────────────────────────
 
@@ -261,99 +278,27 @@ const LOADING_STEPS = [
 
 function LoadingScreen({ step }: { step: number }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm">
-        <div className="flex items-center gap-3 mb-8">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-500/30"
-          >
-            <Brain size={18} className="text-white" />
-          </motion.div>
-          <div>
-            <p className="text-sm font-black text-white">AI Diagnostic Engine</p>
-            <p className="text-xs text-white/40">Scanning your learning data...</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {LOADING_STEPS.map((label, i) => {
-            const done = i < step;
-            const active = i === step;
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: i <= step ? 1 : 0.25, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="flex items-center gap-3"
-              >
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                  {done ? (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400 }}>
-                      <CheckCircle size={16} className="text-emerald-400" />
-                    </motion.div>
-                  ) : active ? (
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50"
-                    />
-                  ) : (
-                    <div className="w-3 h-3 rounded-full border border-white/20" />
-                  )}
-                </div>
-                <span className={`text-sm font-semibold ${done ? "text-emerald-400" : active ? "text-white" : "text-white/25"}`}>
-                  {label}
-                </span>
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
+    <div className="w-full max-w-lg mx-auto py-12 px-6">
+      <AIThinkingScreen
+        steps={LOADING_STEPS.slice(0, -1)}
+        currentStep={step}
+        title="AI Diagnostic Engine..."
+        subtitle="Scanning your learning data..."
+      />
     </div>
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
 function EmptyState({ onAnalyze, analyzing }: { onAnalyze: () => void; analyzing: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-      <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="mb-6 relative">
-        <motion.div
-          animate={{ y: [0, -12, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="text-7xl mb-4"
-        >
-          🏆
-        </motion.div>
-        <motion.div
-          className="absolute inset-0 blur-2xl"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          style={{ background: "radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 60%)" }}
-        />
-      </motion.div>
-      <motion.h3 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="text-xl font-black text-white mb-2">
-        No Weak Topics Detected
-      </motion.h3>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-        className="text-sm text-white/40 max-w-md mb-8">
-        Your learning performance looks strong. Run a full AI analysis to get personalized insights, or continue studying to build more data.
-      </motion.p>
-      <motion.button
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={onAnalyze}
-        disabled={analyzing}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-sm shadow-lg shadow-rose-500/25 disabled:opacity-60"
-      >
-        {analyzing ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
-        {analyzing ? "Analyzing..." : "Run AI Analysis"}
-      </motion.button>
+    <div className="w-full max-w-lg mx-auto py-8">
+      <PremiumEmptyState
+        title="No Weak Topics Detected"
+        description="Your learning performance looks strong. Run a full AI analysis to get personalized insights, or continue studying to build more data."
+        illustration={<Trophy className="w-8 h-8 text-amber-500" />}
+        actionLabel={analyzing ? "Analyzing..." : "Run AI Analysis"}
+        onAction={onAnalyze}
+      />
     </div>
   );
 }

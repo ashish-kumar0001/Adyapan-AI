@@ -12,6 +12,23 @@ import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import {
+  PremiumCard,
+  PremiumButton,
+  PremiumBadge,
+  PremiumInput,
+  PremiumDialog,
+  PremiumTabs,
+  PremiumProgressRing,
+  PremiumProgressBar,
+  AnimatedSkeleton,
+  AIThinkingScreen,
+  EmptyState,
+  SuccessCelebration,
+  ErrorState,
+  FloatingOrbs
+} from "@/components/ui/PremiumComponents";
+
 
 // Define a premium skeleton widget loader
 function DashboardWidgetSkeleton({ title }: { title?: string }) {
@@ -911,90 +928,60 @@ function StatCard({
   value: string; label: string; trend: string; trendUp?: boolean;
 }) {
   return (
-    <div style={{
-      background: "var(--bg-card)", border: "1px solid var(--border-color)",
-      borderRadius: 16, padding: "1rem", transition: "all 0.3s ease",
-    }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-3px) scale(1.01)";
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,158,11,0.2)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "none";
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-color)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 8, background: iconBg, color: iconColor,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
+    <PremiumCard tilt={true} glow={true} className="p-4 flex flex-col justify-between h-full">
+      <div className="flex justify-between items-center mb-3">
+        <div 
+          className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{ background: iconBg, color: iconColor }}
+        >
           {icon}
         </div>
-        <span style={{
-          fontSize: "0.72rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 3,
-          color: trendUp === false ? "#ef4444" : trendUp ? "#10b981" : "var(--text-muted)",
-        }}>
+        <span className={cn(
+          "text-[10px] font-bold flex items-center gap-0.5",
+          trendUp === false ? "text-rose-500" : trendUp ? "text-emerald-500" : "text-slate-400 dark:text-gray-500"
+        )}>
           {trendUp === true && <ArrowUpRight size={11} />}
           {trendUp === false && <TrendingDown size={11} />}
           {trend}
         </span>
       </div>
-      <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 2 }}>{value}</div>
-      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</div>
-    </div>
+      <div className="text-xl font-extrabold text-slate-800 dark:text-gray-150 leading-none mb-1">
+        {value}
+      </div>
+      <div className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+        {label}
+      </div>
+    </PremiumCard>
   );
 }
 
 // ─── Panel Card ───────────────────────────────────────────────────────────────
 function PanelCard({ title, children, flagStyle }: { title: string; children: React.ReactNode; flagStyle?: boolean }) {
   return (
-    <div style={{
-      background: "var(--bg-card)", border: `1px solid ${flagStyle ? "rgba(245,158,11,0.15)" : "var(--border-color)"}`,
-      borderRadius: 16, padding: "1.2rem", transition: "all 0.25s ease",
-      boxShadow: flagStyle ? "0 4px 20px rgba(245,158,11,0.05)" : "none",
-    }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "none";
-        (e.currentTarget as HTMLElement).style.boxShadow = flagStyle ? "0 4px 20px rgba(245,158,11,0.05)" : "none";
-      }}
-    >
-      <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.9rem" }}>
+    <PremiumCard glow={true} variant={flagStyle ? "bordered" : "glass"} className="p-5 h-full">
+      <h3 className="text-xs font-bold text-slate-850 dark:text-gray-150 uppercase tracking-wider mb-4">
         {title}
-      </div>
+      </h3>
       {children}
-    </div>
+    </PremiumCard>
   );
 }
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 function ProgressBar({ value, color = "var(--primary)", height = 5 }: { value: number; color?: string; height?: number }) {
-  return (
-    <div style={{ height, width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
-      <div style={{ height: "100%", width: `${value}%`, background: color, borderRadius: 3, transition: "width 1s ease" }} />
-    </div>
-  );
+  return <PremiumProgressBar value={value} color="amber" height={height} />;
 }
 
 // ─── Compact List Item ────────────────────────────────────────────────────────
 function CompactItem({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      fontSize: "0.78rem", color: "var(--text-secondary)",
-      borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "0.42rem", marginBottom: "0.42rem",
-    }}>
-      <span>{label}</span>
-      <strong style={{ color: highlight ? "var(--primary)" : "var(--text-primary)" }}>{value}</strong>
+    <div className="flex justify-between items-center text-xs py-2 border-b border-black/5 dark:border-white/5 last:border-0 last:pb-0">
+      <span className="text-slate-500 dark:text-gray-450">{label}</span>
+      <strong className={cn("font-semibold", highlight ? "text-amber-500" : "text-slate-800 dark:text-gray-100")}>{value}</strong>
     </div>
   );
 }
+
 // ─── Welcome Banner ───────────────────────────────────────────────────────────
 function WelcomeBanner({
   user,
@@ -1019,50 +1006,46 @@ function WelcomeBanner({
     else setGreeting("Good Evening");
   }, []);
 
-  const btnBase: React.CSSProperties = {
-    padding: "0.52rem 1rem", borderRadius: 10, fontSize: "0.8rem", fontWeight: 700,
-    cursor: "pointer", transition: "all 0.2s ease",
-  };
-
   return (
-    <div style={{
-      background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(139,92,246,0.1))",
-      border: "1px solid var(--border-color)", borderRadius: 18, padding: "1.5rem",
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      gap: "1.5rem", marginBottom: "1.2rem", flexWrap: "wrap",
-    }}>
-      <div>
-        <h1 style={{ fontSize: "1.55rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "0.3rem" }}>
-          {greeting}, {user?.name ?? "User"}
-        </h1>
-        <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
-          {targetRole ? (
-            <>Continue your learning journey as a <strong style={{ color: "var(--primary)" }}>{targetRole}</strong>.</>
-          ) : (
-            "Continue your learning journey and build your professional profile."
-          )}
-        </p>
-        <div style={{ maxWidth: 280 }}>
-          <div style={{ fontSize: "0.77rem", fontWeight: 700, color: "var(--primary)", marginBottom: "0.35rem" }}>
+    <div className="relative overflow-hidden rounded-2xl border border-amber-500/10 dark:border-white/5 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-purple-500/10 p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 shadow-sm">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[90px] rounded-full pointer-events-none animate-pulse" />
+      
+      <div className="space-y-4 max-w-xl">
+        <div className="space-y-1">
+          <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+            {greeting}, {user?.name ?? "Student"}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-gray-400 leading-relaxed">
+            {targetRole ? (
+              <>Continue your learning journey as a <span className="text-amber-500 font-bold">{targetRole}</span>.</>
+            ) : (
+              "Continue your learning journey and build your professional profile."
+            )}
+          </p>
+        </div>
+        <div className="w-64 space-y-1.5">
+          <div className="text-[9px] font-extrabold text-amber-500 uppercase tracking-widest pl-0.5">
             Profile Completion: {profileCompletion}%
           </div>
-          <ProgressBar value={profileCompletion} />
+          <PremiumProgressBar value={profileCompletion} color="amber" height={5} />
         </div>
       </div>
-      <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onStartStudy} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
+      
+      <div className="flex flex-wrap gap-2.5 shrink-0 w-full md:w-auto">
+        <PremiumButton variant="primary" onClick={onStartStudy} className="flex-1 md:flex-none">
           Start Study Session
-        </motion.button>
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onBuildResume} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+        </PremiumButton>
+        <PremiumButton variant="secondary" onClick={onBuildResume} className="flex-1 md:flex-none">
           Build Resume
-        </motion.button>
-        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} onClick={onPracticeDsa} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+        </PremiumButton>
+        <PremiumButton variant="secondary" onClick={onPracticeDsa} className="flex-1 md:flex-none">
           Practice DSA
-        </motion.button>
+        </PremiumButton>
       </div>
     </div>
   );
 }
+
 
 // ─── Stat Cards Grid ──────────────────────────────────────────────────────────
 function StatCardsGrid({ stats }: { stats: { avgAtsScore: number; resumesCount: number; avgLinkedinScore: number; dsaSolved: number; dsaStreak: number; studySessionsCount: number; notesCount: number; quizzesCount: number; dsaAccuracy: number; assignmentsCount: number; pptsCount: number; mindmapsCount: number } }) {
@@ -1931,60 +1914,13 @@ function RecommendationLoadingProgress() {
   }, []);
 
   return (
-    <div style={{
-      background: "var(--bg-card)",
-      border: "1px solid var(--border-color)",
-      borderRadius: "16px",
-      padding: "2rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "1rem",
-      maxWidth: "500px",
-      margin: "2rem auto",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-      backdropFilter: "var(--glass-blur)"
-    }}>
-      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <Wand2 className="text-amber-500 animate-pulse" size={20} />
-        Personalizing Your Recommendations
-      </h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {steps.map((text, idx) => {
-          const isDone = idx < currentStep;
-          const isCurrent = idx === currentStep;
-          return (
-            <motion.div
-              key={text}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.25, delay: idx * 0.05 }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                color: isDone ? "#10b981" : isCurrent ? "var(--primary)" : "var(--text-muted)",
-                fontWeight: isCurrent || isDone ? 600 : 400,
-                fontSize: "0.9rem"
-              }}
-            >
-              {isDone ? (
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ color: "#10b981", display: "flex", fontWeight: "bold" }}>
-                  ✓
-                </motion.span>
-              ) : isCurrent ? (
-                <motion.span
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1.2 }}
-                  style={{ display: "flex", width: 14, height: 14, borderRadius: "50%", background: "var(--primary)" }}
-                />
-              ) : (
-                <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: "50%", border: "2px solid var(--border-color)" }} />
-              )}
-              {text}
-            </motion.div>
-          );
-        })}
-      </div>
+    <div className="w-full max-w-lg mx-auto my-8">
+      <AIThinkingScreen
+        steps={steps}
+        currentStep={currentStep}
+        title="Personalizing Your Dashboard Recommendations..."
+        subtitle="AI recommendation engine is calculating learning statistics"
+      />
     </div>
   );
 }
@@ -1992,6 +1928,7 @@ function RecommendationLoadingProgress() {
 function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreChange?: string; strongestArea?: string; urgentRevision?: string } } | null }) {
   const [typedText, setTypedText] = useState("");
   const fullText = (brief?.text || "").replace(/God morning/gi, "Good morning").replace(/God afternoon/gi, "Good afternoon").replace(/God evening/gi, "Good evening");
+
 
   useEffect(() => {
     let index = 0;
@@ -2009,91 +1946,65 @@ function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreC
   if (!brief) return null;
 
   return (
-    <div style={{
-      background: "var(--bg-card)",
-      border: "1px solid rgba(245, 158, 11, 0.25)",
-      borderRadius: "16px",
-      padding: "1.2rem",
-      marginBottom: "1.5rem",
-      boxShadow: "0 4px 20px rgba(245,158,11,0.05)",
-      backdropFilter: "var(--glass-blur)"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-        <div style={{ flex: 1, minWidth: "280px" }}>
-          <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-            <Zap size={16} className="animate-pulse" />
+    <PremiumCard glow={true} className="p-5 mb-6 border-amber-500/20 dark:border-amber-500/10">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+        <div className="flex-1 min-w-[280px]">
+          <h4 className="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2.5">
+            <Zap size={14} className="animate-pulse" />
             AI Daily Briefing
           </h4>
-          <p style={{ fontSize: "0.88rem", color: "var(--text-primary)", fontWeight: 500, lineHeight: 1.5 }}>
+          <p className="text-xs text-slate-800 dark:text-gray-150 leading-relaxed font-medium">
             {typedText}
           </p>
         </div>
         
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
-            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Score Change</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#10b981" }}>{brief.metrics?.scoreChange}</div>
+        <div className="flex gap-2 shrink-0">
+          <div className="bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/15 rounded-xl p-2.5 text-center min-w-[90px]">
+            <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-bold mb-0.5">Score Change</div>
+            <div className="text-xs font-extrabold text-emerald-500">{brief.metrics?.scoreChange}</div>
           </div>
-          <div style={{ background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
-            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Strongest Area</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#3b82f6" }}>{brief.metrics?.strongestArea}</div>
+          <div className="bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15 rounded-xl p-2.5 text-center min-w-[90px]">
+            <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-bold mb-0.5">Strongest Area</div>
+            <div className="text-xs font-extrabold text-blue-500">{brief.metrics?.strongestArea}</div>
           </div>
-          <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
-            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Urgent Revise</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#ef4444" }}>{brief.metrics?.urgentRevision}</div>
+          <div className="bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/15 rounded-xl p-2.5 text-center min-w-[90px]">
+            <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-bold mb-0.5">Urgent Revise</div>
+            <div className="text-xs font-extrabold text-rose-500">{brief.metrics?.urgentRevision}</div>
           </div>
         </div>
       </div>
-    </div>
+    </PremiumCard>
   );
 }
 
 function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { recommendations: Array<{ id?: string; priority: string; recommendationType: string; topicName?: string; reason?: string; impactScore?: number; urgencyScore?: number }>; onSelectAction: (type: string) => void; onRegenerate: () => void }) {
   return (
-    <div style={{ marginBottom: "1.8rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-primary)" }}>
-          <Award size={18} className="text-amber-500" />
+    <div className="mb-8">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h3 className="text-sm font-extrabold text-slate-800 dark:text-white tracking-wider uppercase flex items-center gap-2">
+          <Award size={16} className="text-amber-500" />
           Recommended Today
         </h3>
-        <button
-          onClick={onRegenerate}
-          style={{
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid var(--border-color)",
-            padding: "5px 12px",
-            borderRadius: "8px",
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            color: "var(--text-secondary)",
-            transition: "var(--transition)"
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.color = "var(--primary)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-        >
-          <RefreshCw size={11} />
+        <PremiumButton variant="secondary" onClick={onRegenerate} icon={<RefreshCw size={11} />} className="py-1.5 px-3">
           Refresh Recommendations
-        </button>
+        </PremiumButton>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "0.85rem" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {recommendations.map((rec, idx) => {
           const priorityColors = {
-            Critical: { text: "#ef4444", bg: "rgba(239, 68, 68, 0.08)", border: "rgba(239, 68, 68, 0.2)" },
-            High: { text: "#f59e0b", bg: "rgba(245, 158, 11, 0.08)", border: "rgba(245, 158, 11, 0.2)" },
-            Medium: { text: "#3b82f6", bg: "rgba(59, 130, 246, 0.08)", border: "rgba(59, 130, 246, 0.2)" },
-            Low: { text: "#10b981", bg: "rgba(16, 185, 129, 0.08)", border: "rgba(16, 185, 129, 0.2)" },
+            Critical: "rose" as const,
+            High: "amber" as const,
+            Medium: "purple" as const,
+            Low: "green" as const,
           };
-          const themeColors = priorityColors[rec.priority as keyof typeof priorityColors] || priorityColors.Medium;
+          const badgeColor = priorityColors[rec.priority as keyof typeof priorityColors] || "purple";
           
           const typeLabels = {
             study_next: "Study Next",
             revision: "Revise",
             practice: "Practice",
             weak_recovery: "Weak Topic",
+            textbook: "Reference",
             exam_prep: "Exam Prep",
             interview_prep: "Interview",
             retention_recovery: "Retention Recovery",
@@ -2103,81 +2014,44 @@ function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { r
           const label = typeLabels[rec.recommendationType as keyof typeof typeLabels] || "Recommendation";
           
           return (
-            <motion.div
+            <PremiumCard
               key={rec.id || idx}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.05 }}
-              whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border-color)",
-                borderRadius: "14px",
-                padding: "1.1rem",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                gap: "0.75rem",
-                transition: "border-color 0.2s ease"
-              }}
+              tilt={true}
+              glow={true}
+              variant="interactive"
+              className="p-4 flex flex-col justify-between h-full gap-4 group"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">
                     {label}
                   </span>
-                  <span style={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color: themeColors.text,
-                    background: themeColors.bg,
-                    border: `1px solid ${themeColors.border}`,
-                    padding: "2px 8px",
-                    borderRadius: "6px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px"
-                  }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: themeColors.text }} />
+                  <PremiumBadge variant={badgeColor} pulse={rec.priority === "Critical" || rec.priority === "High"}>
                     {rec.priority}
-                  </span>
+                  </PremiumBadge>
                 </div>
-                <h4 style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.3rem" }}>
+                <h4 className="text-xs font-bold text-slate-850 dark:text-gray-150 mb-1 group-hover:text-amber-500 transition-colors">
                   {rec.topicName}
                 </h4>
-                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.4, margin: 0 }}>
+                <p className="text-[11px] text-slate-500 dark:text-gray-400 leading-normal">
                   {rec.reason}
                 </p>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.4rem", borderTop: "1px solid var(--border-color)", paddingTop: "0.6rem" }}>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
-                    Impact: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{rec.impactScore}%</span>
-                  </div>
-                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
-                    Urgency: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{rec.urgencyScore}%</span>
-                  </div>
+              
+              <div className="flex justify-between items-center pt-3 border-t border-black/5 dark:border-white/5 mt-auto">
+                <div className="flex gap-2">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-gray-500">
+                    Impact: <span className="text-slate-700 dark:text-gray-300 font-extrabold">{rec.impactScore}%</span>
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-gray-500">
+                    Urgency: <span className="text-slate-700 dark:text-gray-300 font-extrabold">{rec.urgencyScore}%</span>
+                  </span>
                 </div>
-                <button
-                  onClick={() => onSelectAction(rec.recommendationType)}
-                  style={{
-                    background: "var(--primary)",
-                    border: "none",
-                    color: "#17211c",
-                    padding: "4px 12px",
-                    borderRadius: "6px",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "var(--transition)"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                >
+                <PremiumButton variant="primary" onClick={() => onSelectAction(rec.recommendationType)} className="py-1 px-3.5">
                   Start
-                </button>
+                </PremiumButton>
               </div>
-            </motion.div>
+            </PremiumCard>
           );
         })}
       </div>
@@ -2469,11 +2343,13 @@ function UserDashboardContent() {
   const handleAdyChat = () => setActiveView("ady-chat");
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
+    <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
+      <FloatingOrbs />
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <main className={`dash-main resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" || activeView === "ats-checker" ? "!p-0 !overflow-hidden" : ""}`}>
+      <main className={`dash-main relative z-10 resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" || activeView === "ats-checker" ? "!p-0 !overflow-hidden" : ""}`}>
+
         <ErrorBoundary moduleName="Dashboard">
         {activeView === "profile" ? (
           <ErrorBoundary moduleName="Profile"><ProfileView onViewDashboard={handleViewDashboard} /></ErrorBoundary>
