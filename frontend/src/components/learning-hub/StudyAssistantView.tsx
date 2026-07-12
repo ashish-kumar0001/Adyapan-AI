@@ -358,7 +358,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const loadHistoryItem = (item: typeof history[0]) => {
     setFile({ name: item.name } as File);
     setFileDetails({ name: item.name, size: "—", pages: item.pages, language: "English", time: "20 seconds" });
-    setStatus("ready"); setSummaryData(item.analysis); setRevealedTopics(0);
+    setStatus("ready"); setSummaryData(item.analysis as any); setRevealedTopics(0);
     if (item.analysis.topics?.length > 0) setActiveTopic(item.analysis.topics[0].name);
     setShowHistory(false);
     setTimeout(() => {
