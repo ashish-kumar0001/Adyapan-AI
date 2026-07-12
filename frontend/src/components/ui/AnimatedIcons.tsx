@@ -353,3 +353,4 @@ export function AnimatedLink(props: AnimatedIconProps) {
 export function AnimatedBookMarked(props: AnimatedIconProps) {
   return <Animated icon={BookMarked} animation={float} color="var(--primary)" {...props} />;
 }
+

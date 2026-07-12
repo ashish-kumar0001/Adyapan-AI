@@ -154,7 +154,7 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
 
             {/* TAB A: LEARNING PROGRESS */}
             {tab === "learning" && (
-              <LearningAnalyticsDashboard setView={setView} theme={theme} />
+              <LearningAnalyticsDashboard setView={setView as any} theme={theme} />
             )}
 
             {/* TAB B: INTERVIEW PROGRESS */}
@@ -689,3 +689,4 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
     </motion.div>
   );
 }
+

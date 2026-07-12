@@ -36,9 +36,9 @@ export function GithubPortfolioView() {
   const [loading, setLoading] = useState(false);
   
   // Results
-  const [analysis, setAnalysis] = useState<GithubAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<Record<string, any> | null>(null);
   const [readme, setReadme] = useState<string | null>(null);
-  const [portfolio, setPortfolio] = useState<{ aboutSection: string; projectsToHighlight: Array<{ title: string; tech: string; summary: string }> } | null>(null);
+  const [portfolio, setPortfolio] = useState<{ homeHero: { tagline: string; bio: string }; aboutSection: string; projectsToHighlight: Array<{ title: string; tech: string; summary: string }> } | null>(null);
 
   const handleAnalyze = async () => {
     if (!username) return;
@@ -396,3 +396,4 @@ export function GithubPortfolioView() {
     </motion.div>
   );
 }
+

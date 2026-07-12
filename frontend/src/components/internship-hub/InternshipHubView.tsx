@@ -936,3 +936,4 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
     </motion.div>
   );
 }
+

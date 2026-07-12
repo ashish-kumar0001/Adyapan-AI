@@ -78,3 +78,4 @@ export const SUGGESTION_CARDS = [
   { iconKey: "quiz",       title: "Generate Quiz",        prompt: "Generate a quiz on " },
   { iconKey: "career",     title: "Career Advice",        prompt: "Give me career advice for " },
 ];
+

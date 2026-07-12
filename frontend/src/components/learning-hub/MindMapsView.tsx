@@ -61,7 +61,7 @@ const mkColors = (theme: string) => {
   };
 };
 
-type MindMapNodeData = Record<string, unknown> & {
+type MindMapNodeData = Record<string, any> & {
   label: string;
   type: "root" | "concept" | "sub_concept" | "example" | "application";
   definition: string;
@@ -1083,3 +1083,4 @@ export function MindMapsView() {
     </motion.div>
   );
 }
+

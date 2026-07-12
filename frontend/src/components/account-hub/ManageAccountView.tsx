@@ -262,3 +262,4 @@ export function ManageAccountView() {
     </motion.div>
   );
 }
+

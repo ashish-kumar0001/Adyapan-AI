@@ -19,8 +19,7 @@ import { ADY_MODELS, type ChatSession, type ChatMessage } from "./types";
 
 function useVoiceRecognition(onResult: (text: string) => void) {
   const [listening, setListening] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<any | null>(null);
 
   const toggle = useCallback(() => {
     if (listening) {
@@ -28,18 +27,16 @@ function useVoiceRecognition(onResult: (text: string) => void) {
       setListening(false);
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any;
-    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR) {
+    const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
       alert("Voice input is not supported in this browser.");
       return;
     }
-    const recognition = new SR();
+    const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
       const transcript = event.results[event.results.length - 1][0].transcript;
       onResult(transcript);
@@ -473,3 +470,4 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
     </div>
   );
 }
+

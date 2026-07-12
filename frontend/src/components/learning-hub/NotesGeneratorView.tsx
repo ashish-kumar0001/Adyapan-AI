@@ -660,3 +660,4 @@ export function NotesGeneratorView() {
     </motion.div>
   );
 }
+

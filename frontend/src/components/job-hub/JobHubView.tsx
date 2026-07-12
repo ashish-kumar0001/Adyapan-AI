@@ -1077,3 +1077,4 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     </motion.div>
   );
 }
+

@@ -1439,3 +1439,4 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
     </motion.div>
   );
 }
+

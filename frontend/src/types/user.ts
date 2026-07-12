@@ -18,3 +18,4 @@ export type Profile = {
   github?: string;
   resumeUrl?: string;
 };
+

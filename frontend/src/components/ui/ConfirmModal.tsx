@@ -125,3 +125,4 @@ export function useConfirm() {
 
   return [confirm, modal] as const;
 }
+

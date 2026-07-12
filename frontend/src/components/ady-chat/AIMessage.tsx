@@ -510,3 +510,4 @@ export function AIMessage({
     </motion.div>
   );
 }
+

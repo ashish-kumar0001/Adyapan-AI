@@ -95,3 +95,4 @@ export function LearningTimeline({ events }: LearningTimelineProps) {
     </div>
   );
 }
+

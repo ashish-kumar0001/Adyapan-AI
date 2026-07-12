@@ -797,3 +797,4 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
     </motion.div>
   );
 }
+

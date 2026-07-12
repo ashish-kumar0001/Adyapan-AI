@@ -882,3 +882,4 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     </motion.div>
   );
 }
+

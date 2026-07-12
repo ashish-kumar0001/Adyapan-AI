@@ -384,3 +384,4 @@ export function CodingChallengesView() {
     </motion.div>
   );
 }
+

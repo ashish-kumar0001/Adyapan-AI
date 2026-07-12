@@ -82,7 +82,7 @@ export default function PremiumPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
-  const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  const [user, setUser] = useState<Record<string, any> | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
@@ -102,7 +102,7 @@ export default function PremiumPage() {
     }).catch(() => {}).finally(() => setLoading(false));
 
     // Load Razorpay script
-    if (!(window as unknown as Record<string, unknown>).Razorpay) {
+    if (!(window as unknown as Record<string, any>).Razorpay) {
       const script = document.createElement("script");
       script.src = RAZORPAY_SCRIPT;
       script.onload = () => setRazorpayLoaded(true);
@@ -372,3 +372,4 @@ export default function PremiumPage() {
     </div>
   );
 }
+

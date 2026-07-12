@@ -129,3 +129,4 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
     </div>
   );
 }
+

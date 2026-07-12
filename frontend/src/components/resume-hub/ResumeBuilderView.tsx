@@ -969,3 +969,4 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
     </div>
   );
 }
+

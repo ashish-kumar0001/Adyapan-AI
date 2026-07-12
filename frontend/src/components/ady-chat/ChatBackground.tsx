@@ -202,3 +202,4 @@ const PARTICLES = [
   { x: 5, y: 90, size: 2, darkColor: "#8b5cf6", lightColor: "#5b21b6", darkOpacity: 0.3, lightOpacity: 0.06, drift: 26, driftX: -18, duration: 9.5, delay: 1.2 },
   { x: 95, y: 75, size: 3, darkColor: "#3b82f6", lightColor: "#1e40af", darkOpacity: 0.25, lightOpacity: 0.05, drift: 38, driftX: 8, duration: 11.5, delay: 3.5 },
 ];
+

@@ -1185,3 +1185,4 @@ export function QuizGeneratorView() {
     </motion.div>
   );
 }
+

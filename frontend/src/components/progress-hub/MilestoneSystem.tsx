@@ -181,3 +181,4 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
     </div>
   );
 }
+

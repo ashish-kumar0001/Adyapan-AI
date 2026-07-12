@@ -34,3 +34,4 @@ export function useRequireAuth(requiredRole?: "USER" | "ADMIN") {
     }
   }, [router, requiredRole]);
 }
+

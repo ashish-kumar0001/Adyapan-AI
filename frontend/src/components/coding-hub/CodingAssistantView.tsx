@@ -33,7 +33,7 @@ export function CodingAssistantView() {
   const [input, setInput] = useState("");
   const [secondaryInput, setSecondaryInput] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<CodingResult | null>(null);
+  const [result, setResult] = useState<Record<string, any> | null>(null);
 
   const canSubmit = input.trim().length > 0 && (mode !== "debug" || secondaryInput.trim().length > 0);
 
@@ -364,3 +364,4 @@ export function CodingAssistantView() {
     </motion.div>
   );
 }
+

@@ -22,10 +22,10 @@ export interface InterviewSession {
   violationPoints: number;
   violationThreshold: number;
   feedback: InterviewFeedback | null;
-  identityVerification: Record<string, unknown>;
-  deviceInfo: Record<string, unknown>;
-  systemCheck: Record<string, unknown>;
-  configuration: Record<string, unknown>;
+  identityVerification: Record<string, any>;
+  deviceInfo: Record<string, any>;
+  systemCheck: Record<string, any>;
+  configuration: Record<string, any>;
   startedAt: string | null;
   endedAt: string | null;
   createdAt: string;
@@ -57,7 +57,7 @@ export interface InterviewEvaluation {
   improvements: string[];
   summary: string;
   hiringRecommendation: string;
-  detailedAnalysis: Record<string, unknown>;
+  detailedAnalysis: Record<string, any>;
 }
 
 export interface ViolationReport {
@@ -149,3 +149,4 @@ export type InterviewScreen =
   | "rules"
   | "initializing"
   | "terminated";
+

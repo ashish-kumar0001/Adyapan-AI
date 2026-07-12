@@ -202,3 +202,4 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
     </div>
   );
 }
+

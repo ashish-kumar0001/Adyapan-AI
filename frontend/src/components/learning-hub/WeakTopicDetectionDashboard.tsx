@@ -1048,3 +1048,4 @@ export function WeakTopicDetectionDashboard() {
     </div>
   );
 }
+

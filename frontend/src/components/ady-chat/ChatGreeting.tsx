@@ -218,3 +218,4 @@ export function ChatGreeting({ userName, isDark, onSuggestionClick }: ChatGreeti
     </div>
   );
 }
+

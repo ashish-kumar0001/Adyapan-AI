@@ -487,7 +487,6 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     if (!activeSession) return;
     try {
       // For now, use browser's SpeechRecognition
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const w = window as any;
       const SpeechRecognitionClass = w.SpeechRecognition ?? w.webkitSpeechRecognition;
       if (SpeechRecognitionClass) {
@@ -1308,3 +1307,4 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     </div>
   );
 }
+

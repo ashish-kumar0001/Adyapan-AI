@@ -355,3 +355,4 @@ export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
     </AnimatePresence>
   );
 }
+

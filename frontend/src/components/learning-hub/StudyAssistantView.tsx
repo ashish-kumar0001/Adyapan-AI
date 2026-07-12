@@ -187,7 +187,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTopic, setActiveTopic] = useState("");
   const [revealedTopics, setRevealedTopics] = useState<number>(0);
-  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: Record<string, unknown> }>>([]);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: Record<string, any> }>>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [topicHistory, setTopicHistory] = useState<Array<{ topic: string; date: string; duration: string; level: string; lesson: UnifiedLesson }>>([]);
@@ -358,8 +358,8 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const loadHistoryItem = (item: typeof history[0]) => {
     setFile({ name: item.name } as File);
     setFileDetails({ name: item.name, size: "—", pages: item.pages, language: "English", time: "20 seconds" });
-    setStatus("ready"); setSummaryData(item.analysis as { title: string; topics: TopicSummary[]; stats: DocStats; insights: AIInsights; }); setRevealedTopics(0);
-    if ((item.analysis as { topics?: Array<{ name: string }> }).topics?.length ?? 0 > 0) setActiveTopic(((item.analysis as { topics: Array<{ name: string }> }).topics[0].name));
+    setStatus("ready"); setSummaryData(item.analysis as any); setRevealedTopics(0);
+    if (item.analysis.topics?.length > 0) setActiveTopic(item.analysis.topics[0].name);
     setShowHistory(false);
     setTimeout(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });

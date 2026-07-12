@@ -582,3 +582,4 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
     </motion.div>
   );
 }
+

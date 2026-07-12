@@ -138,3 +138,4 @@ export function UserMessage({ message, index, isDark, onEdit }: UserMessageProps
     </motion.div>
   );
 }
+

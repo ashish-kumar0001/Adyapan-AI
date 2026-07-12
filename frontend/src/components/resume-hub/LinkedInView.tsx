@@ -301,3 +301,4 @@ export function LinkedInView({ setView }: LinkedInViewProps) {
     </motion.div>
   );
 }
+

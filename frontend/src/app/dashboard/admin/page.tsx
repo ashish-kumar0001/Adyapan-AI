@@ -202,10 +202,10 @@ export default function AdminDashboard() {
     total?: number; month?: number; premiumUsers?: number; averageOrderValue?: number;
   } | null>(null);
   const [moduleData, setModuleData] = useState<{
-    resumeHub?: Record<string, unknown>;
-    learningHub?: Record<string, unknown>;
-    codingHub?: Record<string, unknown>;
-    interviewHub?: Record<string, unknown>;
+    resumeHub?: Record<string, any>;
+    learningHub?: Record<string, any>;
+    codingHub?: Record<string, any>;
+    interviewHub?: Record<string, any>;
   } | null>(null);
   const [systemHealth, setSystemHealth] = useState<{ uptime?: number; memory?: { used?: number; total?: number; rss?: number }; platform?: string; nodeVersion?: string } | null>(null);
   const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <div className="font-extrabold text-sm">{mod.label}</div>
-                        <div className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{String((mod.data as Record<string, unknown>)?.total ?? 0)} total actions</div>
+                        <div className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{String((mod.data as Record<string, any>)?.total ?? 0)} total actions</div>
                       </div>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90" style={{ color: "var(--text-muted)" }} />
@@ -997,3 +997,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

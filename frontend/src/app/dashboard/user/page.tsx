@@ -2213,8 +2213,8 @@ function UserDashboardContent() {
 
   const [recommendations, setRecommendations] = useState<Array<{ id?: string; priority: string; recommendationType: string; topicName?: string; reason?: string; impactScore?: number; urgencyScore?: number }>>([]);
   const [dailyBrief, setDailyBrief] = useState<{ text?: string } | null>(null);
-  const [coachInsight, setCoachInsight] = useState<Record<string, unknown> | null>(null);
-  const [learningPaths, setLearningPaths] = useState<Record<string, unknown>[]>([]);
+  const [coachInsight, setCoachInsight] = useState<Record<string, any> | null>(null);
+  const [learningPaths, setLearningPaths] = useState<Record<string, any>[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 
   const fetchRecommendations = useCallback(async (forceGenerate = false) => {
@@ -2625,3 +2625,4 @@ function UserDashboardContent() {
     </div>
   );
 }
+

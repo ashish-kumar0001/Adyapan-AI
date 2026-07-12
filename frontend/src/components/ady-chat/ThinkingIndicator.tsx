@@ -150,3 +150,4 @@ export function ThinkingIndicator({ isDark }: ThinkingIndicatorProps) {
     </motion.div>
   );
 }
+

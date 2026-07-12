@@ -1245,3 +1245,4 @@ export function LearningStreakDashboard() {
     </div>
   );
 }
+
