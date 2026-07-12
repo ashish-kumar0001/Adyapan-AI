@@ -4,7 +4,7 @@ import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
 import multer from "multer";
-const { PDFParse } = require("pdf-parse");
+const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
@@ -94,8 +94,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   let rawText: string;
   if (mimeType === "application/pdf") {
-    const pdf = new PDFParse({ data: file.buffer });
-    const result = await pdf.getText();
+    const result = await pdfParse(file.buffer);
     rawText = result.text;
   } else if (
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
