@@ -106,7 +106,7 @@ export class RecommendationService {
   /**
    * Main recommendation pipeline
    */
-  static async generateRecommendations(userId: string, prisma: PrismaClient): Promise<RecommendationDashboardData> {
+  static async generateRecommendations(userId: string, prisma: any): Promise<RecommendationDashboardData> {
     // 1. Gather all learning analytics & progress signals from DB
     const [
       analytics,

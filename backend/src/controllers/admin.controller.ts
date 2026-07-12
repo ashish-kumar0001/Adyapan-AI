@@ -136,7 +136,7 @@ export async function getActivityFeed(_req: Request, res: Response, next: NextFu
     const users = userIds.size > 0
       ? await prisma.user.findMany({ where: { id: { in: Array.from(userIds) } }, select: { id: true, name: true } })
       : [];
-    const userNameMap = new Map(users.map(u => [u.id, u.name]));
+    const userNameMap = new Map<string, string>(users.map(u => [u.id, u.name]));
 
     const activities: { time: Date; user: string; action: string; module: string; id: string }[] = [];
 
