@@ -66,11 +66,12 @@ async function callAIRobust(
     throw new Error("No AI providers configured. Please check environment keys.");
   }
 
-  let lastError: Error | null = null;
+  const controller = new AbortController();
+  const { signal } = controller;
 
-  for (const provider of providers) {
+  const promises = providers.map(async (provider) => {
     try {
-      console.log(`[AI Engine] Calling ${provider.name} using model ${provider.model}...`);
+      console.log(`[AI Engine] [Simultaneous] Calling ${provider.name} using model ${provider.model}...`);
       
       const body: Record<string, unknown> = {
         model: provider.model,
@@ -90,6 +91,7 @@ async function callAIRobust(
           Authorization: `Bearer ${provider.key}`,
         },
         body: JSON.stringify(body),
+        signal,
       });
 
       const data = (await res.json()) as any;
@@ -103,15 +105,29 @@ async function callAIRobust(
         throw new Error(`${provider.name} returned empty completion.`);
       }
 
-      console.log(`[AI Engine] Successfully generated content via ${provider.name}.`);
+      console.log(`[AI Engine] [Simultaneous] Successfully generated content via ${provider.name}.`);
+      
+      // Cancel other pending requests
+      controller.abort();
+      
       return content;
     } catch (e: any) {
-      console.warn(`[AI Engine] ${provider.name} execution failed:`, e.message || e);
-      lastError = e;
+      if (e.name === "AbortError" || (e instanceof Error && e.name === "AbortError")) {
+        console.log(`[AI Engine] [Simultaneous] ${provider.name} request aborted (another provider succeeded first).`);
+      } else {
+        console.warn(`[AI Engine] [Simultaneous] ${provider.name} execution failed:`, e.message || e);
+      }
+      throw e;
     }
-  }
+  });
 
-  throw new Error(`All AI completion providers failed. Last Error: ${lastError?.message}`);
+  try {
+    return await Promise.any(promises);
+  } catch (aggregateError: any) {
+    const errors = aggregateError.errors || [aggregateError];
+    const errorMsg = errors.map((e: any) => e.message || e).join(" | ");
+    throw new Error(`All AI completion providers failed. Errors: ${errorMsg}`);
+  }
 }
 
 // Extracts clean JSON string by finding first '{' or '[' and matching to final '}' or ']'
