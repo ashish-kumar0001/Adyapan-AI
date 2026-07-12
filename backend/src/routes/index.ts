@@ -29,7 +29,6 @@ import { progressRouter } from "./progress.routes";
 import { studyPlannerRouter } from "./study-planner.routes";
 import { streakRouter } from "./streak.routes";
 import { weakTopicsRouter } from "./weak-topics.routes";
-import { dashboardRouter } from "./dashboard.routes";
 
 export const apiRouter = Router();
 
@@ -65,7 +64,7 @@ apiRouter.use("/progress", progressRouter);
 apiRouter.use("/study-planner", studyPlannerRouter);
 apiRouter.use("/streak", streakRouter);
 apiRouter.use("/weak-topics", weakTopicsRouter);
-apiRouter.use("/dashboard", dashboardRouter);
+
 
 
 
