@@ -1990,9 +1990,7 @@ function RecommendationLoadingProgress() {
 
 function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreChange?: string; strongestArea?: string; urgentRevision?: string } } | null }) {
   const [typedText, setTypedText] = useState("");
-  const hr = new Date().getHours();
-  const timeGreeting = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
-  const fullText = (brief?.text || "").replace(/God morning|Good morning/gi, timeGreeting);
+  const fullText = (brief?.text || "").replace(/God morning/gi, "Good morning").replace(/God afternoon/gi, "Good afternoon").replace(/God evening/gi, "Good evening");
 
   useEffect(() => {
     let index = 0;

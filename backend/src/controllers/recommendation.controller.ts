@@ -72,7 +72,7 @@ export async function getDashboardRecommendations(req: Request, res: Response): 
     }));
 
     if (dailyBrief && typeof dailyBrief.text === "string") {
-      dailyBrief.text = dailyBrief.text.replace(/God morning/gi, "Good morning");
+      dailyBrief.text = dailyBrief.text.replace(/God (morning|afternoon|evening)/gi, "Good $1");
     }
 
     res.json({

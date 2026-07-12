@@ -422,7 +422,7 @@ Student Learning Profile:
     }
 
     if (generated.dailyBrief && typeof generated.dailyBrief.text === "string") {
-      generated.dailyBrief.text = generated.dailyBrief.text.replace(/God morning/gi, "Good morning");
+      generated.dailyBrief.text = generated.dailyBrief.text.replace(/God (morning|afternoon|evening)/gi, "Good $1");
     }
 
     // Force date stamp
