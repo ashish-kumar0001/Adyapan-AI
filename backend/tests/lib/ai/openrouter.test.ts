@@ -10,6 +10,11 @@ jest.mock("../../../src/config/env", () => ({
   }
 }));
 
+jest.mock("../../../src/lib/ai/aiCache", () => ({
+  getCachedAIResponse: () => null,
+  setCachedAIResponse: () => {},
+}));
+
 function loadModule() {
   return require("../../../src/lib/ai/openrouter");
 }
