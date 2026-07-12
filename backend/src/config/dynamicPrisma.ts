@@ -6,10 +6,23 @@ const clientCache = new Map<string, PrismaClient>();
 
 export function createPrismaClient(databaseUrl: string): PrismaClient {
   const adapter = new PrismaPg(databaseUrl);
-  return new PrismaClient({
+  const client = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
+
+  (client as any).$use(async (params: any, next: any) => {
+    const start = Date.now();
+    const result = await next(params);
+    const duration = Date.now() - start;
+    try {
+      const { PerformanceMonitor } = require("../utils/monitoring");
+      PerformanceMonitor.record("db", `user_db:${params.model || "generic"}.${params.action}`, duration);
+    } catch {}
+    return result;
+  });
+
+  return client;
 }
 
 export async function getUserPrisma(userId: string): Promise<PrismaClient> {

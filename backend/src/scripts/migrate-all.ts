@@ -21,23 +21,36 @@ async function migrateAllDatabases(): Promise<MigrationResult[]> {
 
   // 2. Migrate each user database using schema.user.prisma
   console.log("Fetching user databases...");
-  const databases = await databaseService.listDatabases();
-  const userDbs = databases.filter((db) => db.name.startsWith("user_"));
+  try {
+    const databases = await databaseService.listDatabases();
+    const userDbs = databases.filter((db) => db.name.startsWith("user_"));
 
-  console.log(`Found ${userDbs.length} user databases`);
+    console.log(`Found ${userDbs.length} user databases`);
 
-  for (const db of userDbs) {
-    console.log(`Migrating ${db.name}...`);
+    for (const db of userDbs) {
+      console.log(`Migrating ${db.name}...`);
+      try {
+        const dbUrl = await databaseService.getConnectionString(db.name);
+        execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+          cwd: process.cwd(),
+          stdio: "inherit",
+          env: { ...process.env, USER_DATABASE_URL: dbUrl },
+        });
+        results.push({ dbName: db.name, success: true });
+      } catch (error) {
+        results.push({ dbName: db.name, success: false, error: String(error) });
+      }
+    }
+  } catch (err: any) {
+    console.warn(`[Migration] Neon API call failed (${err.message || err}). Falling back to pushing schema.user.prisma to default DATABASE_URL...`);
     try {
-      const dbUrl = await databaseService.getConnectionString(db.name);
-      execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+      execSync(`npx prisma db push --schema=prisma/schema.user.prisma --accept-data-loss`, {
         cwd: process.cwd(),
         stdio: "inherit",
-        env: { ...process.env, USER_DATABASE_URL: dbUrl },
       });
-      results.push({ dbName: db.name, success: true });
-    } catch (error) {
-      results.push({ dbName: db.name, success: false, error: String(error) });
+      results.push({ dbName: "default_db_user_schema", success: true });
+    } catch (pushErr) {
+      results.push({ dbName: "default_db_user_schema", success: false, error: String(pushErr) });
     }
   }
 

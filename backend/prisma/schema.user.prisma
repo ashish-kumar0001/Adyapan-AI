@@ -29,6 +29,8 @@ model Resume {
   coverLetters   CoverLetter[]
   resumeAnalyses ResumeAnalysis[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("resumes")
 }
 
@@ -42,6 +44,8 @@ model ATSReport {
   createdAt       DateTime @default(now()) @map("created_at")
   resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("ats_reports")
 }
 
@@ -55,6 +59,8 @@ model ResumeAnalysis {
   createdAt       DateTime @default(now()) @map("created_at")
   resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("resume_analyses")
 }
 
@@ -77,6 +83,8 @@ model CoverLetter {
   docxUrl        String?  @map("docx_url")
   resume         Resume?  @relation(fields: [resumeId], references: [id])
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("cover_letters")
 }
 
@@ -90,6 +98,8 @@ model LinkedInReport {
   score           Int
   createdAt       DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("linkedin_reports")
 }
 
@@ -102,6 +112,8 @@ model StudySession {
   messages  StudyMessage[]
   documents UploadedDocument[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("study_sessions")
 }
 
@@ -113,6 +125,8 @@ model StudyMessage {
   createdAt DateTime     @default(now()) @map("created_at")
   session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("study_messages")
 }
 
@@ -126,6 +140,9 @@ model UploadedDocument {
   createdAt DateTime      @default(now()) @map("created_at")
   session   StudySession? @relation(fields: [sessionId], references: [id])
 
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("uploaded_documents")
 }
 
@@ -142,6 +159,9 @@ model GeneratedNote {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([createdAt])
+  @@index([topic])
   @@map("generated_notes")
 }
 
@@ -155,6 +175,8 @@ model Quiz {
   flashcards Flashcard[]
   attempts   QuizAttempt[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("quizzes")
 }
 
@@ -170,6 +192,9 @@ model QuizAttempt {
   createdAt    DateTime @default(now()) @map("created_at")
   quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([quizId])
+  @@index([createdAt])
   @@map("quiz_attempts")
 }
 
@@ -183,6 +208,9 @@ model Flashcard {
   createdAt DateTime @default(now()) @map("created_at")
   quiz      Quiz?    @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([quizId])
+  @@index([topic])
   @@map("flashcards")
 }
 
@@ -195,6 +223,8 @@ model Assignment {
   content       Json
   createdAt     DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("assignments")
 }
 
@@ -208,6 +238,8 @@ model Presentation {
   slides     Json
   createdAt  DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("presentations")
 }
 
@@ -219,6 +251,8 @@ model MindMap {
   edges     Json
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("mind_maps")
 }
 
@@ -231,6 +265,8 @@ model CodingSession {
   updatedAt DateTime        @updatedAt @map("updated_at")
   messages  CodingMessage[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("coding_sessions")
 }
 
@@ -242,6 +278,8 @@ model CodingMessage {
   createdAt DateTime      @default(now()) @map("created_at")
   session   CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("coding_messages")
 }
 
@@ -276,6 +314,9 @@ model Submission {
   createdAt DateTime @default(now()) @map("created_at")
   problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([problemId])
+  @@index([createdAt])
   @@map("submissions")
 }
 
@@ -289,6 +330,7 @@ model DSAProgress {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
   @@map("dsa_progress")
 }
 
@@ -317,6 +359,9 @@ model ChallengeSubmission {
   createdAt   DateTime  @default(now()) @map("created_at")
   challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([challengeId])
+  @@index([createdAt])
   @@map("challenge_submissions")
 }
 
@@ -328,6 +373,7 @@ model Leaderboard {
   badges    String[]
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
   @@map("leaderboards")
 }
 
@@ -341,6 +387,7 @@ model GithubProfile {
   commits    Int      @default(0)
   lastSynced DateTime @default(now()) @map("last_synced")
 
+  @@index([userId])
   @@map("github_profiles")
 }
 
@@ -351,6 +398,8 @@ model GeneratedReadme {
   content     String
   createdAt   DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("generated_readmes")
 }
 
@@ -364,6 +413,8 @@ model Portfolio {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("portfolios")
 }
 
@@ -395,6 +446,8 @@ model InterviewSession {
   violations           ProctoringEvent[]
   evaluations          InterviewEvaluation[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("interview_sessions")
 }
 
@@ -408,6 +461,8 @@ model InterviewMessage {
   createdAt DateTime         @default(now()) @map("created_at")
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("interview_messages")
 }
 
@@ -426,6 +481,8 @@ model ProctoringEvent {
   createdAt       DateTime         @default(now()) @map("created_at")
   session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("proctoring_events")
 }
 
@@ -448,6 +505,8 @@ model InterviewEvaluation {
   createdAt         DateTime         @default(now()) @map("created_at")
   session           InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("interview_evaluations")
 }
 
@@ -460,6 +519,8 @@ model ChatSession {
   updatedAt DateTime      @updatedAt @map("updated_at")
   messages  ChatMessage[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("chat_sessions")
 }
 
@@ -471,6 +532,8 @@ model ChatMessage {
   createdAt DateTime    @default(now()) @map("created_at")
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([createdAt])
   @@map("chat_messages")
 }
 
@@ -484,6 +547,8 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("notifications")
 }
 
@@ -517,6 +582,9 @@ model LearningEvent {
   duration   Int?     @default(0)
   createdAt  DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([documentId])
+  @@index([createdAt])
   @@map("learning_events")
 }
 
@@ -559,6 +627,9 @@ model TopicProgress {
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([documentId])
+  @@index([topicName])
   @@map("topic_progress")
 }
 
@@ -575,6 +646,8 @@ model ConceptMastery {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([topicName])
   @@map("concept_mastery")
 }
 
@@ -593,6 +666,8 @@ model StudyPlan {
 
   tasks                StudyTask[]
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("study_plans")
 }
 
@@ -609,6 +684,9 @@ model StudyTask {
 
   studyPlan     StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
 
+  @@index([studyPlanId])
+  @@index([topicName])
+  @@index([createdAt])
   @@map("study_tasks")
 }
 
@@ -621,6 +699,9 @@ model StudyRevision {
   status       String   @default("Pending")
   createdAt    DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([topicName])
+  @@index([createdAt])
   @@map("study_revisions")
 }
 
@@ -657,6 +738,9 @@ model StreakEvent {
   activityPoints Int      @default(0) @map("activity_points") // represents minutes of study or equivalent
   createdAt      DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([documentId])
+  @@index([createdAt])
   @@map("streak_events")
 }
 
@@ -669,6 +753,8 @@ model StreakAchievement {
   unlockedAt      DateTime @default(now()) @map("unlocked_at")
   createdAt       DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("streak_achievements")
 }
 
@@ -719,6 +805,8 @@ model RevisionQueue {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([topicName])
   @@map("revision_queue")
 }
 
@@ -736,6 +824,10 @@ model Recommendation {
   generatedAt        DateTime @default(now()) @map("generated_at")
   expiresAt          DateTime @map("expires_at")
 
+  @@index([userId])
+  @@index([recommendationType])
+  @@index([topicName])
+  @@index([generatedAt])
   @@map("recommendations")
 }
 

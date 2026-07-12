@@ -5,6 +5,25 @@ import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
 const pdfParse = require("pdf-parse");
+async function parsePdfNonBlocking(buffer: Buffer): Promise<string> {
+  const pagerender = async (pageData: any) => {
+    await new Promise((resolve) => setImmediate(resolve));
+    const textContent = await pageData.getTextContent();
+    let lastY, text = "";
+    for (const item of textContent.items) {
+      if (lastY === item.transform[5] || !lastY) {
+        text += item.str;
+      } else {
+        text += "\n" + item.str;
+      }
+      lastY = item.transform[5];
+    }
+    return text;
+  };
+
+  const data = await pdfParse(buffer, { pagerender });
+  return data.text;
+}
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
@@ -53,8 +72,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   let rawText: string;
   if (mimeType === "application/pdf") {
-    const result = await pdfParse(file.buffer);
-    rawText = result.text;
+    rawText = await parsePdfNonBlocking(file.buffer);
   } else if (
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     mimeType === "application/msword"
@@ -147,18 +165,25 @@ function findRelevantExcerpt(documentText: string, topicName: string, topicSumma
 
   const searchText = `${topicName} ${topicSummary}`.toLowerCase();
   const keywords = searchText.split(/\s+/).filter(w => w.length > 3);
+  if (keywords.length === 0) return documentText.substring(0, excerptBudget);
 
   let bestScore = 0;
   let bestStart = 0;
   const windowSize = excerptBudget;
-  const step = 5000;
+  const step = 10000;
 
-  for (let i = 0; i <= documentText.length - windowSize; i += step) {
-    const window = documentText.substring(i, i + windowSize).toLowerCase();
+  // Lowercase the document text ONCE instead of on every iteration
+  const docLower = documentText.toLowerCase();
+
+  for (let i = 0; i <= docLower.length - windowSize; i += step) {
+    const window = docLower.substring(i, i + windowSize);
     let score = 0;
     for (const kw of keywords) {
-      const matches = window.split(kw).length - 1;
-      score += matches;
+      let pos = window.indexOf(kw);
+      while (pos !== -1) {
+        score++;
+        pos = window.indexOf(kw, pos + kw.length);
+      }
     }
     if (score > bestScore) {
       bestScore = score;
@@ -287,6 +312,7 @@ Rules:
 
 // Analyze uploaded document — two-phase approach for reliable, detailed summaries
 studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
+  const start = Date.now();
   try {
     let documentText = req.body.documentText as string | undefined;
 
@@ -395,6 +421,12 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
       getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
+
+    try {
+      const duration = Date.now() - start;
+      const { PerformanceMonitor } = require("../utils/monitoring");
+      PerformanceMonitor.record("upload", req.file?.originalname || "text_input", duration);
+    } catch {}
 
     res.json({ success: true, analysis });
   } catch (error) {

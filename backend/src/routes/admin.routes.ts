@@ -32,6 +32,14 @@ adminRouter.get("/analytics/revenue", ...guard, getRevenueAnalytics);
 adminRouter.get("/system-health", ...guard, getSystemHealth);
 adminRouter.get("/modules", ...guard, getModuleAnalytics);
 adminRouter.get("/security", ...guard, getSecurityLogs);
+adminRouter.get("/performance", ...guard, (req, res) => {
+  try {
+    const { PerformanceMonitor } = require("../utils/monitoring");
+    res.json({ success: true, stats: PerformanceMonitor.getStats() });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || "Failed to retrieve performance metrics" });
+  }
+});
 
 adminRouter.get("/databases", ...guard, getUserDatabases);
 adminRouter.get("/databases/stats", ...guard, getUserDatabaseStats);

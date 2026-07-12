@@ -6,6 +6,17 @@ export async function generateAnalytics(req: Request, res: Response): Promise<vo
   try {
     const userId = req.user!.userId;
     const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Recalculation throttling (5 minutes cache)
+    const existing = await userPrisma.learningAnalytics.findUnique({
+      where: { userId },
+    });
+
+    if (existing && Date.now() - new Date(existing.updatedAt).getTime() < 5 * 60 * 1000) {
+      res.json({ success: true, analytics: existing, cached: true });
+      return;
+    }
+
     const analytics = await AnalyticsService.generateAnalytics(userId, userPrisma);
     res.json({ success: true, analytics });
   } catch (error: any) {

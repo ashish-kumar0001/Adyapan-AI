@@ -1,4 +1,5 @@
 import { env } from "../../config/env";
+import { getCachedAIResponse, setCachedAIResponse } from "./aiCache";
 
 export interface OpenRouterMessage {
   role: "user" | "assistant" | "system";
@@ -141,11 +142,26 @@ export async function generateText(
   userPrompt: string,
   options: OpenRouterOptions
 ): Promise<string> {
+  const cached = getCachedAIResponse(systemPrompt, userPrompt, options);
+  if (cached) return cached;
+
+  const start = Date.now();
   const messages: OpenRouterMessage[] = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
-  return callAIRobust(messages, options);
+  const response = await callAIRobust(messages, options);
+  const duration = Date.now() - start;
+
+  try {
+    const { PerformanceMonitor } = require("../../utils/monitoring");
+    PerformanceMonitor.record("ai", options.model || "unknown", duration);
+  } catch (err) {
+    // Ignore monitoring import errors in isolated contexts
+  }
+
+  setCachedAIResponse(systemPrompt, userPrompt, options, response);
+  return response;
 }
 
 export async function generateJSON<T>(
@@ -154,15 +170,39 @@ export async function generateJSON<T>(
   options: OpenRouterOptions,
   fallback: T
 ): Promise<T> {
+  const modifiedSys = `${systemPrompt}\nYou MUST respond with valid JSON only, no other conversational introduction or explanation.`;
+  const cached = getCachedAIResponse(modifiedSys, userPrompt, options);
+  if (cached) {
+    try {
+      const cleaned = stripMarkdownJson(cached);
+      return JSON.parse(cleaned) as T;
+    } catch {
+      // In case parsing fails, let it fallback or recalculate
+    }
+  }
+
+  const start = Date.now();
   let text = "";
   try {
     const messages: OpenRouterMessage[] = [
-      { role: "system", content: `${systemPrompt}\nYou MUST respond with valid JSON only, no other conversational introduction or explanation.` },
+      { role: "system", content: modifiedSys },
       { role: "user", content: userPrompt },
     ];
     text = await callAIRobust(messages, options);
+    const duration = Date.now() - start;
+
+    try {
+      const { PerformanceMonitor } = require("../../utils/monitoring");
+      PerformanceMonitor.record("ai", options.model || "unknown", duration);
+    } catch (err) {
+      // Ignore monitoring import errors
+    }
+
     const cleaned = stripMarkdownJson(text);
-    return JSON.parse(cleaned) as T;
+    const parsed = JSON.parse(cleaned) as T;
+    
+    setCachedAIResponse(modifiedSys, userPrompt, options, text);
+    return parsed;
   } catch (error) {
     console.error(`[AI Engine] JSON generation error (${options.model}):`, error);
     console.error(`[AI Engine] Original LLM Response text was:\n${text}`);

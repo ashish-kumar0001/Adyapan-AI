@@ -16,11 +16,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Custom Axios Retry logic & 401 Redirect handler
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (typeof window !== "undefined" && err?.response?.status === 401) {
+  async (err) => {
+    const { config, response } = err;
+    
+    // Redirect to login on 401
+    if (typeof window !== "undefined" && response?.status === 401) {
       const path = window.location.pathname;
       if (!path.startsWith("/login")) {
         localStorage.removeItem("adyapan-token");
@@ -29,7 +32,25 @@ api.interceptors.response.use(
         sessionStorage.removeItem("adyapan-user");
         window.location.href = "/login";
       }
+      return Promise.reject(err);
     }
+
+    if (!config) return Promise.reject(err);
+
+    // Initialize retry count
+    config.__retryCount = config.__retryCount || 0;
+
+    // Retry up to 3 times on network errors or 5xx status codes
+    const shouldRetry = config.__retryCount < 3 && (!response || (response.status >= 500 && response.status <= 599));
+
+    if (shouldRetry) {
+      config.__retryCount += 1;
+      const delay = 1000 * Math.pow(2, config.__retryCount);
+      console.warn(`[API] Retrying request to ${config.url} (${config.__retryCount}/3) in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return api(config);
+    }
+
     return Promise.reject(err);
   }
 );

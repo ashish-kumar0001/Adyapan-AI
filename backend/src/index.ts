@@ -7,23 +7,37 @@ import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
 
+import compression from "compression";
+import { PerformanceMonitor } from "./utils/monitoring";
+
 const app = express();
 
 // Trust Railway's proxy so rate-limit reads the real client IP
 app.set("trust proxy", 1);
 
-// Trust proxy for deployment platforms like Railway (required for express-rate-limit)
-app.set("trust proxy", 1);
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (req.originalUrl && req.originalUrl.startsWith("/api")) {
+      PerformanceMonitor.record("api", `${req.method} ${req.originalUrl}`, duration);
+      if (res.statusCode >= 400) {
+        PerformanceMonitor.record("error", `${req.method} ${req.originalUrl}`, duration, { status: res.statusCode });
+      }
+    }
+  });
+  next();
+});
 
-// Allow both local dev and production frontend URLs
+app.use(compression());
+app.use(helmet());
+
 const allowedOrigins = [
   env.frontendUrl,
   "http://localhost:3000",
   "http://localhost:3001",
   "https://adyapan-ai-gamma.vercel.app",
 ];
-
-app.use(helmet());
 
 app.use(
   cors({

@@ -10,37 +10,112 @@ import { api } from "@/services/api";
 import { cn } from "@/lib/cn";
 import Link from "next/link";
 import Image from "next/image";
-import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
-import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
-import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
-import { LinkedInView } from "@/components/resume-hub/LinkedInView";
-import { AdyChatView } from "@/components/ady-chat/AdyChatView";
-import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
-import { StudyPlannerDashboard } from "@/components/learning-hub/StudyPlannerDashboard";
-import { LearningStreakDashboard } from "@/components/learning-hub/LearningStreakDashboard";
-import { NotesGeneratorView } from "@/components/learning-hub/NotesGeneratorView";
-import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
-import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGeneratorView";
-import { PptGeneratorView } from "@/components/learning-hub/PptGeneratorView";
-import { MindMapsView } from "@/components/learning-hub/MindMapsView";
-import { FlashcardsView } from "@/components/learning-hub/FlashcardsView";
-import { CodingAssistantView } from "@/components/coding-hub/CodingAssistantView";
-import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
-import { CodingChallengesView } from "@/components/coding-hub/CodingChallengesView";
-import { GithubPortfolioView } from "@/components/coding-hub/GithubPortfolioView";
-import { InterviewHubView } from "@/components/interview-hub/InterviewHubView";
-import { InternshipHubView } from "@/components/internship-hub/InternshipHubView";
-import { JobHubView } from "@/components/job-hub/JobHubView";
-import { PlacementHubView } from "@/components/placement-hub/PlacementHubView";
-import { ProductivityHubView } from "@/components/productivity-hub/ProductivityHubView";
-import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
-import { ProgressDashboard } from "@/components/progress-hub/ProgressDashboard";
-import { CommunityProfileView } from "@/components/account-hub/CommunityProfileView";
-import { ManageAccountView } from "@/components/account-hub/ManageAccountView";
+import dynamic from "next/dynamic";
 
+// Define a premium skeleton widget loader
+function DashboardWidgetSkeleton({ title }: { title?: string }) {
+  return (
+    <div className="w-full min-h-[400px] flex flex-col gap-4 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 backdrop-blur-md animate-pulse">
+      <div className="flex justify-between items-center">
+        <div className="h-6 w-48 bg-amber-500/20 rounded-md"></div>
+        <div className="h-8 w-8 bg-amber-500/20 rounded-full"></div>
+      </div>
+      <div className="flex-1 flex flex-col gap-3 justify-center">
+        <div className="h-4 w-full bg-amber-500/10 rounded-md"></div>
+        <div className="h-4 w-5/6 bg-amber-500/10 rounded-md"></div>
+        <div className="h-4 w-2/3 bg-amber-500/10 rounded-md"></div>
+      </div>
+    </div>
+  );
+}
 
-import { BillingView } from "@/components/account-hub/BillingView";
-import { ResearchHubView } from "@/components/research-hub/ResearchHubView";
+const ResumeBuilderView = dynamic(() => import("@/components/resume-hub/ResumeBuilderView").then(m => m.ResumeBuilderView), {
+  loading: () => <DashboardWidgetSkeleton title="Resume Builder" />
+});
+const AtsCheckerView = dynamic(() => import("@/components/resume-hub/AtsCheckerView").then(m => m.AtsCheckerView), {
+  loading: () => <DashboardWidgetSkeleton title="ATS Checker" />
+});
+const CoverLetterView = dynamic(() => import("@/components/resume-hub/CoverLetterView").then(m => m.CoverLetterView), {
+  loading: () => <DashboardWidgetSkeleton title="Cover Letter Builder" />
+});
+const LinkedInView = dynamic(() => import("@/components/resume-hub/LinkedInView").then(m => m.LinkedInView), {
+  loading: () => <DashboardWidgetSkeleton title="LinkedIn Optimizer" />
+});
+const AdyChatView = dynamic(() => import("@/components/ady-chat/AdyChatView").then(m => m.AdyChatView), {
+  loading: () => <DashboardWidgetSkeleton title="Ady Chat" />
+});
+const StudyAssistantView = dynamic(() => import("@/components/learning-hub/StudyAssistantView").then(m => m.StudyAssistantView), {
+  loading: () => <DashboardWidgetSkeleton title="Study Assistant" />
+});
+const StudyPlannerDashboard = dynamic(() => import("@/components/learning-hub/StudyPlannerDashboard").then(m => m.StudyPlannerDashboard), {
+  loading: () => <DashboardWidgetSkeleton title="Study Planner" />
+});
+const LearningStreakDashboard = dynamic(() => import("@/components/learning-hub/LearningStreakDashboard").then(m => m.LearningStreakDashboard), {
+  loading: () => <DashboardWidgetSkeleton title="Learning Streak" />
+});
+const NotesGeneratorView = dynamic(() => import("@/components/learning-hub/NotesGeneratorView").then(m => m.NotesGeneratorView), {
+  loading: () => <DashboardWidgetSkeleton title="Notes Generator" />
+});
+const QuizGeneratorView = dynamic(() => import("@/components/learning-hub/QuizGeneratorView").then(m => m.QuizGeneratorView), {
+  loading: () => <DashboardWidgetSkeleton title="Quiz Generator" />
+});
+const AssignmentGeneratorView = dynamic(() => import("@/components/learning-hub/AssignmentGeneratorView").then(m => m.AssignmentGeneratorView), {
+  loading: () => <DashboardWidgetSkeleton title="Assignment Generator" />
+});
+const PptGeneratorView = dynamic(() => import("@/components/learning-hub/PptGeneratorView").then(m => m.PptGeneratorView), {
+  loading: () => <DashboardWidgetSkeleton title="PPT Generator" />
+});
+const MindMapsView = dynamic(() => import("@/components/learning-hub/MindMapsView").then(m => m.MindMapsView), {
+  loading: () => <DashboardWidgetSkeleton title="Mind Maps" />
+});
+const FlashcardsView = dynamic(() => import("@/components/learning-hub/FlashcardsView").then(m => m.FlashcardsView), {
+  loading: () => <DashboardWidgetSkeleton title="Flashcards" />
+});
+const CodingAssistantView = dynamic(() => import("@/components/coding-hub/CodingAssistantView").then(m => m.CodingAssistantView), {
+  loading: () => <DashboardWidgetSkeleton title="Coding Assistant" />
+});
+const DsaPracticeView = dynamic(() => import("@/components/coding-hub/DsaPracticeView").then(m => m.DsaPracticeView), {
+  loading: () => <DashboardWidgetSkeleton title="DSA Practice" />
+});
+const CodingChallengesView = dynamic(() => import("@/components/coding-hub/CodingChallengesView").then(m => m.CodingChallengesView), {
+  loading: () => <DashboardWidgetSkeleton title="Coding Challenges" />
+});
+const GithubPortfolioView = dynamic(() => import("@/components/coding-hub/GithubPortfolioView").then(m => m.GithubPortfolioView), {
+  loading: () => <DashboardWidgetSkeleton title="Github Portfolio" />
+});
+const InterviewHubView = dynamic(() => import("@/components/interview-hub/InterviewHubView").then(m => m.InterviewHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Interview Hub" />
+});
+const InternshipHubView = dynamic(() => import("@/components/internship-hub/InternshipHubView").then(m => m.InternshipHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Internship Finder" />
+});
+const JobHubView = dynamic(() => import("@/components/job-hub/JobHubView").then(m => m.JobHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Job matching" />
+});
+const PlacementHubView = dynamic(() => import("@/components/placement-hub/PlacementHubView").then(m => m.PlacementHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Placement Hub" />
+});
+const ProductivityHubView = dynamic(() => import("@/components/productivity-hub/ProductivityHubView").then(m => m.ProductivityHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Productivity Workspace" />
+});
+const AnalyticsHubView = dynamic(() => import("@/components/analytics-hub/AnalyticsHubView").then(m => m.AnalyticsHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Learning Analytics" />
+});
+const ProgressDashboard = dynamic(() => import("@/components/progress-hub/ProgressDashboard").then(m => m.ProgressDashboard), {
+  loading: () => <DashboardWidgetSkeleton title="Progress Tracking" />
+});
+const CommunityProfileView = dynamic(() => import("@/components/account-hub/CommunityProfileView").then(m => m.CommunityProfileView), {
+  loading: () => <DashboardWidgetSkeleton title="Community Profile" />
+});
+const ManageAccountView = dynamic(() => import("@/components/account-hub/ManageAccountView").then(m => m.ManageAccountView), {
+  loading: () => <DashboardWidgetSkeleton title="Manage Account" />
+});
+const BillingView = dynamic(() => import("@/components/account-hub/BillingView").then(m => m.BillingView), {
+  loading: () => <DashboardWidgetSkeleton title="Subscription Billing" />
+});
+const ResearchHubView = dynamic(() => import("@/components/research-hub/ResearchHubView").then(m => m.ResearchHubView), {
+  loading: () => <DashboardWidgetSkeleton title="Research Helper" />
+});
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
