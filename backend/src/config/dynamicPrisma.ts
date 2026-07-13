@@ -38,6 +38,26 @@ export async function getUserPrisma(userId: string): Promise<any> {
 
   const dbUrl = await databaseService.getDatabaseUrlForUser(userId);
   const client = createPrismaClient(dbUrl);
+
+  // Dynamic self-healing migration guard: ensure database contains user tables
+  try {
+    await client.userQuestionProgress.findFirst().catch(async (err: any) => {
+      if (err?.code === "P2021" || err?.message?.includes("does not exist")) {
+        console.log(`[dynamicPrisma] User tables missing for ${userId}. Initializing schema user tables...`);
+        const { execSync } = require("child_process");
+        execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+          env: { ...process.env, USER_DATABASE_URL: dbUrl },
+          stdio: "ignore"
+        });
+        console.log(`[dynamicPrisma] Schema user tables initialized successfully for ${userId}.`);
+      } else {
+        throw err;
+      }
+    });
+  } catch (err: any) {
+    console.error(`[dynamicPrisma] Migration guard check failed for user ${userId}:`, err.message || err);
+  }
+
   clientCache.set(userId, client);
   return client;
 }
