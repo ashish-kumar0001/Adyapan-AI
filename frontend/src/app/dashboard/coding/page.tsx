@@ -1,43 +1,28 @@
 "use client";
 
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useState, useEffect, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
-  Code2, Search, Filter, BookMarked, CheckCircle2, AlertCircle, Play, Sparkles,
-  Trophy, Flame, Clock, RefreshCw, X, ChevronRight, HelpCircle, GraduationCap,
-  ExternalLink, ChevronDown, Check, Award
+  Code2, Search, BookMarked, CheckCircle2, AlertCircle, Play, Sparkles,
+  Trophy, Clock, RefreshCw, X, ChevronRight, HelpCircle, ExternalLink,
+  Check, Award
 } from "lucide-react";
 import {
   FloatingOrbs,
   PremiumCard,
   PremiumButton,
   PremiumBadge,
-  PremiumInput,
-  PremiumProgressBar,
-  PremiumProgressRing
+  PremiumProgressBar
 } from "@/components/ui/PremiumComponents";
 import {
   DashboardSidebar,
   DashboardTopNav,
-  sidebarItems,
   AdyapanUser
 } from "../user/page";
-
-const CodingAssistantView = dynamic(() => import("@/components/coding-hub/CodingAssistantView").then(m => m.CodingAssistantView), {
-  loading: () => <div className="p-6 text-gray-400">Loading Coding Assistant...</div>
-});
-const CodingChallengesView = dynamic(() => import("@/components/coding-hub/CodingChallengesView").then(m => m.CodingChallengesView), {
-  loading: () => <div className="p-6 text-gray-400">Loading Coding Challenges...</div>
-});
-const GithubPortfolioView = dynamic(() => import("@/components/coding-hub/GithubPortfolioView").then(m => m.GithubPortfolioView), {
-  loading: () => <div className="p-6 text-gray-400">Loading GitHub Portfolio Builder...</div>
-});
 
 // ─── Loading checklist steps ──────────────────────────────────────────────────
 const loadingSteps = [
@@ -65,18 +50,16 @@ function TypewriterText({ text, speed = 4 }: { text: string; speed?: number }) {
     }, speed);
     return () => clearInterval(interval);
   }, [text, speed]);
-  return <p className="whitespace-pre-line text-sm leading-relaxed text-gray-300">{displayedText}</p>;
+  return <p className="whitespace-pre-line text-xs md:text-sm leading-relaxed text-[var(--text-primary)] opacity-90">{displayedText}</p>;
 }
 
 export default function CodingHubPage() {
   useRequireAuth("USER");
 
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"dsa" | "assistant" | "challenges" | "github">("dsa");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -250,7 +233,7 @@ export default function CodingHubPage() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
-  const handleComingSoon = () => toast.info("Feature coming soon in Day 12!");
+  const handleComingSoon = () => toast.info("Coming soon!");
   const handleViewProfile = () => router.push("/profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => router.push("/dashboard/user");
@@ -376,9 +359,9 @@ export default function CodingHubPage() {
   // Rendering Loading Screen
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#080710] text-white flex flex-col items-center justify-center font-sans">
+      <div className="fixed inset-0 z-50 bg-[var(--bg-dark)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
         <FloatingOrbs />
-        <div className="relative z-10 w-full max-w-md p-8 bg-white/[0.03] border border-white/5 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
+        <div className="relative z-10 w-full max-w-md p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
@@ -387,7 +370,7 @@ export default function CodingHubPage() {
             <Code2 size={32} className="text-black" />
           </motion.div>
           
-          <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+          <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-primary)]/70 bg-clip-text text-transparent">
             Adyapan Coding Engine
           </h2>
           <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
@@ -400,7 +383,7 @@ export default function CodingHubPage() {
               const isCurrent = idx === loadingIndex;
               return (
                 <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
-                  <span className={isDone ? "text-white/40 line-through" : isCurrent ? "text-amber-400" : "text-white/20"}>
+                  <span className={isDone ? "text-[var(--text-primary)]/40 line-through" : isCurrent ? "text-amber-500" : "text-[var(--text-primary)]/20"}>
                     {step}
                   </span>
                   <div>
@@ -409,7 +392,7 @@ export default function CodingHubPage() {
                     ) : isCurrent ? (
                       <RefreshCw size={12} className="animate-spin text-amber-500" />
                     ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-white/10" />
+                      <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
                     )}
                   </div>
                 </div>
@@ -456,38 +439,14 @@ export default function CodingHubPage() {
       />
 
       {/* Main workspace */}
-      <main className="dash-main relative z-10 font-sans">
+      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6 max-w-7xl mx-auto">
         
-        {/* Submodules Navigation Tabs */}
-        <div className="flex border-b border-white/5 mb-6 overflow-x-auto shrink-0 scrollbar-none gap-2">
-          {[
-            { id: "dsa", label: "DSA Question Bank" },
-            { id: "assistant", label: "Coding Assistant" },
-            { id: "challenges", label: "Coding Challenges" },
-            { id: "github", label: "GitHub Portfolio" }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-3 px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-amber-500 text-amber-400"
-                  : "border-transparent text-gray-400 hover:text-white"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === "dsa" && (
-          <>
-            {/* Header Overview Hero */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
-              <div>
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
+        {/* Header Overview Hero */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 text-xs font-bold text-amber-500 tracking-wider uppercase mb-1.5"
             >
               <Sparkles size={14} className="text-amber-500" />
@@ -497,12 +456,12 @@ export default function CodingHubPage() {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="text-3xl font-black tracking-tight text-white bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent"
+              className="text-3xl font-black tracking-tight text-[var(--text-primary)]"
             >
               DSA Question Bank
             </motion.h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Intelligent practice repo backed by Codeforces & AI-driven hints.
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
+              Select a topic, view guided hints and optimal approaches, and complete placements preparation!
             </p>
           </div>
 
@@ -532,12 +491,12 @@ export default function CodingHubPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md flex flex-col justify-between min-h-[110px]"
+              className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm dark:shadow-none backdrop-blur-md flex flex-col justify-between min-h-[110px]"
             >
-              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400">{card.label}</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">{card.label}</span>
               <div className="mt-2 flex flex-col">
                 <span className={`text-2xl font-black ${card.color}`}>{card.value}</span>
-                <span className="text-[10px] text-gray-500 font-medium">{card.desc}</span>
+                <span className="text-[10px] text-[var(--text-secondary)]/80 font-medium">{card.desc}</span>
               </div>
             </motion.div>
           ))}
@@ -547,30 +506,30 @@ export default function CodingHubPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           
           {/* Daily Challenge Card */}
-          <PremiumCard glow className="lg:col-span-2 flex flex-col p-6 h-full justify-between">
+          <PremiumCard glow className="lg:col-span-2 flex flex-col p-6 h-full justify-between bg-[var(--bg-card)] border-[var(--border-color)] shadow-md dark:shadow-none">
             <div className="flex justify-between items-start">
               <div>
                 <PremiumBadge variant="amber" pulse className="mb-3">Daily Challenge</PremiumBadge>
                 {dailyChallenge ? (
                   <>
-                    <h3 className="text-xl font-bold text-white hover:text-amber-400 transition-colors cursor-pointer" onClick={() => handleOpenQuestion(dailyChallenge)}>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] hover:text-amber-500 transition-colors cursor-pointer" onClick={() => handleOpenQuestion(dailyChallenge)}>
                       {dailyChallenge.title}
                     </h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
-                      <span className="font-semibold text-purple-400">{dailyChallenge.topic}</span>
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-[var(--text-secondary)]">
+                      <span className="font-semibold text-purple-500">{dailyChallenge.topic}</span>
                       <span>·</span>
                       <span className={`font-semibold ${
-                        dailyChallenge.difficulty === "Easy" ? "text-emerald-400" :
-                        dailyChallenge.difficulty === "Medium" ? "text-amber-400" : "text-rose-400"
+                        dailyChallenge.difficulty === "Easy" ? "text-emerald-500" :
+                        dailyChallenge.difficulty === "Medium" ? "text-amber-500" : "text-rose-500"
                       }`}>{dailyChallenge.difficulty}</span>
                       <span>·</span>
-                      <span className="bg-white/5 px-2 py-0.5 rounded text-[10px] font-bold">Rating: {dailyChallenge.rating || "N/A"}</span>
+                      <span className="bg-slate-200 dark:bg-white/5 px-2 py-0.5 rounded text-[10px] font-bold">Rating: {dailyChallenge.rating || "N/A"}</span>
                       <span>·</span>
                       <span className="flex items-center gap-1"><Clock size={12} /> ~25-40 min</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-gray-400 mt-2">No daily challenge generated. Sync database to resolve challenge.</p>
+                  <p className="text-sm text-[var(--text-secondary)] mt-2">No daily challenge generated. Sync database to resolve challenge.</p>
                 )}
               </div>
               {dailyChallenge?.progress?.status === "solved" && (
@@ -593,12 +552,12 @@ export default function CodingHubPage() {
           </PremiumCard>
 
           {/* AI Recommendations Panel */}
-          <PremiumCard className="p-6 h-full flex flex-col justify-between">
+          <PremiumCard className="p-6 h-full flex flex-col justify-between bg-[var(--bg-card)] border-[var(--border-color)] shadow-md dark:shadow-none">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-500 tracking-wider uppercase mb-3">
                 <Sparkles size={14} /> AI Recommendation
               </div>
-              <p className="text-xs text-gray-300 font-semibold mb-4 leading-relaxed">
+              <p className="text-xs text-[var(--text-primary)] font-semibold mb-4 leading-relaxed">
                 {aiRecommendations?.message || "Analyze your progress to generate specific placement recommendation."}
               </p>
               
@@ -607,19 +566,19 @@ export default function CodingHubPage() {
                   <div
                     key={q.id}
                     onClick={() => handleOpenQuestion(q)}
-                    className="flex justify-between items-center p-2.5 rounded-lg bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 cursor-pointer transition-all"
+                    className="flex justify-between items-center p-2.5 rounded-lg bg-[var(--bg-dark)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] cursor-pointer transition-all"
                   >
                     <div className="truncate pr-2">
-                      <p className="text-xs font-bold text-white truncate">{q.title}</p>
-                      <span className="text-[10px] text-gray-500 font-medium">{q.topic} · {q.difficulty}</span>
+                      <p className="text-xs font-bold text-[var(--text-primary)] truncate">{q.title}</p>
+                      <span className="text-[10px] text-[var(--text-secondary)] font-medium">{q.topic} · {q.difficulty}</span>
                     </div>
-                    <ChevronRight size={14} className="text-gray-400 shrink-0" />
+                    <ChevronRight size={14} className="text-[var(--text-secondary)] shrink-0" />
                   </div>
                 ))}
               </div>
             </div>
             
-            <div className="mt-4 flex items-center justify-between text-[10px] font-bold text-gray-500 border-t border-white/5 pt-3">
+            <div className="mt-4 flex items-center justify-between text-[10px] font-bold text-[var(--text-secondary)] border-t border-[var(--border-color)] pt-3">
               <span>Weak Area: {aiRecommendations?.topic || "None"}</span>
               <span>Next Difficulty: {aiRecommendations?.difficulty || "Easy"}</span>
             </div>
@@ -628,7 +587,7 @@ export default function CodingHubPage() {
 
         {/* DSA Topic Explorer Grid */}
         <div className="mb-8">
-          <h2 className="text-lg font-extrabold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-extrabold text-[var(--text-primary)] mb-4 flex items-center gap-2">
             <Trophy size={18} className="text-amber-500" />
             DSA Topic Explorer
           </h2>
@@ -637,19 +596,27 @@ export default function CodingHubPage() {
             {topicExplorer.map((t, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(245,158,11,0.04)" }}
-                className="p-4 rounded-2xl bg-white/[0.015] border border-white/5 backdrop-blur-md flex flex-col justify-between group transition-all"
+                whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(245,158,11,0.06)" }}
+                onClick={() => {
+                  setTopicFilter(t.topicName);
+                  const element = document.getElementById("dsa-repository-section");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  }
+                  toast.success(`Filtered questions by: ${t.topicName}`);
+                }}
+                className="p-4 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] shadow-sm hover:border-amber-500/40 cursor-pointer backdrop-blur-md flex flex-col justify-between group transition-all"
               >
                 <div>
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-bold text-white group-hover:text-amber-500 transition-colors">{t.topicName}</h3>
-                    <span className="text-[10px] font-bold text-gray-400">{t.solvedCount}/{t.questionCount} solved</span>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-amber-500 transition-colors">{t.topicName}</h3>
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">{t.solvedCount}/{t.questionCount} solved</span>
                   </div>
 
                   <PremiumProgressBar value={t.completionPercentage} color={t.completionPercentage >= 60 ? "green" : "amber"} height={4} className="my-3" />
 
                   {/* Difficulty Breakdown display */}
-                  <div className="flex gap-2 text-[8px] uppercase tracking-wider font-extrabold text-gray-500 mt-2 justify-between">
+                  <div className="flex gap-2 text-[8px] uppercase tracking-wider font-extrabold text-[var(--text-secondary)] mt-2 justify-between">
                     <span className="text-emerald-500/80">E: {t.difficultyDistribution?.Easy || 0}</span>
                     <span className="text-amber-500/80">M: {t.difficultyDistribution?.Medium || 0}</span>
                     <span className="text-rose-500/80">H: {t.difficultyDistribution?.Hard || 0}</span>
@@ -657,9 +624,9 @@ export default function CodingHubPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between text-[10px] text-gray-500 border-t border-white/5 pt-2">
+                <div className="mt-3 flex items-center justify-between text-[10px] text-[var(--text-secondary)] border-t border-[var(--border-color)] pt-2">
                   <span>Completion %</span>
-                  <span className="font-bold text-white">{t.completionPercentage}%</span>
+                  <span className="font-bold text-[var(--text-primary)]">{t.completionPercentage}%</span>
                 </div>
               </motion.div>
             ))}
@@ -667,13 +634,13 @@ export default function CodingHubPage() {
         </div>
 
         {/* Question Bank with Filters */}
-        <div className="mb-12">
-          <h2 className="text-lg font-extrabold text-white mb-4 flex items-center gap-2">
+        <div id="dsa-repository-section" className="mb-12 scroll-mt-24">
+          <h2 className="text-lg font-extrabold text-[var(--text-primary)] mb-4 flex items-center gap-2">
             <Code2 size={18} className="text-amber-500" />
             DSA Repository
           </h2>
 
-          <PremiumCard className="p-6">
+          <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] shadow-md dark:shadow-none">
             
             {/* Filters Bar */}
             <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-6">
@@ -681,13 +648,13 @@ export default function CodingHubPage() {
               <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto">
                 {/* Search */}
                 <div className="relative min-w-[200px] w-full sm:w-auto">
-                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search problems or contest..."
-                    className="pl-9 pr-4 py-2 w-full rounded-xl bg-white/[0.02] border border-white/10 outline-none focus:border-amber-500 text-xs text-white"
+                    className="pl-9 pr-4 py-2 w-full rounded-xl bg-[var(--bg-dark)] border border-[var(--border-color)] outline-none focus:border-amber-500 text-xs text-[var(--text-primary)]"
                   />
                 </div>
 
@@ -695,7 +662,7 @@ export default function CodingHubPage() {
                 <select
                   value={topicFilter}
                   onChange={(e) => setTopicFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-neutral-900 border border-white/10 outline-none text-xs text-white cursor-pointer hover:border-amber-500"
+                  className="px-3 py-2 rounded-xl bg-[var(--bg-dark)] border border-[var(--border-color)] outline-none text-xs text-[var(--text-primary)] cursor-pointer hover:border-amber-500"
                 >
                   <option value="">All Topics</option>
                   {[
@@ -710,7 +677,7 @@ export default function CodingHubPage() {
                 <select
                   value={difficultyFilter}
                   onChange={(e) => setDifficultyFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-neutral-900 border border-white/10 outline-none text-xs text-white cursor-pointer hover:border-amber-500"
+                  className="px-3 py-2 rounded-xl bg-[var(--bg-dark)] border border-[var(--border-color)] outline-none text-xs text-[var(--text-primary)] cursor-pointer hover:border-amber-500"
                 >
                   <option value="">All Difficulties</option>
                   <option value="Easy">Easy</option>
@@ -723,7 +690,7 @@ export default function CodingHubPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-neutral-900 border border-white/10 outline-none text-xs text-white cursor-pointer hover:border-amber-500"
+                  className="px-3 py-2 rounded-xl bg-[var(--bg-dark)] border border-[var(--border-color)] outline-none text-xs text-[var(--text-primary)] cursor-pointer hover:border-amber-500"
                 >
                   <option value="">All Statuses</option>
                   <option value="solved">Solved</option>
@@ -735,7 +702,7 @@ export default function CodingHubPage() {
                 <button
                   onClick={() => setBookmarkFilter(prev => !prev)}
                   className={`px-3 py-2 rounded-xl border outline-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
-                    bookmarkFilter ? "border-rose-500 bg-rose-500/10 text-rose-400" : "border-white/10 text-gray-400"
+                    bookmarkFilter ? "border-rose-500 bg-rose-500/10 text-rose-500" : "border-[var(--border-color)] text-[var(--text-secondary)] bg-[var(--bg-dark)] hover:border-amber-500"
                   }`}
                 >
                   <BookMarked size={12} />
@@ -744,7 +711,7 @@ export default function CodingHubPage() {
               </div>
 
               {/* Placement Filter */}
-              <div className="flex bg-white/5 border border-white/5 rounded-xl p-1 gap-0.5 w-full sm:w-auto mt-2 lg:mt-0">
+              <div className="flex bg-[var(--bg-dark)] border border-[var(--border-color)] rounded-xl p-1 gap-0.5 w-full sm:w-auto mt-2 lg:mt-0">
                 {[
                   { id: "all", label: "All Questions" },
                   { id: "placement", label: "Placement Fav" },
@@ -754,7 +721,7 @@ export default function CodingHubPage() {
                     key={item.id}
                     onClick={() => setPlacementFilter(item.id)}
                     className={`flex-1 sm:flex-none text-[10px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                      placementFilter === item.id ? "bg-amber-500 text-black shadow-sm" : "text-gray-400 hover:text-white"
+                      placementFilter === item.id ? "bg-amber-500 text-black shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     {item.label}
@@ -767,7 +734,7 @@ export default function CodingHubPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-gray-500 font-black">
+                  <tr className="border-b border-[var(--border-color)] text-[10px] uppercase tracking-widest text-[var(--text-secondary)] font-black">
                     <th className="py-3 px-2">Status</th>
                     <th className="py-3 px-2">Problem</th>
                     <th className="py-3 px-2">Topic</th>
@@ -780,23 +747,23 @@ export default function CodingHubPage() {
                 <tbody>
                   {fetchingQuestions ? (
                     [...Array(6)].map((_, idx) => (
-                      <tr key={idx} className="border-b border-white/5 animate-pulse">
-                        <td className="py-4 px-2"><div className="w-4 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-48 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-24 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-16 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-12 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-32 h-4 bg-white/5 rounded" /></td>
-                        <td className="py-4 px-2"><div className="w-16 h-4 bg-white/5 rounded ml-auto" /></td>
+                      <tr key={idx} className="border-b border-[var(--border-color)] animate-pulse">
+                        <td className="py-4 px-2"><div className="w-4 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-48 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-24 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-16 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-12 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-32 h-4 bg-[var(--border-color)] rounded" /></td>
+                        <td className="py-4 px-2"><div className="w-16 h-4 bg-[var(--border-color)] rounded ml-auto" /></td>
                       </tr>
                     ))
                   ) : questions.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-gray-500">
+                      <td colSpan={7} className="py-12 text-center text-[var(--text-secondary)]">
                         <div className="flex flex-col items-center justify-center">
-                          <AlertCircle size={32} className="text-gray-600 mb-2" />
-                          <p className="font-bold text-sm text-gray-400">No Questions Available Yet</p>
-                          <p className="text-xs text-gray-500 mt-1 mb-4">Sync Codeforces Repository to begin.</p>
+                          <AlertCircle size={32} className="text-[var(--text-secondary)]/55 mb-2" />
+                          <p className="font-bold text-sm text-[var(--text-primary)] opacity-80">No Questions Available Yet</p>
+                          <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">Sync Codeforces Repository to begin.</p>
                           <PremiumButton variant="secondary" onClick={handleSyncRepository} icon={<RefreshCw size={12} />}>
                             Sync Problems
                           </PremiumButton>
@@ -808,7 +775,7 @@ export default function CodingHubPage() {
                       const isSolved = q.progress?.status === "solved";
                       const isAttempted = q.progress?.status === "attempted";
                       return (
-                        <tr key={q.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-all text-xs font-semibold text-white">
+                        <tr key={q.id} className="border-b border-[var(--border-color)] hover:bg-slate-100 dark:hover:bg-white/[0.015] transition-all text-xs font-semibold text-[var(--text-primary)]">
                           <td className="py-4 px-2">
                             {isSolved ? (
                               <CheckCircle2 size={16} className="text-emerald-500 drop-shadow-[0_0_4px_rgba(16,185,129,0.2)]" />
@@ -817,28 +784,28 @@ export default function CodingHubPage() {
                                 ⏳
                               </div>
                             ) : (
-                              <div className="w-3.5 h-3.5 rounded-full border border-white/10" />
+                              <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
                             )}
                           </td>
                           <td className="py-4 px-2">
-                            <span className="font-bold text-white hover:text-amber-500 cursor-pointer transition-colors block max-w-sm truncate" onClick={() => handleOpenQuestion(q)}>
+                            <span className="font-bold text-[var(--text-primary)] hover:text-amber-500 cursor-pointer transition-colors block max-w-sm truncate" onClick={() => handleOpenQuestion(q)}>
                               {q.title}
                             </span>
-                            <span className="text-[10px] text-gray-500 mt-0.5 block">{q.externalId}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] mt-0.5 block">{q.externalId}</span>
                           </td>
-                          <td className="py-4 px-2 text-purple-400">{q.topic}</td>
+                          <td className="py-4 px-2 text-purple-500 font-semibold">{q.topic}</td>
                           <td className="py-4 px-2">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              q.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                              q.difficulty === "Medium" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                              q.difficulty === "Hard" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
-                              "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                              q.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                              q.difficulty === "Medium" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                              q.difficulty === "Hard" ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" :
+                              "bg-purple-500/10 text-purple-500 border border-purple-500/20"
                             }`}>{q.difficulty}</span>
                           </td>
-                          <td className="py-4 px-2 text-gray-400">{q.rating || "N/A"}</td>
+                          <td className="py-4 px-2 text-[var(--text-secondary)]">{q.rating || "N/A"}</td>
                           <td className="py-4 px-2 flex flex-wrap gap-1">
                             {q.tagsJson?.slice(0, 2).map((t: string) => (
-                              <span key={t} className="text-[8px] font-bold bg-white/5 border border-white/5 text-gray-400 uppercase tracking-widest px-1.5 py-0.5 rounded">
+                              <span key={t} className="text-[8px] font-bold bg-slate-200 dark:bg-white/5 border border-[var(--border-color)] text-[var(--text-secondary)] uppercase tracking-widest px-1.5 py-0.5 rounded">
                                 {t}
                               </span>
                             ))}
@@ -858,16 +825,16 @@ export default function CodingHubPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex justify-between items-center border-t border-white/5 pt-4 mt-4">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+              <div className="flex justify-between items-center border-t border-[var(--border-color)] pt-4 mt-4">
+                <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
                   Page {currentPage} of {totalPages}
                 </span>
                 
                 <div className="flex gap-2">
-                  <PremiumButton variant="secondary" disabled={currentPage <= 1} onClick={() => fetchQuestions(currentPage - 1)} className="px-3 py-1.5">
+                  <PremiumButton variant="secondary" disabled={currentPage <= 1} onClick={() => fetchQuestions(currentPage - 1)} className="px-3 py-1.5 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)]">
                     Previous
                   </PremiumButton>
-                  <PremiumButton variant="secondary" disabled={currentPage >= totalPages} onClick={() => fetchQuestions(currentPage + 1)} className="px-3 py-1.5">
+                  <PremiumButton variant="secondary" disabled={currentPage >= totalPages} onClick={() => fetchQuestions(currentPage + 1)} className="px-3 py-1.5 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)]">
                     Next
                   </PremiumButton>
                 </div>
@@ -875,12 +842,6 @@ export default function CodingHubPage() {
             )}
           </PremiumCard>
         </div>
-          </>
-        )}
-
-        {activeTab === "assistant" && <CodingAssistantView />}
-        {activeTab === "challenges" && <CodingChallengesView />}
-        {activeTab === "github" && <GithubPortfolioView />}
       </main>
 
       {/* Slide-out Question Details Drawer */}
@@ -890,7 +851,7 @@ export default function CodingHubPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex justify-end"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end"
             onClick={() => setDrawerOpen(false)}
           >
             <motion.div
@@ -898,49 +859,49 @@ export default function CodingHubPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-full max-w-2xl bg-[#09090f] border-l border-white/10 h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl relative"
+              className="w-full max-w-2xl bg-[var(--bg-dark)] border-l border-[var(--border-color)] h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Top Bar inside Drawer */}
               <div>
-                <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                <div className="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-4">
                   <div className="flex items-center gap-3">
                     <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-black font-extrabold">
                       CF
                     </span>
                     <div>
-                      <h3 className="text-lg font-bold text-white leading-tight">{selectedQuestion.title}</h3>
-                      <p className="text-[10px] text-gray-500 font-medium">Contest Codeforces · {selectedQuestion.externalId}</p>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)] leading-tight">{selectedQuestion.title}</h3>
+                      <p className="text-[10px] text-[var(--text-secondary)] font-medium">Contest Codeforces · {selectedQuestion.externalId}</p>
                     </div>
                   </div>
                   
-                  <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-full border border-white/5 hover:bg-white/5 transition-colors">
+                  <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-full border border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] transition-colors text-[var(--text-primary)]">
                     <X size={16} />
                   </button>
                 </div>
 
                 {/* Core Details badge display */}
-                <div className="flex flex-wrap items-center gap-3 mb-6 bg-white/[0.01] border border-white/5 p-3.5 rounded-xl">
+                <div className="flex flex-wrap items-center gap-3 mb-6 bg-[var(--bg-card)] border border-[var(--border-color)] p-3.5 rounded-xl">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-gray-500">Topic</span>
-                    <span className="text-xs font-bold text-purple-400">{selectedQuestion.topic}</span>
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)]">Topic</span>
+                    <span className="text-xs font-bold text-purple-500">{selectedQuestion.topic}</span>
                   </div>
-                  <div className="w-[1px] h-6 bg-white/5 mx-2" />
+                  <div className="w-[1px] h-6 bg-[var(--border-color)] mx-2" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-gray-500">Difficulty</span>
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)]">Difficulty</span>
                     <span className={`text-xs font-bold ${
-                      selectedQuestion.difficulty === "Easy" ? "text-emerald-400" :
-                      selectedQuestion.difficulty === "Medium" ? "text-amber-400" : "text-rose-400"
+                      selectedQuestion.difficulty === "Easy" ? "text-emerald-500" :
+                      selectedQuestion.difficulty === "Medium" ? "text-amber-500" : "text-rose-500"
                     }`}>{selectedQuestion.difficulty}</span>
                   </div>
-                  <div className="w-[1px] h-6 bg-white/5 mx-2" />
+                  <div className="w-[1px] h-6 bg-[var(--border-color)] mx-2" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-gray-500">Rating</span>
-                    <span className="text-xs font-bold text-white">{selectedQuestion.rating || "N/A"}</span>
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)]">Rating</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)]">{selectedQuestion.rating || "N/A"}</span>
                   </div>
-                  <div className="w-[1px] h-6 bg-white/5 mx-2" />
+                  <div className="w-[1px] h-6 bg-[var(--border-color)] mx-2" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-gray-500">Solve Timer</span>
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)]">Solve Timer</span>
                     <span className="text-xs font-bold text-amber-500 flex items-center gap-1 font-mono">
                       <Clock size={12} /> {Math.floor(timeSpent / 60)}m {timeSpent % 60}s
                     </span>
@@ -948,15 +909,15 @@ export default function CodingHubPage() {
                 </div>
 
                 {/* Drawer Menu Options */}
-                <div className="flex gap-2 border-b border-white/5 mb-6">
+                <div className="flex gap-2 border-b border-[var(--border-color)] mb-6">
                   {["explanation", "hints", "approach"].map((tab: any) => (
                     <button
                       key={tab}
                       onClick={() => setDrawerActiveTab(tab)}
                       className={`py-2.5 px-4 font-bold uppercase tracking-wider text-[10px] border-b-2 transition-all cursor-pointer ${
                         drawerActiveTab === tab
-                          ? "border-amber-500 text-amber-400"
-                          : "border-transparent text-gray-400 hover:text-white"
+                          ? "border-amber-500 text-amber-500 font-extrabold"
+                          : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       }`}
                     >
                       {tab === "explanation" ? "AI Explanation" : tab === "hints" ? "Hints Library" : "Brute vs Optimal"}
@@ -973,26 +934,26 @@ export default function CodingHubPage() {
                       {selectedQuestionDetails?.aiAnalysis ? (
                         <>
                           <div>
-                            <h4 className="text-[11px] font-black uppercase text-amber-500 tracking-wider mb-1 flex items-center gap-1">
+                            <h4 className="text-[11px] font-black uppercase text-amber-500 tracking-wider mb-1.5 flex items-center gap-1">
                               <Sparkles size={12} /> Problem Breakdown
                             </h4>
                             <TypewriterText text={selectedQuestionDetails.aiAnalysis.problem_explanation} />
                           </div>
                           
-                          <div className="mt-4 border-t border-white/5 pt-4">
-                            <h4 className="text-[11px] font-black uppercase text-purple-400 tracking-wider mb-2 flex items-center gap-1">
+                          <div className="mt-4 border-t border-[var(--border-color)] pt-4">
+                            <h4 className="text-[11px] font-black uppercase text-purple-500 tracking-wider mb-2 flex items-center gap-1">
                               <Award size={12} /> FAANG Interview Importance
                             </h4>
-                            <p className="text-xs text-gray-300 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-3 rounded-lg">
+                            <p className="text-xs text-[var(--text-primary)] opacity-95 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-3 rounded-lg">
                               {selectedQuestionDetails.aiAnalysis.interview_importance}
                             </p>
                           </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-white/5 rounded-xl">
-                          <HelpCircle size={28} className="text-gray-500 mb-2" />
-                          <p className="text-xs text-gray-400 font-bold">Need AI problem explanation & coaching?</p>
-                          <p className="text-[10px] text-gray-500 mt-0.5 mb-4">Instant analysis powered by Gemini.</p>
+                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
+                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <p className="text-xs text-[var(--text-primary)] font-bold">Need AI problem explanation & coaching?</p>
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 mb-4">Instant analysis powered by Gemini.</p>
                           
                           <PremiumButton variant="glow" onClick={handleGenerateAIAnalysis} loading={generatingAnalysis} icon={<Sparkles size={12} />}>
                             Generate AI Explanation
@@ -1012,18 +973,18 @@ export default function CodingHubPage() {
                             { label: "Hint 2 (Core Strategy)", text: selectedQuestionDetails.aiAnalysis.hint_2 },
                             { label: "Hint 3 (Optimization/Data Structure)", text: selectedQuestionDetails.aiAnalysis.hint_3 }
                           ].map((hint, idx) => (
-                            <div key={idx} className="p-3 bg-white/[0.01] border border-white/5 rounded-xl">
+                            <div key={idx} className="p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl">
                               <span className="text-[9px] uppercase font-black text-amber-500 tracking-widest block mb-1">
                                 {hint.label}
                               </span>
-                              <p className="text-xs text-gray-300 leading-relaxed">{hint.text}</p>
+                              <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{hint.text}</p>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-white/5 rounded-xl">
-                          <HelpCircle size={28} className="text-gray-500 mb-2" />
-                          <p className="text-xs text-gray-400 font-bold">Analyze question to retrieve sequential hints</p>
+                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
+                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <p className="text-xs text-[var(--text-primary)] font-bold">Analyze question to retrieve sequential hints</p>
                           <PremiumButton variant="glow" className="mt-4" onClick={handleGenerateAIAnalysis} loading={generatingAnalysis} icon={<Sparkles size={12} />}>
                             Analyze Question
                           </PremiumButton>
@@ -1037,31 +998,31 @@ export default function CodingHubPage() {
                     <div className="space-y-4">
                       {selectedQuestionDetails?.aiAnalysis ? (
                         <div className="flex flex-col gap-4">
-                          <div className="p-3 bg-white/[0.01] border border-white/5 rounded-xl">
-                            <span className="text-[10px] font-black uppercase text-gray-400 block mb-1">Brute Force Method</span>
-                            <p className="text-xs text-gray-300 leading-relaxed">{selectedQuestionDetails.aiAnalysis.brute_force}</p>
+                          <div className="p-3 bg-slate-100 dark:bg-white/[0.01] border border-[var(--border-color)] rounded-xl">
+                            <span className="text-[10px] font-black uppercase text-[var(--text-secondary)] block mb-1">Brute Force Method</span>
+                            <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{selectedQuestionDetails.aiAnalysis.brute_force}</p>
                           </div>
 
-                          <div className="p-3 bg-amber-500/[0.02] border border-amber-500/10 rounded-xl">
+                          <div className="p-3 bg-amber-500/5 dark:bg-amber-500/[0.02] border border-amber-500/20 rounded-xl">
                             <span className="text-[10px] font-black uppercase text-amber-500 block mb-1">Optimal Approach</span>
-                            <p className="text-xs text-gray-300 leading-relaxed">{selectedQuestionDetails.aiAnalysis.optimal_approach}</p>
+                            <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{selectedQuestionDetails.aiAnalysis.optimal_approach}</p>
                           </div>
 
                           {/* Complexities and Mistakes */}
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col justify-between">
-                              <span className="text-[9px] uppercase font-bold text-gray-400">Time Complexity</span>
+                            <div className="p-3 bg-slate-100 dark:bg-white/[0.02] border border-[var(--border-color)] rounded-xl flex flex-col justify-between">
+                              <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)]">Time Complexity</span>
                               <span className="text-sm font-black text-amber-500 mt-1 font-mono">{selectedQuestionDetails.aiAnalysis.time_complexity}</span>
                             </div>
-                            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col justify-between">
-                              <span className="text-[9px] uppercase font-bold text-gray-400">Space Complexity</span>
+                            <div className="p-3 bg-slate-100 dark:bg-white/[0.02] border border-[var(--border-color)] rounded-xl flex flex-col justify-between">
+                              <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)]">Space Complexity</span>
                               <span className="text-sm font-black text-orange-500 mt-1 font-mono">{selectedQuestionDetails.aiAnalysis.space_complexity}</span>
                             </div>
                           </div>
 
-                          <div className="p-3.5 bg-rose-500/[0.02] border border-rose-500/10 rounded-xl">
+                          <div className="p-3.5 bg-rose-500/5 dark:bg-rose-500/[0.02] border border-rose-500/20 rounded-xl">
                             <span className="text-[10px] font-black uppercase text-rose-500 block mb-2">Common Student Mistakes</span>
-                            <ul className="list-disc pl-4 text-xs text-gray-300 space-y-1.5 leading-relaxed">
+                            <ul className="list-disc pl-4 text-xs text-[var(--text-primary)] opacity-90 space-y-1.5 leading-relaxed">
                               {selectedQuestionDetails.aiAnalysis.common_mistakes?.map((mistake: string, idx: number) => (
                                 <li key={idx}>{mistake}</li>
                               ))}
@@ -1069,9 +1030,9 @@ export default function CodingHubPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-white/5 rounded-xl">
-                          <HelpCircle size={28} className="text-gray-500 mb-2" />
-                          <p className="text-xs text-gray-400 font-bold">Generate analysis for optimal algorithmic choices</p>
+                        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
+                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <p className="text-xs text-[var(--text-primary)] font-bold">Generate analysis for optimal algorithmic choices</p>
                           <PremiumButton variant="glow" className="mt-4" onClick={handleGenerateAIAnalysis} loading={generatingAnalysis} icon={<Sparkles size={12} />}>
                             Analyze Question
                           </PremiumButton>
@@ -1083,7 +1044,7 @@ export default function CodingHubPage() {
               </div>
 
               {/* Action Buttons in Drawer Footer */}
-              <div className="border-t border-white/5 pt-4 mt-8 flex flex-wrap gap-3 items-center justify-between">
+              <div className="border-t border-[var(--border-color)] pt-4 mt-8 flex flex-wrap gap-3 items-center justify-between">
                 
                 {/* Left actions */}
                 <div className="flex gap-2">
@@ -1092,7 +1053,7 @@ export default function CodingHubPage() {
                     className={`p-2.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-center ${
                       selectedQuestionDetails?.progress?.bookmarked
                         ? "border-rose-500 text-rose-500 bg-rose-500/15 shadow-[0_0_12px_rgba(244,63,94,0.15)]"
-                        : "border-white/10 hover:border-white/20 text-gray-400 hover:text-white bg-white/5"
+                        : "border-[var(--border-color)] hover:border-amber-500 text-[var(--text-secondary)] hover:text-white bg-[var(--bg-card)]"
                     }`}
                   >
                     <BookMarked size={16} />
@@ -1102,7 +1063,7 @@ export default function CodingHubPage() {
                     href={selectedQuestion.problemUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all flex items-center gap-1.5 text-xs font-bold"
+                    className="p-2.5 rounded-xl border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] transition-all flex items-center gap-1.5 text-xs font-bold"
                   >
                     Codeforces <ExternalLink size={12} />
                   </a>
@@ -1110,7 +1071,7 @@ export default function CodingHubPage() {
 
                 {/* Right actions */}
                 <div className="flex gap-2.5">
-                  <PremiumButton variant="secondary" onClick={handleMarkAttempted}>
+                  <PremiumButton variant="secondary" onClick={handleMarkAttempted} className="bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-color)]">
                     Mark Attempted
                   </PremiumButton>
                   <PremiumButton variant="primary" onClick={handleMarkSolved} icon={<CheckCircle2 size={13} />}>

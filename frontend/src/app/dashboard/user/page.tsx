@@ -207,7 +207,15 @@ export const sidebarItems: SidebarItem[] = [
       { label: "Learning Streak", href: "#" },
     ],
   },
-  { id: "coding", label: "Coding Hub", icon: <Code2 size={18} />, href: "/dashboard/coding" },
+  {
+    id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
+    submenu: [
+      { label: "DSA Practice", href: "/dashboard/coding" },
+      { label: "Coding Assistant", href: "#" },
+      { label: "Coding Challenges", href: "#" },
+      { label: "GitHub Portfolio Builder", href: "#" },
+    ],
+  },
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
