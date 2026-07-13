@@ -44,6 +44,6 @@ export function handleRouteError(
   res.status(statusCode).json({
     success: false,
     message,
-    error: message,
+    error: error instanceof Error ? error.message : String(error),
   });
 }
