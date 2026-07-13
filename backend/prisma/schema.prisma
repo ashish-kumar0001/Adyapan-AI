@@ -88,3 +88,64 @@ enum Role {
   USER
   ADMIN
 }
+
+model CodingQuestion {
+  id                  String   @id @default(cuid())
+  externalId          String   @unique @map("external_id")
+  source              String
+  title               String
+  problemUrl          String   @map("problem_url")
+  difficulty          String
+  rating              Int?
+  topic               String
+  tagsJson            Json     @map("tags_json")
+  placementImportance Boolean  @default(false) @map("placement_importance")
+  interviewImportance Boolean  @default(false) @map("interview_importance")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  aiAnalyses          QuestionAIAnalysis[]
+  dailyChallenges     DailyChallenge[]
+
+  @@map("coding_questions")
+}
+
+model UserQuestionProgress {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  questionId String   @map("question_id")
+  status     String   @default("unsolved")
+  viewed     Boolean  @default(false)
+  attempted  Boolean  @default(false)
+  solved     Boolean  @default(false)
+  bookmarked Boolean  @default(false)
+  timeSpent  Int      @default(0) @map("time_spent")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, questionId])
+  @@map("user_question_progress")
+}
+
+model QuestionAIAnalysis {
+  id                 String         @id @default(cuid())
+  questionId         String         @map("question_id")
+  explanationJson    Json           @map("explanation_json")
+  generatedByModel   String         @map("generated_by_model")
+  generatedAt        DateTime       @default(now()) @map("generated_at")
+  question           CodingQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("question_ai_analysis")
+}
+
+model DailyChallenge {
+  id            String         @id @default(cuid())
+  questionId    String         @map("question_id")
+  challengeDate DateTime       @map("challenge_date")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  question      CodingQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("daily_challenges")
+}
+

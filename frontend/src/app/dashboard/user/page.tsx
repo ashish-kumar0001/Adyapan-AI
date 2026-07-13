@@ -149,13 +149,13 @@ import {
   Upload, Download, Trash2, RefreshCw, ArrowLeft, Lock, Shield,
 } from "lucide-react";
 
-interface AdyapanUser {
+export interface AdyapanUser {
   name: string;
   email: string;
   role?: string;
 }
 
-interface SidebarItem {
+export interface SidebarItem {
   id: string;
   label: string;
   icon: React.ReactNode;
@@ -191,7 +191,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 }
 
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
-const sidebarItems: SidebarItem[] = [
+export const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/dashboard/user" },
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
@@ -207,15 +207,7 @@ const sidebarItems: SidebarItem[] = [
       { label: "Learning Streak", href: "#" },
     ],
   },
-  {
-    id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
-    submenu: [
-      { label: "Coding Assistant", href: "#" },
-      { label: "DSA Practice", href: "#" },
-      { label: "Coding Challenges", href: "#" },
-      { label: "GitHub Portfolio Builder", href: "#" },
-    ],
-  },
+  { id: "coding", label: "Coding Hub", icon: <Code2 size={18} />, href: "/dashboard/coding" },
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
@@ -278,7 +270,7 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 // ─── Sidebar Component ────────────────────────────────────────────────────────
-function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool, sidebarOpen, setSidebarOpen }: {
+export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool, sidebarOpen, setSidebarOpen }: {
   onComingSoon: () => void;
   activeView: string;
   onViewDashboard: () => void;
@@ -452,7 +444,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 }
 
 // ─── TopNav Component ─────────────────────────────────────────────────────────
-function DashboardTopNav({
+export function DashboardTopNav({
   user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
   notifications, setNotifications, unreadCount, onMarkAllRead, onClearAll, onPremium, onViewSettings,
 }: {
@@ -774,7 +766,7 @@ function DashboardTopNav({
 }
 
 // ─── Profile Dropdown ─────────────────────────────────────────────────────────
-function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: string) => void }) {
+export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
