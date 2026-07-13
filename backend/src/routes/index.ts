@@ -30,6 +30,7 @@ import { studyPlannerRouter } from "./study-planner.routes";
 import { streakRouter } from "./streak.routes";
 import { weakTopicsRouter } from "./weak-topics.routes";
 import { recommendationRouter } from "./recommendation.routes";
+import { researchRouter } from "./research.routes";
 
 export const apiRouter = Router();
 
@@ -66,6 +67,9 @@ apiRouter.use("/study-planner", studyPlannerRouter);
 apiRouter.use("/streak", streakRouter);
 apiRouter.use("/weak-topics", weakTopicsRouter);
 apiRouter.use("/recommendations", recommendationRouter);
+
+// Research Hub Routes
+apiRouter.use("/research", researchRouter);
 
 
 
