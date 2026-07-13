@@ -13,14 +13,14 @@ export interface OpenRouterOptions {
   responseFormat?: { type: "json_object" | "text" };
 }
 
-// Robust fallback completion engine using OpenRouter, Groq, and Google AI Studio
+// Sequential fallback completion engine: Gemini → Groq → OpenRouter
 async function callAIRobust(
   messages: OpenRouterMessage[],
   options: OpenRouterOptions
 ): Promise<string> {
   const providers = [];
 
-  // 1. Add Google Gemini if key exists
+  // 1. Add Google Gemini if key exists (primary)
   if (env.geminiApiKey) {
     let geminiModel = "gemini-2.5-flash";
     if (options.model?.includes("gemini")) {
@@ -34,17 +34,7 @@ async function callAIRobust(
     });
   }
 
-  // 2. Add OpenRouter if key exists
-  if (env.openrouterApiKey) {
-    providers.push({
-      name: "OpenRouter",
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      key: env.openrouterApiKey,
-      model: options.model || "openai/gpt-4o-mini"
-    });
-  }
-
-  // 3. Add Groq if key exists
+  // 2. Add Groq if key exists (secondary)
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
     const modelLower = options.model?.toLowerCase() ?? "";
@@ -62,16 +52,25 @@ async function callAIRobust(
     });
   }
 
+  // 3. Add OpenRouter if key exists (tertiary)
+  if (env.openrouterApiKey) {
+    providers.push({
+      name: "OpenRouter",
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      key: env.openrouterApiKey,
+      model: options.model || "openai/gpt-4o-mini"
+    });
+  }
+
   if (providers.length === 0) {
     throw new Error("No AI providers configured. Please check environment keys.");
   }
 
-  const controller = new AbortController();
-  const { signal } = controller;
+  const errors: string[] = [];
 
-  const promises = providers.map(async (provider) => {
+  for (const provider of providers) {
     try {
-      console.log(`[AI Engine] [Simultaneous] Calling ${provider.name} using model ${provider.model}...`);
+      console.log(`[AI Engine] [Fallback] Trying ${provider.name} using model ${provider.model}...`);
       
       const body: Record<string, unknown> = {
         model: provider.model,
@@ -91,7 +90,6 @@ async function callAIRobust(
           Authorization: `Bearer ${provider.key}`,
         },
         body: JSON.stringify(body),
-        signal,
       });
 
       const data = (await res.json()) as any;
@@ -105,29 +103,16 @@ async function callAIRobust(
         throw new Error(`${provider.name} returned empty completion.`);
       }
 
-      console.log(`[AI Engine] [Simultaneous] Successfully generated content via ${provider.name}.`);
-      
-      // Cancel other pending requests
-      controller.abort();
-      
+      console.log(`[AI Engine] [Fallback] Successfully generated content via ${provider.name}.`);
       return content;
     } catch (e: any) {
-      if (e.name === "AbortError" || (e instanceof Error && e.name === "AbortError")) {
-        console.log(`[AI Engine] [Simultaneous] ${provider.name} request aborted (another provider succeeded first).`);
-      } else {
-        console.warn(`[AI Engine] [Simultaneous] ${provider.name} execution failed:`, e.message || e);
-      }
-      throw e;
+      const msg = e.message || String(e);
+      console.warn(`[AI Engine] [Fallback] ${provider.name} failed: ${msg}`);
+      errors.push(`${provider.name}: ${msg}`);
     }
-  });
-
-  try {
-    return await Promise.any(promises);
-  } catch (aggregateError: any) {
-    const errors = aggregateError.errors || [aggregateError];
-    const errorMsg = errors.map((e: any) => e.message || e).join(" | ");
-    throw new Error(`All AI completion providers failed. Errors: ${errorMsg}`);
   }
+
+  throw new Error(`All AI providers failed. Errors: ${errors.join(" | ")}`);
 }
 
 // Extracts clean JSON string by finding first '{' or '[' and matching to final '}' or ']'
