@@ -19,6 +19,15 @@ async function migrateAllDatabases(): Promise<MigrationResult[]> {
     results.push({ dbName: "master", success: false, error: String(error) });
   }
 
+  // 1b. Push user schema to master database to support fallback/shared database setups
+  console.log("Pushing user schema to master database...");
+  try {
+    execSync("npx prisma db push --schema=prisma/schema.user.prisma --accept-data-loss", { cwd: process.cwd(), stdio: "inherit" });
+    results.push({ dbName: "master_user_schema", success: true });
+  } catch (error) {
+    results.push({ dbName: "master_user_schema", success: false, error: String(error) });
+  }
+
   // 2. Migrate each user database using schema.user.prisma
   console.log("Fetching user databases...");
   try {
