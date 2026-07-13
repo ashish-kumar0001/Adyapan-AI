@@ -404,7 +404,15 @@ export default function ProblemWorkspacePage() {
         setMessages(prev => [...prev, { role: "assistant", content: res.data.explanation }]);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "AI Coach failed to generate analysis");
+      const errorMsg = err.response?.data?.error || err.message || "AI Coach failed to generate analysis";
+      toast.error(errorMsg);
+      setMessages(prev => [
+        ...prev,
+        { 
+          role: "assistant", 
+          content: `❌ **AI Coach failed to generate analysis**\n\n*Error details:* ${errorMsg}\n\n*Suggestion:* Verify that your AI environment keys (\`GEMINI_API_KEY\`, \`OPENROUTER_API_KEY\`, or \`GROQ_API_KEY\`) are properly configured in your deployment service dashboard.`
+        }
+      ]);
     } finally {
       setAiGenerating(false);
     }
@@ -433,7 +441,15 @@ Answer the student's question based on the coding problem. Provide hints or feed
         setMessages(prev => [...prev, { role: "assistant", content: res.data.explanation }]);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "AI Coach failed to reply");
+      const errorMsg = err.response?.data?.error || err.message || "AI Coach failed to reply";
+      toast.error(errorMsg);
+      setMessages(prev => [
+        ...prev,
+        { 
+          role: "assistant", 
+          content: `❌ **AI Coach failed to reply**\n\n*Error details:* ${errorMsg}\n\n*Suggestion:* Verify that your AI environment keys (\`GEMINI_API_KEY\`, \`OPENROUTER_API_KEY\`, or \`GROQ_API_KEY\`) are properly configured in your deployment service dashboard.`
+        }
+      ]);
     } finally {
       setAiGenerating(false);
     }
