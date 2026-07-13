@@ -146,8 +146,16 @@ class DatabaseService {
         console.log(`[Database] User database '${dbName}' not found. Creating dynamically...`);
         try {
           await this.createDatabase(dbName);
+          const dbUrl = await this.getConnectionString(dbName);
+          console.log(`[Database] Running migrations for '${dbName}'...`);
+          const { execSync } = require("child_process");
+          execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+            env: { ...process.env, USER_DATABASE_URL: dbUrl },
+            stdio: "inherit"
+          });
+          console.log(`[Database] Migrated '${dbName}' successfully.`);
         } catch (createErr) {
-          console.warn("[Database] Dynamic database creation failed, using main database:", createErr);
+          console.warn("[Database] Dynamic database creation/migration failed, using main database:", createErr);
           return env.databaseUrl;
         }
       }
