@@ -2,6 +2,7 @@
 
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import { toast } from "sonner";
@@ -27,6 +28,16 @@ import {
   sidebarItems,
   AdyapanUser
 } from "../user/page";
+
+const CodingAssistantView = dynamic(() => import("@/components/coding-hub/CodingAssistantView").then(m => m.CodingAssistantView), {
+  loading: () => <div className="p-6 text-gray-400">Loading Coding Assistant...</div>
+});
+const CodingChallengesView = dynamic(() => import("@/components/coding-hub/CodingChallengesView").then(m => m.CodingChallengesView), {
+  loading: () => <div className="p-6 text-gray-400">Loading Coding Challenges...</div>
+});
+const GithubPortfolioView = dynamic(() => import("@/components/coding-hub/GithubPortfolioView").then(m => m.GithubPortfolioView), {
+  loading: () => <div className="p-6 text-gray-400">Loading GitHub Portfolio Builder...</div>
+});
 
 // ─── Loading checklist steps ──────────────────────────────────────────────────
 const loadingSteps = [
@@ -61,6 +72,7 @@ export default function CodingHubPage() {
   useRequireAuth("USER");
 
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"dsa" | "assistant" | "challenges" | "github">("dsa");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -446,12 +458,36 @@ export default function CodingHubPage() {
       {/* Main workspace */}
       <main className="dash-main relative z-10 font-sans">
         
-        {/* Header Overview Hero */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
+        {/* Submodules Navigation Tabs */}
+        <div className="flex border-b border-white/5 mb-6 overflow-x-auto shrink-0 scrollbar-none gap-2">
+          {[
+            { id: "dsa", label: "DSA Question Bank" },
+            { id: "assistant", label: "Coding Assistant" },
+            { id: "challenges", label: "Coding Challenges" },
+            { id: "github", label: "GitHub Portfolio" }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`py-3 px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-amber-500 text-amber-400"
+                  : "border-transparent text-gray-400 hover:text-white"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "dsa" && (
+          <>
+            {/* Header Overview Hero */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
+              <div>
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 text-xs font-bold text-amber-500 tracking-wider uppercase mb-1.5"
             >
               <Sparkles size={14} className="text-amber-500" />
@@ -839,6 +875,12 @@ export default function CodingHubPage() {
             )}
           </PremiumCard>
         </div>
+          </>
+        )}
+
+        {activeTab === "assistant" && <CodingAssistantView />}
+        {activeTab === "challenges" && <CodingChallengesView />}
+        {activeTab === "github" && <GithubPortfolioView />}
       </main>
 
       {/* Slide-out Question Details Drawer */}

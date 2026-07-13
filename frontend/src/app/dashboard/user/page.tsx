@@ -331,30 +331,42 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
           <div key={item.id} className={isOpen ? "sb-item open" : "sb-item"}>
             <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
               onClick={() => {
-                toggleItem(item.id);
+                if (item.href && item.href !== "#") {
+                  router.push(item.href);
+                  setSidebarOpen(false);
+                } else {
+                  toggleItem(item.id);
+                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
                 padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
-                color: "var(--text-secondary)", background: "transparent",
-                border: "1px solid transparent", fontWeight: 500,
-                fontSize: "0.82rem", cursor: "pointer", width: "100%",
+                color: activeView === item.id ? "var(--primary)" : "var(--text-secondary)",
+                background: activeView === item.id ? "rgba(245,158,11,0.1)" : "transparent",
+                border: activeView === item.id ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+                fontWeight: 500, fontSize: "0.82rem", cursor: "pointer", width: "100%",
                 transition: "all 0.2s ease", whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                if (activeView !== item.id) {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                }
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                if (activeView !== item.id) {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                }
               }}
             >
               <span style={{ flexShrink: 0 }}>{item.icon}</span>
               <span className="sb-label" style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-              <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                <ChevronDown size={13} />
-              </span>
+              {item.submenu && item.submenu.length > 0 && (
+                <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                  <ChevronDown size={13} />
+                </span>
+              )}
             </motion.button>
             {/* Submenu: visible when open AND sidebar is hovered */}
             {isOpen && (
