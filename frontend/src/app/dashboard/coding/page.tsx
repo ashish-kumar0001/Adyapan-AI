@@ -248,7 +248,21 @@ export default function CodingHubPage() {
   };
 
   // Question details operations
-  const handleOpenQuestion = (q: any) => {
+  const handleOpenQuestion = async (q: any) => {
+    setSelectedQuestion(q);
+    setSelectedQuestionDetails(null);
+    setDrawerOpen(true);
+    setDrawerActiveTab("explanation");
+
+    try {
+      const res = await api.get(`/coding/question/${q.id}`);
+      setSelectedQuestionDetails(res.data);
+    } catch (err) {
+      toast.error("Failed to load question details");
+    }
+  };
+
+  const handleSolveQuestion = (q: any) => {
     if (!q || !q.id) return;
     router.push(`/dashboard/coding/problem/${q.id}`);
   };
@@ -513,7 +527,7 @@ export default function CodingHubPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               {dailyChallenge && (
                 <>
-                  <PremiumButton variant="primary" onClick={() => handleOpenQuestion(dailyChallenge)} icon={<Play size={12} />}>
+                  <PremiumButton variant="primary" onClick={() => handleSolveQuestion(dailyChallenge)} icon={<Play size={12} />}>
                     Solve Problem
                   </PremiumButton>
                   <PremiumButton variant="secondary" onClick={() => handleOpenQuestion(dailyChallenge)}>
@@ -783,9 +797,12 @@ export default function CodingHubPage() {
                               </span>
                             ))}
                           </td>
-                          <td className="py-4 px-2 text-right">
-                            <PremiumButton variant="ghost" onClick={() => handleOpenQuestion(q)} className="p-1 px-3">
-                              Open
+                          <td className="py-4 px-2 text-right flex items-center justify-end gap-1.5">
+                            <PremiumButton variant="ghost" onClick={() => handleOpenQuestion(q)} className="p-1 px-2.5">
+                              Details
+                            </PremiumButton>
+                            <PremiumButton variant="primary" onClick={() => handleSolveQuestion(q)} className="p-1 px-3">
+                              Solve
                             </PremiumButton>
                           </td>
                         </tr>
@@ -1044,6 +1061,16 @@ export default function CodingHubPage() {
 
                 {/* Right actions */}
                 <div className="flex gap-2.5">
+                  <PremiumButton 
+                    variant="glow" 
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      handleSolveQuestion(selectedQuestion);
+                    }}
+                    icon={<Play size={12} />}
+                  >
+                    Solve in AI Workspace
+                  </PremiumButton>
                   <PremiumButton variant="secondary" onClick={handleMarkAttempted} className="bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-color)]">
                     Mark Attempted
                   </PremiumButton>
