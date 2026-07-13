@@ -256,10 +256,12 @@ export async function resumeChatStream(req: Request, res: Response, next: NextFu
       const text = `I've processed your request to "${message}". Here's what I updated.`;
       for (const word of text.split(" ")) {
         res.write(`data: ${JSON.stringify({ type: "chunk", text: word + " " })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
       }
       const updated = Object.keys(result).length > 0 ? result : {};
       res.write(`data: ${JSON.stringify({ type: "result", ...updated })}\n\n`);
       res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+      if (typeof (res as any).flush === "function") (res as any).flush();
       res.end();
       return;
     }
@@ -287,6 +289,7 @@ Only include fields that actually changed. Omit unchanged fields.`;
       if (text) {
         fullText += text;
         res.write(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
       }
     }
 
@@ -300,12 +303,14 @@ Only include fields that actually changed. Omit unchanged fields.`;
 
     res.write(`data: ${JSON.stringify({ type: "result", ...updates })}\n\n`);
     res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    if (typeof (res as any).flush === "function") (res as any).flush();
     res.end();
   } catch (error) {
     if (!res.headersSent) {
       next(error);
     } else {
       res.write(`data: ${JSON.stringify({ type: "error", message: "Stream failed" })}\n\n`);
+      if (typeof (res as any).flush === "function") (res as any).flush();
       res.end();
     }
   }

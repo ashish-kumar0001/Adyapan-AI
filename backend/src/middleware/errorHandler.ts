@@ -19,6 +19,11 @@ export function errorHandler(error: HttpError, req: Request, res: Response, _nex
     console.warn(`[errorHandler] ${req.method} ${req.originalUrl} -> ${statusCode}: ${error.message}`);
   }
 
+  if (res.headersSent) {
+    console.warn(`[errorHandler] Headers already sent for ${req.method} ${req.originalUrl}, skipping JSON response`);
+    return;
+  }
+
   const message =
     statusCode === 500 && env.nodeEnv === "production"
       ? "Internal server error"
