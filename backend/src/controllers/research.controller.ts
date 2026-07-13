@@ -60,6 +60,7 @@ export async function generatePaperSSE(req: Request, res: Response) {
 
   const sendEvent = (data: Record<string, unknown>) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
+    if (typeof (res as any).flush === "function") (res as any).flush();
   };
 
   try {

@@ -29,7 +29,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers.accept === "text/event-stream") return false;
+    return compression.filter(req, res);
+  },
+}));
 app.use(helmet());
 
 const allowedOrigins = [
@@ -49,7 +54,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-timezone"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-timezone", "Accept", "Cache-Control"],
   }),
 );
 
@@ -75,7 +80,7 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req, res) => {

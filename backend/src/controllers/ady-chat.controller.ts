@@ -235,6 +235,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
       onChunk(text) {
         fullResponse += text;
         res.write(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
       },
       onDone() {
         // Save assistant message
@@ -243,6 +244,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
         }).catch(err => console.error("Failed to save chat message:", err));
 
         res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
         res.end();
       },
       onError(error) {
@@ -251,6 +253,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
           res.status(500).json({ success: false, message: error.message });
         } else {
           res.write(`data: ${JSON.stringify({ type: "error", message: error.message })}\n\n`);
+          if (typeof (res as any).flush === "function") (res as any).flush();
           res.end();
         }
       },
@@ -260,6 +263,7 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
       next(error);
     } else {
       res.write(`data: ${JSON.stringify({ type: "error", message: "Internal error" })}\n\n`);
+      if (typeof (res as any).flush === "function") (res as any).flush();
       res.end();
     }
   }
