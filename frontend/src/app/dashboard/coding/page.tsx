@@ -247,19 +247,10 @@ export default function CodingHubPage() {
     router.push("/dashboard/user");
   };
 
-  // Question details drawer operations
-  const handleOpenQuestion = async (q: any) => {
-    setSelectedQuestion(q);
-    setSelectedQuestionDetails(null);
-    setDrawerOpen(true);
-    setDrawerActiveTab("explanation");
-
-    try {
-      const res = await api.get(`/coding/question/${q.id}`);
-      setSelectedQuestionDetails(res.data);
-    } catch (err) {
-      toast.error("Failed to load question details");
-    }
+  // Question details operations
+  const handleOpenQuestion = (q: any) => {
+    if (!q || !q.id) return;
+    router.push(`/dashboard/coding/problem/${q.id}`);
   };
 
   const handleBookmarkToggle = async () => {
