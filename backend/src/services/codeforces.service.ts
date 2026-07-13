@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { prisma } from "../config/prisma";
+import { env } from "../config/env";
 
 // Signature helper for Codeforces API
 function generateCodeforcesUrl(
@@ -184,8 +185,8 @@ export class CodeforcesService {
    * to ensure database remains compact and all explorer topics are populated.
    */
   static async syncProblems(): Promise<{ success: boolean; syncedCount: number }> {
-    const apiKey = process.env.CODEFORCES_API_KEY;
-    const apiSecret = process.env.CODEFORCES_API_SECRET;
+    const apiKey = env.codeforces.apiKey;
+    const apiSecret = env.codeforces.apiSecret;
 
     console.log("[Codeforces] Starting problem synchronization...");
     

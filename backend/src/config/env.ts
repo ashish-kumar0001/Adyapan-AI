@@ -25,6 +25,10 @@ export const env = {
     branchId: process.env.NEON_BRANCH_ID ?? "",
     regionId: process.env.NEON_REGION_ID ?? "aws-us-east-1",
   },
+  codeforces: {
+    apiKey: process.env.CODEFORCES_API_KEY ?? "",
+    apiSecret: process.env.CODEFORCES_API_SECRET ?? "",
+  },
   nodeEnv: process.env.NODE_ENV ?? "development",
   masterDatabaseUrl: process.env.MASTER_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
 };
