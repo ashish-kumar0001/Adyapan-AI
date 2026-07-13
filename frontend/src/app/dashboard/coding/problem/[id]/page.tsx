@@ -881,10 +881,10 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   }}
                   className="bg-white/5 text-xs text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg px-2.5 py-1 focus:outline-none focus:border-white/20 transition cursor-pointer"
                 >
-                  <option value="python" className="bg-[#070913]">Python 3</option>
-                  <option value="cpp" className="bg-[#070913]">C++ (GCC 17)</option>
-                  <option value="java" className="bg-[#070913]">Java (JDK 21)</option>
-                  <option value="javascript" className="bg-[#070913]">JavaScript (Node.js)</option>
+                  <option value="python">Python 3</option>
+                  <option value="cpp">C++ (GCC 17)</option>
+                  <option value="java">Java (JDK 21)</option>
+                  <option value="javascript">JavaScript (Node.js)</option>
                 </select>
 
                 <div className="h-4 w-px bg-[var(--border-color)]" />

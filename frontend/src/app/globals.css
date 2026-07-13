@@ -390,5 +390,83 @@ button, input, select, textarea {
   }
 }
 
+/* ── AI Problem Workspace Light Theme ── */
+[data-theme="light"] .dash-main {
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+}
+[data-theme="light"] .dash-main::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+}
+[data-theme="light"] .dash-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.22);
+}
+
+/* Toolbar & panel headers */
+[data-theme="light"] .bg-black\/35,
+[data-theme="light"] .bg-black\/25 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* Left/right panels, editor area */
+[data-theme="light"] .bg-black\/15 {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+[data-theme="light"] .bg-black\/5 {
+  background-color: rgba(241, 245, 249, 0.6) !important;
+}
+
+/* Constraint boxes */
+[data-theme="light"] .bg-black\/30 {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+}
+
+/* Inputs, textareas, code blocks */
+[data-theme="light"] .bg-black\/40 {
+  background-color: #ffffff !important;
+  color: var(--text-primary);
+}
+
+/* Cards, buttons, subtle surfaces */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Active states, hover accents */
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+/* White text fallbacks */
+[data-theme="light"] .text-white {
+  color: var(--text-primary) !important;
+}
+[data-theme="light"] .hover\:text-white:hover {
+  color: var(--text-primary) !important;
+}
+
+/* Border overrides for white-based borders */
+[data-theme="light"] .border-white\/10 {
+  border-color: var(--border-color) !important;
+}
+[data-theme="light"] .border-white\/20 {
+  border-color: var(--border-hover) !important;
+}
+
+/* Select dropdown option backgrounds */
+[data-theme="light"] select option {
+  background-color: #ffffff;
+  color: var(--text-primary);
+}
+
+/* Prose (markdown) readability in light mode */
+[data-theme="light"] .prose-invert {
+  color: var(--text-secondary);
+}
+[data-theme="light"] .prose-invert strong,
+[data-theme="light"] .prose-invert b {
+  color: var(--text-primary);
+}
 
 
