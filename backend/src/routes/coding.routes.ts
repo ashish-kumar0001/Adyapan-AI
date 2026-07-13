@@ -6,6 +6,7 @@ import { handleRouteError } from "../utils/routeError";
 import { prisma as masterPrisma } from "../config/prisma";
 import { CodeforcesService } from "../services/codeforces.service";
 import { AICodingService } from "../services/ai-coding.service";
+import { executeCode, runTestCases, checkPistonHealth } from "../services/piston.service";
 
 const router = Router();
 router.use(requireAuth);
@@ -946,6 +947,112 @@ router.post("/workspace/:id/hint", async (req: any, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Coding.workspace.hint", "Failed to generate hint");
+  }
+});
+
+// ─── Code Execution Routes (Piston) ──────────────────────────────────────────
+
+router.get("/piston/health", async (_req, res) => {
+  try {
+    const healthy = await checkPistonHealth();
+    res.json({ healthy });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.piston.health", "Failed to check Piston health");
+  }
+});
+
+router.post("/workspace/:id/run", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const { code, language, stdin = "" } = req.body;
+
+    if (!code || !language) {
+      return res.status(400).json({ error: "code and language are required" });
+    }
+
+    const question = await masterPrisma.codingQuestion.findUnique({
+      where: { id: questionId }
+    });
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    const analysis = await AICodingService.getAnalysis(questionId);
+    const examples = analysis.examples || [];
+
+    const result = await executeCode(language, code, stdin);
+
+    let sampleResults: Array<{ input: string; expected: string; actual: string; passed: boolean }> = [];
+    if (examples.length > 0) {
+      const testCases = examples.map(ex => ({ input: ex.input, expectedOutput: ex.output }));
+      const submission = await runTestCases(language, code, testCases, 10000);
+      sampleResults = submission.testResults.map(tr => ({
+        input: tr.input,
+        expected: tr.expectedOutput,
+        actual: tr.actualOutput,
+        passed: tr.passed,
+      }));
+    }
+
+    res.json({
+      success: result.success,
+      output: result.stdout,
+      error: result.stderr || result.compile_output,
+      executionTime: result.executionTime,
+      memory: result.memory,
+      status: result.status,
+      sampleResults,
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.run", "Failed to execute code");
+  }
+});
+
+router.post("/workspace/:id/submit", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const { code, language } = req.body;
+
+    if (!code || !language) {
+      return res.status(400).json({ error: "code and language are required" });
+    }
+
+    const question = await masterPrisma.codingQuestion.findUnique({
+      where: { id: questionId }
+    });
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    const analysis = await AICodingService.getAnalysis(questionId);
+    const examples = analysis.examples || [];
+
+    if (examples.length === 0) {
+      return res.status(400).json({ error: "No test cases available for this problem" });
+    }
+
+    const testCases = examples.map(ex => ({ input: ex.input, expectedOutput: ex.output }));
+    const submission = await runTestCases(language, code, testCases, 10000);
+
+    const testResults = submission.testResults.map((tr, i) => ({
+      testCase: i + 1,
+      input: tr.input,
+      expected: tr.expectedOutput,
+      actual: tr.actualOutput,
+      passed: tr.passed,
+      executionTime: tr.executionResult.executionTime,
+    }));
+
+    res.json({
+      allPassed: submission.allPassed,
+      totalTests: submission.totalTests,
+      passedTests: submission.passedTests,
+      executionTime: submission.executionTime,
+      memory: submission.memory,
+      testResults,
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.submit", "Failed to submit code");
   }
 });
 

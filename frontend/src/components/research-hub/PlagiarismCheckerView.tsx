@@ -275,7 +275,13 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: documentText, config }),
+        body: JSON.stringify({
+          text: documentText,
+          checkAI: config.aiDetection,
+          checkSimilarity: config.similarityCheck,
+          checkCitations: config.citationCheck,
+          checkWritingQuality: config.writingQuality,
+        }),
       });
 
       if (!res.ok) throw new Error("Analysis request failed");

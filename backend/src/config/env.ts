@@ -29,6 +29,7 @@ export const env = {
     apiKey: process.env.CODEFORCES_API_KEY ?? "",
     apiSecret: process.env.CODEFORCES_API_SECRET ?? "",
   },
+  pistonUrl: process.env.PISTON_URL ?? "http://localhost:2000",
   nodeEnv: process.env.NODE_ENV ?? "development",
   masterDatabaseUrl: process.env.MASTER_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
 };

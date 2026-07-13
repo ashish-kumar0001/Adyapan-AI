@@ -1,6 +1,12 @@
 import { prisma } from "../config/prisma";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
+export interface Example {
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
 export interface AIAnalysisSchema {
   problem_explanation: string;
   hint_1: string;
@@ -12,14 +18,11 @@ export interface AIAnalysisSchema {
   space_complexity: string;
   interview_importance: string;
   common_mistakes: string[];
+  examples?: Example[];
 }
 
 export class AICodingService {
-  /**
-   * Generates or fetches AI coding analysis for a given question.
-   */
   static async getAnalysis(questionId: string): Promise<AIAnalysisSchema> {
-    // 1. Check cache first in Master DB
     const cached = await prisma.questionAIAnalysis.findFirst({
       where: { questionId }
     });
@@ -29,7 +32,6 @@ export class AICodingService {
       return cached.explanationJson as unknown as AIAnalysisSchema;
     }
 
-    // 2. Fetch question details
     const question = await prisma.codingQuestion.findUnique({
       where: { id: questionId }
     });
@@ -54,7 +56,8 @@ export class AICodingService {
         "Not handling corner cases like empty arrays or single element lists.",
         "Using excessive space when an in-place modification is possible.",
         "Integer overflow during sum calculations."
-      ]
+      ],
+      examples: []
     };
 
     const systemPrompt = `You are a FAANG Interview Coach, Competitive Programming Mentor, and EdTech Platform Architect.
@@ -72,7 +75,11 @@ Keys to include:
 8. "space_complexity" (string) - Space complexity of optimal approach (e.g. O(1)).
 9. "interview_importance" (string) - Context on why top companies ask this, what skills it tests, and placement relevance.
 10. "common_mistakes" (array of strings) - 3 common pitfalls or bugs students run into when implementing.
-
+11. "examples" (array of objects) - Generate 2-3 concrete test cases. Each object must have:
+    - "input" (string): The exact stdin input (one line per value, newline-separated for multiple values).
+    - "output" (string): The exact expected stdout output (one line per value).
+    - "explanation" (string): A brief explanation of why this input produces this output.
+Ensure examples cover edge cases and typical scenarios. Use the simplest possible input format.
 Ensure your responses are highly instructional, professional, and motivate the student.`;
 
     const userPrompt = `Coding Question Details:
@@ -86,11 +93,14 @@ Tags: ${JSON.stringify(question.tagsJson)}`;
       const generated = await generateJSON<AIAnalysisSchema>(
         systemPrompt,
         userPrompt,
-        { model: MODELS.CODE, temperature: 0.6, maxTokens: 2500 },
+        { model: MODELS.CODE, temperature: 0.6, maxTokens: 3000 },
         fallback
       );
 
-      // Save to Master DB cache
+      if (!generated.examples || generated.examples.length === 0) {
+        generated.examples = fallback.examples;
+      }
+
       await prisma.questionAIAnalysis.create({
         data: {
           questionId,

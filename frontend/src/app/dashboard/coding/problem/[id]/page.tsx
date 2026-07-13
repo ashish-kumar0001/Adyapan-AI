@@ -107,6 +107,16 @@ export default function ProblemWorkspacePage() {
   const [hints, setHints] = useState<Record<number, string>>({});
   const [commonMistakes, setCommonMistakes] = useState<string[]>([]);
 
+  // Code execution state
+  const [stdin, setStdin] = useState("");
+  const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [outputTab, setOutputTab] = useState<"input" | "output" | "testcases">("output");
+  const [showTerminal, setShowTerminal] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(30);
+
   // Time spent tracker
   const [timeSpentSeconds, setTimeSpentSeconds] = useState(0);
   const timerRef = useRef<any>(null);
@@ -296,6 +306,25 @@ export default function ProblemWorkspacePage() {
     document.addEventListener("mouseup", handleUp);
   };
 
+  const startResizeTerminal = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const middlePanel = (e.target as HTMLElement).closest("[data-middle-panel]");
+    if (!middlePanel) return;
+    const handleMove = (moveEvent: MouseEvent) => {
+      const rect = middlePanel.getBoundingClientRect();
+      const newHeight = ((rect.bottom - moveEvent.clientY) / rect.height) * 100;
+      if (newHeight > 10 && newHeight < 70) {
+        setTerminalHeight(newHeight);
+      }
+    };
+    const handleUp = () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+    };
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleUp);
+  };
+
   // Notes operations
   const handleSaveNote = async () => {
     if (!noteInput.trim()) return;
@@ -436,6 +465,58 @@ Answer the student's question based on the coding problem. Provide hints or feed
       toast.error("AI Coach failed to reply");
     } finally {
       setAiGenerating(false);
+    }
+  };
+
+  // Code execution handlers
+  const handleRun = async () => {
+    if (isRunning || isSubmitting) return;
+    setIsRunning(true);
+    setOutputTab("output");
+    setOutput("");
+    setShowTerminal(true);
+    try {
+      const res = await api.post(`/coding/workspace/${problemId}/run`, {
+        code,
+        language,
+        stdin,
+      });
+      const data = res.data;
+      if (data.success) {
+        setOutput(data.output || "(No output)");
+      } else {
+        setOutput(data.error || data.output || "Execution failed");
+      }
+    } catch (err: any) {
+      setOutput(err.response?.data?.error || err.message || "Failed to run code");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isRunning || isSubmitting) return;
+    setIsSubmitting(true);
+    setOutputTab("testcases");
+    setTestResults([]);
+    setShowTerminal(true);
+    try {
+      const res = await api.post(`/coding/workspace/${problemId}/submit`, {
+        code,
+        language,
+      });
+      const data = res.data;
+      setTestResults(data.testResults || []);
+      if (data.allPassed) {
+        setProgress((prev: any) => ({ ...prev, status: "solved", solved: true }));
+        toast.success(`All ${data.totalTests} test cases passed!`);
+      } else {
+        toast.warning(`${data.passedTests}/${data.totalTests} test cases passed`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to submit code");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -868,8 +949,8 @@ Answer the student's question based on the coding problem. Provide hints or feed
             className="w-1 hover:w-1.5 bg-[var(--border-color)] hover:bg-amber-500/50 cursor-col-resize transition-all z-10 shrink-0"
           />
 
-          {/* Middle panel (Code Editor) */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-black/5">
+          {/* Middle panel (Code Editor + Terminal) */}
+          <div data-middle-panel className="flex-1 flex flex-col overflow-hidden bg-black/5">
             {/* Editor config toolbar */}
             <div className="h-10 border-b border-[var(--border-color)] flex items-center justify-between px-4 bg-black/25">
               <div className="flex items-center gap-3">
@@ -952,22 +1033,150 @@ Answer the student's question based on the coding problem. Provide hints or feed
               />
             </div>
 
-            {/* Editor Terminal footer (Day 13 compilation layer preparation) */}
-            <div className="h-10 border-t border-[var(--border-color)] bg-black/25 flex items-center justify-between px-6 shrink-0 z-10">
-              <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-secondary)]">
-                <Terminal size={14} className="text-amber-500" />
-                <span>Compiler Sandbox: Ready (Day 13 Piston Layer Prepared)</span>
-              </div>
+            {/* Terminal panel (resizable, toggleable) */}
+            {showTerminal && (
+              <>
+                <div
+                  onMouseDown={startResizeTerminal}
+                  className="h-1 hover:h-1.5 bg-[var(--border-color)] hover:bg-amber-500/50 cursor-row-resize transition-all z-10 shrink-0"
+                />
+                <div style={{ height: `${terminalHeight}%` }} className="flex flex-col border-t border-[var(--border-color)] bg-black/30 shrink-0 overflow-hidden">
+                  {/* Terminal header */}
+                  <div className="h-8 border-b border-[var(--border-color)] flex items-center justify-between px-3 bg-black/30 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <Terminal size={12} className="text-amber-500" />
+                      {(["input", "output", "testcases"] as const).map(tab => (
+                        <button
+                          key={tab}
+                          onClick={() => setOutputTab(tab)}
+                          className={`text-[10px] px-2.5 py-1 rounded transition font-semibold ${
+                            outputTab === tab
+                              ? "bg-white/10 text-[var(--text-primary)]"
+                              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                          }`}
+                        >
+                          {tab === "input" ? "Input" : tab === "output" ? "Output" : "Test Cases"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleRun}
+                        disabled={isRunning || isSubmitting}
+                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition"
+                      >
+                        {isRunning ? <RefreshCw size={10} className="animate-spin" /> : <Play size={10} />}
+                        <span>{isRunning ? "Running..." : "Run"}</span>
+                      </button>
+                      <button
+                        onClick={handleSubmit}
+                        disabled={isRunning || isSubmitting}
+                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition"
+                      >
+                        {isSubmitting ? <RefreshCw size={10} className="animate-spin" /> : <Send size={10} />}
+                        <span>{isSubmitting ? "Judging..." : "Submit"}</span>
+                      </button>
+                      <button
+                        onClick={() => setShowTerminal(false)}
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5"
+                      >
+                        <Minimize2 size={10} />
+                      </button>
+                    </div>
+                  </div>
+                  {/* Terminal content */}
+                  <div className="flex-1 overflow-auto p-3 font-mono text-xs">
+                    {outputTab === "input" && (
+                      <textarea
+                        value={stdin}
+                        onChange={(e) => setStdin(e.target.value)}
+                        placeholder="Enter custom input (stdin)..."
+                        className="w-full h-full bg-transparent text-emerald-400 placeholder-[var(--text-muted)] resize-none focus:outline-none"
+                      />
+                    )}
+                    {outputTab === "output" && (
+                      <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed">
+                        {isRunning ? (
+                          <span className="flex items-center gap-2 text-amber-500">
+                            <RefreshCw size={12} className="animate-spin" />
+                            Executing on Piston engine...
+                          </span>
+                        ) : output ? (
+                          output
+                        ) : (
+                          <span className="text-[var(--text-muted)]">Click "Run" to execute your code against custom input.</span>
+                        )}
+                      </pre>
+                    )}
+                    {outputTab === "testcases" && (
+                      <div className="flex flex-col gap-2">
+                        {isSubmitting ? (
+                          <span className="flex items-center gap-2 text-amber-500">
+                            <RefreshCw size={12} className="animate-spin" />
+                            Running against test cases...
+                          </span>
+                        ) : testResults.length === 0 ? (
+                          <span className="text-[var(--text-muted)]">Click "Submit" to run against all test cases.</span>
+                        ) : (
+                          testResults.map((tr: any, i: number) => (
+                            <div key={i} className={`p-2.5 rounded-lg border text-[10px] font-mono ${
+                              tr.passed
+                                ? "bg-emerald-500/5 border-emerald-500/20"
+                                : "bg-rose-500/5 border-rose-500/20"
+                            }`}>
+                              <div className="flex items-center gap-2 mb-1.5">
+                                {tr.passed
+                                  ? <CheckCircle2 size={12} className="text-emerald-500" />
+                                  : <AlertCircle size={12} className="text-rose-500" />
+                                }
+                                <span className={`font-bold ${tr.passed ? "text-emerald-500" : "text-rose-500"}`}>
+                                  Test Case {tr.testCase} {tr.passed ? "Passed" : "Failed"}
+                                </span>
+                              </div>
+                              {!tr.passed && (
+                                <div className="flex flex-col gap-1 text-[var(--text-secondary)]">
+                                  <div><span className="text-[var(--text-muted)]">Input:</span> {tr.input}</div>
+                                  <div><span className="text-[var(--text-muted)]">Expected:</span> {tr.expected}</div>
+                                  <div><span className="text-rose-400">Got:</span> {tr.actual}</div>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => toast.info("Piston Integration arriving in Day 13! Code Execution is currently simulated.")}
-                  className="text-xs bg-white/5 hover:bg-white/10 text-[var(--text-primary)] px-4 py-1 rounded-lg border border-[var(--border-color)] font-semibold transition"
-                >
-                  Run Code
-                </button>
+            {/* Run button bar when terminal is hidden */}
+            {!showTerminal && (
+              <div className="h-10 border-t border-[var(--border-color)] bg-black/25 flex items-center justify-between px-6 shrink-0 z-10">
+                <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-secondary)]">
+                  <Terminal size={14} className="text-amber-500" />
+                  <span>Piston Code Engine</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRun}
+                    disabled={isRunning || isSubmitting}
+                    className="flex items-center gap-1.5 text-xs bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-4 py-1.5 rounded-lg transition"
+                  >
+                    {isRunning ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
+                    <span>{isRunning ? "Running..." : "Run"}</span>
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isRunning || isSubmitting}
+                    className="flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-4 py-1.5 rounded-lg transition"
+                  >
+                    {isSubmitting ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />}
+                    <span>{isSubmitting ? "Judging..." : "Submit"}</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right panel resize handler */}
