@@ -7,6 +7,7 @@ import {
   Clock, Star, Zap,
 } from "lucide-react";
 import type { ChatSession } from "./types";
+import { getDiceBearUrl } from "@/lib/avatar";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -220,14 +221,10 @@ export function ChatSidebar({
               whileHover={{ background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)" }}
             >
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                  color: "#000",
-                  boxShadow: "0 0 10px rgba(245,158,11,0.25)",
-                }}
+                className="w-7 h-7 rounded-full flex-shrink-0 overflow-hidden"
+                style={{ boxShadow: "0 0 10px rgba(245,158,11,0.25)" }}
               >
-                {userName ? userName.charAt(0).toUpperCase() : "A"}
+                <img src={getDiceBearUrl(userName || "Ashish")} alt="avatar" width={28} height={28} style={{ borderRadius: "50%", display: "block" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-semibold truncate" style={{ color: text }}>

@@ -23,6 +23,7 @@ import {
   DashboardTopNav,
   AdyapanUser
 } from "../user/page";
+import { renderMarkdown, inlineFormat } from "@/utils/renderMarkdown";
 
 // ─── Loading checklist steps ──────────────────────────────────────────────────
 const loadingSteps = [
@@ -34,7 +35,7 @@ const loadingSteps = [
 ];
 
 // ─── Typewriter text animation for AI reveal ──────────────────────────────────
-function TypewriterText({ text, speed = 4 }: { text: string; speed?: number }) {
+function TypewriterText({ text, speed = 4, isDark = true }: { text: string; speed?: number; isDark?: boolean }) {
   const [displayedText, setDisplayedText] = useState("");
   useEffect(() => {
     let index = 0;
@@ -50,7 +51,11 @@ function TypewriterText({ text, speed = 4 }: { text: string; speed?: number }) {
     }, speed);
     return () => clearInterval(interval);
   }, [text, speed]);
-  return <p className="whitespace-pre-line text-xs md:text-sm leading-relaxed text-[var(--text-primary)] opacity-90">{displayedText}</p>;
+  return (
+    <div className="text-xs md:text-sm leading-relaxed text-[var(--text-primary)] opacity-90">
+      {renderMarkdown(displayedText, isDark)}
+    </div>
+  );
 }
 
 export default function CodingHubPage() {
@@ -928,16 +933,16 @@ export default function CodingHubPage() {
                             <h4 className="text-[11px] font-black uppercase text-amber-500 tracking-wider mb-1.5 flex items-center gap-1">
                               <Sparkles size={12} /> Problem Breakdown
                             </h4>
-                            <TypewriterText text={selectedQuestionDetails.aiAnalysis.problem_explanation} />
+                            <TypewriterText text={selectedQuestionDetails.aiAnalysis.problem_explanation} isDark={theme === "dark"} />
                           </div>
                           
                           <div className="mt-4 border-t border-[var(--border-color)] pt-4">
                             <h4 className="text-[11px] font-black uppercase text-purple-500 tracking-wider mb-2 flex items-center gap-1">
                               <Award size={12} /> FAANG Interview Importance
                             </h4>
-                            <p className="text-xs text-[var(--text-primary)] opacity-95 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-3 rounded-lg">
-                              {selectedQuestionDetails.aiAnalysis.interview_importance}
-                            </p>
+                            <div className="text-xs text-[var(--text-primary)] opacity-95 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-3 rounded-lg">
+                              {renderMarkdown(selectedQuestionDetails.aiAnalysis.interview_importance, theme === "dark")}
+                            </div>
                           </div>
                         </>
                       ) : (
@@ -968,7 +973,9 @@ export default function CodingHubPage() {
                               <span className="text-[9px] uppercase font-black text-amber-500 tracking-widest block mb-1">
                                 {hint.label}
                               </span>
-                              <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{hint.text}</p>
+                              <div className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">
+                                {renderMarkdown(hint.text, theme === "dark")}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -991,23 +998,27 @@ export default function CodingHubPage() {
                         <div className="flex flex-col gap-4">
                           <div className="p-3 bg-slate-100 dark:bg-white/[0.01] border border-[var(--border-color)] rounded-xl">
                             <span className="text-[10px] font-black uppercase text-[var(--text-secondary)] block mb-1">Brute Force Method</span>
-                            <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{selectedQuestionDetails.aiAnalysis.brute_force}</p>
+                            <div className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">
+                              {renderMarkdown(selectedQuestionDetails.aiAnalysis.brute_force, theme === "dark")}
+                            </div>
                           </div>
 
                           <div className="p-3 bg-amber-500/5 dark:bg-amber-500/[0.02] border border-amber-500/20 rounded-xl">
                             <span className="text-[10px] font-black uppercase text-amber-500 block mb-1">Optimal Approach</span>
-                            <p className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">{selectedQuestionDetails.aiAnalysis.optimal_approach}</p>
+                            <div className="text-xs text-[var(--text-primary)] opacity-90 leading-relaxed">
+                              {renderMarkdown(selectedQuestionDetails.aiAnalysis.optimal_approach, theme === "dark")}
+                            </div>
                           </div>
 
                           {/* Complexities and Mistakes */}
                           <div className="grid grid-cols-2 gap-3">
                             <div className="p-3 bg-slate-100 dark:bg-white/[0.02] border border-[var(--border-color)] rounded-xl flex flex-col justify-between">
                               <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)]">Time Complexity</span>
-                              <span className="text-sm font-black text-amber-500 mt-1 font-mono">{selectedQuestionDetails.aiAnalysis.time_complexity}</span>
+                              <span className="text-sm font-black text-amber-500 mt-1 font-mono">{inlineFormat(selectedQuestionDetails.aiAnalysis.time_complexity)}</span>
                             </div>
                             <div className="p-3 bg-slate-100 dark:bg-white/[0.02] border border-[var(--border-color)] rounded-xl flex flex-col justify-between">
                               <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)]">Space Complexity</span>
-                              <span className="text-sm font-black text-orange-500 mt-1 font-mono">{selectedQuestionDetails.aiAnalysis.space_complexity}</span>
+                              <span className="text-sm font-black text-orange-500 mt-1 font-mono">{inlineFormat(selectedQuestionDetails.aiAnalysis.space_complexity)}</span>
                             </div>
                           </div>
 
@@ -1015,7 +1026,7 @@ export default function CodingHubPage() {
                             <span className="text-[10px] font-black uppercase text-rose-500 block mb-2">Common Student Mistakes</span>
                             <ul className="list-disc pl-4 text-xs text-[var(--text-primary)] opacity-90 space-y-1.5 leading-relaxed">
                               {selectedQuestionDetails.aiAnalysis.common_mistakes?.map((mistake: string, idx: number) => (
-                                <li key={idx}>{mistake}</li>
+                                <li key={idx}>{inlineFormat(mistake)}</li>
                               ))}
                             </ul>
                           </div>

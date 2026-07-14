@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
+import { getDiceBearUrl } from "@/lib/avatar";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -168,9 +169,9 @@ export function CommunityProfileView() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-20 h-20 rounded-full border-2 border-amber-500 bg-amber-500/10 flex items-center justify-center font-black text-2xl text-amber-500 shrink-0"
+              className="w-20 h-20 rounded-full border-2 border-amber-500 shrink-0 overflow-hidden"
             >
-              {initials}
+              <img src={getDiceBearUrl(displayName)} alt="avatar" width={80} height={80} style={{ borderRadius: "50%", display: "block" }} />
             </motion.div>
             <div className="space-y-1.5 text-center sm:text-left">
               <h2 className="text-lg font-extrabold" style={{ color: c.text }}>{displayName}</h2>

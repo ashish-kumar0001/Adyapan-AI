@@ -8,6 +8,7 @@ import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
 import { cn } from "@/lib/cn";
+import { getDiceBearUrl } from "@/lib/avatar";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -838,11 +839,10 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
         transition={{duration:0.12}}
         style={{
           width: 36, height: 36, borderRadius: "50%", border: "2px solid var(--primary)",
-          background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
-          justifyContent: "center", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem",
-          color: "var(--primary)", padding: 0,
+          background: "rgba(245,158,11,0.1)", cursor: "pointer", padding: 0,
+          overflow: "hidden",
         }}>
-        {initials}
+        <img src={getDiceBearUrl(user?.name || "User")} alt="avatar" width={36} height={36} style={{ borderRadius: "50%", display: "block" }} />
       </motion.button>
 
       {open && (
@@ -864,10 +864,9 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
           <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "0 0.4rem", marginBottom: "0.9rem" }}>
             <div style={{
               width: 44, height: 44, borderRadius: "50%", border: "2px solid var(--primary)",
-              background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center",
-              justifyContent: "center", fontWeight: 700, fontSize: "1rem", color: "var(--primary)", flexShrink: 0,
+              background: "rgba(245,158,11,0.1)", flexShrink: 0, overflow: "hidden",
             }}>
-              {initials}
+              <img src={getDiceBearUrl(user?.name || "User")} alt="avatar" width={44} height={44} style={{ borderRadius: "50%", display: "block" }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.92rem", color: isDarkTheme ? "#fff" : "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1361,9 +1360,9 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
         {/* Left Side Summary Card */}
         <div className="space-y-6">
           <div className="border rounded-3xl p-6 text-center shadow-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-            <div className="relative w-20 h-20 rounded-full border-4 flex items-center justify-center text-2xl font-black shadow-md mb-4 mx-auto cursor-default"
-              style={{ borderColor: "var(--primary)", background: "var(--bg-card-alt)", color: "var(--primary)" }}>
-              {initials}
+            <div className="relative w-20 h-20 rounded-full border-4 shadow-md mb-4 mx-auto cursor-default overflow-hidden"
+              style={{ borderColor: "var(--primary)", background: "var(--bg-card-alt)" }}>
+              <img src={getDiceBearUrl(displayName)} alt="avatar" width={80} height={80} style={{ borderRadius: "50%", display: "block" }} />
             </div>
             <h2 className="text-base font-extrabold" style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}>
               {displayName}

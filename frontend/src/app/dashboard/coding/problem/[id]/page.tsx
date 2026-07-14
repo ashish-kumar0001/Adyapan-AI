@@ -27,7 +27,7 @@ import {
   DashboardTopNav,
   AdyapanUser
 } from "../../../user/page";
-import { renderMarkdown } from "@/utils/renderMarkdown";
+import { renderMarkdown, inlineFormat } from "@/utils/renderMarkdown";
 
 // Checklists for loading experience
 const loadingSteps = [
@@ -540,7 +540,8 @@ Answer the student's question based on the coding problem. Provide hints or feed
               <div><span className="text-[var(--text-secondary)]">Output:</span> {ex.output}</div>
               {ex.explanation && (
                 <div className="mt-1 text-[var(--text-secondary)] italic">
-                  <span className="text-amber-500/80 font-semibold font-sans not-italic">Explanation:</span> {ex.explanation}
+                  <span className="text-amber-500/80 font-semibold font-sans not-italic">Explanation: </span>
+                  {inlineFormat(ex.explanation)}
                 </div>
               )}
             </div>
