@@ -1067,6 +1067,23 @@ model ExecutionHistory {
   @@map("execution_history")
 }
 
+model CodeReview {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  questionId    String   @map("question_id")
+  executionId   String?  @map("execution_id")
+  reviewMode    String   @map("review_mode")
+  reviewJson    Json     @map("review_json")
+  overallScore  Int      @map("overall_score")
+  generatedAt   DateTime @default(now()) @map("generated_at")
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([generatedAt])
+  @@map("code_reviews")
+}
+
+
 
 
 

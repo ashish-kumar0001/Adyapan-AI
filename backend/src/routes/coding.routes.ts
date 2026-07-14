@@ -7,6 +7,8 @@ import { prisma as masterPrisma } from "../config/prisma";
 import { CodeforcesService } from "../services/codeforces.service";
 import { AICodingService } from "../services/ai-coding.service";
 import { executeCode, runTestCases, checkPistonHealth } from "../services/piston.service";
+import { AIReviewService } from "../services/ai-review.service";
+
 
 const router = Router();
 router.use(requireAuth);
@@ -1295,4 +1297,92 @@ router.post("/workspace/:id/execution/restore", async (req: any, res) => {
   }
 });
 
+// ─── Day 14 AI Code Review Engine API Endpoints ──────────────────────────────
+
+// POST /api/coding/review
+// Trigger code review generation
+router.post("/review", async (req: any, res) => {
+  try {
+    const { questionId, code, language, reviewMode = "interview" } = req.body;
+    const userId = req.user.userId;
+
+    if (!questionId || !code || !language) {
+      return res.status(400).json({ error: "questionId, code, and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Generate Code Review from service
+    const reviewJson = await AIReviewService.generateReview(
+      userPrisma,
+      userId,
+      questionId,
+      code,
+      language,
+      reviewMode
+    );
+
+    // Save review record to Database
+    const review = await userPrisma.codeReview.create({
+      data: {
+        userId,
+        questionId,
+        reviewMode,
+        reviewJson: reviewJson as any,
+        overallScore: reviewJson.overall_score || 0,
+      }
+    });
+
+    res.json({ success: true, review });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.review.generate", "Failed to generate code review");
+  }
+});
+
+// GET /api/coding/reviews/history
+// Fetch history of previous reviews for a specific user and question
+router.get("/reviews/history", async (req: any, res) => {
+  try {
+    const { questionId } = req.query;
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const whereClause: any = { userId };
+    if (questionId) {
+      whereClause.questionId = questionId as string;
+    }
+
+    const history = await userPrisma.codeReview.findMany({
+      where: whereClause,
+      orderBy: { generatedAt: "desc" }
+    });
+
+    res.json({ success: true, history });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.review.history", "Failed to retrieve reviews history");
+  }
+});
+
+// GET /api/coding/review/:id
+// Get details of a specific code review
+router.get("/review/:id", async (req: any, res) => {
+  try {
+    const reviewId = req.params.id;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const review = await userPrisma.codeReview.findUnique({
+      where: { id: reviewId }
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: "Code review not found" });
+    }
+
+    res.json({ success: true, review });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.review.getDetails", "Failed to retrieve code review details");
+  }
+});
+
 export const codingRouter = router;
+
