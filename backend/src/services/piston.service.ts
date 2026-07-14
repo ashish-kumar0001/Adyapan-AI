@@ -86,6 +86,26 @@ function getApiBase(): string {
   return `${url}/api/v2`;
 }
 
+const FILE_EXTENSIONS: Record<string, string> = {
+  python: ".py",
+  javascript: ".js",
+  c: ".c",
+  "c++": ".cpp",
+  java: ".java",
+  typescript: ".ts",
+  go: ".go",
+  rust: ".rs",
+  ruby: ".rb",
+  php: ".php",
+  swift: ".swift",
+  kotlin: ".kt",
+};
+
+function getFileName(lang: string): string {
+  const ext = FILE_EXTENSIONS[lang] || ".code";
+  return `main${ext}`;
+}
+
 export async function executeCode(
   language: string,
   code: string,
@@ -99,7 +119,7 @@ export async function executeCode(
   const payload: Record<string, unknown> = {
     language: pistonLang,
     version,
-    files: [{ name: "main", content: code }],
+    files: [{ name: getFileName(pistonLang), content: code }],
   };
 
   if (stdin) {
@@ -134,21 +154,40 @@ export async function executeCode(
     }
 
     const data = await res.json() as any;
+    const compile = data.compile || {};
     const run = data.run || {};
 
     const stdout = run.stdout || "";
     const stderr = run.stderr || "";
-    const compileOutput = run.compile_output || "";
+    const compileOutput = compile.stderr || compile.stdout || "";
+    const compileCode = compile.code;
+    const runCode = run.code;
+    const totalTime = (run.wall_time || run.cpu_time || 0);
+
+    const success = (compileCode === 0 || compileCode === null || compileCode === undefined) && runCode === 0;
+
+    let status: string;
+    if (success) {
+      status = "Accepted";
+    } else if (run.signal === "SIGKILL" || run.status === "TO") {
+      status = "Time Limit Exceeded";
+    } else if (compileCode !== 0 && compileCode !== null && compileCode !== undefined) {
+      status = "Compilation Error";
+    } else if (runCode !== 0) {
+      status = run.stderr ? "Runtime Error" : `Exit Code ${runCode}`;
+    } else {
+      status = "Internal Error";
+    }
 
     return {
       stdout,
       stderr,
       compile_output: compileOutput,
-      executionTime: run.time ? parseFloat(run.time) * 1000 : 0,
+      executionTime: totalTime,
       memory: run.memory || 0,
-      status: run.code === 0 ? "Accepted" : run.code === null ? "Runtime Error" : `Exit Code ${run.code}`,
+      status,
       signal: run.signal || null,
-      success: run.code === 0 && !compileOutput,
+      success,
     };
   } catch (err: any) {
     if (err.name === "AbortError") {

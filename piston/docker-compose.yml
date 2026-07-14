@@ -1,18 +1,18 @@
-version: "3.8"
-
 services:
   piston:
-    image: ghcr.io/engineer-man/piston:latest
+    build: .
     container_name: piston
     privileged: true
     ports:
       - "2000:2000"
     volumes:
-      - /tmp/piston-jobs:/piston/jobs:exec
-      - /tmp/piston-tmp:/tmp:exec
+      - piston-packages:/piston/packages
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:2000/api/v2/runtimes"]
       interval: 30s
       timeout: 10s
       retries: 5
+
+volumes:
+  piston-packages:
