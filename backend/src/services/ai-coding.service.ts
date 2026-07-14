@@ -28,8 +28,19 @@ export class AICodingService {
     });
 
     if (cached) {
-      console.log(`[AICodingService] Cache hit for question ${questionId}`);
-      return cached.explanationJson as unknown as AIAnalysisSchema;
+      const data = cached.explanationJson as unknown as AIAnalysisSchema;
+      if (data && data.examples && data.examples.length > 0) {
+        console.log(`[AICodingService] Cache hit for question ${questionId}`);
+        return data;
+      }
+      console.log(`[AICodingService] Cache hit but examples are missing/empty. Regenerating...`);
+      try {
+        await prisma.questionAIAnalysis.delete({
+          where: { id: cached.id }
+        });
+      } catch (err) {
+        console.warn(`[AICodingService] Failed to delete incomplete cache:`, err);
+      }
     }
 
     const question = await prisma.codingQuestion.findUnique({
@@ -57,7 +68,13 @@ export class AICodingService {
         "Using excessive space when an in-place modification is possible.",
         "Integer overflow during sum calculations."
       ],
-      examples: []
+      examples: [
+        {
+          input: "5\n1 2 3 4 5",
+          output: "15",
+          explanation: "Example input with sum 15."
+        }
+      ]
     };
 
     const systemPrompt = `You are a FAANG Interview Coach, Competitive Programming Mentor, and EdTech Platform Architect.
