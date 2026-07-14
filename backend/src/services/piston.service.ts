@@ -79,7 +79,7 @@ function getVersion(lang: string): string | undefined {
 }
 
 function getApiBase(): string {
-  const url = env.pistonUrl.replace(/\/+$/, "");
+  const url = (process.env.PISTON_URL || "http://localhost:2000").replace(/\/+$/, "");
   if (url.includes("emkc.org")) {
     return `${url}/api/v2/piston`;
   }
