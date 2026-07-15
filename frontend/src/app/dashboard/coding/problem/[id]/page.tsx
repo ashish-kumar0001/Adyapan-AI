@@ -11,7 +11,7 @@ const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 import {
   Code2, Sparkles, BookMarked, MessageSquare, StickyNote,
   ChevronLeft, Play, Settings, AlertCircle, CheckCircle2,
-  Maximize2, Minimize2, Info, Moon, Sun, Pin, PinOff,
+  Maximize2, Minimize2, X, Info, Moon, Sun, Pin, PinOff,
   Trash2, Plus, Search, HelpCircle, ChevronRight, CornerDownRight,
   BookOpen, Terminal, Send, Clock, RefreshCw, RotateCcw, Copy
 } from "lucide-react";
@@ -1076,427 +1076,436 @@ Answer the student's question based on the coding problem. Provide hints or feed
     return (
       <AnimatePresence>
         {reviewDrawerOpen && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-[45%] min-w-[420px] max-w-[650px] bg-zinc-950/95 border-l border-zinc-800 shadow-2xl z-50 backdrop-blur-md flex flex-col"
-          >
-            {/* Drawer Header */}
-            <div className="h-14 border-b border-zinc-800 px-5 flex items-center justify-between bg-black/40">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-violet-500 animate-pulse" />
-                <h3 className="text-xs font-black uppercase text-white tracking-wider">AI Code Review Engine</h3>
+          <>
+            {/* Backdrop to close sidebar on click outside */}
+            <div 
+              className="fixed inset-0 z-40 bg-black/10 dark:bg-black/40 backdrop-blur-[1px] transition-opacity"
+              onClick={() => setReviewDrawerOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-[45%] min-w-[420px] max-w-[650px] bg-slate-50 dark:bg-zinc-950 border-l border-slate-200 dark:border-zinc-800 shadow-2xl z-50 backdrop-blur-md flex flex-col"
+            >
+              {/* Drawer Header */}
+              <div className="h-14 border-b border-slate-200 dark:border-zinc-800 px-5 flex items-center justify-between bg-white dark:bg-black/40">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className="text-violet-500 animate-pulse" />
+                  <h3 className="text-xs font-black uppercase text-slate-800 dark:text-white tracking-wider">AI Code Review Engine</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setReviewDrawerOpen(false)}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-lg text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition text-[10px] font-bold"
+                    title="Close Review Drawer"
+                  >
+                    <X size={12} />
+                    <span>Close</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
+
+              {/* Toggle Tabs */}
+              <div className="h-10 border-b border-slate-200 dark:border-zinc-900 bg-slate-50/50 dark:bg-black/25 flex items-center px-5 gap-4">
                 <button
-                  onClick={() => setReviewDrawerOpen(false)}
-                  className="p-1 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition"
+                  onClick={() => setActiveReviewTab("active")}
+                  className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
+                    activeReviewTab === "active"
+                      ? "border-violet-500 text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                  }`}
                 >
-                  <Minimize2 size={14} />
+                  Current Review
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveReviewTab("history");
+                    fetchReviewHistory();
+                  }}
+                  className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
+                    activeReviewTab === "history"
+                      ? "border-violet-500 text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                  }`}
+                >
+                  Review History ({reviewHistory.length})
                 </button>
               </div>
-            </div>
 
-            {/* Toggle Tabs */}
-            <div className="h-10 border-b border-zinc-900 bg-black/25 flex items-center px-5 gap-4">
-              <button
-                onClick={() => setActiveReviewTab("active")}
-                className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
-                  activeReviewTab === "active"
-                    ? "border-violet-500 text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Current Review
-              </button>
-              <button
-                onClick={() => {
-                  setActiveReviewTab("history");
-                  fetchReviewHistory();
-                }}
-                className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
-                  activeReviewTab === "history"
-                    ? "border-violet-500 text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Review History ({reviewHistory.length})
-              </button>
-            </div>
-
-            {/* Content Body */}
-            {activeReviewTab === "active" ? (
-              <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
-                
-                {/* AI Review Loader */}
-                {isReviewing && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-5">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full"
-                    />
-                    <div className="flex flex-col items-center gap-1.5 text-center">
-                      <span className="text-xs font-bold text-violet-400 animate-pulse">
-                        {reviewLoadingSteps[reviewStepIndex]}
-                      </span>
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-semibold">
-                        Running AI analysis simulations
-                      </span>
-                    </div>
-
-                    {/* Progress steps dots */}
-                    <div className="flex items-center gap-2 mt-4 bg-white/5 border border-white/5 px-4 py-2.5 rounded-full">
-                      {reviewLoadingSteps.slice(0, 6).map((step, idx) => (
-                        <div
-                          key={idx}
-                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                            idx <= reviewStepIndex ? "bg-violet-500 shadow-[0_0_8px_#8b5cf6]" : "bg-zinc-800"
-                          }`}
-                          title={step}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* No Review State */}
-                {!isReviewing && !reviewResult && (
-                  <div className="flex flex-col items-center justify-center py-20 text-center text-zinc-400 gap-3">
-                    <Sparkles size={32} className="text-zinc-700 animate-pulse" />
-                    <span className="text-xs font-bold text-zinc-300">No active review generated for this session</span>
-                    <p className="text-[10px] text-zinc-500 max-w-xs leading-relaxed">
-                      Select a review focus mode below the editor, edit your solution, and click the 🤖 Review Code button to launch structural analyses.
-                    </p>
-                  </div>
-                )}
-
-                {/* Review Complete State */}
-                {!isReviewing && reviewResult && (
-                  <>
-                    {/* Error Review prioritised section */}
-                    {reviewResult.error_review && reviewResult.error_review.error_type !== "None" && (
-                      <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex flex-col gap-2.5">
-                        <h4 className="text-xs font-black uppercase text-rose-400 tracking-wider flex items-center gap-1.5">
-                          <AlertCircle size={14} className="text-rose-500 animate-pulse" />
-                          <span>Execution Error review: {reviewResult.error_review.error_type}</span>
-                        </h4>
-                        <div className="bg-black/30 p-2.5 rounded-xl border border-rose-950/20 font-mono text-[10px] text-rose-300">
-                          {reviewResult.error_review.message}
-                        </div>
-                        <div className="text-xs text-zinc-300">
-                          <span className="font-bold text-white block mb-0.5">Likely Cause:</span>
-                          {reviewResult.error_review.cause}
-                        </div>
-                        <div className="text-xs text-zinc-300">
-                          <span className="font-bold text-white block mb-0.5">Suggested Fix:</span>
-                          <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 font-mono text-[10px] text-emerald-400 mt-1 whitespace-pre-wrap">
-                            {reviewResult.error_review.suggested_fix}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Executive Summary */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-2">
-                      <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Executive Summary</h4>
-                      <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{reviewResult.summary}</p>
-                    </div>
-
-                    {/* Scorecard Circular and Subscore bars */}
-                    <div className="flex items-center gap-6 bg-white/5 border border-white/10 rounded-2xl p-4">
-                      {/* Overall score circular ring */}
-                      <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                          <circle cx="40" cy="40" r="34" className="stroke-zinc-800" strokeWidth="6" fill="transparent" />
-                          <motion.circle
-                            cx="40"
-                            cy="40"
-                            r="34"
-                            className="stroke-violet-500"
-                            strokeWidth="6"
-                            fill="transparent"
-                            strokeDasharray="213.6"
-                            initial={{ strokeDashoffset: 213.6 }}
-                            animate={{ strokeDashoffset: 213.6 - (213.6 * (reviewResult.overall_score || 0)) / 100 }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                          />
-                        </svg>
-                        <div className="absolute flex flex-col items-center justify-center">
-                          <span className="text-lg font-black text-white">{reviewResult.overall_score}</span>
-                          <span className="text-[8px] text-zinc-500 uppercase font-bold">Overall</span>
-                        </div>
-                      </div>
-                      
-                      {/* Subscores details */}
-                      <div className="flex-1 flex flex-col gap-2">
-                        {[
-                          { label: "Correctness", val: reviewResult.code_quality_score?.correctness ?? 75, color: "bg-emerald-500" },
-                          { label: "Readability", val: reviewResult.code_quality_score?.readability ?? 75, color: "bg-cyan-500" },
-                          { label: "Performance", val: reviewResult.code_quality_score?.complexity ?? 75, color: "bg-amber-500" },
-                          { label: "Interview Readiness", val: reviewResult.interview_readiness?.score ?? 75, color: "bg-violet-500" },
-                          { label: "Code Quality", val: reviewResult.code_quality_score?.score ?? 75, color: "bg-indigo-500" }
-                        ].map((sub, idx) => (
-                          <div key={idx} className="flex flex-col gap-1">
-                            <div className="flex items-center justify-between text-[9px]">
-                              <span className="text-zinc-400 font-semibold">{sub.label}</span>
-                              <span className="text-white font-black">{sub.val}/100</span>
-                            </div>
-                            <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${sub.val}%` }}
-                                transition={{ duration: 1.2, ease: "easeOut" }}
-                                className={`h-full ${sub.color}`}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Strengths List */}
-                    <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
-                      <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest flex items-center gap-1.5">
-                        <CheckCircle2 size={12} className="text-emerald-500" />
-                        <span>Key Strengths</span>
-                      </h4>
-                      <ul className="flex flex-col gap-2">
-                        {reviewResult.strengths?.map((str: string, i: number) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="text-xs text-zinc-300 flex items-start gap-2 leading-relaxed"
-                          >
-                            <span className="text-emerald-500 shrink-0">✓</span>
-                            <span>{str}</span>
-                          </motion.li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Weaknesses / Issues */}
-                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
-                      <h4 className="text-[10px] font-black uppercase text-rose-400 tracking-widest flex items-center gap-1.5">
-                        <AlertCircle size={12} className="text-rose-500" />
-                        <span>Weaknesses & Issues</span>
-                      </h4>
-                      <ul className="flex flex-col gap-2">
-                        {reviewResult.issues?.map((iss: string, i: number) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="text-xs text-zinc-300 flex items-start gap-2 leading-relaxed"
-                          >
-                            <span className="text-rose-500 shrink-0">⚠️</span>
-                            <span>{iss}</span>
-                          </motion.li>
-                        ))}
-                        {(!reviewResult.issues || reviewResult.issues.length === 0) && (
-                          <li className="text-xs text-zinc-400 italic">No significant weaknesses or bugs detected!</li>
-                        )}
-                      </ul>
-                    </div>
-
-                    {/* Optimizations Section */}
-                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4 flex flex-col gap-3">
-                      <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-widest flex items-center gap-1.5">
-                        <Sparkles size={12} className="text-amber-500 animate-pulse" />
-                        <span>Optimization Opportunities</span>
-                      </h4>
-                      <div className="flex flex-col gap-2.5">
-                        {reviewResult.optimizations?.map((opt: string, i: number) => (
-                          <div key={i} className="bg-black/30 border border-zinc-800 p-2.5 rounded-xl text-xs text-zinc-300 leading-relaxed font-semibold">
-                            {opt}
-                          </div>
-                        ))}
-                        {(!reviewResult.optimizations || reviewResult.optimizations.length === 0) && (
-                          <span className="text-xs text-zinc-400 italic">No optimizations found. Code looks highly performant!</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Edge Cases Simulation */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3">
-                      <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">Edge Case Simulation</h4>
-                      <div className="flex flex-col gap-2">
-                        {reviewResult.edge_cases?.map((ec: string, i: number) => (
-                          <div key={i} className="flex items-center justify-between border-b border-zinc-900 pb-1.5 last:border-0 last:pb-0 text-xs">
-                            <span className="text-zinc-400 font-semibold">{ec}</span>
-                            <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded uppercase tracking-wider">
-                              Verified
-                            </span>
-                          </div>
-                        ))}
-                        {(!reviewResult.edge_cases || reviewResult.edge_cases.length === 0) && (
-                          <span className="text-xs text-zinc-400 italic">No edge cases analyzed.</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Interview Readiness */}
-                    <div className="bg-violet-500/5 border border-violet-500/10 rounded-2xl p-4 flex flex-col gap-3">
-                      <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest flex items-center justify-between">
-                        <span>Technical Interview Readiness</span>
-                        <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border ${
-                          reviewResult.interview_readiness?.interview_ready 
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                        }`}>
-                          {reviewResult.interview_readiness?.interview_ready ? "Passes Interview" : "Fail / Needs Work"}
+              {/* Content Body */}
+              {activeReviewTab === "active" ? (
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+                  
+                  {/* AI Review Loader */}
+                  {isReviewing && (
+                    <div className="flex flex-col items-center justify-center py-20 gap-5">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                        className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full"
+                      />
+                      <div className="flex flex-col items-center gap-1.5 text-center">
+                        <span className="text-xs font-bold text-violet-400 animate-pulse">
+                          {reviewLoadingSteps[reviewStepIndex]}
                         </span>
-                      </h4>
-                      <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
-                      
-                      {reviewResult.interview_readiness?.follow_ups?.length > 0 && (
-                        <div className="flex flex-col gap-1.5 mt-1 border-t border-zinc-800/40 pt-2.5">
-                          <span className="text-[9px] text-violet-400 uppercase font-black tracking-widest">Typical Interviewer Follow-Ups</span>
-                          <ul className="flex flex-col gap-2">
-                            {reviewResult.interview_readiness.follow_ups.map((fq: string, i: number) => (
-                              <li key={i} className="text-xs text-zinc-300 font-medium flex items-start gap-1.5">
-                                <span className="text-violet-500 mt-0.5">•</span>
-                                <span>{fq}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-semibold">
+                          Running AI analysis simulations
+                        </span>
+                      </div>
+
+                      {/* Progress steps dots */}
+                      <div className="flex items-center gap-2 mt-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-full">
+                        {reviewLoadingSteps.slice(0, 6).map((step, idx) => (
+                          <div
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                              idx <= reviewStepIndex ? "bg-violet-500 shadow-[0_0_8px_#8b5cf6]" : "bg-slate-300 dark:bg-zinc-800"
+                            }`}
+                            title={step}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Review State */}
+                  {!isReviewing && !reviewResult && (
+                    <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-zinc-400 gap-3">
+                      <Sparkles size={32} className="text-slate-300 dark:text-zinc-700 animate-pulse" />
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">No active review generated for this session</span>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500 max-w-xs leading-relaxed">
+                        Select a review focus mode below the editor, edit your solution, and click the 🤖 Review Code button to launch structural analyses.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Review Complete State */}
+                  {!isReviewing && reviewResult && (
+                    <>
+                      {/* Error Review prioritised section */}
+                      {reviewResult.error_review && reviewResult.error_review.error_type !== "None" && (
+                        <div className="bg-rose-500/5 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex flex-col gap-2.5">
+                          <h4 className="text-xs font-black uppercase text-rose-550 dark:text-rose-400 tracking-wider flex items-center gap-1.5">
+                            <AlertCircle size={14} className="text-rose-500 animate-pulse" />
+                            <span>Execution Error review: {reviewResult.error_review.error_type}</span>
+                          </h4>
+                          <div className="bg-rose-50/50 dark:bg-black/30 p-2.5 rounded-xl border border-rose-100 dark:border-rose-950/20 font-mono text-[10px] text-rose-600 dark:text-rose-300">
+                            {reviewResult.error_review.message}
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-zinc-300">
+                            <span className="font-bold text-slate-800 dark:text-white block mb-0.5">Likely Cause:</span>
+                            {reviewResult.error_review.cause}
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-zinc-300">
+                            <span className="font-bold text-slate-800 dark:text-white block mb-0.5">Suggested Fix:</span>
+                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-900 font-mono text-[10px] text-emerald-400 mt-1 whitespace-pre-wrap">
+                              {reviewResult.error_review.suggested_fix}
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </div>
 
-                    {/* Line Level Feedback Inspector */}
-                    {reviewResult.line_level_feedback && reviewResult.line_level_feedback.length > 0 && (
-                      <div className="flex flex-col gap-3.5">
-                        <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">Line-Level Code Annotations</h4>
-                        <div className="flex flex-col gap-3">
-                          {reviewResult.line_level_feedback.map((lf: any, idx: number) => (
-                            <div key={idx} className="bg-black/40 border border-zinc-800 rounded-xl p-3 flex flex-col gap-2">
-                              <div className="flex items-center justify-between text-[9px] text-zinc-400 uppercase tracking-widest font-black">
-                                <span>Line {lf.line_number}</span>
+                      {/* Executive Summary */}
+                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+                        <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Executive Summary</h4>
+                        <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">{reviewResult.summary}</p>
+                      </div>
+
+                      {/* Scorecard Circular and Subscore bars */}
+                      <div className="flex items-center gap-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+                        {/* Overall score circular ring */}
+                        <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="40" cy="40" r="34" className="stroke-slate-200 dark:stroke-zinc-800" strokeWidth="6" fill="transparent" />
+                            <motion.circle
+                              cx="40"
+                              cy="40"
+                              r="34"
+                              className="stroke-violet-500"
+                              strokeWidth="6"
+                              fill="transparent"
+                              strokeDasharray="213.6"
+                              initial={{ strokeDashoffset: 213.6 }}
+                              animate={{ strokeDashoffset: 213.6 - (213.6 * (reviewResult.overall_score || 0)) / 100 }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                            />
+                          </svg>
+                          <div className="absolute flex flex-col items-center justify-center">
+                            <span className="text-lg font-black text-slate-800 dark:text-white">{reviewResult.overall_score}</span>
+                            <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase font-bold">Overall</span>
+                          </div>
+                        </div>
+                        
+                        {/* Subscores details */}
+                        <div className="flex-1 flex flex-col gap-2">
+                          {[
+                            { label: "Correctness", val: reviewResult.code_quality_score?.correctness ?? 75, color: "bg-emerald-500" },
+                            { label: "Readability", val: reviewResult.code_quality_score?.readability ?? 75, color: "bg-cyan-500" },
+                            { label: "Performance", val: reviewResult.code_quality_score?.complexity ?? 75, color: "bg-amber-500" },
+                            { label: "Interview Readiness", val: reviewResult.interview_readiness?.score ?? 75, color: "bg-violet-500" },
+                            { label: "Code Quality", val: reviewResult.code_quality_score?.score ?? 75, color: "bg-indigo-500" }
+                          ].map((sub, idx) => (
+                            <div key={idx} className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between text-[9px]">
+                                <span className="text-slate-500 dark:text-zinc-400 font-semibold">{sub.label}</span>
+                                <span className="text-slate-800 dark:text-white font-black">{sub.val}/100</span>
                               </div>
-                              <div className="bg-zinc-950/50 p-2 rounded border border-zinc-900 font-mono text-[10px] text-zinc-500 select-text whitespace-pre overflow-x-auto">
-                                {lf.code_line}
+                              <div className="w-full h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${sub.val}%` }}
+                                  transition={{ duration: 1.2, ease: "easeOut" }}
+                                  className={`h-full ${sub.color}`}
+                                />
                               </div>
-                              <p className="text-xs text-amber-400/90 leading-relaxed font-bold">
-                                {lf.feedback}
-                              </p>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )}
 
-                    {/* Learning Guidance */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-4">
-                      <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">AI Coach Mode Insights</h4>
-                      <div className="flex flex-col gap-3">
-                        <div className="text-xs text-zinc-300 leading-relaxed bg-black/25 p-3 rounded-xl border border-zinc-900 font-semibold">
-                          {reviewResult.learning_insights?.ai_coach_guidance}
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div className="bg-black/20 p-2.5 rounded-xl border border-zinc-900">
-                            <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider block mb-1.5">Algorithms Used</span>
-                            <div className="flex flex-wrap gap-1">
-                              {reviewResult.learning_insights?.concepts_used?.map((c: string, idx: number) => (
-                                <span key={idx} className="text-[9px] bg-white/5 px-2 py-0.5 rounded border border-zinc-800 text-zinc-300 font-mono">{c}</span>
-                              ))}
+                      {/* Strengths List */}
+                      <div className="bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
+                        <h4 className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
+                          <CheckCircle2 size={12} className="text-emerald-500" />
+                          <span>Key Strengths</span>
+                        </h4>
+                        <ul className="flex flex-col gap-2">
+                          {reviewResult.strengths?.map((str: string, i: number) => (
+                            <motion.li
+                              key={i}
+                              initial={{ opacity: 0, x: -5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed"
+                            >
+                              <span className="text-emerald-500 shrink-0">✓</span>
+                              <span>{str}</span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Weaknesses / Issues */}
+                      <div className="bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
+                        <h4 className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
+                          <AlertCircle size={12} className="text-rose-500" />
+                          <span>Weaknesses & Issues</span>
+                        </h4>
+                        <ul className="flex flex-col gap-2">
+                          {reviewResult.issues?.map((iss: string, i: number) => (
+                            <motion.li
+                              key={i}
+                              initial={{ opacity: 0, x: -5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed"
+                            >
+                              <span className="text-rose-500 shrink-0">⚠️</span>
+                              <span>{iss}</span>
+                            </motion.li>
+                          ))}
+                          {(!reviewResult.issues || reviewResult.issues.length === 0) && (
+                            <li className="text-xs text-slate-400 dark:text-zinc-400 italic">No significant weaknesses or bugs detected!</li>
+                          )}
+                        </ul>
+                      </div>
+
+                      {/* Optimizations Section */}
+                      <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-widest flex items-center gap-1.5">
+                          <Sparkles size={12} className="text-amber-500 animate-pulse" />
+                          <span>Optimization Opportunities</span>
+                        </h4>
+                        <div className="flex flex-col gap-2.5">
+                          {reviewResult.optimizations?.map((opt: string, i: number) => (
+                            <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">
+                              {opt}
                             </div>
-                          </div>
-                          <div className="bg-black/20 p-2.5 rounded-xl border border-zinc-900">
-                            <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider block mb-1.5">Unexplored Scaffolds</span>
-                            <div className="flex flex-wrap gap-1">
-                              {reviewResult.learning_insights?.concepts_missing?.map((c: string, idx: number) => (
-                                <span key={idx} className="text-[9px] bg-white/5 px-2 py-0.5 rounded border border-zinc-800 text-zinc-300 font-mono">{c}</span>
-                              ))}
-                            </div>
-                          </div>
+                          ))}
+                          {(!reviewResult.optimizations || reviewResult.optimizations.length === 0) && (
+                            <span className="text-xs text-slate-400 dark:text-zinc-400 italic">No optimizations found. Code looks highly performant!</span>
+                          )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Recommendations Engine */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3">
-                      <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">Targeted Next Problem Sets</h4>
-                      <div className="flex flex-col gap-3 text-xs">
-                        {reviewResult.recommendations?.harder_problems?.length > 0 && (
-                          <div>
-                            <span className="text-[9px] text-orange-400 uppercase font-black tracking-widest block mb-1.5">Harder Progression Challenges:</span>
-                            <div className="flex flex-col gap-1.5">
-                              {reviewResult.recommendations.harder_problems.map((p: string, idx: number) => (
-                                <div key={idx} className="bg-black/25 px-3 py-2 rounded-lg border border-zinc-900 flex items-center justify-between text-zinc-300">
-                                  <span className="font-semibold">{p}</span>
-                                  <span className="text-[9px] text-amber-500 font-black">Practice →</span>
-                                </div>
-                              ))}
+                      {/* Edge Cases Simulation */}
+                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">Edge Case Simulation</h4>
+                        <div className="flex flex-col gap-2">
+                          {reviewResult.edge_cases?.map((ec: string, i: number) => (
+                            <div key={i} className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-900 pb-1.5 last:border-0 last:pb-0 text-xs">
+                              <span className="text-slate-600 dark:text-zinc-400 font-semibold">{ec}</span>
+                              <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded uppercase tracking-wider">
+                                Verified
+                              </span>
                             </div>
-                          </div>
-                        )}
-                        {reviewResult.recommendations?.interview_variants?.length > 0 && (
-                          <div>
-                            <span className="text-[9px] text-violet-400 uppercase font-black tracking-widest block mb-1.5">Alternative Interview Variants:</span>
-                            <div className="flex flex-col gap-1.5">
-                              {reviewResult.recommendations.interview_variants.map((p: string, idx: number) => (
-                                <div key={idx} className="bg-black/25 px-3 py-2 rounded-lg border border-zinc-900 flex items-center justify-between text-zinc-300">
-                                  <span className="font-semibold">{p}</span>
-                                  <span className="text-[9px] text-amber-500 font-black">Practice →</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          ))}
+                          {(!reviewResult.edge_cases || reviewResult.edge_cases.length === 0) && (
+                            <span className="text-xs text-slate-400 dark:text-zinc-400 italic">No edge cases analyzed.</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                  </>
-                )}
-
-              </div>
-            ) : (
-              // Review History Tab view
-              <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
-                {reviewHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-2">
-                    <Clock size={24} className="text-zinc-700 animate-pulse" />
-                    <span className="text-xs font-bold">No review history recorded for this problem</span>
-                  </div>
-                ) : (
-                  reviewHistory.map((rev) => {
-                    const dateStr = new Date(rev.generatedAt).toLocaleDateString([], { month: "short", day: "numeric" });
-                    const timeStr = new Date(rev.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                    return (
-                      <div
-                        key={rev.id}
-                        onClick={() => handleViewHistoryReview(rev)}
-                        className="bg-white/5 border border-zinc-800 hover:border-zinc-700 hover:bg-white/[0.02] p-3.5 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition"
-                      >
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-black uppercase text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
-                              {rev.reviewMode} Mode
-                            </span>
-                            <span className="text-[8px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                              Score: {rev.overallScore}
-                            </span>
-                          </div>
-                          <span className="text-[9px] text-zinc-500 font-semibold">
-                            Reviewed {dateStr} at {timeStr}
+                      {/* Interview Readiness */}
+                      <div className="bg-violet-50 dark:bg-violet-500/5 border border-violet-100 dark:border-violet-500/10 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest flex items-center justify-between">
+                          <span>Technical Interview Readiness</span>
+                          <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border ${
+                            reviewResult.interview_readiness?.interview_ready 
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          }`}>
+                            {reviewResult.interview_readiness?.interview_ready ? "Passes Interview" : "Fail / Needs Work"}
                           </span>
-                        </div>
-                        <button className="text-[9px] text-amber-500 font-black uppercase tracking-wider hover:underline">
-                          View details →
-                        </button>
+                        </h4>
+                        <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
+                        
+                        {reviewResult.interview_readiness?.follow_ups?.length > 0 && (
+                          <div className="flex flex-col gap-1.5 mt-1 border-t border-slate-200 dark:border-zinc-800/40 pt-2.5">
+                            <span className="text-[9px] text-violet-600 dark:text-violet-400 uppercase font-black tracking-widest">Typical Interviewer Follow-Ups</span>
+                            <ul className="flex flex-col gap-2">
+                              {reviewResult.interview_readiness.follow_ups.map((fq: string, i: number) => (
+                                <li key={i} className="text-xs text-slate-700 dark:text-zinc-300 font-medium flex items-start gap-1.5">
+                                  <span className="text-violet-500 mt-0.5">•</span>
+                                  <span>{fq}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          </motion.div>
+
+                      {/* Line Level Feedback Inspector */}
+                      {reviewResult.line_level_feedback && reviewResult.line_level_feedback.length > 0 && (
+                        <div className="flex flex-col gap-3.5">
+                          <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">Line-Level Code Annotations</h4>
+                          <div className="flex flex-col gap-3">
+                            {reviewResult.line_level_feedback.map((lf: any, idx: number) => (
+                              <div key={idx} className="bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-[9px] text-slate-500 dark:text-zinc-400 uppercase tracking-widest font-black">
+                                  <span>Line {lf.line_number}</span>
+                                </div>
+                                <div className="bg-slate-950 p-2 rounded border border-slate-900 font-mono text-[10px] text-zinc-450 select-text whitespace-pre overflow-x-auto">
+                                  {lf.code_line}
+                                </div>
+                                <p className="text-xs text-amber-600 dark:text-amber-400/90 leading-relaxed font-bold">
+                                  {lf.feedback}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Learning Guidance */}
+                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4">
+                        <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">AI Coach Mode Insights</h4>
+                        <div className="flex flex-col gap-3">
+                          <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed bg-slate-50 dark:bg-black/25 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 font-semibold">
+                            {reviewResult.learning_insights?.ai_coach_guidance}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="bg-slate-50 dark:bg-black/20 p-2.5 rounded-xl border border-slate-100 dark:border-zinc-900">
+                              <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block mb-1.5">Algorithms Used</span>
+                              <div className="flex flex-wrap gap-1">
+                                {reviewResult.learning_insights?.concepts_used?.map((c: string, idx: number) => (
+                                  <span key={idx} className="text-[9px] bg-white dark:bg-white/5 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 font-mono">{c}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-black/20 p-2.5 rounded-xl border border-slate-100 dark:border-zinc-900">
+                              <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block mb-1.5">Unexplored Scaffolds</span>
+                              <div className="flex flex-wrap gap-1">
+                                {reviewResult.learning_insights?.concepts_missing?.map((c: string, idx: number) => (
+                                  <span key={idx} className="text-[9px] bg-white dark:bg-white/5 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 text-slate-650 dark:text-zinc-300 font-mono">{c}</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Recommendations Engine */}
+                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-slate-550 dark:text-zinc-300 tracking-widest">Targeted Next Problem Sets</h4>
+                        <div className="flex flex-col gap-3 text-xs">
+                          {reviewResult.recommendations?.harder_problems?.length > 0 && (
+                            <div>
+                              <span className="text-[9px] text-orange-600 dark:text-orange-400 uppercase font-black tracking-widest block mb-1.5">Harder Progression Challenges:</span>
+                              <div className="flex flex-col gap-1.5">
+                                {reviewResult.recommendations.harder_problems.map((p: string, idx: number) => (
+                                  <div key={idx} className="bg-slate-50 dark:bg-black/25 px-3 py-2 rounded-lg border border-slate-100 dark:border-zinc-900 flex items-center justify-between text-slate-700 dark:text-zinc-300">
+                                    <span className="font-semibold">{p}</span>
+                                    <span className="text-[9px] text-amber-500 font-black">Practice →</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {reviewResult.recommendations?.interview_variants?.length > 0 && (
+                            <div>
+                              <span className="text-[9px] text-violet-655 dark:text-violet-400 uppercase font-black tracking-widest block mb-1.5">Alternative Interview Variants:</span>
+                              <div className="flex flex-col gap-1.5">
+                                {reviewResult.recommendations.interview_variants.map((p: string, idx: number) => (
+                                  <div key={idx} className="bg-slate-50 dark:bg-black/25 px-3 py-2 rounded-lg border border-slate-100 dark:border-zinc-900 flex items-center justify-between text-slate-700 dark:text-zinc-300">
+                                    <span className="font-semibold">{p}</span>
+                                    <span className="text-[9px] text-amber-500 font-black">Practice →</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                    </>
+                  )}
+
+                </div>
+              ) : (
+                // Review History Tab view
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+                  {reviewHistory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-zinc-400 gap-2">
+                      <Clock size={24} className="text-slate-355 dark:text-zinc-700 animate-pulse" />
+                      <span className="text-xs font-bold">No review history recorded for this problem</span>
+                    </div>
+                  ) : (
+                    reviewHistory.map((rev) => {
+                      const dateStr = new Date(rev.generatedAt).toLocaleDateString([], { month: "short", day: "numeric" });
+                      const timeStr = new Date(rev.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                      return (
+                        <div
+                          key={rev.id}
+                          onClick={() => handleViewHistoryReview(rev)}
+                          className="bg-white dark:bg-white/5 border border-slate-200 dark:border-zinc-800 hover:border-slate-350 dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-white/[0.02] p-3.5 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition shadow-sm dark:shadow-none"
+                        >
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[8px] font-black uppercase text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-550/20 dark:border-violet-500/20">
+                                {rev.reviewMode} Mode
+                              </span>
+                              <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-550/20 dark:border-emerald-500/20">
+                                Score: {rev.overallScore}
+                              </span>
+                            </div>
+                            <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-semibold">
+                              Reviewed {dateStr} at {timeStr}
+                            </span>
+                          </div>
+                          <button className="text-[9px] text-amber-550 dark:text-amber-500 font-black uppercase tracking-wider hover:underline">
+                            View details →
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     );
