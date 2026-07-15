@@ -327,26 +327,69 @@ export default function CodingRoadmapPage() {
 
           <AnimatePresence mode="wait">
             {loading ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-20">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full mb-4"
-                />
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading your profile roadmap...</p>
+              <div className="flex flex-col items-center justify-center py-20 min-h-[50vh]">
+                <div className="relative w-full max-w-md p-8 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)" }}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6"
+                  >
+                    <Compass size={32} className="text-black" />
+                  </motion.div>
+                  <h2 className="text-xl font-black mb-1" style={{ backgroundImage: "linear-gradient(135deg, var(--text-primary), var(--text-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Adyapan Roadmap Engine
+                  </h2>
+                  <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
+                    Building Personalized Path
+                  </p>
+                  <div className="w-full flex flex-col gap-3">
+                    {LOADING_STEPS.slice(0, 5).map((step, idx) => {
+                      const isDone = idx < loadingStepIdx;
+                      const isCurrent = idx === loadingStepIdx;
+                      return (
+                        <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
+                          <span className={isDone ? "line-through" : ""} style={{ color: isDone ? "var(--text-primary)" : isCurrent ? "#f59e0b" : "var(--text-primary)", opacity: isDone ? 0.4 : isCurrent ? 1 : 0.2 }}>
+                            {step}
+                          </span>
+                          <div>
+                            {isDone ? (
+                              <Check size={14} className="text-emerald-500" />
+                            ) : isCurrent ? (
+                              <RefreshCw size={12} className="animate-spin text-amber-500" />
+                            ) : (
+                              <div className="w-3.5 h-3.5 rounded-full" style={{ border: "1px solid var(--border-color)" }} />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : isGenerating ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center max-w-lg mx-auto py-16 text-center"
-              >
-                <PremiumCard variant="bordered" className="p-8 w-full">
-                  <BrainCircuit className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
-                  <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>Building Your Personalized Path</h3>
+              <div className="flex flex-col items-center justify-center py-16 min-h-[50vh]">
+                <div className="relative w-full max-w-lg p-10 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center text-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)" }}>
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                    <div className="absolute -top-20 -right-20 w-60 h-60 bg-amber-500/10 rounded-full blur-[80px] animate-pulse" />
+                    <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-orange-500/10 rounded-full blur-[80px] animate-pulse" />
+                  </div>
 
-                  <div className="space-y-3 text-left max-w-xs mx-auto mb-6">
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30 mb-6 relative z-10"
+                  >
+                    <BrainCircuit size={32} className="text-black" />
+                  </motion.div>
+
+                  <h3 className="text-lg font-black mb-1 relative z-10" style={{ backgroundImage: "linear-gradient(135deg, var(--text-primary), var(--text-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Building Your Personalized Path
+                  </h3>
+                  <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-8 relative z-10">
+                    AI Roadmap Generation
+                  </p>
+
+                  <div className="w-full space-y-3 text-left max-w-xs mx-auto mb-8 relative z-10">
                     {LOADING_STEPS.map((step, idx) => {
                       const isDone = idx < loadingStepIdx;
                       const isActive = idx === loadingStepIdx;
@@ -355,33 +398,37 @@ export default function CodingRoadmapPage() {
                           key={step}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: isDone || isActive ? 1 : 0.25, x: 0 }}
-                          className="flex items-center gap-3"
+                          transition={{ delay: idx * 0.05 }}
+                          className="flex items-center justify-between text-xs font-semibold py-1"
                         >
-                          {isDone ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                          ) : isActive ? (
-                            <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ border: "1px solid var(--border-color)" }} />
-                          )}
-                          <span className={`text-xs ${isActive ? "text-amber-400 font-bold" : ""}`} style={!isActive ? { color: "var(--text-secondary)" } : {}}>
+                          <span className={isDone ? "line-through" : ""} style={{ color: isDone ? "var(--text-primary)" : isActive ? "#f59e0b" : "var(--text-primary)", opacity: isDone ? 0.4 : isActive ? 1 : 0.2 }}>
                             {step}
                           </span>
+                          <div className="flex-shrink-0 ml-3">
+                            {isDone ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            ) : isActive ? (
+                              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full" style={{ border: "1px solid var(--border-color)" }} />
+                            )}
+                          </div>
                         </motion.div>
                       );
                     })}
                   </div>
 
-                  <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "var(--bg-card)" }}>
+                  <div className="w-full rounded-full h-1.5 overflow-hidden relative z-10" style={{ background: "rgba(255,255,255,0.06)" }}>
                     <motion.div
-                      className="bg-gradient-to-r from-amber-500 to-amber-600 h-full"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+                      style={{ backgroundSize: "200% 100%" }}
                       initial={{ width: "0%" }}
                       animate={{ width: `${(loadingStepIdx / (LOADING_STEPS.length - 1)) * 100}%` }}
-                      transition={{ ease: "easeInOut" }}
+                      transition={{ ease: "easeInOut", duration: 0.5 }}
                     />
                   </div>
-                </PremiumCard>
-              </motion.div>
+                </div>
+              </div>
             ) : !roadmap ? (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -389,19 +436,31 @@ export default function CodingRoadmapPage() {
                 exit={{ opacity: 0 }}
                 className="max-w-2xl mx-auto w-full"
               >
-                <PremiumCard variant="glass" className="p-8 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                    <GraduationCap className="w-36 h-36" />
+                <div className="relative w-full rounded-2xl backdrop-blur-xl shadow-2xl overflow-hidden p-8 md:p-10" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)" }}>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/8 rounded-full blur-[100px]" />
+                    <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-orange-500/6 rounded-full blur-[100px]" />
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.04] pointer-events-none">
+                      <GraduationCap className="w-40 h-40" />
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3 mb-6">
-                    <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
-                    <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Setup Coding Roadmap</h2>
-                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <Route className="w-5 h-5 text-black" />
+                      </div>
+                      <h2 className="text-xl font-black" style={{ backgroundImage: "linear-gradient(135deg, var(--text-primary), var(--text-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                        Setup Coding Roadmap
+                      </h2>
+                    </div>
+                    <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-4">
+                      Personalized DSA Preparation Path
+                    </p>
 
-                  <p className="text-xs md:text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-                    Answer a few questions about your preparation status and targeted placements. Our AI agent will calculate your readiness footprint and map out an optimized roadmap timeline.
-                  </p>
+                    <p className="text-xs md:text-sm mb-8 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      Answer a few questions about your preparation status and targeted placements. Our AI agent will analyze your coding history, detect weak topics, and map out an optimized roadmap timeline.
+                    </p>
 
                   <form onSubmit={triggerGeneration} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -497,11 +556,12 @@ export default function CodingRoadmapPage() {
                       </div>
                     </div>
 
-                    <PremiumButton type="submit" className="w-full py-4 text-sm mt-4">
+                    <PremiumButton type="submit" className="w-full py-4 text-sm mt-6 relative z-10">
                       <Sparkles className="w-4 h-4 mr-2" /> Generate AI Roadmap
                     </PremiumButton>
                   </form>
-                </PremiumCard>
+                  </div>
+                </div>
               </motion.div>
             ) : (
               <motion.div
