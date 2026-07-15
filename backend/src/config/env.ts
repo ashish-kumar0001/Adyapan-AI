@@ -25,6 +25,11 @@ export const env = {
     branchId: process.env.NEON_BRANCH_ID ?? "",
     regionId: process.env.NEON_REGION_ID ?? "aws-us-east-1",
   },
+  github: {
+    clientId: process.env.GITHUB_CLIENT_ID ?? "",
+    clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+    callbackUrl: process.env.GITHUB_CALLBACK_URL ?? "http://localhost:5000/api/auth/github/callback",
+  },
   codeforces: {
     apiKey: process.env.CODEFORCES_API_KEY ?? "",
     apiSecret: process.env.CODEFORCES_API_SECRET ?? "",

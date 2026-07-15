@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { loginUser, registerUser } from "../services/auth.service";
+import { loginUser, registerUser, getGitHubRedirectUrl, exchangeGitHubCode, handleGitHubUser } from "../services/auth.service";
 import { requireString } from "../utils/request";
 import { env } from "../config/env";
 import { httpError } from "../utils/httpError";
@@ -90,4 +90,33 @@ export function forgotPassword(_req: Request, res: Response) {
     success: true,
     message: "Password reset flow accepted",
   });
+}
+
+export function githubAuth(_req: Request, res: Response) {
+  const url = getGitHubRedirectUrl();
+  res.redirect(url);
+}
+
+export async function githubCallback(req: Request, res: Response, next: NextFunction) {
+  try {
+    const code = req.query.code as string | undefined;
+    if (!code) {
+      throw httpError(400, "Missing authorization code");
+    }
+
+    const githubUser = await exchangeGitHubCode(code);
+    const result = await handleGitHubUser(githubUser);
+
+    const frontendUrl = env.frontendUrl;
+    const params = new URLSearchParams({
+      token: result.token,
+      user: JSON.stringify(result.user),
+    });
+
+    res.redirect(`${frontendUrl}/login?github=success&${params.toString()}`);
+  } catch (error) {
+    const frontendUrl = env.frontendUrl;
+    const message = error instanceof Error ? error.message : "GitHub login failed";
+    res.redirect(`${frontendUrl}/login?github=error&message=${encodeURIComponent(message)}`);
+  }
 }

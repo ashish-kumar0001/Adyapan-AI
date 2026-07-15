@@ -142,6 +142,10 @@ export async function loginUser(input: LoginInput & { rememberMe?: boolean }) {
     throw httpError(401, "Invalid email or password");
   }
 
+  if (!user.password) {
+    throw httpError(401, "This account was created via GitHub login. Please use GitHub to sign in.");
+  }
+
   const isPasswordValid = await bcrypt.compare(input.password, user.password);
 
   if (!isPasswordValid) {
@@ -202,4 +206,128 @@ export async function rateLimitAuthRequest(ip: string) {
   } catch (err) {
     throw httpError(429, "Too many requests");
   }
+}
+
+type GitHubUser = {
+  id: number;
+  login: string;
+  name: string | null;
+  email: string;
+  avatar_url: string;
+};
+
+export function getGitHubRedirectUrl(): string {
+  const params = new URLSearchParams({
+    client_id: env.github.clientId,
+    redirect_uri: env.github.callbackUrl,
+    scope: "read:user user:email",
+    state: "adyapan_ai",
+  });
+  return `https://github.com/login/oauth/authorize?${params.toString()}`;
+}
+
+export async function exchangeGitHubCode(code: string): Promise<GitHubUser> {
+  const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      client_id: env.github.clientId,
+      client_secret: env.github.clientSecret,
+      code,
+      redirect_uri: env.github.callbackUrl,
+    }),
+  });
+
+  const tokenData = (await tokenRes.json()) as { access_token?: string; error?: string };
+  if (!tokenData.access_token) {
+    throw httpError(401, "GitHub OAuth failed: " + (tokenData.error || "No access token"));
+  }
+
+  const userRes = await fetch("https://api.github.com/user", {
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      Accept: "application/json",
+    },
+  });
+
+  const githubUser = (await userRes.json()) as GitHubUser;
+
+  if (!githubUser.email) {
+    const emailsRes = await fetch("https://api.github.com/user/emails", {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        Accept: "application/json",
+      },
+    });
+    const emails = (await emailsRes.json()) as { email: string; primary: boolean }[];
+    const primary = emails.find((e) => e.primary);
+    if (primary) {
+      githubUser.email = primary.email;
+    } else if (emails.length > 0) {
+      githubUser.email = emails[0].email;
+    }
+  }
+
+  if (!githubUser.email) {
+    throw httpError(400, "GitHub account has no public email. Please add one to your GitHub profile.");
+  }
+
+  return githubUser;
+}
+
+export async function handleGitHubUser(githubUser: GitHubUser, rememberMe?: boolean) {
+  const githubId = String(githubUser.id);
+  const email = githubUser.email.toLowerCase();
+
+  let user = await prisma.user.findFirst({
+    where: { OR: [{ githubId }, { email }] },
+  });
+
+  if (user) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        githubId,
+        avatarUrl: githubUser.avatar_url,
+        name: user.name || githubUser.name || githubUser.login,
+      },
+    });
+  } else {
+    user = await prisma.user.create({
+      data: {
+        name: githubUser.name || githubUser.login,
+        email,
+        githubId,
+        avatarUrl: githubUser.avatar_url,
+        role: "USER",
+        profile: {
+          create: {
+            github: githubUser.login,
+          },
+        },
+      },
+    });
+
+    try {
+      const userDbName = `user_${user.id}`;
+      await databaseService.createDatabase(userDbName);
+      const dbUrl = await databaseService.getConnectionString(userDbName);
+      execSync("npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss", {
+        cwd: process.cwd(),
+        stdio: "pipe",
+        env: { ...process.env, USER_DATABASE_URL: dbUrl },
+      });
+    } catch (error) {
+      console.error(`Failed to create database for user ${user.id}:`, error);
+    }
+  }
+
+  return {
+    user: publicUser(user),
+    token: signToken(user, rememberMe),
+    refreshToken: signRefreshToken(user.id),
+  };
 }

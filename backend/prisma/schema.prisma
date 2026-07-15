@@ -7,14 +7,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  profile   Profile?
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  password   String?
+  githubId   String?  @unique @map("github_id")
+  avatarUrl  String?  @map("avatar_url")
+  role       Role     @default(USER)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  profile    Profile?
 
   // Payment / Subscription Relations
   plan                String   @default("free")

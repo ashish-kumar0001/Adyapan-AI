@@ -56,9 +56,35 @@ export default function LoginPage() {
     const saved = (localStorage.getItem("adyapan-theme") as "dark" | "light") || "dark";
     setTheme(saved);
 
-    // Open register tab if ?tab=register in URL
+    // Handle GitHub OAuth callback
     const params = new URLSearchParams(window.location.search);
     if (params.get("tab") === "register") setTab("register");
+
+    const githubStatus = params.get("github");
+    if (githubStatus === "success") {
+      const token = params.get("token");
+      const userStr = params.get("user");
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr) as { role?: string };
+          saveAuthSession(token, user as any, true);
+          router.replace(user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+          return;
+        } catch { /* ignore parse error */ }
+      }
+    } else if (githubStatus === "error") {
+      setLoginError(params.get("message") || "GitHub login failed. Please try again.");
+    }
+
+    // Strip GitHub params from URL without reload
+    if (githubStatus) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("github");
+      url.searchParams.delete("token");
+      url.searchParams.delete("user");
+      url.searchParams.delete("message");
+      window.history.replaceState({}, "", url.toString());
+    }
 
     const observer = new MutationObserver(() => {
       const t = document.documentElement.getAttribute("data-theme");
@@ -214,7 +240,7 @@ export default function LoginPage() {
                     </motion.div>
                     <motion.div className="flex gap-2" custom={5} variants={staggerItem} initial="hidden" animate="visible">
                       <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GoogleIcon /> Google</button>
-                      <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
+                      <button type="button" onClick={() => window.location.href = `${api.defaults.baseURL}/auth/github`} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
                     </motion.div>
                     <motion.p className="text-center text-xs" style={{ color: labelClr }} custom={6} variants={staggerItem} initial="hidden" animate="visible">
                       Don&apos;t have an account? <button type="button" onClick={() => switchTab("register")} className="font-bold text-amber-500">Register here</button>
@@ -283,7 +309,7 @@ export default function LoginPage() {
                     </motion.div>
                     <motion.div className="col-span-2 flex gap-2" custom={10} variants={staggerItem} initial="hidden" animate="visible">
                       <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GoogleIcon /> Google</button>
-                      <button type="button" className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
+                      <button type="button" onClick={() => window.location.href = `${api.defaults.baseURL}/auth/github`} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold hover:opacity-80" style={socialStyle}><GitHubIcon color={cardText} /> GitHub</button>
                     </motion.div>
                     <motion.p className="col-span-2 text-center text-xs" style={{ color: labelClr }} custom={11} variants={staggerItem} initial="hidden" animate="visible">
                       Already have an account? <button type="button" onClick={() => switchTab("login")} className="font-bold text-amber-500">Sign in</button>
