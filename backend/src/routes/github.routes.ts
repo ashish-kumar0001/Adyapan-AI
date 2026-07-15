@@ -73,4 +73,55 @@ router.post("/portfolio", async (req: any, res) => {
   }
 });
 
+router.post("/push", async (req: any, res) => {
+  try {
+    const { token, owner, repo, path, content, message } = req.body;
+    if (!token || !owner || !repo || !path || !content) {
+      return res.status(400).json({ error: "Missing required fields for pushing to GitHub" });
+    }
+
+    const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "Adyapan-AI-Copilot",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+
+    let sha: string | undefined;
+    try {
+      const getRes = await fetch(fileUrl, { headers });
+      if (getRes.status === 200) {
+        const fileData = await getRes.json();
+        sha = fileData.sha;
+      }
+    } catch (e) {
+      // File doesn't exist yet
+    }
+
+    const putRes = await fetch(fileUrl, {
+      method: "PUT",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: message || `Update ${path} via Adyapan AI`,
+        content: Buffer.from(content).toString("base64"),
+        sha,
+      }),
+    });
+
+    if (!putRes.ok) {
+      const errorText = await putRes.text();
+      throw new Error(`GitHub API error: ${putRes.status} ${errorText}`);
+    }
+
+    const resultData = await putRes.json();
+    res.json({ success: true, commit: resultData.commit });
+  } catch (error: any) {
+    handleRouteError(res, error, "Github.push", "Failed to push to GitHub");
+  }
+});
+
 export const githubRouter = router;

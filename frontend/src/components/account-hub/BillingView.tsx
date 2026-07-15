@@ -61,7 +61,7 @@ export function BillingView() {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-6 max-w-5xl mx-auto p-1"
+      className="space-y-6 p-1"
       style={{ color: c.text }}
     >
       {/* Page Header */}
