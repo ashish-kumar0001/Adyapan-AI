@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Terminal,
@@ -11,23 +11,19 @@ import {
   Code,
   Loader2,
   Sparkles,
-  ShieldCheck,
   ArrowRight,
   Plus,
   Search,
   Trash2,
   Clock,
-  Play,
   Upload,
   Download,
   Check,
   FileCode,
   ChevronDown,
-  Layers,
   CheckSquare,
   AlertTriangle,
   Cpu,
-  RefreshCw,
   Copy,
   Info,
 } from "lucide-react";
@@ -568,7 +564,7 @@ export function CodingAssistantView() {
                               className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                               style={{ background: `${sIconColor}18` }}
                             >
-                              {sIcon({ className: "w-3.5 h-3.5", style: { color: sIconColor } })}
+                              {React.createElement(sIcon, { className: "w-3.5 h-3.5", style: { color: sIconColor } })}
                             </div>
 
                             <div className="flex-1 min-w-0">
@@ -677,7 +673,7 @@ export function CodingAssistantView() {
                     boxShadow: `0 0 25px ${currentTab.color}25`,
                   }}
                 >
-                  {currentTab.icon({ className: "w-8 h-8", style: { color: currentTab.color } })}
+                  {React.createElement(currentTab.icon, { className: "w-8 h-8", style: { color: currentTab.color } })}
                   <motion.div
                     className="absolute -inset-0.5 rounded-2xl blur-md"
                     style={{ background: currentTab.color, zIndex: -1, opacity: 0.15 }}
@@ -743,7 +739,7 @@ export function CodingAssistantView() {
                       {msg.role === "user" ? (
                         <span className="text-[10px] font-bold uppercase">Me</span>
                       ) : (
-                        currentTab.icon({ className: "w-4 h-4", style: { color: currentTab.color } })
+                        React.createElement(currentTab.icon, { className: "w-4 h-4", style: { color: currentTab.color } })
                       )}
                     </div>
 
