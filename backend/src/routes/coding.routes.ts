@@ -1486,6 +1486,555 @@ router.get("/complexity/:id", async (req: any, res) => {
   }
 });
 
+// ─── Coding Challenges System API Endpoints ────────────────────────────────────
+
+// GET /api/coding/challenges
+// Fetch all coding challenges and merge user-specific completion progress
+router.get("/challenges", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // 1. Fetch all global challenges from Master DB, including their questions
+    const globalChallenges = await masterPrisma.codingChallenge.findMany({
+      include: {
+        questions: {
+          include: {
+            question: true
+          },
+          orderBy: {
+            orderIndex: 'asc'
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    // 2. Fetch user's question progress (to compute solved status)
+    const questionProgress = await userPrisma.userQuestionProgress.findMany({
+      where: { userId }
+    });
+    const solvedQuestionsMap = new Map(
+      questionProgress.filter((p: any) => p.status === "solved" || p.solved).map((p: any) => [p.questionId, true])
+    );
+
+    // 3. Fetch user's challenge progress
+    const challengeProgress = await userPrisma.userChallengeProgress.findMany({
+      where: { userId }
+    });
+    const progressMap = new Map(
+      challengeProgress.map((p: any) => [p.challengeId, p])
+    );
+
+    // 4. Map global challenges to include user stats
+    const challenges = globalChallenges.map((challenge: any) => {
+      const prog = progressMap.get(challenge.id) as any;
+      const totalQ = challenge.questions.length;
+      
+      // Calculate how many questions of this challenge are solved
+      const solvedQ = challenge.questions.filter((q: any) => solvedQuestionsMap.has(q.questionId)).length;
+      const computedPercentage = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0;
+      
+      let status = "not_started";
+      let progressPercentage = 0;
+      let xpEarned = 0;
+
+      if (prog) {
+        status = prog.status;
+        progressPercentage = computedPercentage;
+        xpEarned = prog.xpEarned;
+      }
+
+      return {
+        id: challenge.id,
+        title: challenge.title,
+        challengeType: challenge.challengeType,
+        description: challenge.description,
+        difficulty: challenge.difficulty,
+        xpReward: challenge.xpReward,
+        totalQuestions: totalQ,
+        solvedQuestions: solvedQ,
+        progressPercentage,
+        status,
+        xpEarned,
+        startedAt: prog?.startedAt || null,
+        completedAt: prog?.completedAt || null,
+        questions: challenge.questions.map((q: any) => ({
+          id: q.question.id,
+          title: q.question.title,
+          difficulty: q.question.difficulty,
+          topic: q.question.topic,
+          solved: solvedQuestionsMap.has(q.questionId),
+          orderIndex: q.orderIndex
+        }))
+      };
+    });
+
+    res.json({ success: true, challenges });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.challenges.list", "Failed to retrieve challenges");
+  }
+});
+
+// GET /api/coding/challenge/:id
+// Get challenge details and progressive unlocking status for each question
+router.get("/challenge/:id", async (req: any, res) => {
+  try {
+    const challengeId = req.params.id;
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // 1. Fetch challenge details from Master DB
+    const challenge = await masterPrisma.codingChallenge.findUnique({
+      where: { id: challengeId },
+      include: {
+        questions: {
+          include: {
+            question: true
+          },
+          orderBy: {
+            orderIndex: 'asc'
+          }
+        }
+      }
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    // 2. Fetch user's question progress
+    const questionProgress = await userPrisma.userQuestionProgress.findMany({
+      where: { userId }
+    });
+    const solvedQuestionsMap = new Map(
+      questionProgress.filter((p: any) => p.status === "solved" || p.solved).map((p: any) => [p.questionId, true])
+    );
+
+    // 3. Fetch user's challenge progress
+    const prog = await userPrisma.userChallengeProgress.findUnique({
+      where: { userId_challengeId: { userId, challengeId } }
+    });
+
+    const totalQ = challenge.questions.length;
+    const solvedQ = challenge.questions.filter((q: any) => solvedQuestionsMap.has(q.questionId)).length;
+    const computedPercentage = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0;
+
+    // Progressive unlocking logic
+    let isPrevSolved = true;
+    const questionsMapped = challenge.questions.map((q: any) => {
+      const isSolved = solvedQuestionsMap.has(q.questionId);
+      const isUnlocked = isPrevSolved || isSolved;
+      isPrevSolved = isSolved;
+
+      return {
+        id: q.question.id,
+        title: q.question.title,
+        difficulty: q.question.difficulty,
+        topic: q.question.topic,
+        solved: isSolved,
+        unlocked: isUnlocked,
+        orderIndex: q.orderIndex
+      };
+    });
+
+    res.json({
+      success: true,
+      challenge: {
+        id: challenge.id,
+        title: challenge.title,
+        challengeType: challenge.challengeType,
+        description: challenge.description,
+        difficulty: challenge.difficulty,
+        xpReward: challenge.xpReward,
+        progressPercentage: computedPercentage,
+        status: prog?.status || "not_started",
+        xpEarned: prog?.xpEarned || 0,
+        startedAt: prog?.startedAt || null,
+        completedAt: prog?.completedAt || null,
+        questions: questionsMapped
+      }
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.challenge.getDetails", "Failed to retrieve challenge details");
+  }
+});
+
+// POST /api/coding/challenge/start
+// Set user challenge progress status to 'in_progress' or 'started'
+router.post("/challenge/start", async (req: any, res) => {
+  try {
+    const { challengeId } = req.body;
+    const userId = req.user.userId;
+
+    if (!challengeId) {
+      return res.status(400).json({ error: "challengeId is required" });
+    }
+
+    const challenge = await masterPrisma.codingChallenge.findUnique({
+      where: { id: challengeId }
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const progress = await userPrisma.userChallengeProgress.upsert({
+      where: { userId_challengeId: { userId, challengeId } },
+      update: {
+        status: "in_progress"
+      },
+      create: {
+        userId,
+        challengeId,
+        status: "started",
+        progressPercentage: 0,
+        xpEarned: 0
+      }
+    });
+
+    res.json({ success: true, progress });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.challenge.start", "Failed to start challenge");
+  }
+});
+
+// POST /api/coding/challenge/complete
+// Verify that all challenge questions are solved, update status and award XP/Streaks
+router.post("/challenge/complete", async (req: any, res) => {
+  try {
+    const { challengeId } = req.body;
+    const userId = req.user.userId;
+
+    if (!challengeId) {
+      return res.status(400).json({ error: "challengeId is required" });
+    }
+
+    const challenge = await masterPrisma.codingChallenge.findUnique({
+      where: { id: challengeId },
+      include: { questions: true }
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Verify if all questions are indeed solved
+    const questionProgress = await userPrisma.userQuestionProgress.findMany({
+      where: { userId }
+    });
+    const solvedQuestionsMap = new Map(
+      questionProgress.filter((p: any) => p.status === "solved" || p.solved).map((p: any) => [p.questionId, true])
+    );
+
+    const allSolved = challenge.questions.every((q: any) => solvedQuestionsMap.has(q.questionId));
+
+    if (!allSolved) {
+      return res.status(400).json({ error: "Cannot complete challenge: not all questions are solved yet." });
+    }
+
+    const existingProgress = await userPrisma.userChallengeProgress.findUnique({
+      where: { userId_challengeId: { userId, challengeId } }
+    });
+
+    if (existingProgress?.status === "completed") {
+      return res.json({
+        success: true,
+        message: "Challenge already completed",
+        xpEarned: 0,
+        progress: existingProgress
+      });
+    }
+
+    const progress = await userPrisma.userChallengeProgress.upsert({
+      where: { userId_challengeId: { userId, challengeId } },
+      update: {
+        status: "completed",
+        progressPercentage: 100,
+        xpEarned: challenge.xpReward,
+        completedAt: new Date()
+      },
+      create: {
+        userId,
+        challengeId,
+        status: "completed",
+        progressPercentage: 100,
+        xpEarned: challenge.xpReward,
+        startedAt: new Date(),
+        completedAt: new Date()
+      }
+    });
+
+    // Update XP stats
+    let userXP = await userPrisma.userXP.findUnique({
+      where: { userId }
+    });
+
+    if (!userXP) {
+      userXP = await userPrisma.userXP.create({
+        data: {
+          userId,
+          totalXP: 0,
+          level: 1,
+          dailyStreak: 0,
+          weeklyStreak: 0,
+          topicStreak: 0
+        }
+      });
+    }
+
+    const nextXP = userXP.totalXP + challenge.xpReward;
+    const nextLevel = Math.floor(Math.sqrt(nextXP / 100)) + 1;
+
+    // Streak updates
+    let newDailyStreak = userXP.dailyStreak;
+    let newWeeklyStreak = userXP.weeklyStreak;
+    let newTopicStreak = userXP.topicStreak;
+    const now = new Date();
+
+    if (challenge.challengeType === "daily") {
+      const lastDaily = userXP.lastDailyChallengeAt;
+      if (!lastDaily) {
+        newDailyStreak = 1;
+      } else {
+        const diffTime = Math.abs(now.getTime() - lastDaily.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays <= 1) {
+          const isSameDay = lastDaily.toDateString() === now.toDateString();
+          if (!isSameDay) {
+            newDailyStreak += 1;
+          }
+        } else {
+          newDailyStreak = 1;
+        }
+      }
+    } else if (challenge.challengeType === "weekly") {
+      const lastWeekly = userXP.lastWeeklyChallengeAt;
+      if (!lastWeekly) {
+        newWeeklyStreak = 1;
+      } else {
+        const diffTime = Math.abs(now.getTime() - lastWeekly.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays <= 7) {
+          newWeeklyStreak += 1;
+        } else {
+          newWeeklyStreak = 1;
+        }
+      }
+    } else if (challenge.challengeType === "topic") {
+      newTopicStreak += 1;
+    }
+
+    const updatedXP = await userPrisma.userXP.update({
+      where: { userId },
+      data: {
+        totalXP: nextXP,
+        level: nextLevel,
+        dailyStreak: newDailyStreak,
+        weeklyStreak: newWeeklyStreak,
+        topicStreak: newTopicStreak,
+        lastDailyChallengeAt: challenge.challengeType === "daily" ? now : undefined,
+        lastWeeklyChallengeAt: challenge.challengeType === "weekly" ? now : undefined,
+        lastTopicChallengeAt: challenge.challengeType === "topic" ? now : undefined,
+      }
+    });
+
+    // Check Achievements & unlock them
+    const completedChallengesCount = await userPrisma.userChallengeProgress.count({
+      where: { userId, status: "completed" }
+    });
+    const solvedQuestionsCount = solvedQuestionsMap.size;
+
+    const achievementsToUnlock: Array<{ name: string; type: string; rarity: string }> = [];
+    if (completedChallengesCount === 1) {
+      achievementsToUnlock.push({ name: "First Challenge Completed", type: "challenge", rarity: "Common" });
+    }
+    if (completedChallengesCount === 5) {
+      achievementsToUnlock.push({ name: "Challenge Veteran", type: "challenge", rarity: "Rare" });
+    }
+    if (newDailyStreak >= 3) {
+      achievementsToUnlock.push({ name: "Streak Spark", type: "streak", rarity: "Common" });
+    }
+    if (newDailyStreak >= 30) {
+      achievementsToUnlock.push({ name: "30-Day Flame", type: "streak", rarity: "Legendary" });
+    }
+    if (solvedQuestionsCount >= 100) {
+      achievementsToUnlock.push({ name: "Centurion Coder", type: "milestone", rarity: "Epic" });
+    }
+
+    // Determine DP mastery
+    const dpSolvedCount = questionProgress.filter((p: any) => p.status === "solved" && p.solved).map((p: any) => {
+      const q = challenge.questions.find((cq: any) => cq.questionId === p.questionId);
+      return q?.question.topic === "Dynamic Programming";
+    }).filter(Boolean).length;
+
+    if (dpSolvedCount >= 3) {
+      achievementsToUnlock.push({ name: "DP Master", type: "mastery", rarity: "Epic" });
+    }
+
+    for (const ach of achievementsToUnlock) {
+      const existingAch = await userPrisma.streakAchievement.findFirst({
+        where: { userId, achievementName: ach.name }
+      });
+      if (!existingAch) {
+        await userPrisma.streakAchievement.create({
+          data: {
+            userId,
+            achievementName: ach.name,
+            achievementType: ach.type,
+            rarity: ach.rarity
+          }
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      xpEarned: challenge.xpReward,
+      totalXP: nextXP,
+      level: nextLevel,
+      dailyStreak: newDailyStreak,
+      weeklyStreak: newWeeklyStreak,
+      topicStreak: newTopicStreak,
+      progress
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.challenge.complete", "Failed to complete challenge");
+  }
+});
+
+// GET /api/coding/challenge/recommendations
+// Generate topic challenges based on user weak topics
+router.get("/challenge/recommendations", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const weakTopics = await userPrisma.weakTopic.findMany({
+      where: { userId },
+      orderBy: { strengthScore: "asc" }
+    });
+
+    let targetTopic = "Arrays";
+    let reason = "Start with our recommended arrays warmup challenge to build confidence.";
+
+    if (weakTopics.length > 0) {
+      targetTopic = weakTopics[0].topicName;
+      reason = `We detected a weakness in your ${targetTopic} performance (strength score: ${weakTopics[0].strengthScore}%).`;
+    }
+
+    let challenge = await masterPrisma.codingChallenge.findFirst({
+      where: {
+        challengeType: "topic",
+        title: {
+          contains: targetTopic,
+          mode: "insensitive"
+        }
+      },
+      include: {
+        questions: {
+          include: { question: true }
+        }
+      }
+    });
+
+    if (!challenge) {
+      challenge = await masterPrisma.codingChallenge.findFirst({
+        where: { challengeType: "topic" },
+        include: {
+          questions: {
+            include: { question: true }
+          }
+        }
+      });
+      if (challenge) {
+        reason = "Boost your general DSA logic structures with this recommended topic challenge.";
+      }
+    }
+
+    res.json({
+      success: true,
+      recommendation: challenge ? {
+        id: challenge.id,
+        title: challenge.title,
+        challengeType: challenge.challengeType,
+        description: challenge.description,
+        difficulty: challenge.difficulty,
+        xpReward: challenge.xpReward,
+        questionsCount: challenge.questions.length,
+        reason
+      } : null
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.challenge.recommendations", "Failed to fetch recommended challenge");
+  }
+});
+
+// GET /api/coding/xp
+// Fetch XP profile dashboard stats: level progress, streaks and achievements
+router.get("/xp", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    let userXP = await userPrisma.userXP.findUnique({
+      where: { userId }
+    });
+
+    if (!userXP) {
+      userXP = await userPrisma.userXP.create({
+        data: {
+          userId,
+          totalXP: 0,
+          level: 1,
+          dailyStreak: 0,
+          weeklyStreak: 0,
+          topicStreak: 0
+        }
+      });
+    }
+
+    const currentLevel = userXP.level;
+    const currentLevelMinXP = Math.pow(currentLevel - 1, 2) * 100;
+    const nextLevelMinXP = Math.pow(currentLevel, 2) * 100;
+    const levelRange = nextLevelMinXP - currentLevelMinXP;
+    const currentXPInLevel = userXP.totalXP - currentLevelMinXP;
+    const levelProgress = levelRange > 0 ? Math.round((currentXPInLevel / levelRange) * 100) : 0;
+
+    const achievements = await userPrisma.streakAchievement.findMany({
+      where: { userId },
+      orderBy: { unlockedAt: "desc" }
+    });
+
+    res.json({
+      success: true,
+      xpStats: {
+        totalXP: userXP.totalXP,
+        level: userXP.level,
+        levelProgress: Math.min(100, Math.max(0, levelProgress)),
+        nextLevelXP: nextLevelMinXP,
+        dailyStreak: userXP.dailyStreak,
+        weeklyStreak: userXP.weeklyStreak,
+        topicStreak: userXP.topicStreak,
+        achievements: achievements.map((a: any) => ({
+          name: a.achievementName,
+          type: a.achievementType,
+          rarity: a.rarity,
+          unlockedAt: a.unlockedAt
+        }))
+      }
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.xp.getStats", "Failed to retrieve XP statistics");
+  }
+});
+
 export const codingRouter = router;
 
 
