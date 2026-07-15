@@ -1818,6 +1818,37 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           ))}
                         </div>
                       </div>
+                      {/* Complexity Analysis Deep Dive teaser */}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider flex items-center gap-1.5">
+                            <Sparkles size={12} className="text-amber-550 dark:text-amber-400 animate-pulse" />
+                            <span>Algorithmic Complexity Auditing</span>
+                          </h4>
+                          <span className="text-[8px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                            Day 15 Engine
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-650 dark:text-zinc-450 leading-relaxed font-semibold">
+                          {complexityResult 
+                            ? `Your solution has O(${complexityResult.time_complexity}) time complexity. Explore timeline scales and data structure checks.`
+                            : "Analyze code execution growth runtime patterns, Big-O classes, data structure swaps, and interview thresholds."
+                          }
+                        </p>
+                        <button
+                          onClick={() => {
+                            if (complexityResult) {
+                              setActiveReviewTab("complexity");
+                            } else {
+                              handleRequestComplexityAnalysis();
+                            }
+                          }}
+                          className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-black text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-1.5"
+                        >
+                          <Sparkles size={12} />
+                          <span>{complexityResult ? "View Complexity Dashboard" : "Run Complexity Analysis"}</span>
+                        </button>
+                      </div>
 
                       {/* Strengths List */}
                       <div className="bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
@@ -2631,14 +2662,6 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         <option value="professional" className="bg-zinc-950 text-white">Professional</option>
                       </select>
                       <button
-                        onClick={handleRequestComplexityAnalysis}
-                        disabled={isRunning || isSubmitting || isAnalyzingComplexity}
-                        className="flex items-center gap-1 text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition shrink-0 whitespace-nowrap"
-                      >
-                        {isAnalyzingComplexity ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                        <span>{isAnalyzingComplexity ? "Analyzing..." : "Analyze Complexity"}</span>
-                      </button>
-                      <button
                         onClick={handleRequestReview}
                         disabled={isRunning || isSubmitting || isReviewing}
                         className="flex items-center gap-1 text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 bg-violet-600 hover:bg-violet-700 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-white font-black rounded-lg transition shrink-0 whitespace-nowrap"
@@ -2777,14 +2800,6 @@ Answer the student's question based on the coding problem. Provide hints or feed
                     <option value="competitive" className="bg-zinc-950 text-white">Competitive</option>
                     <option value="professional" className="bg-zinc-950 text-white">Professional</option>
                   </select>
-                  <button
-                    onClick={handleRequestComplexityAnalysis}
-                    disabled={isRunning || isSubmitting || isAnalyzingComplexity}
-                    className="flex items-center gap-1 text-[10px] sm:text-xs bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-2.5 sm:px-4 py-1.5 rounded-lg transition shrink-0 whitespace-nowrap"
-                  >
-                    {isAnalyzingComplexity ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                    <span>{isAnalyzingComplexity ? "Analyzing..." : "Analyze Complexity"}</span>
-                  </button>
                   <button
                     onClick={handleRequestReview}
                     disabled={isRunning || isSubmitting || isReviewing}
