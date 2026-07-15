@@ -1200,7 +1200,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           </div>
                           <div className="text-xs text-slate-600 dark:text-zinc-300">
                             <span className="font-bold text-slate-800 dark:text-white block mb-0.5">Suggested Fix:</span>
-                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-900 font-mono text-[10px] text-emerald-400 mt-1 whitespace-pre-wrap">
+                            <div className="bg-slate-100 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 font-mono text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 whitespace-pre-wrap">
                               {reviewResult.error_review.suggested_fix}
                             </div>
                           </div>
@@ -1387,7 +1387,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                                 <div className="flex items-center justify-between text-[9px] text-slate-500 dark:text-zinc-400 uppercase tracking-widest font-black">
                                   <span>Line {lf.line_number}</span>
                                 </div>
-                                <div className="bg-slate-950 p-2 rounded border border-slate-900 font-mono text-[10px] text-zinc-450 select-text whitespace-pre overflow-x-auto">
+                                <div className="bg-slate-100 dark:bg-zinc-900/50 p-2 rounded border border-slate-200 dark:border-zinc-800 font-mono text-[10px] text-slate-800 dark:text-zinc-300 select-text whitespace-pre overflow-x-auto">
                                   {lf.code_line}
                                 </div>
                                 <p className="text-xs text-amber-600 dark:text-amber-400/90 leading-relaxed font-bold">
