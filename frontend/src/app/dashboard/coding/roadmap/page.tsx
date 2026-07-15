@@ -26,6 +26,7 @@ import {
   DashboardTopNav,
   AdyapanUser
 } from "../../user/page";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 const ALL_TOPICS = [
   "Arrays", "Strings", "Hashing", "Linked Lists", "Stacks", "Queues",
@@ -126,6 +127,7 @@ export default function CodingRoadmapPage() {
     preferredLanguage: "C++"
   });
 
+  const [confirm, confirmModal] = useConfirm();
   const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({ 1: true });
 
   useEffect(() => {
@@ -249,8 +251,9 @@ export default function CodingRoadmapPage() {
     setExpandedWeeks(prev => ({ ...prev, [weekNum]: !prev[weekNum] }));
   };
 
-  const handleResetRoadmap = () => {
-    if (window.confirm("Are you sure you want to discard your current roadmap and generate a new one?")) {
+  const handleResetRoadmap = async () => {
+    const ok = await confirm("Are you sure you want to discard your current roadmap and generate a new one?", { danger: true, confirmLabel: "Regenerate" });
+    if (ok) {
       setRoadmap(null);
     }
   };
@@ -265,6 +268,7 @@ export default function CodingRoadmapPage() {
   }
 
   const isDark = theme === "dark";
+  const optionStyle = { background: isDark ? "#0e1025" : "#ffffff", color: isDark ? "#e5e7eb" : "#1f2937" };
 
   return (
     <div className="flex min-h-screen font-sans" style={{ background: "var(--background)", color: "var(--foreground)" }}>
@@ -297,7 +301,8 @@ export default function CodingRoadmapPage() {
         onViewSettings={() => handleViewTool("settings")}
       />
 
-      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6">
+      <main className="dash-main relative z-10 font-sans">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 mb-8" style={{ borderBottom: "1px solid var(--border-color)" }}>
@@ -472,9 +477,9 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="Beginner">Beginner (No core DSA knowledge)</option>
-                          <option value="Intermediate">Intermediate (Familiar with arrays/stacks, weak on tree/graph)</option>
-                          <option value="Advanced">Advanced (Strong logic, practicing hard/optimization)</option>
+                          <option style={optionStyle} value="Beginner">Beginner (No core DSA knowledge)</option>
+                          <option style={optionStyle} value="Intermediate">Intermediate (Familiar with arrays/stacks, weak on tree/graph)</option>
+                          <option style={optionStyle} value="Advanced">Advanced (Strong logic, practicing hard/optimization)</option>
                         </select>
                       </div>
 
@@ -486,13 +491,13 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="FAANG">FAANG Track (Google, Amazon, Microsoft)</option>
-                          <option value="Product Companies">Product Companies (Uber, Atlassian, Stripe)</option>
-                          <option value="Startup">Startup Track (Rapid problem solving)</option>
-                          <option value="TCS">TCS Track</option>
-                          <option value="Infosys">Infosys Track</option>
-                          <option value="Accenture">Accenture Track</option>
-                          <option value="Competitive Programming">Competitive Programming Track</option>
+                          <option style={optionStyle} value="FAANG">FAANG Track (Google, Amazon, Microsoft)</option>
+                          <option style={optionStyle} value="Product Companies">Product Companies (Uber, Atlassian, Stripe)</option>
+                          <option style={optionStyle} value="Startup">Startup Track (Rapid problem solving)</option>
+                          <option style={optionStyle} value="TCS">TCS Track</option>
+                          <option style={optionStyle} value="Infosys">Infosys Track</option>
+                          <option style={optionStyle} value="Accenture">Accenture Track</option>
+                          <option style={optionStyle} value="Competitive Programming">Competitive Programming Track</option>
                         </select>
                       </div>
 
@@ -504,9 +509,9 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="Internship">Internship Placement</option>
-                          <option value="Placement">Campus Placement (Entry level SDE)</option>
-                          <option value="SDE-1">SDE-1 Role (Full-time placement)</option>
+                          <option style={optionStyle} value="Internship">Internship Placement</option>
+                          <option style={optionStyle} value="Placement">Campus Placement (Entry level SDE)</option>
+                          <option style={optionStyle} value="SDE-1">SDE-1 Role (Full-time placement)</option>
                         </select>
                       </div>
 
@@ -518,10 +523,10 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="4">4 Weeks (Fast Crash Course)</option>
-                          <option value="6">6 Weeks (Standard path)</option>
-                          <option value="8">8 Weeks (Thorough prep - Recommended)</option>
-                          <option value="12">12 Weeks (Extended deep dive)</option>
+                          <option style={optionStyle} value="4">4 Weeks (Fast Crash Course)</option>
+                          <option style={optionStyle} value="6">6 Weeks (Standard path)</option>
+                          <option style={optionStyle} value="8">8 Weeks (Thorough prep - Recommended)</option>
+                          <option style={optionStyle} value="12">12 Weeks (Extended deep dive)</option>
                         </select>
                       </div>
 
@@ -533,10 +538,10 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="C++">C++</option>
-                          <option value="Java">Java</option>
-                          <option value="Python">Python</option>
-                          <option value="JavaScript">JavaScript</option>
+                          <option style={optionStyle} value="C++">C++</option>
+                          <option style={optionStyle} value="Java">Java</option>
+                          <option style={optionStyle} value="Python">Python</option>
+                          <option style={optionStyle} value="JavaScript">JavaScript</option>
                         </select>
                       </div>
 
@@ -548,10 +553,10 @@ export default function CodingRoadmapPage() {
                           className="rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-amber-500 transition"
                           style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
                         >
-                          <option value="1 hour">1 Hour / Day</option>
-                          <option value="2 hours">2 Hours / Day</option>
-                          <option value="4 hours">4 Hours / Day</option>
-                          <option value="6+ hours">6+ Hours / Day</option>
+                          <option style={optionStyle} value="1 hour">1 Hour / Day</option>
+                          <option style={optionStyle} value="2 hours">2 Hours / Day</option>
+                          <option style={optionStyle} value="4 hours">4 Hours / Day</option>
+                          <option style={optionStyle} value="6+ hours">6+ Hours / Day</option>
                         </select>
                       </div>
                     </div>
@@ -878,7 +883,10 @@ export default function CodingRoadmapPage() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
       </main>
+
+      {confirmModal}
     </div>
   );
 }
