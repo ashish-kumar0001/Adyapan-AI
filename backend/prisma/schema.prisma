@@ -7,16 +7,14 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String?
-  githubId   String?  @unique @map("github_id")
-  avatarUrl  String?  @map("avatar_url")
-  role       Role     @default(USER)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  profile    Profile?
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  profile   Profile?
 
   // Payment / Subscription Relations
   plan                String   @default("free")
@@ -108,7 +106,6 @@ model CodingQuestion {
 
   aiAnalyses          QuestionAIAnalysis[]
   dailyChallenges     DailyChallenge[]
-  challengeQuestions  ChallengeQuestion[]
 
   @@map("coding_questions")
 }
@@ -155,29 +152,4 @@ model DailyChallenge {
   @@index([questionId])
   @@map("daily_challenges")
 }
-
-model CodingChallenge {
-  id            String              @id @default(cuid())
-  title         String
-  challengeType String              @map("challenge_type")
-  description   String
-  difficulty    String
-  xpReward      Int                 @map("xp_reward")
-  createdAt     DateTime            @default(now()) @map("created_at")
-  questions     ChallengeQuestion[]
-
-  @@map("coding_challenges")
-}
-
-model ChallengeQuestion {
-  id          String          @id @default(cuid())
-  challengeId String          @map("challenge_id")
-  questionId  String          @map("question_id")
-  orderIndex  Int             @map("order_index")
-  challenge   CodingChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  question    CodingQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("challenge_questions")
-}
-
 
