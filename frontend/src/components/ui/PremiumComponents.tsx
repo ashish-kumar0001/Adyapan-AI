@@ -663,6 +663,103 @@ export function SuccessCelebration({
   );
 }
 
+// ─── Settings Toggle ─────────────────────────────────────────────────────
+export function SettingsToggle({
+  enabled,
+  onToggle,
+  label,
+  description,
+  icon,
+}: {
+  enabled: boolean;
+  onToggle: () => void;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-3 min-w-0">
+        {icon && (
+          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 dark:bg-white/5 dark:border-white/5 flex items-center justify-center text-amber-500 shrink-0">
+            {icon}
+          </div>
+        )}
+        <div className="min-w-0">
+          <span className="text-xs font-bold block dark:text-gray-100">{label}</span>
+          {description && (
+            <span className="text-[10px] dark:text-gray-500 block mt-0.5">{description}</span>
+          )}
+        </div>
+      </div>
+      <motion.button
+        onClick={onToggle}
+        whileTap={{ scale: 0.9 }}
+        className="relative shrink-0 cursor-pointer"
+        style={{ width: 40, height: 22 }}
+      >
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{
+            background: enabled
+              ? "linear-gradient(135deg, #f59e0b, #ea580c)"
+              : "rgba(255,255,255,0.1)",
+            boxShadow: enabled
+              ? "0 0 12px rgba(245,158,11,0.35)"
+              : "none",
+          }}
+          transition={{ duration: 0.2 }}
+        />
+        <motion.div
+          className="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm"
+          animate={{ left: enabled ? 21 : 3 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        />
+      </motion.button>
+    </div>
+  );
+}
+
+// ─── Settings Select ─────────────────────────────────────────────────────
+export function SettingsSelect({
+  label,
+  value,
+  options,
+  onChange,
+  icon,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-bold uppercase tracking-wider dark:text-gray-400 flex items-center gap-1.5 pl-1">
+        {icon}
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full text-xs rounded-xl px-4 py-2.5 bg-black/35 dark:bg-black/35 border border-white/5 dark:border-white/5 text-gray-100 dark:text-gray-100 outline-none focus:border-amber-500/40 transition-all cursor-pointer appearance-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 12px center",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // ─── Error State Overlay / Alert ──────────────────────────────────────────
 export function ErrorState({
   title = "Something went sideways",

@@ -1,17 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Settings, ShieldCheck, Lock, Globe, Mail, Phone, User
+  User, Settings, Palette, Bell, Sparkles, BookOpen, Shield, Lock,
+  CreditCard, Globe, Zap, HardDrive, Activity, HelpCircle, Search,
+  Save, RotateCcw, Camera, Mail, Phone, GraduationCap, FileText,
+  Download, Trash2, RefreshCw, LogOut, Eye, EyeOff, Check,
+  Moon, Sun, Monitor, ChevronRight, ExternalLink, Key, Smartphone,
+  AlertTriangle, X, MessageSquare, Code, Link2, Clock, Star,
+  Brain, Lightbulb, Trophy, ArrowUpRight, Image, FolderOpen,
+  Database, ShieldCheck, Fingerprint, Menu, Info,
+  Heart, ClipboardList, TrendingUp, Target, Calendar, Users
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PremiumCard, PremiumButton, PremiumBadge, PremiumInput,
+  PremiumProgressRing, PremiumProgressBar, SettingsToggle, SettingsSelect
+} from "@/components/ui/PremiumComponents";
+import { getDiceBearUrl } from "@/lib/avatar";
 
+// ─── Animation Variants ──────────────────────────────────────────────────
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }),
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.04, duration: 0.35 } }),
 };
 
+const sectionTransition = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.15 } },
+};
+
+// ─── Theme Hook ──────────────────────────────────────────────────────────
 function useTheme() {
   const [theme, setTheme] = useState("dark");
   useEffect(() => {
@@ -26,240 +47,1701 @@ function useTheme() {
   return theme;
 }
 
+// ─── Navigation Config ───────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: "profile", label: "My Profile", icon: User },
+  { id: "account", label: "Account", icon: Settings },
+  { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "ai-preferences", label: "AI Preferences", icon: Sparkles },
+  { id: "learning", label: "Learning Preferences", icon: BookOpen },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "privacy", label: "Privacy", icon: Lock },
+  { id: "billing", label: "Billing & Subscription", icon: CreditCard },
+  { id: "connected", label: "Connected Accounts", icon: Globe },
+  { id: "api", label: "API Integrations", icon: Zap },
+  { id: "storage", label: "Storage", icon: HardDrive },
+  { id: "activity", label: "Activity Log", icon: Activity },
+  { id: "help", label: "Help & Support", icon: HelpCircle },
+] as const;
+
+type SectionId = (typeof NAV_ITEMS)[number]["id"];
+
+// ─── Main Component ──────────────────────────────────────────────────────
 export function ManageAccountView() {
   const theme = useTheme();
   const isDark = theme === "dark";
 
-  const c = {
+  const c = useMemo(() => ({
     text: isDark ? "#ffffff" : "#0f172a",
     textSec: isDark ? "rgba(255,255,255,0.7)" : "#475569",
     textMuted: isDark ? "rgba(255,255,255,0.45)" : "#94a3b8",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
+    cardBgHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.02)",
     border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    borderHover: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.15)",
     primary: "#f59e0b",
-    inputBg: isDark ? "rgba(0,0,0,0.4)" : "#ffffff",
-  };
+    inputBg: isDark ? "rgba(0,0,0,0.4)" : "#f8fafc",
+  }), [isDark]);
 
+  // ── State ──
+  const [activeSection, setActiveSection] = useState<SectionId>("profile");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Profile
   const [fullName, setFullName] = useState("Ashish Kumar");
+  const [username, setUsername] = useState("ashishk");
   const [email, setEmail] = useState("ashish@adyapan.ai");
   const [phone, setPhone] = useState("+91 98765 43210");
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [privacyProfile, setPrivacyProfile] = useState(true);
-  const [privacyResume, setPrivacyResume] = useState(false);
+  const [college, setCollege] = useState("Indian Institute of Technology");
+  const [degree, setDegree] = useState("B.Tech");
+  const [branch, setBranch] = useState("Computer Science");
+  const [gradYear, setGradYear] = useState("2027");
+  const [bio, setBio] = useState("Passionate about AI, full-stack development, and building products that make a difference.");
 
+  // Appearance
+  const [themeMode, setThemeMode] = useState<"dark" | "light" | "system">("dark");
+  const [accentColor, setAccentColor] = useState("#f59e0b");
+  const [compactMode, setCompactMode] = useState(false);
+  const [glassEffect, setGlassEffect] = useState(true);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [sidebarCollapse, setSidebarCollapse] = useState(true);
+  const [fontSize, setFontSize] = useState(14);
+
+  // AI Preferences
+  const [aiModel, setAiModel] = useState("gemini");
+  const [responseLength, setResponseLength] = useState("balanced");
+  const [creativity, setCreativity] = useState(70);
+  const [aiMemory, setAiMemory] = useState(true);
+  const [markdownOutput, setMarkdownOutput] = useState(true);
+  const [codeHighlighting, setCodeHighlighting] = useState(true);
+  const [autoCitation, setAutoCitation] = useState(false);
+  const [autoSaveConversations, setAutoSaveConversations] = useState(true);
+
+  // Learning
+  const [language, setLanguage] = useState("en");
+  const [learningStyle, setLearningStyle] = useState("visual");
+  const [dailyGoal, setDailyGoal] = useState(3);
+  const [reminderTime, setReminderTime] = useState("09:00");
+  const [difficulty, setDifficulty] = useState("intermediate");
+  const [noteFormat, setNoteFormat] = useState("markdown");
+  const [quizDifficulty, setQuizDifficulty] = useState("medium");
+  const [tutorPersonality, setTutorPersonality] = useState("friendly");
+
+  // Notifications
+  const [notifEmail, setNotifEmail] = useState(true);
+  const [notifPush, setNotifPush] = useState(true);
+  const [notifAssignment, setNotifAssignment] = useState(true);
+  const [notifInterview, setNotifInterview] = useState(true);
+  const [notifCoding, setNotifCoding] = useState(false);
+  const [notifResearch, setNotifResearch] = useState(false);
+  const [notifWeekly, setNotifWeekly] = useState(true);
+  const [notifDaily, setNotifDaily] = useState(true);
+
+  // Security
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [loginAlerts, setLoginAlerts] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Connected Accounts
+  const [connectedAccounts, setConnectedAccounts] = useState([
+    { name: "Google", icon: "G", color: "#4285f4", connected: true },
+    { name: "GitHub", icon: "GH", color: "#ffffff", connected: true },
+    { name: "Microsoft", icon: "M", color: "#00a4ef", connected: false },
+    { name: "LinkedIn", icon: "in", color: "#0077b5", connected: false },
+    { name: "Notion", icon: "N", color: "#ffffff", connected: false },
+  ]);
+
+  // API
+  const [apiKeys, setApiKeys] = useState([
+    { name: "Gemini API", status: "active", lastSync: "2 min ago", key: "AIza...xxxx" },
+    { name: "OpenAI API", status: "active", lastSync: "5 min ago", key: "sk-...xxxx" },
+    { name: "Claude API", status: "inactive", lastSync: "Never", key: "" },
+    { name: "Groq API", status: "active", lastSync: "1 min ago", key: "gsk_...xxxx" },
+    { name: "OpenRouter API", status: "inactive", lastSync: "Never", key: "" },
+  ]);
+
+  // Privacy
+  const [publicProfile, setPublicProfile] = useState(true);
+  const [dataCollection, setDataCollection] = useState(true);
+  const [personalizedAI, setPersonalizedAI] = useState(true);
+
+  // Load from localStorage
   useEffect(() => {
-    const storedName = localStorage.getItem("adyapan-full-name");
-    const storedEmail = localStorage.getItem("adyapan-email");
-    const storedPhone = localStorage.getItem("adyapan-phone");
-    if (storedName) setFullName(storedName);
-    if (storedEmail) setEmail(storedEmail);
-    if (storedPhone) setPhone(storedPhone);
+    const stored = (key: string) => localStorage.getItem(`adyapan-${key}`);
+    const sName = stored("full-name");
+    const sEmail = stored("email");
+    const sPhone = stored("phone");
+    if (sName) setFullName(sName);
+    if (sEmail) setEmail(sEmail);
+    if (sPhone) setPhone(sPhone);
   }, []);
 
+  const markChanged = useCallback(() => setHasChanges(true), []);
+
+  // ── Search filtering ──
+  const filteredNav = useMemo(() => {
+    if (!searchQuery.trim()) return NAV_ITEMS;
+    const q = searchQuery.toLowerCase();
+    return NAV_ITEMS.filter((item) => item.label.toLowerCase().includes(q));
+  }, [searchQuery]);
+
+  // ── Handlers ──
   const handleSave = () => {
     localStorage.setItem("adyapan-full-name", fullName);
     localStorage.setItem("adyapan-email", email);
     localStorage.setItem("adyapan-phone", phone);
-    toast.success("Account preferences updated successfully!");
+    setHasChanges(false);
+    toast.success("Settings saved successfully!");
   };
+
+  const handleReset = () => {
+    setHasChanges(false);
+    toast.info("Settings reset to defaults.");
+  };
+
+  const handleSectionChange = (id: SectionId) => {
+    setActiveSection(id);
+    setMobileNavOpen(false);
+  };
+
+  // ── Profile completion calc ──
+  const profileCompletion = useMemo(() => {
+    const fields = [fullName, username, email, phone, college, degree, branch, gradYear, bio];
+    return Math.round((fields.filter(Boolean).length / fields.length) * 100);
+  }, [fullName, username, email, phone, college, degree, branch, gradYear, bio]);
+
+  // ── Storage mock data ──
+  const storageUsed = 2.4;
+  const storageTotal = 10;
+  const storagePercent = Math.round((storageUsed / storageTotal) * 100);
+  const storageCategories = [
+    { name: "Documents", size: "820 MB", percent: 34, color: "amber" as const },
+    { name: "Notes", size: "540 MB", percent: 22, color: "green" as const },
+    { name: "Resume Files", size: "380 MB", percent: 16, color: "purple" as const },
+    { name: "Research Papers", size: "420 MB", percent: 18, color: "rose" as const },
+    { name: "PPT Files", size: "240 MB", percent: 10, color: "amber" as const },
+  ];
+
+  // ── Activity log mock data ──
+  const activityLog = [
+    { time: "2 min ago", action: "AI Chat session started", icon: MessageSquare, color: "text-cyan-500" },
+    { time: "15 min ago", action: "Resume downloaded (ATS Modern)", icon: Download, color: "text-emerald-500" },
+    { time: "1 hour ago", action: "Settings updated", icon: Settings, color: "text-amber-500" },
+    { time: "3 hours ago", action: "Quiz completed — Score: 85%", icon: Trophy, color: "text-purple-500" },
+    { time: "Yesterday", action: "Password changed", icon: Key, color: "text-rose-500" },
+    { time: "Yesterday", action: "Research paper generated", icon: FileText, color: "text-blue-500" },
+    { time: "2 days ago", action: "Logged in from new device", icon: Smartphone, color: "text-orange-500" },
+    { time: "3 days ago", action: "Profile updated", icon: User, color: "text-amber-500" },
+  ];
+
+  // ── Active Devices mock ──
+  const activeDevices = [
+    { name: "Chrome on Windows", location: "New Delhi, India", current: true, lastActive: "Now" },
+    { name: "Safari on iPhone", location: "New Delhi, India", current: false, lastActive: "2 hours ago" },
+    { name: "Firefox on Ubuntu", location: "Mumbai, India", current: false, lastActive: "3 days ago" },
+  ];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-6 max-w-4xl mx-auto p-1"
+      className="space-y-5"
       style={{ color: c.text }}
     >
-      {/* Page Header */}
-      <div>
-        <h1 className="text-xl font-extrabold tracking-tight flex items-center gap-2">
-          <Settings className="text-amber-500" size={22} /> Manage Account
-        </h1>
-        <p className="text-xs mt-1" style={{ color: c.textMuted }}>
-          Update your profile information, manage OAuth credentials, and adjust security or privacy policies.
-        </p>
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight flex items-center gap-2">
+            <Settings className="text-amber-500" size={22} /> Settings
+          </h1>
+          <p className="text-xs mt-1" style={{ color: c.textMuted }}>
+            Manage your account, AI preferences, security, and application settings.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <div className="relative hidden sm:block">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search settings..."
+              className="pl-8 pr-3 py-2 rounded-xl text-xs border outline-none transition-all w-48 focus:w-56"
+              style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+            />
+          </div>
+          <motion.button
+            onClick={handleReset}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all"
+            style={{ borderColor: c.border, color: c.textSec, background: c.cardBg }}
+          >
+            <RotateCcw size={13} /> Reset
+          </motion.button>
+          <motion.button
+            onClick={handleSave}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/20 transition-all"
+          >
+            <Save size={13} /> Save Changes
+          </motion.button>
+        </div>
       </div>
 
-      {/* Main Grid */}
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
-        
-        {/* Personal Details Form */}
-        <motion.div
-          custom={0} variants={fadeUp} initial="hidden" animate="visible"
-          whileHover={{ y: -2, scale: 1.005 }}
-          className="p-5 border rounded-2xl space-y-4"
-          style={{ background: c.cardBg, borderColor: c.border }}
-        >
-          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-            <User size={16} /> Personal Information
-          </h3>
-          <div className="space-y-3">
-            {[
-              { label: "Full Name", val: fullName, set: setFullName, icon: null },
-              { label: "Email Address", val: email, set: setEmail, icon: <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} /> },
-              { label: "Phone Number", val: phone, set: setPhone, icon: <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} /> },
-            ].map((field, i) => (
-              <motion.div key={field.label} custom={i} variants={fadeUp} initial="hidden" animate="visible" className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{field.label}</label>
-                {field.label === "Full Name" ? (
-                  <input
-                    value={field.val as string}
-                    onChange={(e) => (field.set as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
-                    className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 text-xs transition-colors"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  />
-                ) : (
-                  <div className="relative">
-                    <input
-                      value={field.val as string}
-                      onChange={(e) => (field.set as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
-                      className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 pl-8 text-xs transition-colors"
-                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                    />
-                    {field.icon}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+      {/* ── Mobile search ── */}
+      <div className="relative sm:hidden">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search settings..."
+          className="w-full pl-8 pr-3 py-2 rounded-xl text-xs border outline-none transition-all"
+          style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+        />
+      </div>
 
-        {/* Connections & Security Column */}
-        <motion.div
-          custom={1} variants={fadeUp} initial="hidden" animate="visible"
-          className="space-y-6"
+      {/* ── Main Layout ── */}
+      <div className="flex gap-5 relative">
+
+        {/* ── Left Navigation (Desktop) ── */}
+        <nav
+          className="hidden lg:block w-[220px] shrink-0 sticky top-0 space-y-1 overflow-y-auto max-h-[calc(100vh-160px)] pb-4"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(255,255,255,0.1) transparent",
+          }}
         >
-          <motion.div
-            whileHover={{ y: -2, scale: 1.005 }}
-            className="p-5 border rounded-2xl space-y-4"
-            style={{ background: c.cardBg, borderColor: c.border }}
+          <div
+            className="rounded-2xl border p-2 space-y-0.5"
+            style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
           >
-            <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-              <Globe size={16} /> Connected Accounts
-            </h3>
-            <div className="space-y-3 text-xs">
-              {([
-                { name: "Google Account", status: "Connected" },
-                { name: "GitHub OAuth", status: "Connected" },
-                { name: "LinkedIn Profile", status: null },
-              ] as { name: string; status: string | null }[]).map((acct, i) => (
-                <motion.div
-                  key={acct.name}
-                  custom={i} variants={fadeUp} initial="hidden" animate="visible"
-                  className="flex justify-between items-center p-2.5 border rounded-xl"
-                  style={{ borderColor: c.border }}
+            {filteredNav.map((item) => {
+              const isActive = activeSection === item.id;
+              const Icon = item.icon;
+              return (
+                <motion.button
+                  key={item.id}
+                  onClick={() => handleSectionChange(item.id)}
+                  whileHover={{ x: 2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all relative cursor-pointer"
+                  style={{
+                    background: isActive
+                      ? "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,88,12,0.1))"
+                      : "transparent",
+                    color: isActive ? "#f59e0b" : c.textSec,
+                  }}
                 >
-                  <span className="font-semibold">{acct.name}</span>
-                  {acct.status ? (
-                    <span className="text-emerald-500 font-bold">{acct.status}</span>
-                  ) : (
-                    <motion.button
-                      onClick={() => toast.success("Connected to LinkedIn successfully!")}
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
-                      className="text-amber-500 hover:underline font-bold"
-                    >
-                      Connect
-                    </motion.button>
+                  {isActive && (
+                    <motion.div
+                      layoutId="settings-nav-glow"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-amber-500 to-orange-500"
+                      style={{ boxShadow: "0 0 8px rgba(245,158,11,0.5)" }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    />
                   )}
-                </motion.div>
-              ))}
+                  <Icon size={15} className="shrink-0" />
+                  <span className="text-[11px] font-bold truncate">{item.label}</span>
+                  {isActive && <ChevronRight size={12} className="ml-auto shrink-0 opacity-50" />}
+                </motion.button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* ── Mobile Nav Toggle ── */}
+        <div className="lg:hidden fixed bottom-5 right-5 z-50">
+          <motion.button
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-black flex items-center justify-center shadow-lg shadow-amber-500/30"
+          >
+            <Menu size={20} />
+          </motion.button>
+        </div>
+
+        {/* ── Mobile Nav Drawer ── */}
+        <AnimatePresence>
+          {mobileNavOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] lg:hidden"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.nav
+                initial={{ x: -280 }}
+                animate={{ x: 0 }}
+                exit={{ x: -280 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute left-0 top-0 bottom-0 w-[280px] border-r p-4 space-y-1 overflow-y-auto"
+                style={{ background: isDark ? "#0c0d16" : "#ffffff", borderColor: c.border }}
+              >
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <span className="text-sm font-extrabold" style={{ color: c.text }}>Settings</span>
+                  <button onClick={() => setMobileNavOpen(false)} className="p-1.5 rounded-lg hover:bg-white/5">
+                    <X size={16} style={{ color: c.textSec }} />
+                  </button>
+                </div>
+                {NAV_ITEMS.map((item) => {
+                  const isActive = activeSection === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSectionChange(item.id)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                      style={{
+                        background: isActive ? "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,88,12,0.1))" : "transparent",
+                        color: isActive ? "#f59e0b" : c.textSec,
+                      }}
+                    >
+                      <Icon size={15} />
+                      <span className="text-xs font-bold">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </motion.nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Main Content ── */}
+        <div className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div key={activeSection} {...sectionTransition}>
+              {activeSection === "profile" && <ProfileSection c={c} fullName={fullName} setFullName={setFullName} username={username} setUsername={setUsername} email={email} setEmail={setEmail} phone={phone} setPhone={setPhone} college={college} setCollege={setCollege} degree={degree} setDegree={setDegree} branch={branch} setBranch={setBranch} gradYear={gradYear} setGradYear={setGradYear} bio={bio} setBio={setBio} markChanged={markChanged} />}
+              {activeSection === "account" && <AccountSection c={c} email={email} markChanged={markChanged} />}
+              {activeSection === "appearance" && <AppearanceSection c={c} isDark={isDark} themeMode={themeMode} setThemeMode={setThemeMode} accentColor={accentColor} setAccentColor={setAccentColor} compactMode={compactMode} setCompactMode={setCompactMode} glassEffect={glassEffect} setGlassEffect={setGlassEffect} animationsEnabled={animationsEnabled} setAnimationsEnabled={setAnimationsEnabled} sidebarCollapse={sidebarCollapse} setSidebarCollapse={setSidebarCollapse} fontSize={fontSize} setFontSize={setFontSize} markChanged={markChanged} />}
+              {activeSection === "notifications" && <NotificationsSection c={c} notifEmail={notifEmail} setNotifEmail={setNotifEmail} notifPush={notifPush} setNotifPush={setNotifPush} notifAssignment={notifAssignment} setNotifAssignment={setNotifAssignment} notifInterview={notifInterview} setNotifInterview={setNotifInterview} notifCoding={notifCoding} setNotifCoding={setNotifCoding} notifResearch={notifResearch} setNotifResearch={setNotifResearch} notifWeekly={notifWeekly} setNotifWeekly={setNotifWeekly} notifDaily={notifDaily} setNotifDaily={setNotifDaily} markChanged={markChanged} />}
+              {activeSection === "ai-preferences" && <AIPreferencesSection c={c} aiModel={aiModel} setAiModel={setAiModel} responseLength={responseLength} setResponseLength={setResponseLength} creativity={creativity} setCreativity={setCreativity} aiMemory={aiMemory} setAiMemory={setAiMemory} markdownOutput={markdownOutput} setMarkdownOutput={setMarkdownOutput} codeHighlighting={codeHighlighting} setCodeHighlighting={setCodeHighlighting} autoCitation={autoCitation} setAutoCitation={setAutoCitation} autoSaveConversations={autoSaveConversations} setAutoSaveConversations={setAutoSaveConversations} markChanged={markChanged} />}
+              {activeSection === "learning" && <LearningSection c={c} language={language} setLanguage={setLanguage} learningStyle={learningStyle} setLearningStyle={setLearningStyle} dailyGoal={dailyGoal} setDailyGoal={setDailyGoal} reminderTime={reminderTime} setReminderTime={setReminderTime} difficulty={difficulty} setDifficulty={setDifficulty} noteFormat={noteFormat} setNoteFormat={setNoteFormat} quizDifficulty={quizDifficulty} setQuizDifficulty={setQuizDifficulty} tutorPersonality={tutorPersonality} setTutorPersonality={setTutorPersonality} markChanged={markChanged} />}
+              {activeSection === "security" && <SecuritySection c={c} twoFactor={twoFactor} setTwoFactor={setTwoFactor} loginAlerts={loginAlerts} setLoginAlerts={setLoginAlerts} showPassword={showPassword} setShowPassword={setShowPassword} activeDevices={activeDevices} markChanged={markChanged} />}
+              {activeSection === "privacy" && <PrivacySection c={c} publicProfile={publicProfile} setPublicProfile={setPublicProfile} dataCollection={dataCollection} setDataCollection={setDataCollection} personalizedAI={personalizedAI} setPersonalizedAI={setPersonalizedAI} markChanged={markChanged} />}
+              {activeSection === "billing" && <BillingSection c={c} />}
+              {activeSection === "connected" && <ConnectedAccountsSection c={c} accounts={connectedAccounts} setAccounts={setConnectedAccounts} markChanged={markChanged} />}
+              {activeSection === "api" && <APISection c={c} apiKeys={apiKeys} setApiKeys={setApiKeys} markChanged={markChanged} />}
+              {activeSection === "storage" && <StorageSection c={c} storageUsed={storageUsed} storageTotal={storageTotal} storagePercent={storagePercent} categories={storageCategories} />}
+              {activeSection === "activity" && <ActivitySection c={c} activityLog={activityLog} />}
+              {activeSection === "help" && <HelpSection c={c} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* ── Right Sidebar (Desktop) ── */}
+        <aside className="hidden xl:block w-[260px] shrink-0 sticky top-0 space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pb-4" style={{ scrollbarWidth: "thin" }}>
+          {/* Profile Summary Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border p-5 space-y-4"
+            style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <PremiumProgressRing value={profileCompletion} size={80} strokeWidth={6} />
+              <span className="text-[10px] font-bold uppercase tracking-wider mt-2" style={{ color: c.textMuted }}>Profile Completion</span>
             </div>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: c.textMuted }}>Current Plan</span>
+                <PremiumBadge variant="amber" pulse>Premium</PremiumBadge>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: c.textMuted }}>Learning Streak</span>
+                <span className="font-bold flex items-center gap-1"><Trophy size={12} className="text-amber-500" /> 14 days</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: c.textMuted }}>AI Usage Today</span>
+                <span className="font-bold">24 / 100</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: c.textMuted }}>Storage Used</span>
+                <span className="font-bold">{storageUsed} GB</span>
+              </div>
+            </div>
+            <PremiumProgressBar value={storagePercent} color="amber" height={4} />
           </motion.div>
 
-          {/* Security */}
+          {/* Quick Actions */}
           <motion.div
-            whileHover={{ y: -2, scale: 1.005 }}
-            className="p-5 border rounded-2xl space-y-4"
-            style={{ background: c.cardBg, borderColor: c.border }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl border p-4 space-y-2"
+            style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
           >
-            <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-              <Lock size={16} /> Security
-            </h3>
-            <div className="flex justify-between items-center">
-              <div className="text-xs">
-                <span className="font-semibold block">Two-Factor Authentication</span>
-                <span className="text-[10px]" style={{ color: c.textMuted }}>Secure account logins with SMS/Email checks.</span>
-              </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Quick Actions</span>
+            {[
+              { label: "Upgrade Plan", icon: ArrowUpRight, color: "text-amber-500" },
+              { label: "Download Data", icon: Download, color: "text-cyan-500" },
+              { label: "Export Chats", icon: FileText, color: "text-purple-500" },
+              { label: "Invite Friend", icon: Link2, color: "text-emerald-500" },
+            ].map((action) => (
               <motion.button
-                onClick={() => setTwoFactor(!twoFactor)}
-                whileTap={{ scale: 0.9 }}
-                className={`w-10 h-6 rounded-full relative transition-colors ${twoFactor ? "bg-amber-500" : "bg-white/10"}`}
-                style={{ border: `1px solid ${c.border}` }}
+                key={action.label}
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold transition-all hover:bg-white/5"
+                style={{ color: c.textSec }}
               >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${twoFactor ? "right-1" : "left-1"}`} />
+                <action.icon size={14} className={action.color} />
+                {action.label}
+              </motion.button>
+            ))}
+          </motion.div>
+        </aside>
+      </div>
+
+      {/* ── Changes indicator ── */}
+      <AnimatePresence>
+        {hasChanges && (
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl border shadow-2xl"
+            style={{
+              background: isDark ? "rgba(12,13,22,0.95)" : "rgba(255,255,255,0.95)",
+              borderColor: c.border,
+              backdropFilter: "blur(16px)",
+              boxShadow: "0 0 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <span className="text-xs font-bold" style={{ color: c.text }}>You have unsaved changes</span>
+            <motion.button
+              onClick={handleSave}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-bold"
+            >
+              Save Now
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+type SectionProps = { c: ReturnType<typeof ManageAccountView extends () => unknown ? never : never> extends { } ? Record<string, string> : Record<string, string> };
+
+// ─── Profile Section ─────────────────────────────────────────────────────
+function ProfileSection({
+  c, fullName, setFullName, username, setUsername, email, setEmail, phone, setPhone,
+  college, setCollege, degree, setDegree, branch, setBranch, gradYear, setGradYear,
+  bio, setBio, markChanged,
+}: {
+  c: Record<string, string>;
+  fullName: string; setFullName: (v: string) => void;
+  username: string; setUsername: (v: string) => void;
+  email: string; setEmail: (v: string) => void;
+  phone: string; setPhone: (v: string) => void;
+  college: string; setCollege: (v: string) => void;
+  degree: string; setDegree: (v: string) => void;
+  branch: string; setBranch: (v: string) => void;
+  gradYear: string; setGradYear: (v: string) => void;
+  bio: string; setBio: (v: string) => void;
+  markChanged: () => void;
+}) {
+  const inputStyle = { background: c.inputBg, borderColor: c.border, color: c.text };
+
+  return (
+    <div className="space-y-5">
+      {/* Photo Card */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.primary }}>
+          <Camera size={16} /> Profile Photo
+        </h3>
+        <div className="flex items-center gap-5">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-500/30">
+              <img src={getDiceBearUrl(fullName)} alt="avatar" width={80} height={80} className="block" />
+            </div>
+            <div className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+              <Camera size={18} className="text-white" />
+            </div>
+          </div>
+          <div>
+            <span className="text-xs font-bold block" style={{ color: c.text }}>{fullName}</span>
+            <span className="text-[10px] block mt-0.5" style={{ color: c.textMuted }}>JPG, PNG or GIF. Max 2MB.</span>
+            <div className="flex gap-2 mt-2">
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold">
+                Upload Photo
+              </motion.button>
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                className="px-3 py-1.5 rounded-lg border text-[10px] font-bold"
+                style={{ borderColor: c.border, color: c.textMuted }}>
+                Remove
               </motion.button>
             </div>
-          </motion.div>
-        </motion.div>
-
+          </div>
+        </div>
       </motion.div>
 
-      {/* Privacy settings */}
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={1}
-        whileHover={{ y: -2, scale: 1.005 }}
-        className="p-5 border rounded-2xl space-y-4"
-        style={{ background: c.cardBg, borderColor: c.border }}
+      {/* Personal Information */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
       >
         <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-          <ShieldCheck size={16} /> Privacy Visibility
+          <User size={16} /> Personal Information
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Full Name</label>
+            <input value={fullName} onChange={(e) => { setFullName(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Username</label>
+            <input value={username} onChange={(e) => { setUsername(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: c.textMuted }}>
+              <Mail size={10} /> Email Address
+            </label>
+            <input value={email} onChange={(e) => { setEmail(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: c.textMuted }}>
+              <Phone size={10} /> Phone Number
+            </label>
+            <input value={phone} onChange={(e) => { setPhone(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Education */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <GraduationCap size={16} /> Education
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>College / University</label>
+            <input value={college} onChange={(e) => { setCollege(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Degree</label>
+            <input value={degree} onChange={(e) => { setDegree(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Branch / Major</label>
+            <input value={branch} onChange={(e) => { setBranch(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Graduation Year</label>
+            <input value={gradYear} onChange={(e) => { setGradYear(e.target.value); markChanged(); }}
+              className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+              style={inputStyle} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Bio */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <FileText size={16} /> Bio
+        </h3>
+        <textarea value={bio} onChange={(e) => { setBio(e.target.value); markChanged(); }}
+          rows={3} maxLength={300}
+          className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all resize-none"
+          style={inputStyle} />
+        <div className="flex justify-end">
+          <span className="text-[10px]" style={{ color: c.textMuted }}>{bio.length}/300</span>
+        </div>
+      </motion.div>
+
+      {/* Save/Cancel */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={4}
+        className="flex justify-end gap-2.5">
+        <PremiumButton variant="secondary">Cancel</PremiumButton>
+        <PremiumButton variant="primary" icon={<Save size={13} />}>Save Profile</PremiumButton>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Account Section ─────────────────────────────────────────────────────
+function AccountSection({ c, email, markChanged }: { c: Record<string, string>; email: string; markChanged: () => void }) {
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Settings size={16} /> Account Information
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between py-2.5 border-b" style={{ borderColor: c.border }}>
+            <div>
+              <span className="text-xs font-bold block">Email Address</span>
+              <span className="text-[10px]" style={{ color: c.textMuted }}>{email}</span>
+            </div>
+            <PremiumBadge variant="green">Verified</PremiumBadge>
+          </div>
+          <div className="flex items-center justify-between py-2.5 border-b" style={{ borderColor: c.border }}>
+            <div>
+              <span className="text-xs font-bold block">Account Type</span>
+              <span className="text-[10px]" style={{ color: c.textMuted }}>Premium Student</span>
+            </div>
+            <PremiumBadge variant="amber">Premium</PremiumBadge>
+          </div>
+          <div className="flex items-center justify-between py-2.5 border-b" style={{ borderColor: c.border }}>
+            <div>
+              <span className="text-xs font-bold block">Member Since</span>
+              <span className="text-[10px]" style={{ color: c.textMuted }}>January 2025</span>
+            </div>
+            <span className="text-xs font-bold" style={{ color: c.textSec }}>18 months</span>
+          </div>
+          <div className="flex items-center justify-between py-2.5">
+            <div>
+              <span className="text-xs font-bold block">Language</span>
+              <span className="text-[10px]" style={{ color: c.textMuted }}>Interface language</span>
+            </div>
+            <span className="text-xs font-bold" style={{ color: c.textSec }}>English (US)</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Appearance Section ──────────────────────────────────────────────────
+function AppearanceSection({
+  c, isDark, themeMode, setThemeMode, accentColor, setAccentColor,
+  compactMode, setCompactMode, glassEffect, setGlassEffect,
+  animationsEnabled, setAnimationsEnabled, sidebarCollapse, setSidebarCollapse,
+  fontSize, setFontSize, markChanged,
+}: {
+  c: Record<string, string>; isDark: boolean;
+  themeMode: string; setThemeMode: (v: "dark" | "light" | "system") => void;
+  accentColor: string; setAccentColor: (v: string) => void;
+  compactMode: boolean; setCompactMode: (v: boolean) => void;
+  glassEffect: boolean; setGlassEffect: (v: boolean) => void;
+  animationsEnabled: boolean; setAnimationsEnabled: (v: boolean) => void;
+  sidebarCollapse: boolean; setSidebarCollapse: (v: boolean) => void;
+  fontSize: number; setFontSize: (v: number) => void;
+  markChanged: () => void;
+}) {
+  const accentColors = ["#f59e0b", "#ef4444", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
+
+  return (
+    <div className="space-y-5">
+      {/* Theme Mode */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Palette size={16} /> Theme Mode
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Public Community Profile", desc: "Allow followers to view achievements and feeds.", val: privacyProfile, set: setPrivacyProfile },
-            { label: "Resume Visibility", desc: "Share resume documents with partner recruiters.", val: privacyResume, set: setPrivacyResume },
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              custom={i} variants={fadeUp} initial="hidden" animate="visible"
-              className="flex justify-between items-center"
+            { id: "dark" as const, label: "Dark", icon: Moon, desc: "Easy on the eyes" },
+            { id: "light" as const, label: "Light", icon: Sun, desc: "Bright and clean" },
+            { id: "system" as const, label: "System", icon: Monitor, desc: "Match OS setting" },
+          ].map((mode) => {
+            const isActive = themeMode === mode.id;
+            return (
+              <motion.button
+                key={mode.id}
+                onClick={() => { setThemeMode(mode.id); markChanged(); }}
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="p-4 rounded-xl border text-center space-y-2 transition-all"
+                style={{
+                  background: isActive
+                    ? "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,88,12,0.08))"
+                    : c.cardBg,
+                  borderColor: isActive ? "rgba(245,158,11,0.4)" : c.border,
+                  boxShadow: isActive ? "0 0 20px rgba(245,158,11,0.1)" : "none",
+                }}
+              >
+                <mode.icon size={20} className={isActive ? "text-amber-500 mx-auto" : "mx-auto"} style={!isActive ? { color: c.textSec } : {}} />
+                <div>
+                  <span className="text-xs font-bold block" style={{ color: isActive ? "#f59e0b" : c.text }}>{mode.label}</span>
+                  <span className="text-[9px]" style={{ color: c.textMuted }}>{mode.desc}</span>
+                </div>
+                {isActive && (
+                  <motion.div layoutId="theme-active-dot"
+                    className="w-1.5 h-1.5 rounded-full bg-amber-500 mx-auto"
+                    style={{ boxShadow: "0 0 6px rgba(245,158,11,0.6)" }} />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Accent Color */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Lightbulb size={16} /> Accent Color
+        </h3>
+        <div className="flex flex-wrap gap-3">
+          {accentColors.map((color) => (
+            <motion.button
+              key={color}
+              onClick={() => { setAccentColor(color); markChanged(); }}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-8 h-8 rounded-full border-2 transition-all"
+              style={{
+                background: color,
+                borderColor: accentColor === color ? "#ffffff" : "transparent",
+                boxShadow: accentColor === color ? `0 0 12px ${color}80` : "none",
+              }}
+            />
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Toggles */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="rounded-2xl border p-6 space-y-1 divide-y"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2 pb-3" style={{ color: c.primary }}>
+          <Eye size={16} /> Display Options
+        </h3>
+        <SettingsToggle enabled={compactMode} onToggle={() => { setCompactMode(!compactMode); markChanged(); }} label="Compact Mode" description="Reduce spacing for more content density" icon={<Monitor size={14} />} />
+        <SettingsToggle enabled={glassEffect} onToggle={() => { setGlassEffect(!glassEffect); markChanged(); }} label="Glass Effect" description="Enable glassmorphism backdrop blur" icon={<Eye size={14} />} />
+        <SettingsToggle enabled={animationsEnabled} onToggle={() => { setAnimationsEnabled(!animationsEnabled); markChanged(); }} label="Animations" description="Smooth transitions and motion effects" icon={<Sparkles size={14} />} />
+        <SettingsToggle enabled={sidebarCollapse} onToggle={() => { setSidebarCollapse(!sidebarCollapse); markChanged(); }} label="Sidebar Auto Collapse" description="Collapse sidebar when not hovered" icon={<Menu size={14} />} />
+      </motion.div>
+
+      {/* Font Size */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <FileText size={16} /> Font Size
+        </h3>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px]" style={{ color: c.textMuted }}>A</span>
+          <input type="range" min={12} max={18} value={fontSize}
+            onChange={(e) => { setFontSize(Number(e.target.value)); markChanged(); }}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #f59e0b ${((fontSize - 12) / 6) * 100}%, ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} ${((fontSize - 12) / 6) * 100}%)`,
+            }}
+          />
+          <span className="text-sm font-bold" style={{ color: c.text }}>{fontSize}px</span>
+        </div>
+      </motion.div>
+
+      {/* Live Preview */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={4}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Eye size={16} /> Live Preview
+        </h3>
+        <div className="rounded-xl border p-4" style={{ borderColor: c.border, background: isDark ? "#070913" : "#f8fafc" }}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-xs font-extrabold" style={{ color: c.text }}>Preview Card</span>
+          </div>
+          <p style={{ fontSize: `${fontSize}px`, color: c.textSec }} className="leading-relaxed">
+            This is how your content will appear with the selected font size and accent color.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <div className="px-3 py-1 rounded-lg text-[10px] font-bold text-black" style={{ background: accentColor }}>Accent Button</div>
+            <div className="px-3 py-1 rounded-lg text-[10px] font-bold border" style={{ borderColor: c.border, color: c.textSec }}>Secondary</div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Notifications Section ───────────────────────────────────────────────
+function NotificationsSection({
+  c, notifEmail, setNotifEmail, notifPush, setNotifPush,
+  notifAssignment, setNotifAssignment, notifInterview, setNotifInterview,
+  notifCoding, setNotifCoding, notifResearch, setNotifResearch,
+  notifWeekly, setNotifWeekly, notifDaily, setNotifDaily, markChanged,
+}: {
+  c: Record<string, string>;
+  notifEmail: boolean; setNotifEmail: (v: boolean) => void;
+  notifPush: boolean; setNotifPush: (v: boolean) => void;
+  notifAssignment: boolean; setNotifAssignment: (v: boolean) => void;
+  notifInterview: boolean; setNotifInterview: (v: boolean) => void;
+  notifCoding: boolean; setNotifCoding: (v: boolean) => void;
+  notifResearch: boolean; setNotifResearch: (v: boolean) => void;
+  notifWeekly: boolean; setNotifWeekly: (v: boolean) => void;
+  notifDaily: boolean; setNotifDaily: (v: boolean) => void;
+  markChanged: () => void;
+}) {
+  const toggles = [
+    { enabled: notifEmail, toggle: () => setNotifEmail(!notifEmail), label: "Email Notifications", desc: "Receive updates about your learning progress", icon: <Mail size={14} /> },
+    { enabled: notifPush, toggle: () => setNotifPush(!notifPush), label: "Push Notifications", desc: "Browser and mobile push alerts", icon: <Bell size={14} /> },
+    { enabled: notifAssignment, toggle: () => setNotifAssignment(!notifAssignment), label: "Assignment Alerts", desc: "Deadline reminders and submission updates", icon: <ClipboardList size={14} /> },
+    { enabled: notifInterview, toggle: () => setNotifInterview(!notifInterview), label: "Interview Reminders", desc: "Upcoming interview schedule notifications", icon: <MessageSquare size={14} /> },
+    { enabled: notifCoding, toggle: () => setNotifCoding(!notifCoding), label: "Coding Challenge Alerts", desc: "New challenges and contest notifications", icon: <Code size={14} /> },
+    { enabled: notifResearch, toggle: () => setNotifResearch(!notifResearch), label: "Research Updates", desc: "New research papers and citations", icon: <FileText size={14} /> },
+    { enabled: notifWeekly, toggle: () => setNotifWeekly(!notifWeekly), label: "Weekly Progress Report", desc: "Summary of your weekly learning activity", icon: <Activity size={14} /> },
+    { enabled: notifDaily, toggle: () => setNotifDaily(!notifDaily), label: "Daily Study Reminder", desc: "Daily nudge to stay on track", icon: <Clock size={14} /> },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-1 divide-y"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2 pb-3" style={{ color: c.primary }}>
+          <Bell size={16} /> Notification Preferences
+        </h3>
+        {toggles.map((t, i) => (
+          <SettingsToggle key={t.label} enabled={t.enabled} onToggle={() => { t.toggle(); markChanged(); }} label={t.label} description={t.desc} icon={t.icon} />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── AI Preferences Section ──────────────────────────────────────────────
+function AIPreferencesSection({
+  c, aiModel, setAiModel, responseLength, setResponseLength,
+  creativity, setCreativity, aiMemory, setAiMemory,
+  markdownOutput, setMarkdownOutput, codeHighlighting, setCodeHighlighting,
+  autoCitation, setAutoCitation, autoSaveConversations, setAutoSaveConversations, markChanged,
+}: {
+  c: Record<string, string>;
+  aiModel: string; setAiModel: (v: string) => void;
+  responseLength: string; setResponseLength: (v: string) => void;
+  creativity: number; setCreativity: (v: number) => void;
+  aiMemory: boolean; setAiMemory: (v: boolean) => void;
+  markdownOutput: boolean; setMarkdownOutput: (v: boolean) => void;
+  codeHighlighting: boolean; setCodeHighlighting: (v: boolean) => void;
+  autoCitation: boolean; setAutoCitation: (v: boolean) => void;
+  autoSaveConversations: boolean; setAutoSaveConversations: (v: boolean) => void;
+  markChanged: () => void;
+}) {
+  const models = [
+    { id: "gemini", name: "Gemini", desc: "Google's multimodal AI" },
+    { id: "openai", name: "OpenAI", desc: "GPT-4 powered responses" },
+    { id: "claude", name: "Claude", desc: "Anthropic's helpful AI" },
+    { id: "deepseek", name: "DeepSeek", desc: "Advanced reasoning model" },
+    { id: "auto", name: "Auto", desc: "Best model per task" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Default Model */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Sparkles size={16} /> Default AI Model
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          {models.map((model) => {
+            const isActive = aiModel === model.id;
+            return (
+              <motion.button
+                key={model.id}
+                onClick={() => { setAiModel(model.id); markChanged(); }}
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="p-3 rounded-xl border text-center space-y-1.5 transition-all"
+                style={{
+                  background: isActive ? "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,88,12,0.08))" : c.cardBg,
+                  borderColor: isActive ? "rgba(245,158,11,0.4)" : c.border,
+                  boxShadow: isActive ? "0 0 15px rgba(245,158,11,0.1)" : "none",
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center text-xs font-black"
+                  style={{ background: isActive ? "rgba(245,158,11,0.15)" : c.cardBg, color: isActive ? "#f59e0b" : c.textSec }}>
+                  {model.name[0]}
+                </div>
+                <span className="text-[11px] font-bold block" style={{ color: isActive ? "#f59e0b" : c.text }}>{model.name}</span>
+                <span className="text-[9px] block" style={{ color: c.textMuted }}>{model.desc}</span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Response Length */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <MessageSquare size={16} /> Response Length
+        </h3>
+        <div className="flex gap-3">
+          {["short", "balanced", "detailed"].map((len) => {
+            const isActive = responseLength === len;
+            return (
+              <motion.button
+                key={len}
+                onClick={() => { setResponseLength(len); markChanged(); }}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex-1 py-2.5 rounded-xl border text-xs font-bold capitalize transition-all"
+                style={{
+                  background: isActive ? "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,88,12,0.08))" : "transparent",
+                  borderColor: isActive ? "rgba(245,158,11,0.4)" : c.border,
+                  color: isActive ? "#f59e0b" : c.textSec,
+                }}
+              >
+                {len}
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Creativity Slider */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Brain size={16} /> Creativity Level
+        </h3>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px]" style={{ color: c.textMuted }}>Precise</span>
+          <input type="range" min={0} max={100} value={creativity}
+            onChange={(e) => { setCreativity(Number(e.target.value)); markChanged(); }}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #f59e0b ${creativity}%, ${c.cardBg.includes("255,255,255") ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)"} ${creativity}%)`,
+            }}
+          />
+          <span className="text-[10px]" style={{ color: c.textMuted }}>Creative</span>
+          <span className="text-xs font-bold w-8 text-right" style={{ color: c.text }}>{creativity}%</span>
+        </div>
+      </motion.div>
+
+      {/* Toggles */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}
+        className="rounded-2xl border p-6 space-y-1 divide-y"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2 pb-3" style={{ color: c.primary }}>
+          <Zap size={16} /> AI Behavior
+        </h3>
+        <SettingsToggle enabled={aiMemory} onToggle={() => { setAiMemory(!aiMemory); markChanged(); }} label="AI Memory" description="AI remembers context across conversations" icon={<Brain size={14} />} />
+        <SettingsToggle enabled={markdownOutput} onToggle={() => { setMarkdownOutput(!markdownOutput); markChanged(); }} label="Markdown Output" description="Format AI responses in markdown" icon={<FileText size={14} />} />
+        <SettingsToggle enabled={codeHighlighting} onToggle={() => { setCodeHighlighting(!codeHighlighting); markChanged(); }} label="Code Highlighting" description="Syntax highlighting for code blocks" icon={<Code size={14} />} />
+        <SettingsToggle enabled={autoCitation} onToggle={() => { setAutoCitation(!autoCitation); markChanged(); }} label="Auto Citation" description="Automatically cite sources in responses" icon={<BookOpen size={14} />} />
+        <SettingsToggle enabled={autoSaveConversations} onToggle={() => { setAutoSaveConversations(!autoSaveConversations); markChanged(); }} label="Auto Save Conversations" description="Save chat history automatically" icon={<Save size={14} />} />
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Learning Section ────────────────────────────────────────────────────
+function LearningSection({
+  c, language, setLanguage, learningStyle, setLearningStyle,
+  dailyGoal, setDailyGoal, reminderTime, setReminderTime,
+  difficulty, setDifficulty, noteFormat, setNoteFormat,
+  quizDifficulty, setQuizDifficulty, tutorPersonality, setTutorPersonality, markChanged,
+}: {
+  c: Record<string, string>;
+  language: string; setLanguage: (v: string) => void;
+  learningStyle: string; setLearningStyle: (v: string) => void;
+  dailyGoal: number; setDailyGoal: (v: number) => void;
+  reminderTime: string; setReminderTime: (v: string) => void;
+  difficulty: string; setDifficulty: (v: string) => void;
+  noteFormat: string; setNoteFormat: (v: string) => void;
+  quizDifficulty: string; setQuizDifficulty: (v: string) => void;
+  tutorPersonality: string; setTutorPersonality: (v: string) => void;
+  markChanged: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-5"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <BookOpen size={16} /> Learning Preferences
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <SettingsSelect label="Preferred Language" value={language} onChange={(v) => { setLanguage(v); markChanged(); }}
+            options={[
+              { value: "en", label: "English" },
+              { value: "hi", label: "Hindi" },
+              { value: "es", label: "Spanish" },
+              { value: "fr", label: "French" },
+              { value: "de", label: "German" },
+              { value: "ja", label: "Japanese" },
+            ]} icon={<Globe size={11} />} />
+          <SettingsSelect label="Learning Style" value={learningStyle} onChange={(v) => { setLearningStyle(v); markChanged(); }}
+            options={[
+              { value: "visual", label: "Visual" },
+              { value: "auditory", label: "Auditory" },
+              { value: "reading", label: "Reading/Writing" },
+              { value: "kinesthetic", label: "Kinesthetic" },
+            ]} icon={<Eye size={11} />} />
+          <SettingsSelect label="Difficulty Level" value={difficulty} onChange={(v) => { setDifficulty(v); markChanged(); }}
+            options={[
+              { value: "beginner", label: "Beginner" },
+              { value: "intermediate", label: "Intermediate" },
+              { value: "advanced", label: "Advanced" },
+              { value: "expert", label: "Expert" },
+            ]} icon={<TrendingUp size={11} />} />
+          <SettingsSelect label="Default Note Format" value={noteFormat} onChange={(v) => { setNoteFormat(v); markChanged(); }}
+            options={[
+              { value: "markdown", label: "Markdown" },
+              { value: "pdf", label: "PDF" },
+              { value: "docx", label: "Word Document" },
+              { value: "txt", label: "Plain Text" },
+            ]} icon={<FileText size={11} />} />
+          <SettingsSelect label="Quiz Difficulty" value={quizDifficulty} onChange={(v) => { setQuizDifficulty(v); markChanged(); }}
+            options={[
+              { value: "easy", label: "Easy" },
+              { value: "medium", label: "Medium" },
+              { value: "hard", label: "Hard" },
+              { value: "adaptive", label: "Adaptive" },
+            ]} icon={<Star size={11} />} />
+          <SettingsSelect label="AI Tutor Personality" value={tutorPersonality} onChange={(v) => { setTutorPersonality(v); markChanged(); }}
+            options={[
+              { value: "friendly", label: "Friendly" },
+              { value: "formal", label: "Formal" },
+              { value: "socratic", label: "Socratic" },
+              { value: "motivational", label: "Motivational" },
+            ]} icon={<Heart size={11} />} />
+        </div>
+      </motion.div>
+
+      {/* Daily Goal */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Target size={16} /> Daily Study Goal
+        </h3>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px]" style={{ color: c.textMuted }}>1 hr</span>
+          <input type="range" min={1} max={12} value={dailyGoal}
+            onChange={(e) => { setDailyGoal(Number(e.target.value)); markChanged(); }}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #f59e0b ${((dailyGoal - 1) / 11) * 100}%, ${c.cardBg.includes("255,255,255") ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)"} ${((dailyGoal - 1) / 11) * 100}%)`,
+            }}
+          />
+          <span className="text-[10px]" style={{ color: c.textMuted }}>12 hrs</span>
+          <span className="text-xs font-bold w-12 text-right" style={{ color: c.text }}>{dailyGoal}h/day</span>
+        </div>
+      </motion.div>
+
+      {/* Reminder Time */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Clock size={16} /> Study Reminder
+        </h3>
+        <div className="flex items-center gap-3">
+          <input type="time" value={reminderTime}
+            onChange={(e) => { setReminderTime(e.target.value); markChanged(); }}
+            className="rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+            style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+          />
+          <span className="text-[10px]" style={{ color: c.textMuted }}>Daily reminder time</span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Security Section ────────────────────────────────────────────────────
+function SecuritySection({
+  c, twoFactor, setTwoFactor, loginAlerts, setLoginAlerts,
+  showPassword, setShowPassword, activeDevices, markChanged,
+}: {
+  c: Record<string, string>;
+  twoFactor: boolean; setTwoFactor: (v: boolean) => void;
+  loginAlerts: boolean; setLoginAlerts: (v: boolean) => void;
+  showPassword: boolean; setShowPassword: (v: boolean) => void;
+  activeDevices: { name: string; location: string; current: boolean; lastActive: string }[];
+  markChanged: () => void;
+}) {
+  const inputStyle = { background: c.inputBg, borderColor: c.border, color: c.text };
+
+  return (
+    <div className="space-y-5">
+      {/* Change Password */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Lock size={16} /> Change Password
+        </h3>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Current Password</label>
+            <div className="relative">
+              <input type={showPassword ? "text" : "password"} placeholder="Enter current password"
+                className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all pr-10"
+                style={inputStyle} />
+              <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                {showPassword ? <EyeOff size={14} style={{ color: c.textMuted }} /> : <Eye size={14} style={{ color: c.textMuted }} />}
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>New Password</label>
+              <input type="password" placeholder="Enter new password"
+                className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+                style={inputStyle} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Confirm Password</label>
+              <input type="password" placeholder="Confirm new password"
+                className="w-full rounded-xl px-4 py-2.5 text-xs border outline-none focus:border-amber-500/40 transition-all"
+                style={inputStyle} />
+            </div>
+          </div>
+        </div>
+        <PremiumButton variant="primary" icon={<Key size={13} />}>Update Password</PremiumButton>
+      </motion.div>
+
+      {/* 2FA & Login Alerts */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-1 divide-y"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2 pb-3" style={{ color: c.primary }}>
+          <ShieldCheck size={16} /> Two-Factor & Login Security
+        </h3>
+        <SettingsToggle enabled={twoFactor} onToggle={() => { setTwoFactor(!twoFactor); markChanged(); }} label="Two-Factor Authentication" description="Add an extra layer of security with SMS/email verification" icon={<Fingerprint size={14} />} />
+        <SettingsToggle enabled={loginAlerts} onToggle={() => { setLoginAlerts(!loginAlerts); markChanged(); }} label="Login Alerts" description="Get notified of new sign-ins to your account" icon={<Smartphone size={14} />} />
+      </motion.div>
+
+      {/* Active Devices */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Monitor size={16} /> Active Devices
+        </h3>
+        <div className="space-y-2.5">
+          {activeDevices.map((device, i) => (
+            <motion.div key={i} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+              className="flex items-center justify-between p-3 rounded-xl border"
+              style={{ borderColor: c.border }}
             >
-              <div className="text-xs">
-                <span className="font-semibold block">{item.label}</span>
-                <span className="text-[10px]" style={{ color: c.textMuted }}>{item.desc}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: device.current ? "rgba(245,158,11,0.1)" : c.cardBg }}>
+                  <Smartphone size={14} style={{ color: device.current ? "#f59e0b" : c.textMuted }} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold block">{device.name}</span>
+                  <span className="text-[10px]" style={{ color: c.textMuted }}>{device.location} · {device.lastActive}</span>
+                </div>
+              </div>
+              {device.current && <PremiumBadge variant="green" pulse>Current</PremiumBadge>}
+            </motion.div>
+          ))}
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all"
+          style={{ borderColor: "rgba(239,68,68,0.3)", color: "#ef4444", background: "rgba(239,68,68,0.05)" }}
+        >
+          <LogOut size={14} /> Logout All Devices
+        </motion.button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Privacy Section ─────────────────────────────────────────────────────
+function PrivacySection({
+  c, publicProfile, setPublicProfile, dataCollection, setDataCollection,
+  personalizedAI, setPersonalizedAI, markChanged,
+}: {
+  c: Record<string, string>;
+  publicProfile: boolean; setPublicProfile: (v: boolean) => void;
+  dataCollection: boolean; setDataCollection: (v: boolean) => void;
+  personalizedAI: boolean; setPersonalizedAI: (v: boolean) => void;
+  markChanged: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-1 divide-y"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2 pb-3" style={{ color: c.primary }}>
+          <Lock size={16} /> Privacy Controls
+        </h3>
+        <SettingsToggle enabled={publicProfile} onToggle={() => { setPublicProfile(!publicProfile); markChanged(); }} label="Public Profile" description="Allow others to view your community profile" icon={<Globe size={14} />} />
+        <SettingsToggle enabled={dataCollection} onToggle={() => { setDataCollection(!dataCollection); markChanged(); }} label="Data Collection" description="Help improve Adyapan with anonymous usage data" icon={<Database size={14} />} />
+        <SettingsToggle enabled={personalizedAI} onToggle={() => { setPersonalizedAI(!personalizedAI); markChanged(); }} label="Personalized AI" description="AI uses your learning history for better recommendations" icon={<Brain size={14} />} />
+      </motion.div>
+
+      {/* Data Actions */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Database size={16} /> Data Management
+        </h3>
+        <div className="space-y-2.5">
+          <motion.button whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-between p-3 rounded-xl border transition-all hover:bg-white/5"
+            style={{ borderColor: c.border }}>
+            <div className="flex items-center gap-2.5">
+              <Download size={14} className="text-cyan-500" />
+              <div className="text-left">
+                <span className="text-xs font-bold block">Export My Data</span>
+                <span className="text-[10px]" style={{ color: c.textMuted }}>Download all your data as JSON</span>
+              </div>
+            </div>
+            <ChevronRight size={14} style={{ color: c.textMuted }} />
+          </motion.button>
+          <motion.button whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-between p-3 rounded-xl border transition-all hover:bg-white/5"
+            style={{ borderColor: c.border }}>
+            <div className="flex items-center gap-2.5">
+              <Trash2 size={14} className="text-orange-500" />
+              <div className="text-left">
+                <span className="text-xs font-bold block">Delete Chat History</span>
+                <span className="text-[10px]" style={{ color: c.textMuted }}>Permanently delete all AI conversations</span>
+              </div>
+            </div>
+            <ChevronRight size={14} style={{ color: c.textMuted }} />
+          </motion.button>
+          <motion.button whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-between p-3 rounded-xl border transition-all"
+            style={{ borderColor: "rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.03)" }}>
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle size={14} className="text-rose-500" />
+              <div className="text-left">
+                <span className="text-xs font-bold block" style={{ color: "#ef4444" }}>Delete Account</span>
+                <span className="text-[10px]" style={{ color: c.textMuted }}>Permanently delete your account and all data</span>
+              </div>
+            </div>
+            <ChevronRight size={14} className="text-rose-500" />
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Billing Section ─────────────────────────────────────────────────────
+function BillingSection({ c }: { c: Record<string, string> }) {
+  return (
+    <div className="space-y-5">
+      {/* Plan Overview */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+            <CreditCard size={16} /> Current Plan
+          </h3>
+          <PremiumBadge variant="amber" pulse>Premium</PremiumBadge>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Plan", value: "Premium", icon: <Star size={14} className="text-amber-500" /> },
+            { label: "Renewal", value: "Aug 1, 2026", icon: <Calendar size={14} className="text-cyan-500" /> },
+            { label: "AI Credits", value: "64 / 100", icon: <Zap size={14} className="text-emerald-500" /> },
+            { label: "Invoice", value: "#INV-928", icon: <FileText size={14} className="text-purple-500" /> },
+          ].map((item, i) => (
+            <motion.div key={i} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+              className="p-3 rounded-xl border text-center" style={{ borderColor: c.border }}>
+              <div className="flex justify-center mb-1.5">{item.icon}</div>
+              <span className="text-[10px] font-bold uppercase block" style={{ color: c.textMuted }}>{item.label}</span>
+              <span className="text-sm font-extrabold block">{item.value}</span>
+            </motion.div>
+          ))}
+        </div>
+        <PremiumProgressBar value={64} color="amber" height={5} />
+        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-extrabold shadow-lg shadow-amber-500/20">
+          Upgrade Plan
+        </motion.button>
+      </motion.div>
+
+      {/* Invoices */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <FileText size={16} /> Recent Invoices
+        </h3>
+        <div className="space-y-2">
+          {[
+            { id: "INV-928", date: "Jul 1, 2026", amount: "$15.00", status: "Paid" },
+            { id: "INV-815", date: "Jun 1, 2026", amount: "$15.00", status: "Paid" },
+            { id: "INV-702", date: "May 1, 2026", amount: "$15.00", status: "Paid" },
+          ].map((inv, i) => (
+            <motion.div key={inv.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+              className="flex items-center justify-between p-3 rounded-xl border" style={{ borderColor: c.border }}>
+              <div>
+                <span className="text-xs font-bold block">{inv.id}</span>
+                <span className="text-[10px]" style={{ color: c.textMuted }}>{inv.date} · {inv.amount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <PremiumBadge variant="green">{inv.status}</PremiumBadge>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  className="p-1.5 rounded-lg hover:bg-white/5 border" style={{ borderColor: c.border }}>
+                  <Download size={12} style={{ color: c.textSec }} />
+                </motion.button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Connected Accounts Section ──────────────────────────────────────────
+function ConnectedAccountsSection({
+  c, accounts, setAccounts, markChanged,
+}: {
+  c: Record<string, string>;
+  accounts: { name: string; icon: string; color: string; connected: boolean }[];
+  setAccounts: (v: { name: string; icon: string; color: string; connected: boolean }[]) => void;
+  markChanged: () => void;
+}) {
+  const toggleAccount = (index: number) => {
+    const updated = [...accounts];
+    updated[index] = { ...updated[index], connected: !updated[index].connected };
+    setAccounts(updated);
+    markChanged();
+    toast.success(updated[index].connected ? `Connected to ${updated[index].name}` : `Disconnected from ${updated[index].name}`);
+  };
+
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Globe size={16} /> Connected Accounts
+        </h3>
+        <div className="space-y-2.5">
+          {accounts.map((acct, i) => (
+            <motion.div key={acct.name} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+              className="flex items-center justify-between p-3.5 rounded-xl border" style={{ borderColor: c.border }}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-black border"
+                  style={{ color: acct.color, borderColor: c.border, background: c.cardBg }}>
+                  {acct.icon}
+                </div>
+                <div>
+                  <span className="text-xs font-bold block">{acct.name}</span>
+                  <span className="text-[10px]" style={{ color: acct.connected ? "#10b981" : c.textMuted }}>
+                    {acct.connected ? "Connected" : "Not connected"}
+                  </span>
+                </div>
               </div>
               <motion.button
-                onClick={() => item.set(!item.val)}
-                whileTap={{ scale: 0.9 }}
-                className={`w-10 h-6 rounded-full relative transition-colors ${item.val ? "bg-amber-500" : "bg-white/10"}`}
-                style={{ border: `1px solid ${c.border}` }}
+                onClick={() => toggleAccount(i)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                style={{
+                  background: acct.connected ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
+                  color: acct.connected ? "#ef4444" : "#f59e0b",
+                  border: `1px solid ${acct.connected ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
+                }}
               >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${item.val ? "right-1" : "left-1"}`} />
+                {acct.connected ? "Disconnect" : "Connect"}
               </motion.button>
             </motion.div>
           ))}
         </div>
       </motion.div>
-
-      {/* Save Button Row */}
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={2}
-        className="flex justify-end pt-2"
-      >
-        <motion.button
-          onClick={handleSave}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          className="py-2.5 px-6 rounded-xl bg-amber-500 text-black hover:bg-amber-400 font-extrabold text-xs transition-all"
-        >
-          Save Settings
-        </motion.button>
-      </motion.div>
-    </motion.div>
+    </div>
   );
 }
+
+// ─── API Integrations Section ────────────────────────────────────────────
+function APISection({
+  c, apiKeys, setApiKeys, markChanged,
+}: {
+  c: Record<string, string>;
+  apiKeys: { name: string; status: string; lastSync: string; key: string }[];
+  setApiKeys: (v: { name: string; status: string; lastSync: string; key: string }[]) => void;
+  markChanged: () => void;
+}) {
+  const inputStyle = { background: c.inputBg, borderColor: c.border, color: c.text };
+
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <Zap size={16} /> API Integrations
+        </h3>
+        <div className="space-y-3">
+          {apiKeys.map((api, i) => (
+            <motion.div key={api.name} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+              className="p-4 rounded-xl border space-y-3" style={{ borderColor: c.border }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: api.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.05)" }}>
+                    <Zap size={14} style={{ color: api.status === "active" ? "#10b981" : c.textMuted }} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block">{api.name}</span>
+                    <span className="text-[10px]" style={{ color: c.textMuted }}>Last sync: {api.lastSync}</span>
+                  </div>
+                </div>
+                <PremiumBadge variant={api.status === "active" ? "green" : "rose"} pulse={api.status === "active"}>
+                  {api.status}
+                </PremiumBadge>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 relative">
+                  <Key size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
+                  <input
+                    type="password"
+                    defaultValue={api.key}
+                    placeholder="Enter API key..."
+                    className="w-full rounded-lg px-3 py-2 pl-8 text-[11px] border outline-none focus:border-amber-500/40 transition-all"
+                    style={inputStyle}
+                  />
+                </div>
+                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold shrink-0">
+                  Update
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  className="px-3 py-2 rounded-lg border text-[10px] font-bold shrink-0"
+                  style={{ borderColor: "rgba(239,68,68,0.2)", color: "#ef4444" }}>
+                  Remove
+                </motion.button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Storage Section ─────────────────────────────────────────────────────
+function StorageSection({
+  c, storageUsed, storageTotal, storagePercent, categories,
+}: {
+  c: Record<string, string>;
+  storageUsed: number; storageTotal: number; storagePercent: number;
+  categories: { name: string; size: string; percent: number; color: "amber" | "green" | "purple" | "rose" }[];
+}) {
+  return (
+    <div className="space-y-5">
+      {/* Usage Overview */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-5"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <HardDrive size={16} /> Storage Usage
+        </h3>
+        <div className="flex flex-col items-center">
+          <PremiumProgressRing value={storagePercent} size={120} strokeWidth={8} />
+          <span className="text-xs mt-3" style={{ color: c.textMuted }}>
+            {storageUsed} GB of {storageTotal} GB used
+          </span>
+        </div>
+        <div className="space-y-3">
+          {categories.map((cat) => (
+            <div key={cat.name} className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="font-bold" style={{ color: c.text }}>{cat.name}</span>
+                <span style={{ color: c.textMuted }}>{cat.size}</span>
+              </div>
+              <PremiumProgressBar value={cat.percent} color={cat.color} height={4} />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2.5">
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            className="flex-1 py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2"
+            style={{ borderColor: c.border, color: c.textSec, background: c.cardBg }}>
+            <Download size={13} /> Download Backup
+          </motion.button>
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            className="flex-1 py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2"
+            style={{ borderColor: "rgba(239,68,68,0.25)", color: "#ef4444", background: "rgba(239,68,68,0.05)" }}>
+            <Trash2 size={13} /> Clear Cache
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Activity Section ────────────────────────────────────────────────────
+function ActivitySection({
+  c, activityLog,
+}: {
+  c: Record<string, string>;
+  activityLog: { time: string; action: string; icon: React.ComponentType<{ size?: number; className?: string }>; color: string }[];
+}) {
+  const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filtered = activityLog.filter((item) => {
+    if (searchTerm && !item.action.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+            <Activity size={16} /> Activity Log
+          </h3>
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search activity..."
+              className="pl-7 pr-3 py-1.5 rounded-lg text-[11px] border outline-none transition-all w-full sm:w-44"
+              style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+            />
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="relative pl-6">
+          <div className="absolute left-[9px] top-0 bottom-0 w-px" style={{ background: c.border }} />
+          <div className="space-y-4">
+            {filtered.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div key={i} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+                  className="relative flex items-start gap-3">
+                  <div className="absolute left-[-15px] top-1 w-[10px] h-[10px] rounded-full border-2"
+                    style={{ borderColor: c.border, background: c.cardBg }} />
+                  <div className="flex-1">
+                    <span className="text-xs font-bold block" style={{ color: c.text }}>{item.action}</span>
+                    <span className="text-[10px]" style={{ color: c.textMuted }}>{item.time}</span>
+                  </div>
+                  <Icon size={14} className={item.color} />
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Help Section ────────────────────────────────────────────────────────
+function HelpSection({ c }: { c: Record<string, string> }) {
+  const items = [
+    { title: "FAQ", desc: "Frequently asked questions about Adyapan AI", icon: HelpCircle, color: "text-blue-500" },
+    { title: "Contact Support", desc: "Get help from our support team", icon: Mail, color: "text-emerald-500" },
+    { title: "Report Bug", desc: "Report issues or unexpected behavior", icon: AlertTriangle, color: "text-rose-500" },
+    { title: "Documentation", desc: "Explore guides and tutorials", icon: FileText, color: "text-purple-500" },
+    { title: "Community", desc: "Join the Adyapan developer community", icon: Users, color: "text-cyan-500" },
+    { title: "About Adyapan AI", desc: "Version 2.0.0 · Made with love", icon: Info, color: "text-amber-500" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
+        className="rounded-2xl border p-6 space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
+      >
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
+          <HelpCircle size={16} /> Help & Support
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {items.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <motion.div key={item.title} variants={fadeUp} initial="hidden" animate="visible" custom={i}
+                whileHover={{ y: -2, scale: 1.01 }}
+                className="p-4 rounded-xl border flex items-start gap-3 cursor-pointer transition-all"
+                style={{ borderColor: c.border, background: c.cardBgHover }}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <Icon size={16} className={item.color} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold block">{item.title}</span>
+                  <span className="text-[10px] leading-relaxed" style={{ color: c.textMuted }}>{item.desc}</span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 

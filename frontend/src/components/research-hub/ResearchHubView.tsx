@@ -97,7 +97,7 @@ const TEMPLATES = ["IEEE", "ACM", "Springer", "Elsevier", "APA"];
 const LENGTHS = ["Short (4-6 pages)", "Medium (8-12 pages)", "Long (15-25 pages)"];
 const CITATION_STYLES = ["IEEE", "APA", "MLA", "Chicago"];
 
-function ExportDropdown({ onExport, generating, c }: { onExport: (f: "pdf" | "docx" | "latex" | "bibtex") => void; generating: boolean; c: any }) {
+function ExportDropdown({ onExport, generating, c, isDark }: { onExport: (f: "pdf" | "docx" | "latex" | "bibtex") => void; generating: boolean; c: any; isDark: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -125,7 +125,7 @@ function ExportDropdown({ onExport, generating, c }: { onExport: (f: "pdf" | "do
       {open && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
           className="absolute top-full right-0 mt-1 w-52 border rounded-xl overflow-hidden z-50 shadow-xl"
-          style={{ background: c.cardBg, borderColor: c.border }}
+          style={{ background: isDark ? "#0d1117" : "#ffffff", borderColor: c.border }}
         >
           {items.map(item => (
             <motion.button key={item.format} whileTap={{ scale: 0.98 }}
@@ -939,7 +939,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
               <Copy size={11} /> Copy All
             </motion.button>
             <span className="w-px h-4" style={{ background: c.border }} />
-            <ExportDropdown onExport={handleExport} generating={generating} c={c} />
+            <ExportDropdown onExport={handleExport} generating={generating} c={c} isDark={isDark} />
           </div>
         </div>
 
