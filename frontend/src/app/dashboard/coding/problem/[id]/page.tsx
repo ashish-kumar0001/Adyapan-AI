@@ -1184,9 +1184,16 @@ Answer the student's question based on the coding problem. Provide hints or feed
         <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-zinc-400 gap-3">
           <Sparkles size={32} className="text-slate-300 dark:text-zinc-700 animate-pulse" />
           <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">No complexity analysis generated for this session</span>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 max-w-xs leading-relaxed">
-            Click the **📊 Analyze Complexity** button in the bottom action bar to run standard complexity checks on your solution code.
+          <p className="text-[10px] text-slate-400 dark:text-zinc-500 max-w-xs leading-relaxed mb-3">
+            Click **Run Complexity Analysis** inside the Code Review tab to run standard complexity checks on your solution code.
           </p>
+          <button
+            onClick={handleRequestComplexityAnalysis}
+            className="flex items-center gap-1.5 text-xs px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black rounded-lg transition shadow-md"
+          >
+            <Sparkles size={12} />
+            <span>Run Complexity Analysis</span>
+          </button>
         </div>
       );
     }
