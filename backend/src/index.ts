@@ -94,15 +94,10 @@ app.use(errorHandler);
 
 import { createServer } from "http";
 import { initSocketServer } from "./lib/socket";
-import { seedChallengesIfNeeded } from "./utils/challengeSeeder";
 
 const server = createServer(app);
 initSocketServer(server);
 
 server.listen(env.port, "0.0.0.0", () => {
   console.log(`Adyapan AI API running on http://0.0.0.0:${env.port}`);
-  seedChallengesIfNeeded().catch(err => {
-    console.error("[Seeder] Failed to seed challenges on startup:", err);
-  });
 });
-
