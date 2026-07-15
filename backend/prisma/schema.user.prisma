@@ -987,6 +987,7 @@ model CodingQuestion {
 
   aiAnalyses          QuestionAIAnalysis[]
   dailyChallenges     DailyChallenge[]
+  challengeQuestions  ChallengeQuestion[]
 
   @@map("coding_questions")
 }
@@ -1100,6 +1101,62 @@ model ComplexityAnalysis {
   @@index([generatedAt])
   @@map("complexity_analyses")
 }
+
+model UserChallengeProgress {
+  id                 String    @id @default(cuid())
+  userId             String    @map("user_id")
+  challengeId        String    @map("challenge_id")
+  status             String    @default("started")
+  progressPercentage Float     @default(0) @map("progress_percentage")
+  xpEarned           Int       @default(0) @map("xp_earned")
+  startedAt          DateTime  @default(now()) @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+
+  @@unique([userId, challengeId])
+  @@map("user_challenge_progress")
+}
+
+model UserXP {
+  id                    String    @id @default(cuid())
+  userId                String    @unique @map("user_id")
+  totalXP               Int       @default(0) @map("total_xp")
+  level                 Int       @default(1)
+  dailyStreak           Int       @default(0) @map("daily_streak")
+  weeklyStreak          Int       @default(0) @map("weekly_streak")
+  topicStreak           Int       @default(0) @map("topic_streak")
+  lastDailyChallengeAt  DateTime? @map("last_daily_challenge_at")
+  lastWeeklyChallengeAt DateTime? @map("last_weekly_challenge_at")
+  lastTopicChallengeAt  DateTime? @map("last_topic_challenge_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_xp")
+}
+
+model CodingChallenge {
+  id            String              @id @default(cuid())
+  title         String
+  challengeType String              @map("challenge_type")
+  description   String
+  difficulty    String
+  xpReward      Int                 @map("xp_reward")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  questions     ChallengeQuestion[]
+
+  @@map("coding_challenges")
+}
+
+model ChallengeQuestion {
+  id          String          @id @default(cuid())
+  challengeId String          @map("challenge_id")
+  questionId  String          @map("question_id")
+  orderIndex  Int             @map("order_index")
+  challenge   CodingChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  question    CodingQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("challenge_questions")
+}
+
+
 
 
 
