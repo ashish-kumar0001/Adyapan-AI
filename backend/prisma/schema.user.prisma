@@ -1101,6 +1101,37 @@ model ComplexityAnalysis {
   @@map("complexity_analyses")
 }
 
+model CodingRoadmap {
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  roadmapType          String             @map("roadmap_type") // placement, faang, competitive, custom
+  skillLevel           String             @map("skill_level") // beginner, intermediate, advanced
+  targetCompany        String             @map("target_company") // Amazon, Google, Microsoft, TCS, Infosys, Accenture, Startup, None
+  timelineWeeks        Int                @map("timeline_weeks")
+  roadmapJson          Json               @map("roadmap_json")
+  completionPercentage Int                @default(0) @map("completion_percentage")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  milestones           RoadmapMilestone[]
+
+  @@index([userId])
+  @@map("coding_roadmaps")
+}
+
+model RoadmapMilestone {
+  id                   String        @id @default(cuid())
+  roadmapId            String        @map("roadmap_id")
+  title                String
+  status               String        @default("pending") // pending, in_progress, completed
+  completionPercentage Int           @default(0) @map("completion_percentage")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  roadmap              CodingRoadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  @@index([roadmapId])
+  @@map("roadmap_milestones")
+}
+
+
 
 
 

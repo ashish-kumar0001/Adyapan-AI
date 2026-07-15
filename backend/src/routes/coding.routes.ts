@@ -9,6 +9,8 @@ import { AICodingService } from "../services/ai-coding.service";
 import { executeCode, runTestCases, checkPistonHealth } from "../services/piston.service";
 import { AIReviewService } from "../services/ai-review.service";
 import { ComplexityService } from "../services/complexity.service";
+import { CodingRoadmapService } from "../services/coding-roadmap.service";
+
 
 
 const router = Router();
@@ -1483,6 +1485,86 @@ router.get("/complexity/:id", async (req: any, res) => {
     res.json({ success: true, complexityAnalysis });
   } catch (error) {
     handleRouteError(res, error, "Coding.complexity.getDetails", "Failed to retrieve complexity details");
+  }
+});
+
+// ─── Coding Roadmap Generator Endpoints ──────────────────────────────────────────
+
+// POST /api/coding/roadmap/generate
+router.post("/roadmap/generate", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const { skillLevel, targetRole, targetCompany, dailyStudyTime, targetTimeline, preferredLanguage } = req.body;
+
+    if (!skillLevel || !targetRole || !targetCompany || !targetTimeline) {
+      return res.status(400).json({ error: "Missing required onboarding parameters." });
+    }
+
+    const roadmap = await CodingRoadmapService.generateRoadmap(userId, userPrisma, {
+      skillLevel,
+      targetRole,
+      targetCompany,
+      dailyStudyTime: dailyStudyTime || "1 hour",
+      targetTimeline: Number(targetTimeline) || 8,
+      preferredLanguage: preferredLanguage || "JavaScript"
+    });
+
+    res.json({ success: true, roadmap });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.roadmap.generate", "Failed to generate roadmap");
+  }
+});
+
+// GET /api/coding/roadmap
+router.get("/roadmap", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const roadmap = await CodingRoadmapService.getRoadmap(userId, userPrisma);
+
+    res.json({ success: true, roadmap });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.roadmap.get", "Failed to retrieve roadmap");
+  }
+});
+
+// POST /api/coding/roadmap/update
+router.post("/roadmap/update", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const roadmap = await CodingRoadmapService.getRoadmap(userId, userPrisma);
+
+    res.json({ success: true, roadmap });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.roadmap.update", "Failed to update roadmap");
+  }
+});
+
+// GET /api/coding/roadmap/recommendations
+router.get("/roadmap/recommendations", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const recommendations = await CodingRoadmapService.getRecommendations(userId, userPrisma);
+
+    res.json({ success: true, recommendations });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.roadmap.recommendations", "Failed to retrieve recommendations");
+  }
+});
+
+// GET /api/coding/roadmap/readiness
+router.get("/roadmap/readiness", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const readiness = await CodingRoadmapService.getReadinessScores(userId, userPrisma);
+
+    res.json({ success: true, readiness });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.roadmap.readiness", "Failed to retrieve readiness scores");
   }
 });
 

@@ -217,6 +217,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
     submenu: [
+      { label: "Coding Roadmap", href: "/dashboard/coding/roadmap" },
       { label: "DSA Practice", href: "/dashboard/coding" },
       { label: "Coding Assistant", href: "#" },
       { label: "Coding Challenges", href: "#" },
