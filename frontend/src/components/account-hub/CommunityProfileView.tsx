@@ -16,14 +16,13 @@ import CountUp from "react-countup";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getDiceBearUrl } from "@/lib/avatar";
+import { useTheme } from "@/hooks/useTheme";
 import {
   PremiumBadge, PremiumProgressRing,
   PremiumProgressBar, AnimatedSkeleton
 } from "@/components/ui/PremiumComponents";
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SVG ICONS
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── SVG ICONS ───────────────────────────────────────────────────────────────
 
 function Github({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGSVGElement>) {
   return (
@@ -44,9 +43,7 @@ function Linkedin({ size = 24, ...props }: { size?: number } & React.SVGProps<SV
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATION VARIANTS
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── ANIMATION VARIANTS ──────────────────────────────────────────────────────
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -82,9 +79,7 @@ const staggerItem: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED COUNTER COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── ANIMATED COUNTER ────────────────────────────────────────────────────────
 
 function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; suffix?: string; prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -101,9 +96,7 @@ function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; s
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROFILE INTERFACE & MOCK DATA
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── PROFILE INTERFACE & MOCK DATA ───────────────────────────────────────────
 
 interface ProfileData {
   id: string;
@@ -127,8 +120,6 @@ interface ProfileData {
   resumeName: string | null;
   user?: { id: string; name: string; email: string; role: string };
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────
 
 const MOCK_STATS = {
   followers: 1248,
@@ -342,23 +333,25 @@ const SECTION_TABS = [
 
 type TabId = (typeof SECTION_TABS)[number]["id"];
 
-// ═══════════════════════════════════════════════════════════════════════════
-// HELPER COMPONENTS
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── HELPER COMPONENTS ───────────────────────────────────────────────────────
 
 function GlassCard({ children, className = "", glow = false, glowColor = "rgba(245,158,11,0.06)" }: {
   children: React.ReactNode; className?: string; glow?: boolean; glowColor?: string;
 }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
   return (
     <div className={`relative rounded-[20px] border overflow-hidden ${className}`}
       style={{
-        background: "rgba(255,255,255,0.025)",
-        borderColor: "rgba(255,255,255,0.06)",
+        background: isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
+        borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
         backdropFilter: "blur(20px)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)",
+        boxShadow: isDark 
+          ? "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" 
+          : "0 8px 32px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6)",
       }}>
       {glow && (
-        <div className="absolute -inset-20 pointer-events-none opacity-40"
+        <div className="absolute -inset-20 pointer-events-none opacity-40 animate-pulse"
           style={{ background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 60%)` }} />
       )}
       <div className="relative z-10">{children}</div>
@@ -369,18 +362,23 @@ function GlassCard({ children, className = "", glow = false, glowColor = "rgba(2
 function SectionHeader({ icon: Icon, title, subtitle, gradient = false }: {
   icon: React.ComponentType<{ size?: number; className?: string }>; title: string; subtitle?: string; gradient?: boolean;
 }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-        style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.15)" }}>
-        <Icon size={16} className="text-amber-400" />
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ 
+          background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", 
+          border: isDark ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(245,158,11,0.2)" 
+        }}>
+        <Icon size={16} className="text-amber-500" />
       </div>
       <div>
-        <h3 className={`text-sm font-extrabold ${gradient ? "bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent" : ""}`}
-          style={{ color: gradient ? undefined : "#ffffff" }}>
+        <h3 className={`text-sm font-extrabold ${gradient ? "bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent" : ""}`}
+          style={{ color: gradient ? undefined : (isDark ? "#ffffff" : "#0f172a") }}>
           {title}
         </h3>
-        {subtitle && <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{subtitle}</p>}
+        {subtitle && <p className="text-[10px] mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.5)" }}>{subtitle}</p>}
       </div>
     </div>
   );
@@ -392,11 +390,12 @@ function SkillLevelBadge({ level }: { level: number }) {
   return <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-md">Intermediate</span>;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export function CommunityProfileView() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -445,6 +444,18 @@ export function CommunityProfileView() {
     );
   }
 
+  // Theme constants
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const secondaryText = isDark ? "text-slate-400" : "text-slate-500";
+  const labelColor = isDark ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+  const coverBg = isDark
+    ? "linear-gradient(135deg, #070715 0%, rgba(139,92,246,0.3) 30%, rgba(59,130,246,0.2) 60%, rgba(6,182,212,0.15) 80%, #070715 100%)"
+    : "linear-gradient(135deg, #f1f5f9 0%, rgba(139,92,246,0.15) 30%, rgba(59,130,246,0.12) 60%, rgba(6,182,212,0.08) 80%, #f1f5f9 100%)";
+  const avatarBorderColor = isDark ? "#070715" : "#ffffff";
+  const statsCardBg = isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -459,12 +470,11 @@ export function CommunityProfileView() {
       <GlassCard glow glowColor="rgba(139,92,246,0.08)">
         {/* Cover Banner with parallax-like gradient */}
         <div className="h-36 sm:h-48 relative overflow-hidden rounded-t-[20px]">
+          <div className="absolute inset-0" style={{ background: coverBg }} />
           <div className="absolute inset-0"
-            style={{ background: "linear-gradient(135deg, #0B1120 0%, rgba(139,92,246,0.3) 30%, rgba(59,130,246,0.2) 60%, rgba(6,182,212,0.15) 80%, #0B1120 100%)" }} />
+            style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(245,158,11,0.1) 0%, transparent 50%)" }} />
           <div className="absolute inset-0"
-            style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(245,158,11,0.12) 0%, transparent 50%)" }} />
-          <div className="absolute inset-0"
-            style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(139,92,246,0.1) 0%, transparent 50%)" }} />
+            style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(139,92,246,0.08) 0%, transparent 50%)" }} />
           {/* Floating orbs */}
           <motion.div
             className="absolute top-6 right-12 w-24 h-24 rounded-full bg-purple-500/10 blur-2xl"
@@ -489,18 +499,20 @@ export function CommunityProfileView() {
             >
               <div className="w-28 h-28 rounded-[22px] overflow-hidden border-4"
                 style={{
-                  borderColor: "#0B1120",
-                  boxShadow: "0 0 30px rgba(245,158,11,0.25), 0 0 60px rgba(139,92,246,0.1)",
+                  borderColor: avatarBorderColor,
+                  boxShadow: isDark 
+                    ? "0 0 30px rgba(245,158,11,0.25), 0 0 60px rgba(139,92,246,0.1)"
+                    : "0 4px 20px rgba(0,0,0,0.08)",
                 }}>
-                <img src={getDiceBearUrl(displayName)} alt="avatar" width={112} height={112} className="block" />
+                <img src={getDiceBearUrl(displayName)} alt="avatar" width={112} height={112} className="block bg-slate-100" />
               </div>
               {/* Verified Badge */}
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.5 }}
-                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, #10b981, #059669)", border: "3px solid #0B1120" }}
+                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full flex items-center justify-center shadow-sm"
+                style={{ background: "linear-gradient(135deg, #10b981, #059669)", border: `3px solid ${avatarBorderColor}` }}
               >
                 <BadgeCheck size={14} className="text-white" />
               </motion.div>
@@ -508,23 +520,23 @@ export function CommunityProfileView() {
 
             {/* User Info */}
             <div className="flex-1 text-center sm:text-left pb-1">
-              <div className="flex flex-col sm:flex-row items-center gap-2.5">
-                <h1 className="text-xl font-extrabold text-white tracking-tight">{displayName}</h1>
+              <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2.5">
+                <h1 className={`text-xl font-extrabold tracking-tight ${primaryText}`}>{displayName}</h1>
                 <PremiumBadge variant="amber" pulse>Pro</PremiumBadge>
                 <PremiumBadge variant="purple">Top 1%</PremiumBadge>
               </div>
-              <p className="text-xs font-bold mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p className="text-xs font-bold mt-1" style={{ color: labelColorSemi }}>
                 {username} · {profile?.targetRole || "AI Researcher & Full-Stack Developer"}
               </p>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-[11px]" style={{ color: labelColor }}>
                 <span className="flex items-center gap-1"><GraduationCap size={12} className="text-amber-400" /> {profile?.college || "IIT Delhi"}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="w-1 h-1 rounded-full bg-slate-400/30" />
                 <span>{profile?.branch || "Computer Science"}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="w-1 h-1 rounded-full bg-slate-400/30" />
                 <span>Class of {profile?.graduationYear || "2027"}</span>
                 {profile?.location && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-slate-400/30" />
                     <span className="flex items-center gap-1"><MapPin size={11} /> {profile.location}</span>
                   </>
                 )}
@@ -537,11 +549,13 @@ export function CommunityProfileView() {
                 whileHover={{ scale: 1.04, boxShadow: isFollowing ? "none" : "0 0 20px rgba(245,158,11,0.3)" }}
                 whileTap={{ scale: 0.96 }}
                 onClick={handleFollow}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
                 style={{
-                  background: isFollowing ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #f59e0b, #ea580c)",
-                  color: isFollowing ? "rgba(255,255,255,0.7)" : "#000",
-                  border: isFollowing ? "1px solid rgba(255,255,255,0.1)" : "none",
+                  background: isFollowing 
+                    ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
+                    : "linear-gradient(135deg, #f59e0b, #ea580c)",
+                  color: isFollowing ? (isDark ? "rgba(255,255,255,0.7)" : "#334155") : "#000",
+                  border: isFollowing ? `1px solid ${customBorder}` : "none",
                 }}
               >
                 {isFollowing ? <><User size={13} /> Following</> : <><Plus size={13} /> Follow</>}
@@ -550,8 +564,12 @@ export function CommunityProfileView() {
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => toast.info("Messaging coming soon")}
-                className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2"
-                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.03)" }}
+                className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-colors"
+                style={{ 
+                  borderColor: customBorder, 
+                  color: isDark ? "rgba(255,255,255,0.7)" : "#334155", 
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" 
+                }}
               >
                 <MessageSquare size={13} /> Message
               </motion.button>
@@ -559,8 +577,12 @@ export function CommunityProfileView() {
                 whileHover={{ scale: 1.08, rotate: 15 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={handleShare}
-                className="w-10 h-10 rounded-xl border flex items-center justify-center"
-                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.03)" }}
+                className="w-10 h-10 rounded-xl border flex items-center justify-center transition-colors"
+                style={{ 
+                  borderColor: customBorder, 
+                  color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.45)", 
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" 
+                }}
               >
                 <Share2 size={14} />
               </motion.button>
@@ -568,7 +590,7 @@ export function CommunityProfileView() {
           </div>
 
           {/* Bio */}
-          <p className="text-[11px] mt-5 max-w-2xl leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+          <p className="text-[11px] mt-5 max-w-2xl leading-relaxed" style={{ color: labelColorSemi }}>
             {bio}
           </p>
 
@@ -580,9 +602,13 @@ export function CommunityProfileView() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 + i * 0.05 }}
-                whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.15)", borderColor: "rgba(245,158,11,0.3)" }}
+                whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.15)", borderColor: "rgba(245,158,11,0.35)" }}
                 className="px-3 py-1 rounded-lg text-[10px] font-bold cursor-default transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.65)" }}
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
+                  border: `1px solid ${customBorder}`, 
+                  color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,23,42,0.65)" 
+                }}
               >
                 {s}
               </motion.span>
@@ -593,19 +619,22 @@ export function CommunityProfileView() {
           <div className="flex flex-wrap gap-4 mt-4">
             {profile?.portfolio && (
               <a href={profile.portfolio} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-400 transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}>
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                style={{ color: labelColorSemi }}>
                 <Globe size={12} /> Portfolio <ArrowUpRight size={10} />
               </a>
             )}
             {profile?.github && (
               <a href={profile.github} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-400 transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}>
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                style={{ color: labelColorSemi }}>
                 <Github size={12} /> GitHub <ArrowUpRight size={10} />
               </a>
             )}
             {profile?.linkedin && (
               <a href={profile.linkedin} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-400 transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}>
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                style={{ color: labelColorSemi }}>
                 <Linkedin size={12} /> LinkedIn <ArrowUpRight size={10} />
               </a>
             )}
@@ -631,17 +660,17 @@ export function CommunityProfileView() {
           <motion.div
             key={stat.label}
             variants={staggerItem}
-            whileHover={{ y: -4, scale: 1.02, boxShadow: `0 12px 40px rgba(0,0,0,0.3)` }}
-            className="relative rounded-[20px] border p-4 flex items-center justify-between overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.025)", borderColor: "rgba(255,255,255,0.06)" }}
+            whileHover={{ y: -4, scale: 1.02, boxShadow: isDark ? "0 12px 40px rgba(0,0,0,0.3)" : "0 12px 25px rgba(0,0,0,0.06)" }}
+            className="relative rounded-[20px] border p-4 flex items-center justify-between overflow-hidden shadow-sm"
+            style={{ background: statsCardBg, borderColor: customBorder }}
           >
-            <div className="absolute inset-0 opacity-30"
+            <div className="absolute inset-0 opacity-20"
               style={{ background: `radial-gradient(circle at 80% 20%, ${stat.color}15 0%, transparent 50%)` }} />
             <div className="relative z-10 space-y-1">
-              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>
                 {stat.label}
               </span>
-              <span className="text-xl font-extrabold text-white block">
+              <span className={`text-xl font-extrabold block ${primaryText}`}>
                 <AnimatedCounter value={stat.val} />
               </span>
             </div>
@@ -649,8 +678,8 @@ export function CommunityProfileView() {
               initial={{ scale: 0, rotate: -30 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 280, damping: 18, delay: i * 0.05 }}
-              className={`relative z-10 w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${stat.gradient}`}
-              style={{ boxShadow: `0 4px 15px ${stat.color}30` }}
+              className={`relative z-10 w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${stat.gradient} shadow-md`}
+              style={{ boxShadow: `0 4px 15px ${stat.color}25` }}
             >
               <stat.icon size={16} className="text-white" />
             </motion.div>
@@ -662,7 +691,12 @@ export function CommunityProfileView() {
       {/* TAB NAVIGATION                                                     */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex gap-1 p-1.5 rounded-2xl overflow-x-auto"
-        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}>
+        style={{ 
+          background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.85)", 
+          border: `1px solid ${customBorder}`, 
+          backdropFilter: "blur(20px)" 
+        }}
+      >
         {SECTION_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -670,13 +704,16 @@ export function CommunityProfileView() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className="relative flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer"
-              style={{ color: isActive ? "#f59e0b" : "rgba(255,255,255,0.4)" }}
+              style={{ color: isActive ? "#f59e0b" : (isDark ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.5)") }}
             >
               {isActive && (
                 <motion.div
                   layoutId="community-tab"
                   className="absolute inset-0 rounded-xl"
-                  style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)" }}
+                  style={{ 
+                    background: "rgba(245,158,11,0.1)", 
+                    border: "1px solid rgba(245,158,11,0.2)" 
+                  }}
                   transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 />
               )}
@@ -693,7 +730,7 @@ export function CommunityProfileView() {
         {/* Profile Summary */}
         <GlassCard glow glowColor="rgba(245,158,11,0.06)">
           <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Profile Summary</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Profile Summary</span>
             <div className="space-y-2.5">
               {[
                 { label: "Reputation Score", val: "4,820", icon: Award, gradient: "from-amber-500 to-orange-500" },
@@ -704,13 +741,13 @@ export function CommunityProfileView() {
                 <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
                   className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <span className="flex items-center gap-2" style={{ color: labelColorSemi }}>
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
                       <item.icon size={10} className="text-white" />
                     </div>
                     {item.label}
                   </span>
-                  <span className="font-bold text-white">{item.val}</span>
+                  <span className={`font-bold ${primaryText}`}>{item.val}</span>
                 </motion.div>
               ))}
             </div>
@@ -720,7 +757,7 @@ export function CommunityProfileView() {
         {/* Recent Badges */}
         <GlassCard>
           <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Recent Badges</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Recent Badges</span>
             {MOCK_ACHIEVEMENTS.slice(0, 4).map((a, i) => {
               const Icon = a.icon;
               return (
@@ -731,8 +768,8 @@ export function CommunityProfileView() {
                     <Icon size={14} className={a.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold block text-white truncate">{a.name}</span>
-                    <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{a.rarity}</span>
+                    <span className={`text-[10px] font-bold block truncate ${primaryText}`}>{a.name}</span>
+                    <span className="text-[9px]" style={{ color: labelColor }}>{a.rarity}</span>
                   </div>
                 </motion.div>
               );
@@ -743,7 +780,7 @@ export function CommunityProfileView() {
         {/* Quick Stats */}
         <GlassCard>
           <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Quick Stats</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Quick Stats</span>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "Online", val: "2h 14m", icon: Wifi, color: "text-emerald-400" },
@@ -751,10 +788,15 @@ export function CommunityProfileView() {
                 { label: "Avg. Daily", val: "4.2h", icon: Coffee, color: "text-amber-400" },
                 { label: "Peak Hour", val: "11 PM", icon: Sun, color: "text-purple-400" },
               ].map((stat, i) => (
-                <div key={i} className="p-2.5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div key={i} className="p-2.5 rounded-xl text-center transition-colors" 
+                  style={{ 
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
+                    border: `1px solid ${customBorder}` 
+                  }}
+                >
                   <stat.icon size={12} className={`${stat.color} mx-auto mb-1`} />
-                  <span className="text-[9px] block" style={{ color: "rgba(255,255,255,0.35)" }}>{stat.label}</span>
-                  <span className="text-[10px] font-bold text-white block">{stat.val}</span>
+                  <span className="text-[9px] block" style={{ color: labelColor }}>{stat.label}</span>
+                  <span className={`text-[10px] font-bold block ${primaryText}`}>{stat.val}</span>
                 </div>
               ))}
             </div>
@@ -764,7 +806,7 @@ export function CommunityProfileView() {
         {/* Learning Streak & Focus */}
         <GlassCard>
           <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Learning Pulse</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Learning Pulse</span>
             <div className="space-y-2.5">
               {[
                 { label: "Learning Streak", val: "14 days", icon: Flame, gradient: "from-orange-500 to-red-500" },
@@ -775,13 +817,13 @@ export function CommunityProfileView() {
                 <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
                   className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <span className="flex items-center gap-2" style={{ color: labelColorSemi }}>
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
                       <item.icon size={10} className="text-white" />
                     </div>
                     {item.label}
                   </span>
-                  <span className="font-bold text-white">{item.val}</span>
+                  <span className={`font-bold ${primaryText}`}>{item.val}</span>
                 </motion.div>
               ))}
             </div>
@@ -812,11 +854,18 @@ export function CommunityProfileView() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// OVERVIEW TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── OVERVIEW TAB ────────────────────────────────────────────────────────────
 
 function OverviewTab() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+  const timelineDotBorder = isDark ? "#070715" : "#ffffff";
+  const timelineDotBg = isDark ? "#0B1120" : "#f1f5f9";
+
   return (
     <div className="space-y-5">
       {/* Learning Progress */}
@@ -838,7 +887,7 @@ function OverviewTab() {
                 className="flex flex-col items-center"
               >
                 <PremiumProgressRing value={item.val} size={72} strokeWidth={6} />
-                <span className="text-[10px] font-bold mt-2 text-white">{item.label}</span>
+                <span className={`text-[10px] font-bold mt-2 ${primaryText}`}>{item.label}</span>
               </motion.div>
             ))}
             {[
@@ -854,15 +903,15 @@ function OverviewTab() {
                 custom={i + 3}
                 className="text-center"
               >
-                <span className="text-2xl font-extrabold text-white block">
+                <span className={`text-2xl font-extrabold block ${primaryText}`}>
                   {typeof item.val === "number" ? (
                     <AnimatedCounter value={item.val} />
                   ) : (
                     item.val
                   )}
                 </span>
-                <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.4)" }}>{item.sub}</span>
-                <span className="text-[10px] font-bold block mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>{item.label}</span>
+                <span className="text-[9px]" style={{ color: labelColor }}>{item.sub}</span>
+                <span className="text-[10px] font-bold block mt-1" style={{ color: labelColorSemi }}>{item.label}</span>
               </motion.div>
             ))}
           </div>
@@ -884,25 +933,27 @@ function OverviewTab() {
                 className="w-3 h-3 rounded-[3px] cursor-default transition-all"
                 title={`${level} contributions`}
                 style={{
-                  background: level === 0 ? "rgba(255,255,255,0.04)" :
-                    level === 1 ? "rgba(245,158,11,0.2)" :
-                    level === 2 ? "rgba(245,158,11,0.4)" :
-                    level === 3 ? "rgba(245,158,11,0.65)" :
-                    "rgba(245,158,11,0.9)",
+                  background: level === 0 
+                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
+                    : level === 1 ? "rgba(245,158,11,0.2)" 
+                    : level === 2 ? "rgba(245,158,11,0.4)" 
+                    : level === 3 ? "rgba(245,158,11,0.65)" 
+                    : "rgba(245,158,11,0.9)",
                 }}
               />
             ))}
           </div>
-          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: labelColor }}>
             <span>Less</span>
             {[0, 1, 2, 3, 4].map((l) => (
               <div key={l} className="w-3 h-3 rounded-sm"
                 style={{
-                  background: l === 0 ? "rgba(255,255,255,0.04)" :
-                    l === 1 ? "rgba(245,158,11,0.2)" :
-                    l === 2 ? "rgba(245,158,11,0.4)" :
-                    l === 3 ? "rgba(245,158,11,0.65)" :
-                    "rgba(245,158,11,0.9)",
+                  background: l === 0 
+                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
+                    : l === 1 ? "rgba(245,158,11,0.2)" 
+                    : l === 2 ? "rgba(245,158,11,0.4)" 
+                    : l === 3 ? "rgba(245,158,11,0.65)" 
+                    : "rgba(245,158,11,0.9)",
                 }}
               />
             ))}
@@ -923,15 +974,18 @@ function OverviewTab() {
                 animate="visible"
                 custom={i}
                 whileHover={{ y: -2 }}
-                className="p-3.5 rounded-xl flex items-center gap-3"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                className="p-3.5 rounded-xl flex items-center gap-3 transition-colors"
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
+                  border: `1px solid ${customBorder}` 
+                }}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${s.gradient} shrink-0`}>
                   <s.icon size={14} className="text-white" />
                 </div>
                 <div>
-                  <span className="text-[9px] block" style={{ color: "rgba(255,255,255,0.4)" }}>{s.label}</span>
-                  <span className="text-sm font-extrabold text-white">
+                  <span className="text-[9px] block" style={{ color: labelColor }}>{s.label}</span>
+                  <span className={`text-sm font-extrabold ${primaryText}`}>
                     <AnimatedCounter value={s.val} suffix={s.suffix || ""} />
                   </span>
                 </div>
@@ -941,7 +995,7 @@ function OverviewTab() {
 
           {/* Language Distribution */}
           <div className="space-y-2.5 mt-5">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>
               Language Distribution
             </span>
             {LANG_DIST.map((lang, i) => (
@@ -953,8 +1007,8 @@ function OverviewTab() {
                 className="space-y-1"
               >
                 <div className="flex justify-between text-[10px]">
-                  <span className="font-bold text-white">{lang.name}</span>
-                  <span style={{ color: "rgba(255,255,255,0.4)" }}>{lang.percent}%</span>
+                  <span className={`font-bold ${primaryText}`}>{lang.name}</span>
+                  <span style={{ color: labelColor }}>{lang.percent}%</span>
                 </div>
                 <PremiumProgressBar value={lang.percent} color="amber" height={4} />
               </motion.div>
@@ -976,7 +1030,11 @@ function OverviewTab() {
                 transition={{ delay: i * 0.04 }}
                 whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.12)", borderColor: "rgba(245,158,11,0.25)", color: "#f59e0b" }}
                 className="px-3.5 py-1.5 rounded-xl text-[10px] font-bold cursor-default transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
+                  border: `1px solid ${customBorder}`, 
+                  color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)" 
+                }}
               >
                 {interest}
               </motion.span>
@@ -990,7 +1048,13 @@ function OverviewTab() {
         <div className="p-6">
           <SectionHeader icon={Clock} title="Activity Timeline" subtitle="Recent activity" />
           <div className="relative pl-8 space-y-5 mt-3">
-            <div className="absolute left-[11px] top-0 bottom-0 w-px" style={{ background: "linear-gradient(to bottom, rgba(245,158,11,0.3), rgba(139,92,246,0.2), rgba(6,182,212,0.1), transparent)" }} />
+            <div className="absolute left-[11px] top-0 bottom-0 w-px" 
+              style={{ 
+                background: isDark
+                  ? "linear-gradient(to bottom, rgba(245,158,11,0.3), rgba(139,92,246,0.2), rgba(6,182,212,0.1), transparent)" 
+                  : "linear-gradient(to bottom, rgba(245,158,11,0.4), rgba(139,92,246,0.25), rgba(6,182,212,0.15), transparent)" 
+              }} 
+            />
             {MOCK_TIMELINE.map((item, i) => {
               const Icon = item.icon;
               return (
@@ -1002,8 +1066,8 @@ function OverviewTab() {
                   custom={i}
                   className="relative flex items-start gap-4"
                 >
-                  <div className="absolute left-[-20px] top-1.5 w-2.5 h-2.5 rounded-full border-2"
-                    style={{ borderColor: "#f59e0b", background: "#0B1120" }} />
+                  <div className="absolute left-[-20px] top-1.5 w-2.5 h-2.5 rounded-full border-2 transition-colors"
+                    style={{ borderColor: "#f59e0b", background: timelineDotBorder }} />
                   <div className="flex-1 p-3 rounded-xl transition-all hover:bg-white/[0.02]"
                     style={{ border: "1px solid transparent" }}>
                     <div className="flex items-center gap-2.5">
@@ -1011,8 +1075,8 @@ function OverviewTab() {
                         <Icon size={13} className={item.color} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[11px] font-bold text-white block truncate">{item.action}</span>
-                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>{item.time}</span>
+                        <span className={`text-[11px] font-bold block truncate ${primaryText}`}>{item.action}</span>
+                        <span className="text-[10px]" style={{ color: labelColor }}>{item.time}</span>
                       </div>
                     </div>
                   </div>
@@ -1037,16 +1101,19 @@ function OverviewTab() {
                 custom={i}
                 whileHover={{ y: -2, borderColor: "rgba(245,158,11,0.15)" }}
                 className="p-4 rounded-xl transition-all"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
+                  border: `1px solid ${customBorder}` 
+                }}
               >
                 <div className="flex items-center gap-3 mb-2.5">
                   <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0"
-                    style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <img src={getDiceBearUrl(rec.name)} alt={rec.name} width={36} height={36} className="block" />
+                    style={{ border: `1px solid ${customBorder}` }}>
+                    <img src={getDiceBearUrl(rec.name)} alt={rec.name} width={36} height={36} className="block bg-slate-100" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-[11px] font-bold text-white block">{rec.name}</span>
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{rec.role}</span>
+                    <span className={`text-[11px] font-bold block ${primaryText}`}>{rec.name}</span>
+                    <span className="text-[10px]" style={{ color: labelColor }}>{rec.role}</span>
                   </div>
                   <div className="flex gap-0.5">
                     {Array.from({ length: rec.rating }).map((_, j) => (
@@ -1054,7 +1121,7 @@ function OverviewTab() {
                     ))}
                   </div>
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
                   &ldquo;{rec.text}&rdquo;
                 </p>
               </motion.div>
@@ -1066,11 +1133,16 @@ function OverviewTab() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROJECTS TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── PROJECTS TAB ────────────────────────────────────────────────────────────
 
 function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: string; setProjectFilter: (v: string) => void }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
   const filters = ["all", "completed", "in-progress", "research"];
   const filtered = projectFilter === "all" ? MOCK_PROJECTS : MOCK_PROJECTS.filter(p => p.status === projectFilter);
 
@@ -1078,9 +1150,14 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
     <div className="space-y-5">
       <GlassCard>
         <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <SectionHeader icon={Folder} title="Featured Projects" subtitle="Your best work" />
-            <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="flex gap-1 p-1 rounded-xl self-start sm:self-auto" 
+              style={{ 
+                background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)", 
+                border: `1px solid ${customBorder}` 
+              }}
+            >
               {filters.map((f) => (
                 <button
                   key={f}
@@ -1088,7 +1165,7 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
                   className="px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer"
                   style={{
                     background: projectFilter === f ? "rgba(245,158,11,0.12)" : "transparent",
-                    color: projectFilter === f ? "#f59e0b" : "rgba(255,255,255,0.35)",
+                    color: projectFilter === f ? "#ea580c" : (isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.5)"),
                     border: projectFilter === f ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
                   }}
                 >
@@ -1106,9 +1183,12 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
                 initial="hidden"
                 animate="visible"
                 custom={i}
-                whileHover={{ y: -6, scale: 1.01, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
-                className="rounded-[20px] border overflow-hidden transition-all"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)" }}
+                whileHover={{ y: -6, scale: 1.01, boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.3)" : "0 20px 30px rgba(0,0,0,0.05)" }}
+                className="rounded-[20px] border overflow-hidden transition-all shadow-sm"
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
+                  borderColor: customBorder 
+                }}
               >
                 {/* Project Thumbnail */}
                 <div className={`h-36 relative bg-gradient-to-br ${proj.gradient}`}>
@@ -1129,20 +1209,25 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
                 </div>
 
                 <div className="p-4 space-y-3">
-                  <h4 className="text-sm font-extrabold text-white">{proj.title}</h4>
-                  <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <h4 className={`text-sm font-extrabold ${primaryText}`}>{proj.title}</h4>
+                  <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
                     {proj.desc}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {proj.tech.map((t) => (
                       <span key={t} className="px-2 py-0.5 rounded-md text-[9px] font-bold"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                        style={{ 
+                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
+                          border: `1px solid ${customBorder}`, 
+                          color: labelColorSemi 
+                        }}
+                      >
                         {t}
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex gap-4 text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${customBorder}` }}>
+                    <div className="flex gap-4 text-[10px]" style={{ color: labelColor }}>
                       <span className="flex items-center gap-1"><Star size={10} className="text-amber-400" /> {proj.stars}</span>
                       <span className="flex items-center gap-1"><Heart size={10} className="text-rose-400" /> {proj.likes}</span>
                       <span className="flex items-center gap-1"><Eye size={10} className="text-cyan-400" /> {proj.views}</span>
@@ -1150,14 +1235,22 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
                     </div>
                     <div className="flex gap-1.5">
                       <motion.a href={proj.github} whileHover={{ scale: 1.15, rotate: 5 }}
-                        className="p-2 rounded-lg transition-all"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <Github size={12} style={{ color: "rgba(255,255,255,0.5)" }} />
+                        className="p-2 rounded-lg transition-colors border"
+                        style={{ 
+                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)", 
+                          borderColor: customBorder 
+                        }}
+                      >
+                        <Github size={12} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)" }} />
                       </motion.a>
                       <motion.a href={proj.demo} whileHover={{ scale: 1.15, rotate: -5 }}
-                        className="p-2 rounded-lg transition-all"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <ExternalLink size={12} style={{ color: "rgba(255,255,255,0.5)" }} />
+                        className="p-2 rounded-lg transition-colors border"
+                        style={{ 
+                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)", 
+                          borderColor: customBorder 
+                        }}
+                      >
+                        <ExternalLink size={12} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)" }} />
                       </motion.a>
                     </div>
                   </div>
@@ -1171,11 +1264,16 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// RESEARCH TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── RESEARCH TAB ────────────────────────────────────────────────────────────
 
 function ResearchTab() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
   return (
     <div className="space-y-5">
       {/* Publications */}
@@ -1192,13 +1290,17 @@ function ResearchTab() {
                 custom={i}
                 whileHover={{ y: -3, borderColor: "rgba(139,92,246,0.2)" }}
                 className="rounded-[20px] border p-5 space-y-3 transition-all"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
+                  borderColor: customBorder, 
+                  backdropFilter: "blur(20px)" 
+                }}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h4 className="text-sm font-extrabold leading-snug text-white">{paper.title}</h4>
+                  <h4 className={`text-sm font-extrabold leading-snug ${primaryText}`}>{paper.title}</h4>
                   <PremiumBadge variant="cyan">{paper.domain}</PremiumBadge>
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
                   {paper.abstract}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -1208,8 +1310,8 @@ function ResearchTab() {
                     </span>
                   ))}
                 </div>
-                <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div className="flex gap-4 text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${customBorder}` }}>
+                  <div className="flex gap-4 text-[10px]" style={{ color: labelColor }}>
                     <span>{paper.date}</span>
                     <span className="flex items-center gap-1"><Quote size={10} className="text-amber-400" /> {paper.citations} citations</span>
                     <span className="flex items-center gap-1"><Download size={10} className="text-cyan-400" /> {paper.downloads} downloads</span>
@@ -1218,7 +1320,7 @@ function ResearchTab() {
                     whileHover={{ scale: 1.04, boxShadow: "0 0 15px rgba(245,158,11,0.2)" }}
                     whileTap={{ scale: 0.96 }}
                     className="px-4 py-2 rounded-xl text-[10px] font-bold flex items-center gap-1.5"
-                    style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}
+                    style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#ea580c" }}
                   >
                     <FileText size={10} /> Read Paper
                   </motion.button>
@@ -1241,21 +1343,24 @@ function ResearchTab() {
                 initial="hidden"
                 animate="visible"
                 custom={i}
-                whileHover={{ y: -4, scale: 1.02, boxShadow: "0 15px 30px rgba(0,0,0,0.3)" }}
+                whileHover={{ y: -4, scale: 1.02, boxShadow: isDark ? "0 15px 30px rgba(0,0,0,0.3)" : "0 15px 20px rgba(0,0,0,0.05)" }}
                 className="p-5 rounded-[20px] border text-center space-y-3 transition-all"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)" }}
+                style={{ 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
+                  borderColor: customBorder 
+                }}
               >
-                <div className={`w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-gradient-to-br ${cert.color}`}>
+                <div className={`w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-gradient-to-br ${cert.color} shadow-sm`}>
                   <span className="text-sm font-black text-white">{cert.org[0]}</span>
                 </div>
-                <span className="text-[10px] font-bold block" style={{ color: "rgba(255,255,255,0.4)" }}>{cert.org}</span>
-                <span className="text-xs font-bold text-white block">{cert.name}</span>
-                <span className="text-[9px] block" style={{ color: "rgba(255,255,255,0.35)" }}>{cert.date}</span>
-                <span className="text-[8px] block font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{cert.credentialId}</span>
+                <span className="text-[10px] font-bold block" style={{ color: labelColor }}>{cert.org}</span>
+                <span className={`text-xs font-bold block ${primaryText}`}>{cert.name}</span>
+                <span className="text-[9px] block" style={{ color: labelColor }}>{cert.date}</span>
+                <span className="text-[8px] block font-mono" style={{ color: labelColor }}>{cert.credentialId}</span>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   className="text-[10px] font-bold flex items-center gap-1 mx-auto mt-1"
-                  style={{ color: "#f59e0b" }}
+                  style={{ color: "#ea580c" }}
                 >
                   <ExternalLink size={10} /> View Certificate
                 </motion.button>
@@ -1268,11 +1373,15 @@ function ResearchTab() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SKILLS TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── SKILLS TAB ──────────────────────────────────────────────────────────────
 
 function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof MOCK_SKILLS; setSkillFilter: (v: keyof typeof MOCK_SKILLS) => void }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
   const filters: { id: keyof typeof MOCK_SKILLS; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
     { id: "programming", label: "Programming", icon: Code2 },
     { id: "ai", label: "AI & ML", icon: Brain },
@@ -1285,7 +1394,7 @@ function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof 
         <div className="p-6">
           <SectionHeader icon={Zap} title="Skills Showcase" subtitle="Your technical expertise" gradient />
 
-          <div className="flex gap-2 mt-2 mb-5">
+          <div className="flex gap-2 mt-2 mb-5 overflow-x-auto pb-1">
             {filters.map((f) => {
               const isActive = skillFilter === f.id;
               return (
@@ -1294,11 +1403,11 @@ function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof 
                   onClick={() => setSkillFilter(f.id)}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
                   style={{
-                    background: isActive ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.03)",
-                    border: isActive ? "1px solid rgba(245,158,11,0.25)" : "1px solid rgba(255,255,255,0.06)",
-                    color: isActive ? "#f59e0b" : "rgba(255,255,255,0.4)",
+                    background: isActive ? "rgba(245,158,11,0.12)" : (isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"),
+                    border: isActive ? "1px solid rgba(245,158,11,0.25)" : `1px solid ${customBorder}`,
+                    color: isActive ? "#ea580c" : (isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)"),
                   }}
                 >
                   <f.icon size={13} /> {f.label}
@@ -1318,25 +1427,31 @@ function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof 
                   animate="visible"
                   custom={i}
                   whileHover={{ y: -3, borderColor: "rgba(245,158,11,0.2)" }}
-                  className="p-4 rounded-[16px] border transition-all"
-                  style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+                  className="p-4 rounded-[16px] border transition-colors shadow-sm"
+                  style={{ 
+                    borderColor: customBorder, 
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
+                  }}
                 >
                   <div className="flex items-center gap-3 mb-2.5">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.15)" }}>
-                      <SkillIcon size={14} className="text-amber-400" />
+                      style={{ 
+                        background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", 
+                        border: "1px solid rgba(245,158,11,0.15)" 
+                      }}>
+                      <SkillIcon size={14} className="text-amber-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">{skill.name}</span>
-                        <span className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{skill.level}%</span>
+                        <span className={`text-xs font-bold ${primaryText}`}>{skill.name}</span>
+                        <span className="text-[10px] font-bold" style={{ color: labelColor }}>{skill.level}%</span>
                       </div>
                     </div>
                     <SkillLevelBadge level={skill.level} />
                   </div>
                   <PremiumProgressBar value={skill.level} color="amber" height={4} />
                   <div className="flex items-center justify-between mt-2.5">
-                    <span className="text-[9px] flex items-center gap-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    <span className="text-[9px] flex items-center gap-1" style={{ color: labelColor }}>
                       <Users size={9} /> {skill.endorsements} endorsements
                     </span>
                   </div>
@@ -1350,11 +1465,15 @@ function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof 
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ACTIVITY TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── ACTIVITY TAB ────────────────────────────────────────────────────────────
 
 function ActivityTab() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
   return (
     <div className="space-y-5">
       {/* Contribution Heatmap */}
@@ -1372,25 +1491,27 @@ function ActivityTab() {
                 className="w-3.5 h-3.5 rounded-[3px] cursor-default"
                 title={`${level} contributions`}
                 style={{
-                  background: level === 0 ? "rgba(255,255,255,0.04)" :
-                    level === 1 ? "rgba(245,158,11,0.2)" :
-                    level === 2 ? "rgba(245,158,11,0.4)" :
-                    level === 3 ? "rgba(245,158,11,0.65)" :
-                    "rgba(245,158,11,0.9)",
+                  background: level === 0 
+                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
+                    : level === 1 ? "rgba(245,158,11,0.2)" 
+                    : level === 2 ? "rgba(245,158,11,0.4)" 
+                    : level === 3 ? "rgba(245,158,11,0.65)" 
+                    : "rgba(245,158,11,0.9)",
                 }}
               />
             ))}
           </div>
-          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: labelColor }}>
             <span>Less</span>
             {[0, 1, 2, 3, 4].map((l) => (
               <div key={l} className="w-3 h-3 rounded-sm"
                 style={{
-                  background: l === 0 ? "rgba(255,255,255,0.04)" :
-                    l === 1 ? "rgba(245,158,11,0.2)" :
-                    l === 2 ? "rgba(245,158,11,0.4)" :
-                    l === 3 ? "rgba(245,158,11,0.65)" :
-                    "rgba(245,158,11,0.9)",
+                  background: l === 0 
+                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
+                    : l === 1 ? "rgba(245,158,11,0.2)" 
+                    : l === 2 ? "rgba(245,158,11,0.4)" 
+                    : l === 3 ? "rgba(245,158,11,0.65)" 
+                    : "rgba(245,158,11,0.9)",
                 }}
               />
             ))}
@@ -1413,8 +1534,9 @@ function ActivityTab() {
                   transition={{ delay: i * 0.06 }}
                   className="flex items-center gap-3"
                 >
-                  <span className="text-[10px] font-bold w-8" style={{ color: "rgba(255,255,255,0.4)" }}>{item.day}</span>
-                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <span className="text-[10px] font-bold w-8" style={{ color: labelColor }}>{item.day}</span>
+                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" 
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)" }}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${(item.hours / 8) * 100}%` }}
@@ -1423,7 +1545,7 @@ function ActivityTab() {
                       style={{ background: "linear-gradient(90deg, #f59e0b, #ea580c)" }}
                     />
                   </div>
-                  <span className="text-[10px] font-bold w-8 text-right text-white">{item.hours}h</span>
+                  <span className={`text-[10px] font-bold w-8 text-right ${primaryText}`}>{item.hours}h</span>
                 </motion.div>
               ))}
             </div>
@@ -1442,8 +1564,9 @@ function ActivityTab() {
                   transition={{ delay: i * 0.06 }}
                   className="flex items-center gap-3"
                 >
-                  <span className="text-[10px] font-bold w-8" style={{ color: "rgba(255,255,255,0.4)" }}>{item.month}</span>
-                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <span className="text-[10px] font-bold w-8" style={{ color: labelColor }}>{item.month}</span>
+                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" 
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)" }}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${item.value}%` }}
@@ -1452,7 +1575,7 @@ function ActivityTab() {
                       style={{ background: "linear-gradient(90deg, #06b6d4, #3b82f6)" }}
                     />
                   </div>
-                  <span className="text-[10px] font-bold w-8 text-right text-white">{item.value}%</span>
+                  <span className={`text-[10px] font-bold w-8 text-right ${primaryText}`}>{item.value}%</span>
                 </motion.div>
               ))}
             </div>
@@ -1480,16 +1603,19 @@ function ActivityTab() {
                 animate="visible"
                 custom={i}
                 whileHover={{ y: -3, scale: 1.02 }}
-                className="p-4 rounded-[16px] border text-center transition-all"
-                style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+                className="p-4 rounded-[16px] border text-center transition-colors shadow-sm"
+                style={{ 
+                  borderColor: customBorder, 
+                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
+                }}
               >
                 <div className={`w-9 h-9 rounded-xl mx-auto flex items-center justify-center bg-gradient-to-br ${item.gradient} mb-2`}>
                   <item.icon size={16} className="text-white" />
                 </div>
-                <span className="text-xl font-extrabold text-white block">
+                <span className={`text-xl font-extrabold block ${primaryText}`}>
                   <AnimatedCounter value={item.val} />
                 </span>
-                <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.4)" }}>{item.label}</span>
+                <span className="text-[9px]" style={{ color: labelColor }}>{item.label}</span>
               </motion.div>
             ))}
           </div>
@@ -1515,10 +1641,10 @@ function ActivityTab() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.06 }}
                 whileHover={{ y: -4, scale: 1.03 }}
-                className={`h-28 rounded-[16px] bg-gradient-to-br ${item.gradient} border flex items-center justify-center cursor-pointer transition-all relative overflow-hidden group`}
-                style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                className={`h-28 rounded-[16px] bg-gradient-to-br ${item.gradient} border flex items-center justify-center cursor-pointer transition-all relative overflow-hidden group shadow-sm`}
+                style={{ borderColor: customBorder }}
               >
-                <span className="text-[10px] font-bold text-white/60 relative z-10">{item.title}</span>
+                <span className="text-[10px] font-bold text-white/70 relative z-10">{item.title}</span>
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <Eye size={18} className="text-white" />
                 </div>
@@ -1531,11 +1657,15 @@ function ActivityTab() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ACHIEVEMENTS TAB
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── ACHIEVEMENTS TAB ────────────────────────────────────────────────────────
 
 function AchievementsTab() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
   return (
     <div className="space-y-5">
       <GlassCard>
@@ -1551,9 +1681,12 @@ function AchievementsTab() {
                   initial="hidden"
                   animate="visible"
                   custom={i}
-                  whileHover={{ y: -6, scale: 1.04, boxShadow: `0 15px 30px rgba(0,0,0,0.3)` }}
-                  className="p-5 rounded-[20px] border text-center space-y-3 transition-all"
-                  style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)" }}
+                  whileHover={{ y: -6, scale: 1.04, boxShadow: isDark ? "0 15px 30px rgba(0,0,0,0.3)" : "0 15px 20px rgba(0,0,0,0.05)" }}
+                  className="p-5 rounded-[20px] border text-center space-y-3 transition-colors shadow-sm"
+                  style={{ 
+                    borderColor: customBorder, 
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
+                  }}
                 >
                   <motion.div
                     initial={{ scale: 0, rotate: -30 }}
@@ -1563,8 +1696,8 @@ function AchievementsTab() {
                   >
                     <Icon size={24} className={ach.color} />
                   </motion.div>
-                  <span className="text-xs font-bold text-white block">{ach.name}</span>
-                  <span className="text-[9px] block leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{ach.desc}</span>
+                  <span className={`text-xs font-bold block ${primaryText}`}>{ach.name}</span>
+                  <span className="text-[9px] block leading-relaxed" style={{ color: labelColor }}>{ach.desc}</span>
                   <PremiumBadge variant={
                     ach.rarity === "Legendary" ? "amber" :
                     ach.rarity === "Epic" ? "purple" :
@@ -1594,15 +1727,18 @@ function AchievementsTab() {
             animate="visible"
             custom={i}
             whileHover={{ y: -3, scale: 1.02 }}
-            className="p-4 rounded-[20px] border flex items-center gap-3 transition-all"
-            style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+            className="p-4 rounded-[20px] border flex items-center gap-3 transition-colors shadow-sm"
+            style={{ 
+              borderColor: customBorder, 
+              background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
+            }}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${s.gradient} shrink-0`}>
               <s.icon size={16} className="text-white" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase block" style={{ color: "rgba(255,255,255,0.4)" }}>{s.label}</span>
-              <span className="text-xl font-extrabold text-white">
+              <span className="text-[10px] font-bold uppercase block" style={{ color: labelColor }}>{s.label}</span>
+              <span className={`text-xl font-extrabold ${primaryText}`}>
                 <AnimatedCounter value={s.val} prefix={s.prefix || ""} />
               </span>
             </div>

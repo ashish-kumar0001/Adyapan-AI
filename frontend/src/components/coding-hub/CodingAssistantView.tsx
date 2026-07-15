@@ -426,13 +426,13 @@ export function CodingAssistantView() {
         {!sidebarOpen && (
           <motion.button
             key="side-open"
-            className="absolute top-3 left-3 z-30 flex items-center justify-center rounded-xl"
+            className="absolute top-3 left-3 z-30 flex items-center justify-center rounded-lg"
             style={{
-              width: 40,
-              height: 40,
-              background: `linear-gradient(135deg, ${currentTab.color}, #080614)`,
-              color: "#fff",
-              boxShadow: `0 4px 16px ${currentTab.color}40`,
+              width: 32,
+              height: 32,
+              background: "linear-gradient(135deg, #f59e0b, #d97706)",
+              color: "#000",
+              boxShadow: "0 2px 10px rgba(245,158,11,0.3)",
             }}
             initial={{ opacity: 0, scale: 0.8, x: -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -441,7 +441,7 @@ export function CodingAssistantView() {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.92 }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
               <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
               <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
@@ -475,19 +475,19 @@ export function CodingAssistantView() {
                 <div className="flex items-center gap-2">
                   <motion.button
                     onClick={() => setSidebarOpen(false)}
-                    className="flex items-center justify-center rounded-xl flex-shrink-0"
+                    className="flex items-center justify-center rounded-lg flex-shrink-0"
                     style={{
-                      width: 40,
-                      height: 40,
-                      background: `linear-gradient(135deg, ${currentTab.color}, #1f2937)`,
-                      color: "#fff",
-                      boxShadow: `0 3px 12px ${currentTab.color}30`,
+                      width: 32,
+                      height: 32,
+                      background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                      color: "#000",
+                      boxShadow: "0 2px 10px rgba(245,158,11,0.3)",
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.94 }}
                     title="Close sidebar"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                       <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
                       <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
                       <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
