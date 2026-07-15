@@ -2026,14 +2026,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                 />
                 <div style={{ height: `${terminalHeight}%` }} className="flex flex-col border-t border-[var(--border-color)] bg-black/30 shrink-0 overflow-hidden">
                   {/* Terminal header */}
-                  <div className="h-8 border-b border-[var(--border-color)] flex items-center justify-between px-3 bg-black/30 shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      <Terminal size={12} className="text-amber-500" />
+                  <div className="h-8 border-b border-[var(--border-color)] flex items-center justify-between px-3 bg-black/30 shrink-0 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0 shrink overflow-x-auto scrollbar-none">
+                      <Terminal size={12} className="text-amber-500 shrink-0" />
                       {(["input", "output", "testcases", "history"] as const).map(tab => (
                         <button
                           key={tab}
                           onClick={() => setOutputTab(tab)}
-                          className={`text-[10px] px-2.5 py-1 rounded transition font-semibold ${
+                          className={`text-[10px] px-2 py-0.5 rounded transition font-semibold whitespace-nowrap shrink-0 ${
                             outputTab === tab
                               ? "bg-white/10 text-[var(--text-primary)]"
                               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -2049,14 +2049,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         </button>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       {/* Run Code Section helpers */}
                       <button
                         onClick={() => {
                           setCode(DEFAULT_CODE[language as keyof typeof DEFAULT_CODE] || "");
                           toast.info("Code reset to template.");
                         }}
-                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center"
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center shrink-0"
                         title="Reset Code template"
                       >
                         <RotateCcw size={10} />
@@ -2067,7 +2067,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           setRunDetails(null);
                           toast.info("Output console cleared.");
                         }}
-                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center"
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center shrink-0"
                         title="Clear Output"
                       >
                         <Trash2 size={10} />
@@ -2077,17 +2077,17 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           navigator.clipboard.writeText(output || "");
                           toast.success("Output copied to clipboard.");
                         }}
-                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center mr-1.5"
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center mr-1 shrink-0"
                         title="Copy Output"
                       >
                         <Copy size={10} />
                       </button>
-                      <div className="h-4 w-px bg-[var(--border-color)] mr-1.5" />
+                      <div className="h-4 w-px bg-[var(--border-color)] mr-1 shrink-0" />
                       <select
                         value={reviewMode}
                         onChange={(e) => setReviewMode(e.target.value)}
                         disabled={isReviewing}
-                        className="bg-white/5 text-[9px] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg px-2 py-0.5 focus:outline-none focus:border-white/20 transition cursor-pointer font-bold"
+                        className="bg-white/5 text-[9px] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg px-2 py-0.5 focus:outline-none focus:border-white/20 transition cursor-pointer font-bold shrink-0"
                       >
                         <option value="interview" className="bg-zinc-950 text-white">Interview</option>
                         <option value="beginner" className="bg-zinc-950 text-white">Beginner</option>
@@ -2097,7 +2097,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       <button
                         onClick={handleRequestReview}
                         disabled={isRunning || isSubmitting || isReviewing}
-                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-violet-600 hover:bg-violet-700 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-white font-black rounded-lg transition"
+                        className="flex items-center gap-1 text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 bg-violet-600 hover:bg-violet-700 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-white font-black rounded-lg transition shrink-0 whitespace-nowrap"
                       >
                         {isReviewing ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />}
                         <span>{isReviewing ? "Reviewing..." : "Review Code"}</span>
@@ -2105,7 +2105,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       <button
                         onClick={handleRun}
                         disabled={isRunning || isSubmitting}
-                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition animate-none"
+                        className="flex items-center gap-1 text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition animate-none shrink-0 whitespace-nowrap"
                       >
                         {isRunning ? <RefreshCw size={10} className="animate-spin" /> : <Play size={10} />}
                         <span>{isRunning ? "Running..." : "Run"}</span>
@@ -2113,7 +2113,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       <button
                         onClick={handleSubmit}
                         disabled={isRunning || isSubmitting}
-                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition"
+                        className="flex items-center gap-1 text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition shrink-0 whitespace-nowrap"
                       >
                         {isSubmitting ? <RefreshCw size={10} className="animate-spin" /> : <Send size={10} />}
                         <span>{isSubmitting ? "Judging..." : "Submit"}</span>
@@ -2121,7 +2121,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
                       <button
                         onClick={() => setShowTerminal(false)}
-                        className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5"
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 shrink-0"
                       >
                         <Minimize2 size={10} />
                       </button>
@@ -2183,18 +2183,18 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
             {/* Run button bar when terminal is hidden */}
             {!showTerminal && (
-              <div className="h-10 border-t border-[var(--border-color)] bg-black/25 flex items-center justify-between px-6 shrink-0 z-10">
-                <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-secondary)]">
-                  <Terminal size={14} className="text-amber-500" />
-                  <span>Piston Code Engine</span>
+              <div className="h-10 border-t border-[var(--border-color)] bg-black/25 flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 min-w-0">
+                <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-secondary)] min-w-0 shrink">
+                  <Terminal size={14} className="text-amber-500 shrink-0" />
+                  <span className="truncate whitespace-nowrap">Piston Code Engine</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     onClick={() => {
                       setCode(DEFAULT_CODE[language as keyof typeof DEFAULT_CODE] || "");
                       toast.info("Code reset to template.");
                     }}
-                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition"
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition shrink-0"
                     title="Reset Code template"
                   >
                     <RotateCcw size={12} />
@@ -2205,7 +2205,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       setRunDetails(null);
                       toast.info("Output console cleared.");
                     }}
-                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition"
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition shrink-0"
                     title="Clear Output"
                   >
                     <Trash2 size={12} />
@@ -2215,17 +2215,17 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       navigator.clipboard.writeText(output || "");
                       toast.success("Output copied to clipboard.");
                     }}
-                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition mr-2"
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition mr-1 sm:mr-2 shrink-0"
                     title="Copy Output"
                   >
                     <Copy size={12} />
                   </button>
-                  <div className="h-5 w-px bg-[var(--border-color)] mr-2" />
+                  <div className="h-5 w-px bg-[var(--border-color)] mr-1 sm:mr-2 shrink-0" />
                   <select
                     value={reviewMode}
                     onChange={(e) => setReviewMode(e.target.value)}
                     disabled={isReviewing}
-                    className="bg-white/5 text-[10px] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg px-2.5 py-1 focus:outline-none focus:border-white/20 transition cursor-pointer font-bold"
+                    className="bg-white/5 text-[10px] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg px-2 py-1 focus:outline-none focus:border-white/20 transition cursor-pointer font-bold shrink-0"
                   >
                     <option value="interview" className="bg-zinc-950 text-white">Interview</option>
                     <option value="beginner" className="bg-zinc-950 text-white">Beginner</option>
@@ -2235,7 +2235,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   <button
                     onClick={handleRequestReview}
                     disabled={isRunning || isSubmitting || isReviewing}
-                    className="flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-700 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-white font-bold px-4 py-1.5 rounded-lg transition"
+                    className="flex items-center gap-1 text-[10px] sm:text-xs bg-violet-600 hover:bg-violet-700 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-white font-bold px-2.5 sm:px-4 py-1.5 rounded-lg transition shrink-0 whitespace-nowrap"
                   >
                     {isReviewing ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
                     <span>{isReviewing ? "Reviewing..." : "Review Code"}</span>
@@ -2243,7 +2243,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   <button
                     onClick={handleRun}
                     disabled={isRunning || isSubmitting}
-                    className="flex items-center gap-1.5 text-xs bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-4 py-1.5 rounded-lg transition"
+                    className="flex items-center gap-1 text-[10px] sm:text-xs bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-2.5 sm:px-4 py-1.5 rounded-lg transition shrink-0 whitespace-nowrap"
                   >
                     {isRunning ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
                     <span>{isRunning ? "Running..." : "Run"}</span>
@@ -2251,7 +2251,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   <button
                     onClick={handleSubmit}
                     disabled={isRunning || isSubmitting}
-                    className="flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-4 py-1.5 rounded-lg transition"
+                    className="flex items-center gap-1 text-[10px] sm:text-xs bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-bold px-2.5 sm:px-4 py-1.5 rounded-lg transition shrink-0 whitespace-nowrap"
                   >
                     {isSubmitting ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />}
                     <span>{isSubmitting ? "Judging..." : "Submit"}</span>
