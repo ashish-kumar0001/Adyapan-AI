@@ -279,27 +279,25 @@ export default function CodingRoadmapPage() {
         setSidebarOpen={setSidebarOpen}
       />
 
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto relative z-10">
+      <DashboardTopNav
+        user={user}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onComingSoon={handleComingSoon}
+        onViewProfile={handleViewProfile}
+        onAdyChat={handleAdyChat}
+        onViewTool={handleViewTool}
+        onMenuToggle={() => setSidebarOpen(prev => !prev)}
+        notifications={notifications}
+        setNotifications={setNotifications}
+        unreadCount={unreadCount}
+        onMarkAllRead={() => {}}
+        onClearAll={() => {}}
+        onPremium={handlePremium}
+        onViewSettings={() => handleViewTool("settings")}
+      />
 
-        <DashboardTopNav
-          user={user}
-          theme={theme}
-          onThemeToggle={handleThemeToggle}
-          onComingSoon={handleComingSoon}
-          onViewProfile={handleViewProfile}
-          onAdyChat={handleAdyChat}
-          onViewTool={handleViewTool}
-          onMenuToggle={() => setSidebarOpen(prev => !prev)}
-          notifications={notifications}
-          setNotifications={setNotifications}
-          unreadCount={unreadCount}
-          onMarkAllRead={() => {}}
-          onClearAll={() => {}}
-          onPremium={handlePremium}
-          onViewSettings={() => handleViewTool("settings")}
-        />
-
-        <div className="px-4 md:px-8 py-6 mt-[70px]">
+      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6">
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 mb-8" style={{ borderBottom: "1px solid var(--border-color)" }}>
@@ -823,8 +821,7 @@ export default function CodingRoadmapPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
