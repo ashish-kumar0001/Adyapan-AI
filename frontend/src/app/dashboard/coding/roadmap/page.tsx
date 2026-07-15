@@ -311,18 +311,15 @@ export default function CodingRoadmapPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 h-9">
               {roadmap && (
                 <>
-                  <PremiumButton variant="secondary" className="text-xs py-2" onClick={handleUpdateProgress}>
+                  <PremiumButton variant="secondary" className="text-xs h-9" onClick={handleUpdateProgress}>
                     <RefreshCw className="w-4 h-4 mr-2" /> Sync Progress
                   </PremiumButton>
-                  <button
-                    onClick={handleResetRoadmap}
-                    className="px-4 py-2 border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-semibold transition"
-                  >
+                  <PremiumButton variant="secondary" className="text-xs h-9 !border-red-500/20 !text-red-400 hover:!bg-red-500/10" onClick={handleResetRoadmap}>
                     Regenerate
-                  </button>
+                  </PremiumButton>
                 </>
               )}
             </div>
