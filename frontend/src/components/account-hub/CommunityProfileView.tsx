@@ -4,13 +4,13 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useInView, type Variants } from "framer-motion";
 import {
   User, Award, Users, Globe, Share2, MessageSquare,
-  ExternalLink, Star, BookOpen, Code2, FileText, Trophy,
+  ExternalLink, Star, BookOpen, Code2, FileText, Trophy, Target,
   TrendingUp, Calendar, Clock, Eye, Heart, Download, ArrowUpRight,
   Zap, Brain, GraduationCap, Flame,
   Bookmark, Lightbulb, Layers, GitBranch,
   Quote, BadgeCheck, Rocket, Coffee, Crown, Medal, BrainCircuit,
   BarChart3, Activity, Folder, ImageIcon, Plus,
-  MapPin, Send, Terminal, Cpu, Database, Wifi, Lock, Sun, Server
+  MapPin, Terminal, Cpu, Database, Wifi, Lock, Sun, Server
 } from "lucide-react";
 import CountUp from "react-countup";
 import { toast } from "sonner";
@@ -687,159 +687,127 @@ export function CommunityProfileView() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* MAIN CONTENT + SIDEBAR                                            */}
+      {/* FULL-WIDTH PROFILE SUMMARY ROW                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="flex gap-5">
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
-            >
-              {activeTab === "overview" && <OverviewTab />}
-              {activeTab === "projects" && <ProjectsTab projectFilter={projectFilter} setProjectFilter={setProjectFilter} />}
-              {activeTab === "research" && <ResearchTab />}
-              {activeTab === "skills" && <SkillsTab skillFilter={skillFilter} setSkillFilter={setSkillFilter} />}
-              {activeTab === "activity" && <ActivityTab />}
-              {activeTab === "achievements" && <AchievementsTab />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* RIGHT SIDEBAR                                                  */}
-        {/* ═══════════════════════════════════════════════════════════════ */}
-        <aside className="hidden xl:block w-[270px] shrink-0 space-y-4 sticky top-0 max-h-[calc(100vh-160px)] overflow-y-auto pb-4"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
-          {/* Profile Summary Card */}
-          <GlassCard glow glowColor="rgba(245,158,11,0.06)">
-            <div className="p-5 space-y-4">
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl mx-auto overflow-hidden mb-2"
-                  style={{ border: "2px solid rgba(245,158,11,0.3)", boxShadow: "0 0 20px rgba(245,158,11,0.15)" }}>
-                  <img src={getDiceBearUrl(displayName)} alt="avatar" width={56} height={56} className="block" />
-                </div>
-                <span className="text-xs font-extrabold text-white block">{displayName}</span>
-                <span className="text-[10px] block" style={{ color: "rgba(255,255,255,0.4)" }}>{username}</span>
-              </div>
-
-              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-              <div className="space-y-3">
-                {[
-                  { label: "Reputation Score", val: "4,820", icon: Award, color: "text-amber-400", gradient: "from-amber-500 to-orange-500" },
-                  { label: "Global Rank", val: "#14", icon: Trophy, color: "text-purple-400", gradient: "from-purple-500 to-indigo-500" },
-                  { label: "University Rank", val: "#3", icon: GraduationCap, color: "text-cyan-400", gradient: "from-cyan-500 to-blue-500" },
-                  { label: "Skill Level", val: "Expert", icon: Zap, color: "text-emerald-400", gradient: "from-emerald-500 to-teal-500" },
-                  { label: "Learning Streak", val: "14 days", icon: Flame, color: "text-orange-400", gradient: "from-orange-500 to-red-500" },
-                  { label: "Current Focus", val: "AI/ML", icon: Brain, color: "text-blue-400", gradient: "from-blue-500 to-indigo-500" },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
-                        <item.icon size={10} className="text-white" />
-                      </div>
-                      {item.label}
-                    </span>
-                    <span className="font-bold text-white">{item.val}</span>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-              <div className="space-y-2">
-                {[
-                  { label: "View Projects", icon: Folder, primary: true },
-                  { label: "View Research", icon: BookOpen, primary: false },
-                  { label: "Contact", icon: Send, primary: false },
-                ].map((btn, i) => (
-                  <motion.button
-                    key={i}
-                    whileHover={{ scale: 1.02, x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all"
-                    style={btn.primary ? {
-                      background: "rgba(245,158,11,0.1)",
-                      border: "1px solid rgba(245,158,11,0.2)",
-                      color: "#f59e0b",
-                    } : {
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      color: "rgba(255,255,255,0.5)",
-                      background: "rgba(255,255,255,0.02)",
-                    }}
-                  >
-                    <btn.icon size={11} /> {btn.label}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
-
-          {/* Recent Achievements */}
-          <GlassCard>
-            <div className="p-5 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
-                Recent Badges
-              </span>
-              {MOCK_ACHIEVEMENTS.slice(0, 5).map((a, i) => {
-                const Icon = a.icon;
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + i * 0.05 }}
-                    whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.04)" }}
-                    className="flex items-center gap-3 p-2 rounded-xl transition-all cursor-default"
-                  >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${a.bg} shrink-0`}>
-                      <Icon size={16} className={a.color} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Profile Summary */}
+        <GlassCard glow glowColor="rgba(245,158,11,0.06)">
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Profile Summary</span>
+            <div className="space-y-2.5">
+              {[
+                { label: "Reputation Score", val: "4,820", icon: Award, gradient: "from-amber-500 to-orange-500" },
+                { label: "Global Rank", val: "#14", icon: Trophy, gradient: "from-purple-500 to-indigo-500" },
+                { label: "University Rank", val: "#3", icon: GraduationCap, gradient: "from-cyan-500 to-blue-500" },
+                { label: "Skill Level", val: "Expert", icon: Zap, gradient: "from-emerald-500 to-teal-500" },
+              ].map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
+                      <item.icon size={10} className="text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-bold block text-white truncate">{a.name}</span>
-                      <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{a.rarity}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                    {item.label}
+                  </span>
+                  <span className="font-bold text-white">{item.val}</span>
+                </motion.div>
+              ))}
             </div>
-          </GlassCard>
+          </div>
+        </GlassCard>
 
-          {/* Active Status Card */}
-          <GlassCard>
-            <div className="p-5 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
-                Quick Stats
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: "Online", val: "2h 14m", icon: Wifi, color: "text-emerald-400" },
-                  { label: "This Week", val: "28h", icon: Clock, color: "text-cyan-400" },
-                  { label: "Avg. Daily", val: "4.2h", icon: Coffee, color: "text-amber-400" },
-                  { label: "Peak Hour", val: "11 PM", icon: Sun, color: "text-purple-400" },
-                ].map((stat, i) => (
-                  <div key={i} className="p-2.5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                    <stat.icon size={12} className={`${stat.color} mx-auto mb-1`} />
-                    <span className="text-[9px] block" style={{ color: "rgba(255,255,255,0.35)" }}>{stat.label}</span>
-                    <span className="text-[10px] font-bold text-white block">{stat.val}</span>
+        {/* Recent Badges */}
+        <GlassCard>
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Recent Badges</span>
+            {MOCK_ACHIEVEMENTS.slice(0, 4).map((a, i) => {
+              const Icon = a.icon;
+              return (
+                <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 + i * 0.04 }}
+                  className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${a.bg} shrink-0`}>
+                    <Icon size={14} className={a.color} />
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-bold block text-white truncate">{a.name}</span>
+                    <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{a.rarity}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        {/* Quick Stats */}
+        <GlassCard>
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Quick Stats</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Online", val: "2h 14m", icon: Wifi, color: "text-emerald-400" },
+                { label: "This Week", val: "28h", icon: Clock, color: "text-cyan-400" },
+                { label: "Avg. Daily", val: "4.2h", icon: Coffee, color: "text-amber-400" },
+                { label: "Peak Hour", val: "11 PM", icon: Sun, color: "text-purple-400" },
+              ].map((stat, i) => (
+                <div key={i} className="p-2.5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <stat.icon size={12} className={`${stat.color} mx-auto mb-1`} />
+                  <span className="text-[9px] block" style={{ color: "rgba(255,255,255,0.35)" }}>{stat.label}</span>
+                  <span className="text-[10px] font-bold text-white block">{stat.val}</span>
+                </div>
+              ))}
             </div>
-          </GlassCard>
-        </aside>
+          </div>
+        </GlassCard>
+
+        {/* Learning Streak & Focus */}
+        <GlassCard>
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>Learning Pulse</span>
+            <div className="space-y-2.5">
+              {[
+                { label: "Learning Streak", val: "14 days", icon: Flame, gradient: "from-orange-500 to-red-500" },
+                { label: "Current Focus", val: "AI/ML", icon: Brain, gradient: "from-blue-500 to-indigo-500" },
+                { label: "Courses Active", val: "3", icon: BookOpen, gradient: "from-purple-500 to-pink-500" },
+                { label: "Next Goal", val: "500 DSA", icon: Target, gradient: "from-emerald-500 to-teal-500" },
+              ].map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
+                      <item.icon size={10} className="text-white" />
+                    </div>
+                    {item.label}
+                  </span>
+                  <span className="font-bold text-white">{item.val}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* TAB CONTENT - FULL WIDTH                                           */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.25 }}
+        >
+          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "projects" && <ProjectsTab projectFilter={projectFilter} setProjectFilter={setProjectFilter} />}
+          {activeTab === "research" && <ResearchTab />}
+          {activeTab === "skills" && <SkillsTab skillFilter={skillFilter} setSkillFilter={setSkillFilter} />}
+          {activeTab === "activity" && <ActivityTab />}
+          {activeTab === "achievements" && <AchievementsTab />}
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 }
