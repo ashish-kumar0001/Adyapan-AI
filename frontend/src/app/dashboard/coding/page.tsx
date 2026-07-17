@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import {
   Code2, Search, BookMarked, CheckCircle2, AlertCircle, Play, Sparkles,
   Trophy, Clock, RefreshCw, X, ChevronRight, HelpCircle, ExternalLink,
-  Check, Award
+  Check, Award, Lightbulb, Zap
 } from "lucide-react";
 import {
   FloatingOrbs,
@@ -18,6 +18,10 @@ import {
   PremiumBadge,
   PremiumProgressBar
 } from "@/components/ui/PremiumComponents";
+import {
+  CodingEmptyState,
+  codingFadeUp
+} from "@/components/coding-hub/CodingHubShared";
 import {
   DashboardSidebar,
   DashboardTopNav,
@@ -480,7 +484,7 @@ export default function CodingHubPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm dark:shadow-none backdrop-blur-md flex flex-col justify-between min-h-[110px]"
+              className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm dark:shadow-none backdrop-blur-md flex flex-col justify-between min-h-[110px] hover:border-amber-500/30 hover:shadow-[0_0_20px_rgba(245,158,11,0.06)] transition-all duration-300"
             >
               <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">{card.label}</span>
               <div className="mt-2 flex flex-col">
@@ -541,7 +545,7 @@ export default function CodingHubPage() {
           </PremiumCard>
 
           {/* AI Recommendations Panel */}
-          <PremiumCard className="p-6 h-full flex flex-col justify-between bg-[var(--bg-card)] border-[var(--border-color)] shadow-md dark:shadow-none">
+          <PremiumCard className="p-6 h-full flex flex-col justify-between bg-[var(--bg-card)] border-[var(--border-color)] shadow-md dark:shadow-none hover:border-purple-500/20 hover:shadow-[0_0_24px_rgba(168,85,247,0.04)] transition-all duration-300">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-purple-500 tracking-wider uppercase mb-3">
                 <Sparkles size={14} /> AI Recommendation
@@ -750,10 +754,10 @@ export default function CodingHubPage() {
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-[var(--text-secondary)]">
                         <div className="flex flex-col items-center justify-center">
-                          <AlertCircle size={32} className="text-[var(--text-secondary)]/55 mb-2" />
-                          <p className="font-bold text-sm text-[var(--text-primary)] opacity-80">No Questions Available Yet</p>
+                          <Code2 size={32} className="text-[var(--text-secondary)]/25 mb-2" />
+                          <p className="font-bold text-sm text-[var(--text-primary)]">No Questions Available Yet</p>
                           <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">Sync Codeforces Repository to begin.</p>
-                          <PremiumButton variant="secondary" onClick={handleSyncRepository} icon={<RefreshCw size={12} />}>
+                          <PremiumButton variant="primary" onClick={handleSyncRepository} icon={<RefreshCw size={12} />}>
                             Sync Problems
                           </PremiumButton>
                         </div>
@@ -947,7 +951,7 @@ export default function CodingHubPage() {
                         </>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
-                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <Sparkles size={28} className="text-amber-500/30 mb-2 animate-pulse" />
                           <p className="text-xs text-[var(--text-primary)] font-bold">Need AI problem explanation & coaching?</p>
                           <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 mb-4">Instant analysis powered by Gemini.</p>
                           
@@ -981,7 +985,7 @@ export default function CodingHubPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
-                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <Lightbulb size={28} className="text-amber-500/30 mb-2" />
                           <p className="text-xs text-[var(--text-primary)] font-bold">Analyze question to retrieve sequential hints</p>
                           <PremiumButton variant="glow" className="mt-4" onClick={handleGenerateAIAnalysis} loading={generatingAnalysis} icon={<Sparkles size={12} />}>
                             Analyze Question
@@ -1033,7 +1037,7 @@ export default function CodingHubPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-10 border border-dashed border-[var(--border-color)] rounded-xl">
-                          <HelpCircle size={28} className="text-[var(--text-secondary)] mb-2" />
+                          <Zap size={28} className="text-amber-500/30 mb-2" />
                           <p className="text-xs text-[var(--text-primary)] font-bold">Generate analysis for optimal algorithmic choices</p>
                           <PremiumButton variant="glow" className="mt-4" onClick={handleGenerateAIAnalysis} loading={generatingAnalysis} icon={<Sparkles size={12} />}>
                             Analyze Question
