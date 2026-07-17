@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/components/providers/LenisProvider";
+import ThemeScript from "@/components/providers/ThemeScript";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -32,6 +33,7 @@ export default function RootLayout({
       className={`${outfit.variable} ${plusJakarta.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <ThemeScript />
         <LenisProvider />
         <Toaster position="top-right" richColors closeButton />
         {children}

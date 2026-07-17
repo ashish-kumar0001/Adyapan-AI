@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { generateCode, debugCode, explainCode, generateProject } from "../lib/ai/coding";
+import { generateCode, debugCode, explainCode, generateProject, generateMultiLanguageCode, streamCodingAssistant } from "../lib/ai/coding";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { prisma as masterPrisma } from "../config/prisma";
@@ -10,11 +10,276 @@ import { executeCode, runTestCases, checkPistonHealth } from "../services/piston
 import { AIReviewService } from "../services/ai-review.service";
 import { ComplexityService } from "../services/complexity.service";
 import { CodingRoadmapService } from "../services/coding-roadmap.service";
+import { requireUserId } from "../utils/request";
 
 
 
 const router = Router();
 router.use(requireAuth);
+
+// ─── Coding Assistant Session Management ──────────────────────────────────────
+
+router.get("/assistant/sessions", async (req: any, res) => {
+  try {
+    const userId = requireUserId(req);
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.codingSession.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, title: true, mode: true, languages: true, createdAt: true, updatedAt: true },
+    });
+    res.json({ success: true, sessions });
+  } catch (error) {
+    handleRouteError(res, error, "CodingAssistant.sessions", "Failed to list sessions");
+  }
+});
+
+router.post("/assistant/sessions", async (req: any, res) => {
+  try {
+    const userId = requireUserId(req);
+    const { title, mode, languages } = req.body;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.codingSession.create({
+      data: {
+        userId,
+        title: title || "New Coding Session",
+        mode: mode || "generate",
+        languages: languages || ["javascript"],
+      },
+    });
+    res.status(201).json({ success: true, session });
+  } catch (error) {
+    handleRouteError(res, error, "CodingAssistant.createSession", "Failed to create session");
+  }
+});
+
+router.get("/assistant/sessions/:id", async (req: any, res) => {
+  try {
+    const userId = requireUserId(req);
+    const sessionId = req.params.id;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.codingSession.findFirst({
+      where: { id: sessionId, userId },
+      include: {
+        messages: { orderBy: { createdAt: "asc" } },
+      },
+    });
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    res.json({ success: true, session });
+  } catch (error) {
+    handleRouteError(res, error, "CodingAssistant.getSession", "Failed to get session");
+  }
+});
+
+router.delete("/assistant/sessions/:id", async (req: any, res) => {
+  try {
+    const userId = requireUserId(req);
+    const sessionId = req.params.id;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.codingSession.findFirst({
+      where: { id: sessionId, userId },
+    });
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    await userPrisma.codingSession.delete({ where: { id: sessionId } });
+    res.json({ success: true, message: "Session deleted" });
+  } catch (error) {
+    handleRouteError(res, error, "CodingAssistant.deleteSession", "Failed to delete session");
+  }
+});
+
+router.post("/assistant/sessions/:id/messages", async (req: any, res) => {
+  try {
+    const userId = requireUserId(req);
+    const sessionId = req.params.id;
+    const { message, languages, codeSnippet, errorMsg } = req.body;
+
+    if (!message) return res.status(400).json({ error: "message is required" });
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const session = await userPrisma.codingSession.findFirst({
+      where: { id: sessionId, userId },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
+    if (!session) return res.status(404).json({ error: "Session not found" });
+
+    const sessionLanguages = languages || session.languages || ["javascript"];
+
+    // Save user message
+    await userPrisma.codingMessage.create({
+      data: {
+        sessionId: session.id,
+        role: "user",
+        content: message,
+        mode: session.mode,
+        codeSnippet: codeSnippet || null,
+        errorMsg: errorMsg || null,
+        languages: sessionLanguages,
+      },
+    });
+
+    // Update session title from first message
+    const userMsgCount = await userPrisma.codingMessage.count({
+      where: { sessionId: session.id, role: "user" },
+    });
+    if (userMsgCount <= 1 && session.title === "New Coding Session") {
+      await userPrisma.codingSession.update({
+        where: { id: session.id },
+        data: {
+          title: message.slice(0, 60) + (message.length > 60 ? "..." : ""),
+          languages: sessionLanguages,
+        },
+      });
+    } else {
+      await userPrisma.codingSession.update({
+        where: { id: session.id },
+        data: { languages: sessionLanguages, updatedAt: new Date() },
+      });
+    }
+
+    // Build conversation history for AI
+    const previousMessages = session.messages.map((m: any) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+    let systemPrompt = "";
+
+    if (session.mode === "debug") {
+      systemPrompt = `You are an expert debugging assistant. Analyze the error and code provided.
+Fix the bug and explain the root cause.
+Return a JSON response with keys: "issue", "rootCause", "fixedCode", "explanation", "timeComplexity", "spaceComplexity".
+Always return valid JSON only, no markdown wrapping.`;
+    } else if (session.mode === "explain") {
+      systemPrompt = `You are a code explanation expert. Break down the code line by line.
+Explain the logic, patterns used, and time/space complexity.
+Return a JSON response with keys: "explanation", "timeComplexity", "spaceComplexity", "keyInsights" (array of strings).
+Always return valid JSON only, no markdown wrapping.`;
+    } else if (session.mode === "project") {
+      systemPrompt = `You are a senior software architect. Design comprehensive project plans.
+Return a JSON response with keys: "architecture", "techStack" (array), "folderStructure", "features" (array), "roadmap" (array), "estimatedTime".
+Always return valid JSON only, no markdown wrapping.`;
+    } else {
+      systemPrompt = `You are a world-class polyglot software engineer and coding assistant.
+The user has selected these programming languages: [${sessionLanguages.map((l: string) => `"${l}"`).join(", ")}].
+
+Generate production-ready code in ALL requested languages.
+Return a JSON response with keys:
+- "languages": { "<lang>": { "code": "...", "explanation": "...", "timeComplexity": "...", "spaceComplexity": "..." } }
+- "summary": "Brief overall explanation of the approach (2-3 sentences)"
+
+Always return valid JSON only, no markdown wrapping.`;
+    }
+
+    const allMessages = [
+      { role: "system" as const, content: systemPrompt },
+      ...previousMessages,
+      { role: "user" as const, content: errorMsg ? `Error: ${errorMsg}\n\nCode:\n${message}` : message },
+    ];
+
+    // Set up SSE streaming
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    let fullResponse = "";
+
+    await streamCodingAssistant(
+      allMessages,
+      (chunk) => {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({ type: "chunk", text: chunk })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
+      },
+      async () => {
+        // Try to parse as JSON for structured results
+        let parsedResults: any = null;
+        try {
+          const cleaned = fullResponse.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+          const firstBrace = cleaned.indexOf("{");
+          const lastBrace = cleaned.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace > firstBrace) {
+            parsedResults = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+          }
+        } catch {
+          // Not valid JSON, keep as markdown text
+        }
+
+        // Save assistant message
+        await userPrisma.codingMessage.create({
+          data: {
+            sessionId: session.id,
+            role: "assistant",
+            content: fullResponse,
+            mode: session.mode,
+            results: parsedResults || undefined,
+            languages: sessionLanguages,
+          },
+        });
+
+        res.write(`data: ${JSON.stringify({ type: "done", results: parsedResults })}\n\n`);
+        if (typeof (res as any).flush === "function") (res as any).flush();
+        res.end();
+      },
+      (error) => {
+        console.error("[CodingAssistant] Stream error:", error.message);
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, error: error.message });
+        } else {
+          res.write(`data: ${JSON.stringify({ type: "error", message: error.message })}\n\n`);
+          if (typeof (res as any).flush === "function") (res as any).flush();
+          res.end();
+        }
+      }
+    );
+  } catch (error) {
+    if (!res.headersSent) {
+      handleRouteError(res, error, "CodingAssistant.sendMessage", "Failed to send message");
+    } else {
+      res.write(`data: ${JSON.stringify({ type: "error", message: "Internal error" })}\n\n`);
+      if (typeof (res as any).flush === "function") (res as any).flush();
+      res.end();
+    }
+  }
+});
+
+// ─── Multi-Language Code Generation (Standalone) ──────────────────────────────
+
+router.post("/generate-multi", async (req: any, res) => {
+  try {
+    const { prompt, languages } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Prompt is required" });
+    if (!languages || !Array.isArray(languages) || languages.length === 0) {
+      return res.status(400).json({ error: "At least one language is required" });
+    }
+    const result = await generateMultiLanguageCode(prompt, languages);
+    res.json({ success: true, results: result });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.generateMulti", "Failed to generate multi-language code");
+  }
+});
+
+// ─── Standalone Code Execution (via Piston) ───────────────────────────────────
+
+router.post("/run", async (req: any, res) => {
+  try {
+    const { code, language, stdin = "" } = req.body;
+    if (!code || !language) {
+      return res.status(400).json({ error: "code and language are required" });
+    }
+    const result = await executeCode(language, code, stdin);
+    res.json({
+      success: result.success,
+      output: result.stdout,
+      error: result.stderr || result.compile_output,
+      executionTime: result.executionTime,
+      memory: result.memory,
+      status: result.status,
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.run", "Failed to execute code");
+  }
+});
 
 // ─── Existing AI Code Helper Routes ──────────────────────────────────────────
 

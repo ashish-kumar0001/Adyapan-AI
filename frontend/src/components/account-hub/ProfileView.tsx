@@ -53,15 +53,6 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } }
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } }
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.08 } }
-};
-
 // ─── Helper: Completion % ──────────────────────────────────────────────────
 function calcCompletion(p: ProfileData | null): number {
   if (!p) return 0;
@@ -346,7 +337,6 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
   const completion = calcCompletion(profile);
   const displayName = profile?.user?.name ?? "User";
   const email = profile?.user?.email ?? "";
-  const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
   const skills = profile?.skills ?? [];
   const domains = profile?.interestedDomains ?? [];
   const memberSince = profile?.user?.createdAt ? new Date(profile.user.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "";
@@ -471,6 +461,7 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
               <div className="relative w-20 h-20 mx-auto mb-3">
                 <div className="w-20 h-20 rounded-full border-4 shadow-lg overflow-hidden"
                   style={{ borderColor: c.primary, background: c.cardBg }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={getDiceBearUrl(displayName)} alt="avatar" width={80} height={80}
                     style={{ borderRadius: "50%", display: "block" }} />
                 </div>

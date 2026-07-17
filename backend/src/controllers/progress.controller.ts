@@ -9,9 +9,10 @@ export async function calculateProgress(req: Request, res: Response): Promise<vo
     const userPrisma = await getUserPrismaFromRequest(req);
     const payload = await ProgressService.calculateProgress(userId, userPrisma);
     res.json({ success: true, data: payload });
-  } catch (error: any) {
+  } catch (error) {
     console.error("calculateProgress error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to calculate progress" });
+    const msg = error instanceof Error ? error.message : "Failed to calculate progress";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -22,9 +23,10 @@ export async function getProgressDashboard(req: Request, res: Response): Promise
     const userPrisma = await getUserPrismaFromRequest(req);
     const payload = await ProgressService.getDashboard(userId, userPrisma);
     res.json({ success: true, data: payload });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getProgressDashboard error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch progress dashboard" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch progress dashboard";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -38,9 +40,10 @@ export async function getTopicProgress(req: Request, res: Response): Promise<voi
       orderBy: { progressPercentage: "desc" },
     });
     res.json({ success: true, topics });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getTopicProgress error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch topic progress" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch topic progress";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -54,9 +57,10 @@ export async function getConceptMastery(req: Request, res: Response): Promise<vo
       orderBy: { masteryScore: "desc" },
     });
     res.json({ success: true, concepts });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getConceptMastery error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch concept mastery" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch concept mastery";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -70,9 +74,10 @@ export async function getMilestones(req: Request, res: Response): Promise<void> 
       success: true,
       milestones: (progress?.milestonesJson as any[]) || [],
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getMilestones error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch milestones" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch milestones";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -83,9 +88,10 @@ export async function getProgressRecommendations(req: Request, res: Response): P
     const userPrisma = await getUserPrismaFromRequest(req);
     const payload = await ProgressService.calculateProgress(userId, userPrisma);
     res.json({ success: true, recommendations: payload.recommendations, insights: payload.insights });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getProgressRecommendations error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch recommendations" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch recommendations";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -99,9 +105,10 @@ export async function getTimeline(req: Request, res: Response): Promise<void> {
       success: true,
       timeline: (progress?.timelineJson as any[]) || [],
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getTimeline error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch timeline" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch timeline";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -115,9 +122,10 @@ export async function getRevisionQueue(req: Request, res: Response): Promise<voi
       success: true,
       revisionQueue: (progress?.revisionQueueJson as any[]) || [],
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getRevisionQueue error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch revision queue" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch revision queue";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -140,9 +148,10 @@ export async function getKnowledgeGrowth(req: Request, res: Response): Promise<v
 
     const growth = ProgressService.buildKnowledgeGrowth({ notes, quizAttempts, docs, events });
     res.json({ success: true, knowledgeGrowth: growth });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getKnowledgeGrowth error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch knowledge growth" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch knowledge growth";
+    res.status(500).json({ success: false, error: msg });
   }
 }
 
@@ -169,8 +178,9 @@ export async function getStudySessions(req: Request, res: Response): Promise<voi
     }));
 
     res.json({ success: true, sessions: formattedSessions, events: events.slice(0, 20) });
-  } catch (error: any) {
+  } catch (error) {
     console.error("getStudySessions error:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to fetch study sessions" });
+    const msg = error instanceof Error ? error.message : "Failed to fetch study sessions";
+    res.status(500).json({ success: false, error: msg });
   }
 }

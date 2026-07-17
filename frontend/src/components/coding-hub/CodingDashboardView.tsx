@@ -162,7 +162,7 @@ export function CodingDashboardView() {
     hidden: { opacity: 0, y: 20 },
     visible: (i: number) => ({
       opacity: 1, y: 0,
-      transition: { delay: i * 0.06, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }
+      transition: { delay: i * 0.06, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }
     })
   };
 
@@ -274,7 +274,7 @@ export function CodingDashboardView() {
                   </div>
                   <div className="mt-3 flex flex-col">
                     <span className={`text-3xl font-black ${card.color}`}>
-                      <CountUp end={card.value} duration={1.8} enableScroll />{card.suffix || ""}
+                      <CountUp end={card.value} duration={1.8} enableScrollSpy />{card.suffix || ""}
                     </span>
                     <span className="text-[10px] text-[var(--text-secondary)]/80 font-medium mt-1">{card.desc}</span>
                   </div>
@@ -728,7 +728,7 @@ export function CodingDashboardView() {
                               "bg-amber-500/10 text-amber-500"
                             }`}>{wt.riskLevel}</span>
                           </div>
-                          <PremiumProgressBar value={wt.mastery} color={wt.mastery >= 50 ? "amber" : "red"} height={4} />
+                          <PremiumProgressBar value={wt.mastery} color={wt.mastery >= 50 ? "amber" : "rose"} height={4} />
                           <div className="flex justify-between mt-1.5">
                             <span className="text-[9px] text-[var(--text-secondary)]">Mastery: {wt.mastery}%</span>
                             <span className="text-[9px] text-[var(--text-secondary)]">{wt.revisionPriority}</span>

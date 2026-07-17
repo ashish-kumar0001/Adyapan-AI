@@ -373,6 +373,9 @@ button, input, select, textarea {
   .mobile-close-btn {
     display: flex !important;
   }
+  .mobile-sidebar-backdrop {
+    display: block !important;
+  }
 }
 
 @media (min-width: 769px) {
@@ -380,6 +383,9 @@ button, input, select, textarea {
     display: none !important;
   }
   .mobile-close-btn {
+    display: none !important;
+  }
+  .mobile-sidebar-backdrop {
     display: none !important;
   }
 }
