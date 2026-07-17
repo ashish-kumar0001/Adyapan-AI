@@ -3,7 +3,6 @@ import { httpError } from "../utils/httpError";
 import { streamChat } from "../lib/ai/ady-chat";
 import type { ChatModelId } from "../lib/ai/openrouter";
 import multer from "multer";
-const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
@@ -18,14 +17,19 @@ const uploadMemory = multer({
 
 export const uploadChatFile = uploadMemory.single("file");
 
+async function parsePdf(buffer: Buffer): Promise<string> {
+  const pdfParse = require("pdf-parse/lib/pdf-parse");
+  const parsed = await pdfParse(buffer);
+  return parsed.text;
+}
+
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   let rawText: string;
   
   try {
     if (mimeType === "application/pdf") {
-      const parsed = await pdfParse(file.buffer);
-      rawText = parsed.text;
+      rawText = await parsePdf(file.buffer);
     } else if (
       mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       mimeType === "application/msword"

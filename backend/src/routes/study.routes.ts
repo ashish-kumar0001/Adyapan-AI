@@ -4,8 +4,8 @@ import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
-const pdfParse = require("pdf-parse");
 async function parsePdfNonBlocking(buffer: Buffer): Promise<string> {
+  const pdfParse = require("pdf-parse/lib/pdf-parse");
   const pagerender = async (pageData: any) => {
     await new Promise((resolve) => setImmediate(resolve));
     const textContent = await pageData.getTextContent();

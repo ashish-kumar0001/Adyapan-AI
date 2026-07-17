@@ -4,22 +4,34 @@ import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 import { generateJSON } from "../lib/ai/openrouter";
 import { cloudinary } from "../config/cloudinary";
-const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+async function parsePdf(buffer: Buffer): Promise<string> {
+  // pdf-parse v2 has a known init bug — load the internal module directly
+  const pdfParse = require("pdf-parse/lib/pdf-parse");
+  const parsed = await pdfParse(buffer);
+  return parsed.text;
+}
+
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  if (!file.buffer || file.buffer.length === 0) {
+    throw httpError(400, "File buffer is empty. Please try uploading again.");
+  }
+
   const mimeType = file.mimetype;
   let rawText: string;
+
   try {
     if (mimeType === "application/pdf") {
-      const parsed = await pdfParse(file.buffer);
-      rawText = parsed.text;
+      console.log(`[Resume Upload] Parsing PDF: ${file.originalname} (${file.buffer.length} bytes)`);
+      rawText = await parsePdf(file.buffer);
     } else if (
       mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       mimeType === "application/msword"
     ) {
+      console.log(`[Resume Upload] Parsing DOCX: ${file.originalname} (${file.buffer.length} bytes)`);
       const parsed = await mammoth.extractRawText({ buffer: file.buffer });
       rawText = parsed.value;
     } else {
@@ -27,12 +39,15 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     }
   } catch (parseErr: any) {
     if (parseErr.statusCode === 400) throw parseErr;
-    console.error("[Resume Upload] Document parsing error:", parseErr);
+    console.error("[Resume Upload] Document parsing error:", parseErr?.message || parseErr);
     throw httpError(400, "Failed to parse document. Ensure the file is not corrupted or password-protected.");
   }
+
   if (!rawText || rawText.trim().length === 0) {
     throw httpError(400, "The document appears to be empty. Please upload a resume with readable text.");
   }
+
+  console.log(`[Resume Upload] Extracted ${rawText.length} characters from ${file.originalname}`);
   return rawText;
 }
 

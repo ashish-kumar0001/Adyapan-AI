@@ -8,21 +8,29 @@ import {
   applyATSSuggestion,
   atsAIChat,
 } from "../lib/ai/gemini";
-const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+async function parsePdf(buffer: Buffer): Promise<string> {
+  const pdfParse = require("pdf-parse/lib/pdf-parse");
+  const parsed = await pdfParse(buffer);
+  return parsed.text;
+}
+
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  if (!file.buffer || file.buffer.length === 0) {
+    throw httpError(400, "File buffer is empty. Please try uploading again.");
+  }
+
   const mimeType = file.mimetype;
   let rawText: string;
   
   try {
     if (mimeType === "application/pdf") {
-      const parsed = await pdfParse(file.buffer);
-      rawText = parsed.text;
+      rawText = await parsePdf(file.buffer);
     } else if (
       mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       mimeType === "application/msword"
@@ -34,7 +42,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     }
   } catch (parseErr: any) {
     if (parseErr.statusCode === 400) throw parseErr;
-    console.error("[ATS upload] Document parsing error:", parseErr);
+    console.error("[ATS upload] Document parsing error:", parseErr?.message || parseErr);
     throw httpError(400, "Failed to parse document. Ensure the file is not corrupted or password-protected.");
   }
 
