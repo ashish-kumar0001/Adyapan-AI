@@ -88,6 +88,56 @@ model CoverLetter {
   @@map("cover_letters")
 }
 
+model UploadedResume {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  cloudinaryUrl   String           @map("cloudinary_url")
+  fileName        String           @map("file_name")
+  fileType        String           @map("file_type")
+  fileSize        Int              @map("file_size")
+  versionNumber   Int              @default(1) @map("version_number")
+  isActive        Boolean          @default(false) @map("is_active")
+  extractedText   String?          @map("extracted_text")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  candidateProfile CandidateProfile?
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("uploaded_resumes")
+}
+
+model CandidateProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @map("user_id")
+  resumeId           String    @map("resume_id")
+  name               String?
+  email              String?
+  phone              String?
+  location           String?
+  summary            String?
+  education          Json      @default("[]")
+  experience         Json      @default("[]")
+  projects           Json      @default("[]")
+  skills             Json      @default("[]")
+  certifications     Json      @default("[]")
+  achievements       Json      @default("[]")
+  languages          Json      @default("[]")
+  links              Json      @default("{}")
+  completenessScore  Int       @default(0) @map("completeness_score")
+  strengthScore      Int       @default(0) @map("strength_score")
+  missingSections    Json      @default("[]") @map("missing_sections")
+  recommendations    Json      @default("[]")
+  strengths          Json      @default("[]")
+  weaknesses         Json      @default("[]")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  resume             UploadedResume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resumeId])
+  @@index([userId])
+  @@map("candidate_profiles")
+}
+
 model LinkedInReport {
   id              String   @id @default(cuid())
   userId          String   @map("user_id")

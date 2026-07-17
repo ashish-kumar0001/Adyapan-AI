@@ -32,6 +32,7 @@ import { weakTopicsRouter } from "./weak-topics.routes";
 import { recommendationRouter } from "./recommendation.routes";
 import { researchRouter } from "./research.routes";
 import { plagiarismRouter } from "./plagiarism.routes";
+import { resumeUploadRouter } from "./resume-upload.routes";
 
 export const apiRouter = Router();
 
@@ -40,6 +41,7 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/profile", profileRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/resume", resumeRouter);
+apiRouter.use("/resume-upload", resumeUploadRouter);
 apiRouter.use("/ats", atsRouter);
 apiRouter.use("/resume-analysis", resumeAnalysisRouter);
 apiRouter.use("/cover-letter", coverLetterRouter);

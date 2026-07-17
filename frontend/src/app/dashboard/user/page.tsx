@@ -61,6 +61,9 @@ const CoverLetterView = dynamic(() => import("@/components/resume-hub/CoverLette
 const LinkedInView = dynamic(() => import("@/components/resume-hub/LinkedInView").then(m => m.LinkedInView), {
   loading: () => <DashboardWidgetSkeleton title="LinkedIn Optimizer" />
 });
+const ResumeUploadView = dynamic(() => import("@/components/resume-hub/ResumeUploadView").then(m => m.ResumeUploadView), {
+  loading: () => <DashboardWidgetSkeleton title="Resume Upload" />
+});
 const AdyChatView = dynamic(() => import("@/components/ady-chat/AdyChatView").then(m => m.AdyChatView), {
   loading: () => <DashboardWidgetSkeleton title="Ady Chat" />
 });
@@ -224,6 +227,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "Coding Challenges", viewId: "coding-challenges", category: "Coding Hub" },
   { label: "GitHub Portfolio", viewId: "github-portfolio", category: "Coding Hub" },
   { label: "Resume Builder", viewId: "resume-builder", category: "Resume Hub" },
+  { label: "Resume Upload", viewId: "resume-upload", category: "Resume Hub" },
   { label: "ATS Score Checker", viewId: "ats-checker", category: "Resume Hub" },
   { label: "Cover Letter Generator", viewId: "cover-letter", category: "Resume Hub" },
   { label: "LinkedIn Optimizer", viewId: "linkedin-optimizer", category: "Resume Hub" },
@@ -283,8 +287,9 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
-      { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
-      { label: "Cover Letter Generator", href: "#" }, { label: "LinkedIn Optimizer", href: "#" },
+      { label: "Upload Resume", href: "#" }, { label: "Resume Builder", href: "#" },
+      { label: "ATS Score Checker", href: "#" }, { label: "Cover Letter Generator", href: "#" },
+      { label: "LinkedIn Optimizer", href: "#" },
     ],
   },
   {
@@ -480,6 +485,7 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
                       }
 
                       else if (sub.label === "Resume Builder") onViewTool("resume-hub");
+                      else if (sub.label === "Upload Resume") onViewTool("resume-upload");
                       else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
@@ -2168,6 +2174,8 @@ function UserDashboardContent() {
           <HubErrorBoundary><BillingView /></HubErrorBoundary>
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
           <HubErrorBoundary><ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} /></HubErrorBoundary>
+        ) : activeView === "resume-upload" ? (
+          <HubErrorBoundary><ResumeUploadView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "ats-checker" ? (
           <HubErrorBoundary><AtsCheckerView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "cover-letter" ? (
