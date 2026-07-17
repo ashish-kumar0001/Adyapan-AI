@@ -271,7 +271,6 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
-    href: "/dashboard/coding/dashboard",
     submenu: [
       { label: "Coding Dashboard", href: "/dashboard/coding/dashboard" },
       { label: "Coding Roadmap", href: "/dashboard/coding/roadmap" },
@@ -406,9 +405,6 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
               onClick={() => {
                 if (item.submenu && item.submenu.length > 0) {
                   toggleItem(item.id);
-                  if (item.href && item.href !== "#") {
-                    router.push(item.href);
-                  }
                 } else if (item.href && item.href !== "#") {
                   router.push(item.href);
                   setSidebarOpen(false);
