@@ -397,17 +397,40 @@ model DSAProgress {
   @@map("dsa_progress")
 }
 
+model ChallengeCategory {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String
+  icon        String
+  gradient    String
+  color       String
+  sortOrder   Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  challenges  Challenge[]
+
+  @@map("challenge_categories")
+}
+
 model Challenge {
-  id          String                @id @default(cuid())
+  id          String               @id @default(cuid())
+  categoryId  String               @map("category_id")
+  slug        String               @unique
   title       String
   difficulty  String
   points      Int
   description String
-  startTime   DateTime
-  endTime     DateTime
-  createdAt   DateTime              @default(now()) @map("created_at")
+  topics      String[]
+  testCases   Json?
+  timeLimit   Int?
+  startTime   DateTime?
+  endTime     DateTime?
+  createdAt   DateTime             @default(now()) @map("created_at")
+  category    ChallengeCategory    @relation(fields: [categoryId], references: [id])
   submissions ChallengeSubmission[]
 
+  @@index([categoryId])
   @@map("challenges")
 }
 
