@@ -12,7 +12,7 @@ import { getDiceBearUrl } from "@/lib/avatar";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { ErrorBoundary as UiErrorBoundary } from "@/components/ui-error-boundary";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import {
   PremiumCard,
@@ -92,7 +92,7 @@ const MindMapsView = dynamic(() => import("@/components/learning-hub/MindMapsVie
 const FlashcardsView = dynamic(() => import("@/components/learning-hub/FlashcardsView").then(m => m.FlashcardsView), {
   loading: () => <DashboardWidgetSkeleton title="Flashcards" />
 });
-const CodingAssistantView = dynamic(() => import("@/components/coding-hub/CodingAssistantView").then(m => m.CodingAssistantView), {
+const CodingAssistantView = dynamic(() => import("@/components/coding-hub/CodingAssistantView"), {
   loading: () => <DashboardWidgetSkeleton title="Coding Assistant" />
 });
 const DsaPracticeView = dynamic(() => import("@/components/coding-hub/DsaPracticeView").then(m => m.DsaPracticeView), {
@@ -358,7 +358,29 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
     setOpenItem((prev) => (prev === id ? null : id));
   };
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [sidebarOpen]);
+
   return (
+    <>
+      {/* Mobile backdrop overlay */}
+      {sidebarOpen && (
+        <div
+          className="mobile-sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed", inset: 0, top: 70, zIndex: 119,
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            transition: "opacity 0.3s ease",
+          }}
+        />
+      )}
     <aside className={`dash-sidebar ${sidebarOpen ? "open" : ""}`}>
       {/* Mobile close button */}
       <div className="mobile-close-btn" style={{ display: "none", justifyContent: "flex-end", padding: "0.5rem 0.5rem 0" }}>
@@ -531,6 +553,7 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
         );
       })}
     </aside>
+    </>
   );
 }
 
@@ -563,6 +586,7 @@ export function DashboardTopNav({
   const [searchOpen, setSearchOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const searchResults = searchQuery.trim().length >= 2
     ? SEARCH_INDEX.filter((entry) =>
@@ -582,6 +606,26 @@ export function DashboardTopNav({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchFocused(true);
+        setSearchOpen(true);
+      }
+      if (e.key === "Escape") {
+        searchInputRef.current?.blur();
+        setSearchQuery("");
+        setSearchFocused(false);
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, []);
 
   const isDarkTheme = theme === "dark";
@@ -637,6 +681,7 @@ export function DashboardTopNav({
             <Search size={14} />
           </span>
           <motion.input
+            ref={searchInputRef}
             type="text" placeholder="Search tools, notes, jobs..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
@@ -649,12 +694,24 @@ export function DashboardTopNav({
             }}
             transition={{duration: 0.12}}
             style={{
-              width: "100%", padding: "0.5rem 1rem 0.5rem 2rem",
+              width: "100%", padding: "0.5rem 2.5rem 0.5rem 2rem",
               background: navInputBg, border: `1px solid ${navBorder}`,
               borderRadius: 8, color: navInputColor, fontSize: "0.83rem", outline: "none",
               boxSizing: "border-box",
             }}
           />
+          {!searchFocused && (
+            <span style={{
+              position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+              fontSize: "0.6rem", fontWeight: 600, color: "var(--text-muted)",
+              background: isDarkTheme ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+              border: `1px solid ${navBorder}`, borderRadius: 4,
+              padding: "1px 5px", lineHeight: "16px",
+              pointerEvents: "none" as const,
+            }}>
+              ⌘K
+            </span>
+          )}
           {searchOpen && searchResults.length > 0 && (
             <div style={{
               position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%", minWidth: 260,
@@ -1798,6 +1855,15 @@ export default function UserDashboardPage() {
   );
 }
 
+function HubErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [retryKey, setRetryKey] = useState(0);
+  return (
+    <UiErrorBoundary key={retryKey} onRetry={() => setRetryKey(k => k + 1)}>
+      <div key={retryKey}>{children}</div>
+    </UiErrorBoundary>
+  );
+}
+
 function UserDashboardContent() {
   useRequireAuth("USER");
   const [user, setUser] = useState<AdyapanUser | null>(null);
@@ -1897,6 +1963,16 @@ function UserDashboardContent() {
       socket.off("notification:new", handler);
     };
   }, [socket, isConnected]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [sidebarOpen]);
 
   const [dashboardStats, setDashboardStats] = useState({
     resumesCount: 0,
@@ -2085,71 +2161,71 @@ function UserDashboardContent() {
 
       <main className="dash-main relative z-10 resume-hub-theme">
 
-        <ErrorBoundary moduleName="Dashboard">
+        <HubErrorBoundary>
         {activeView === "profile" ? (
-          <ErrorBoundary moduleName="Profile"><ProfileView onViewDashboard={handleViewDashboard} /></ErrorBoundary>
+          <HubErrorBoundary><ProfileView onViewDashboard={handleViewDashboard} /></HubErrorBoundary>
         ) : activeView === "community-profile" ? (
-          <ErrorBoundary moduleName="Community Profile"><CommunityProfileView /></ErrorBoundary>
+          <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
         ) : activeView === "settings" ? (
-          <ErrorBoundary moduleName="Account Settings"><ManageAccountView /></ErrorBoundary>
+          <HubErrorBoundary><ManageAccountView /></HubErrorBoundary>
         ) : activeView === "billing" ? (
-          <ErrorBoundary moduleName="Billing"><BillingView /></ErrorBoundary>
+          <HubErrorBoundary><BillingView /></HubErrorBoundary>
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
-          <ErrorBoundary moduleName="Resume Builder"><ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} /></ErrorBoundary>
+          <HubErrorBoundary><ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} /></HubErrorBoundary>
         ) : activeView === "ats-checker" ? (
-          <ErrorBoundary moduleName="ATS Checker"><AtsCheckerView setView={setActiveView} /></ErrorBoundary>
+          <HubErrorBoundary><AtsCheckerView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "cover-letter" ? (
-          <ErrorBoundary moduleName="Cover Letter Builder"><CoverLetterView setView={setActiveView} /></ErrorBoundary>
+          <HubErrorBoundary><CoverLetterView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "linkedin-optimizer" ? (
-          <ErrorBoundary moduleName="LinkedIn Optimizer"><LinkedInView setView={setActiveView} /></ErrorBoundary>
+          <HubErrorBoundary><LinkedInView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "study-assistant" ? (
-          <ErrorBoundary moduleName="Study Assistant"><StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} /></ErrorBoundary>
+          <HubErrorBoundary><StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} /></HubErrorBoundary>
         ) : activeView === "lesson-view" && lessonResult ? (
-          <ErrorBoundary moduleName="Lesson Viewer"><StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} /></ErrorBoundary>
+          <HubErrorBoundary><StudyAssistantView lessonToView={lessonResult} onViewLesson={() => setActiveView("study-assistant")} /></HubErrorBoundary>
         ) : activeView === "study-planner" ? (
-          <ErrorBoundary moduleName="Study Planner"><StudyPlannerDashboard /></ErrorBoundary>
+          <HubErrorBoundary><StudyPlannerDashboard /></HubErrorBoundary>
         ) : activeView === "learning-streak" ? (
-          <ErrorBoundary moduleName="Learning Streak"><LearningStreakDashboard /></ErrorBoundary>
+          <HubErrorBoundary><LearningStreakDashboard /></HubErrorBoundary>
         ) : activeView === "notes-generator" ? (
-          <ErrorBoundary moduleName="Notes Generator"><NotesGeneratorView /></ErrorBoundary>
+          <HubErrorBoundary><NotesGeneratorView /></HubErrorBoundary>
         ) : activeView === "quiz-generator" ? (
-          <ErrorBoundary moduleName="Quiz Generator"><QuizGeneratorView /></ErrorBoundary>
+          <HubErrorBoundary><QuizGeneratorView /></HubErrorBoundary>
         ) : activeView === "assignment-generator" ? (
-          <ErrorBoundary moduleName="Assignment Generator"><AssignmentGeneratorView /></ErrorBoundary>
+          <HubErrorBoundary><AssignmentGeneratorView /></HubErrorBoundary>
         ) : activeView === "ppt-generator" ? (
-          <ErrorBoundary moduleName="PPT Generator"><PptGeneratorView /></ErrorBoundary>
+          <HubErrorBoundary><PptGeneratorView /></HubErrorBoundary>
         ) : activeView === "mind-maps" ? (
-          <ErrorBoundary moduleName="Mind Maps"><MindMapsView /></ErrorBoundary>
+          <HubErrorBoundary><MindMapsView /></HubErrorBoundary>
         ) : activeView === "flashcards" ? (
-          <ErrorBoundary moduleName="Flashcards"><FlashcardsView /></ErrorBoundary>
+          <HubErrorBoundary><FlashcardsView /></HubErrorBoundary>
         ) : activeView === "coding-assistant" ? (
-          <ErrorBoundary moduleName="Coding Assistant"><CodingAssistantView /></ErrorBoundary>
+          <HubErrorBoundary><CodingAssistantView /></HubErrorBoundary>
         ) : activeView === "dsa-practice" ? (
-          <ErrorBoundary moduleName="DSA Practice"><DsaPracticeView /></ErrorBoundary>
+          <HubErrorBoundary><DsaPracticeView /></HubErrorBoundary>
         ) : activeView === "coding-challenges" ? (
-          <ErrorBoundary moduleName="Coding Challenges"><CodingChallengesView /></ErrorBoundary>
+          <HubErrorBoundary><CodingChallengesView /></HubErrorBoundary>
         ) : activeView === "ady-chat" ? (
-          <ErrorBoundary moduleName="Ady Chat"><AdyChatView setView={setActiveView} /></ErrorBoundary>
+          <HubErrorBoundary><AdyChatView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
-          <ErrorBoundary moduleName="Interview Hub"><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" ? (
-          <ErrorBoundary moduleName="Internship Hub"><InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "job-hub" || activeView === "job-matching" || activeView === "job-jd-match" || activeView === "job-referrals" || activeView === "job-challenges" ? (
-          <ErrorBoundary moduleName="Job Hub"><JobHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><JobHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "placement-hub" || activeView === "placement-aptitude" || activeView === "placement-reasoning" || activeView === "placement-mcqs" || activeView === "placement-mocks" || activeView === "placement-readiness" ? (
-          <ErrorBoundary moduleName="Placement Hub"><PlacementHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><PlacementHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "productivity-hub" || activeView === "prod-email" || activeView === "prod-sop" || activeView === "prod-linkedin" || activeView === "prod-content" ? (
-          <ErrorBoundary moduleName="Productivity Hub"><ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "analytics-hub" || activeView === "analytics-learning" || activeView === "analytics-interview" || activeView === "analytics-resume" || activeView === "analytics-skills" ? (
-          <ErrorBoundary moduleName="Analytics Hub"><AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "progress-hub" ? (
-          <ErrorBoundary moduleName="Progress Tracking"><ProgressDashboard /></ErrorBoundary>
+          <HubErrorBoundary><ProgressDashboard /></HubErrorBoundary>
         ) : activeView === "research-hub" || activeView === "research-paper-ai" ? (
-          <ErrorBoundary moduleName="Research Hub"><ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+          <HubErrorBoundary><ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "research-plagiarism" ? (
-          <ErrorBoundary moduleName="Plagiarism Checker"><PlagiarismCheckerView setView={setActiveView} /></ErrorBoundary>
+          <HubErrorBoundary><PlagiarismCheckerView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "github-portfolio" ? (
-          <ErrorBoundary moduleName="Github Portfolio"><GithubPortfolioView /></ErrorBoundary>
+          <HubErrorBoundary><GithubPortfolioView /></HubErrorBoundary>
         ) : activeView === "notifications" ? (
           <NotificationsView
             notifications={notifications}
@@ -2203,7 +2279,7 @@ function UserDashboardContent() {
             </>
           )
         )}
-        </ErrorBoundary>
+        </HubErrorBoundary>
       </main>
 
       {toast && (

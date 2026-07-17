@@ -260,7 +260,8 @@ model CodingSession {
   id        String          @id @default(cuid())
   userId    String          @map("user_id")
   title     String
-  language  String?
+  mode      String          @default("generate")
+  languages String[]        @default(["javascript"])
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
   messages  CodingMessage[]
@@ -271,12 +272,17 @@ model CodingSession {
 }
 
 model CodingMessage {
-  id        String        @id @default(cuid())
-  sessionId String        @map("session_id")
-  role      String
-  content   String
-  createdAt DateTime      @default(now()) @map("created_at")
-  session   CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  sessionId   String        @map("session_id")
+  role        String
+  content     String
+  mode        String?
+  results     Json?
+  codeSnippet String?
+  errorMsg    String?
+  languages   String[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  session     CodingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([createdAt])
