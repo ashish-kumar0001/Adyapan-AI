@@ -21,6 +21,10 @@ import {
   PremiumProgressBar
 } from "@/components/ui/PremiumComponents";
 import {
+  CodingEmptyState,
+  codingFadeUp
+} from "@/components/coding-hub/CodingHubShared";
+import {
   DashboardSidebar,
   DashboardTopNav,
   AdyapanUser
@@ -158,14 +162,6 @@ export function CodingDashboardView() {
     router.push("/dashboard/user");
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-      opacity: 1, y: 0,
-      transition: { delay: i * 0.06, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }
-    })
-  };
-
   return (
     <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       <FloatingOrbs />
@@ -263,10 +259,10 @@ export function CodingDashboardView() {
                 <motion.div
                   key={i}
                   custom={i}
-                  variants={cardVariants}
+                  variants={codingFadeUp}
                   initial="hidden"
                   animate="visible"
-                  className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm backdrop-blur-md flex flex-col justify-between min-h-[120px] group hover:border-amber-500/30 transition-all duration-300"
+                  className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm backdrop-blur-md flex flex-col justify-between min-h-[120px] group hover:border-amber-500/30 hover:shadow-[0_0_20px_rgba(245,158,11,0.06)] transition-all duration-300"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">{card.label}</span>
@@ -283,10 +279,10 @@ export function CodingDashboardView() {
             </div>
 
             {/* ─── AI BRIEF ──────────────────────────────────────── */}
-            <motion.div custom={6} variants={cardVariants} initial="hidden" animate="visible">
+            <motion.div custom={6} variants={codingFadeUp} initial="hidden" animate="visible">
               <PremiumCard glow className="p-6 bg-[var(--bg-card)] border-[var(--border-color)]">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/20">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/20 animate-pulse">
                     <Sparkles size={20} className="text-white" />
                   </div>
                   <div className="flex-1">
@@ -302,8 +298,8 @@ export function CodingDashboardView() {
             {/* ─── CHARTS ROW 1: Activity + Topic Mastery ──────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Activity Chart */}
-              <motion.div custom={7} variants={cardVariants} initial="hidden" animate="visible" className="lg:col-span-2">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)]">
+              <motion.div custom={7} variants={codingFadeUp} initial="hidden" animate="visible" className="lg:col-span-2">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Activity size={18} className="text-amber-500" />
@@ -392,8 +388,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* Topic Mastery Radar */}
-              <motion.div custom={8} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={8} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-purple-500/20 hover:shadow-[0_0_24px_rgba(168,85,247,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Brain size={18} className="text-purple-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Topic Mastery</h3>
@@ -458,8 +454,8 @@ export function CodingDashboardView() {
             {/* ─── CHARTS ROW 2: Difficulty Distribution + Efficiency Trend ─── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Difficulty Doughnut */}
-              <motion.div custom={9} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={9} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-emerald-500/20 hover:shadow-[0_0_24px_rgba(16,185,129,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Hash size={18} className="text-emerald-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Difficulty Distribution</h3>
@@ -517,8 +513,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* Efficiency Trend */}
-              <motion.div custom={10} variants={cardVariants} initial="hidden" animate="visible" className="lg:col-span-2">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)]">
+              <motion.div custom={10} variants={codingFadeUp} initial="hidden" animate="visible" className="lg:col-span-2">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] hover:border-blue-500/20 hover:shadow-[0_0_24px_rgba(59,130,246,0.04)] transition-all duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <TrendingUp size={18} className="text-blue-500" />
@@ -589,8 +585,8 @@ export function CodingDashboardView() {
             {/* ─── ROADMAP + CHALLENGES + READINESS ──────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Roadmap Progress */}
-              <motion.div custom={11} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={11} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-purple-500/20 hover:shadow-[0_0_24px_rgba(168,85,247,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Rocket size={18} className="text-purple-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Roadmap Progress</h3>
@@ -640,8 +636,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* Challenge Analytics */}
-              <motion.div custom={12} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={12} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Zap size={18} className="text-amber-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Challenge Analytics</h3>
@@ -672,8 +668,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* AI Review Insights */}
-              <motion.div custom={13} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={13} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-blue-500/20 hover:shadow-[0_0_24px_rgba(59,130,246,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Eye size={18} className="text-blue-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">AI Review Insights</h3>
@@ -710,8 +706,8 @@ export function CodingDashboardView() {
             {/* ─── WEAK TOPICS + STRONG TOPICS + RECOMMENDATIONS ── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Weak Topics */}
-              <motion.div custom={14} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={14} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-rose-500/20 hover:shadow-[0_0_24px_rgba(244,63,94,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <AlertTriangle size={18} className="text-rose-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Weak Topics</h3>
@@ -747,8 +743,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* Strong Topics */}
-              <motion.div custom={15} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={15} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <Star size={18} className="text-amber-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Strong Topics</h3>
@@ -777,8 +773,8 @@ export function CodingDashboardView() {
               </motion.div>
 
               {/* Complexity Summary */}
-              <motion.div custom={16} variants={cardVariants} initial="hidden" animate="visible">
-                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full">
+              <motion.div custom={16} variants={codingFadeUp} initial="hidden" animate="visible">
+                <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] h-full hover:border-blue-500/20 hover:shadow-[0_0_24px_rgba(59,130,246,0.04)] transition-all duration-300">
                   <div className="flex items-center gap-2 mb-4">
                     <BarChart3 size={18} className="text-blue-500" />
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">Complexity Analytics</h3>
@@ -815,8 +811,8 @@ export function CodingDashboardView() {
             </div>
 
             {/* ─── HEATMAP ───────────────────────────────────────── */}
-            <motion.div custom={17} variants={cardVariants} initial="hidden" animate="visible">
-              <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)]">
+            <motion.div custom={17} variants={codingFadeUp} initial="hidden" animate="visible">
+              <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] hover:border-emerald-500/20 hover:shadow-[0_0_24px_rgba(16,185,129,0.04)] transition-all duration-300">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2">
                     <Calendar size={18} className="text-emerald-500" />
@@ -829,8 +825,8 @@ export function CodingDashboardView() {
             </motion.div>
 
             {/* ─── RECENT ACTIVITY ───────────────────────────────── */}
-            <motion.div custom={18} variants={cardVariants} initial="hidden" animate="visible">
-              <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)]">
+            <motion.div custom={18} variants={codingFadeUp} initial="hidden" animate="visible">
+              <PremiumCard className="p-6 bg-[var(--bg-card)] border-[var(--border-color)] hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock size={18} className="text-amber-500" />
                   <h3 className="text-sm font-bold text-[var(--text-primary)]">Recent Activity</h3>
@@ -878,9 +874,11 @@ export function CodingDashboardView() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 min-h-[40vh]">
-            <BarChart3 size={40} className="text-[var(--text-secondary)]/30 mb-4" />
-            <p className="text-sm font-bold text-[var(--text-primary)]">No analytics data available</p>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">Start solving coding problems to generate analytics.</p>
+            <CodingEmptyState
+              type="dashboard"
+              actionLabel="Start Solving"
+              onAction={() => router.push("/dashboard/coding")}
+            />
           </div>
         )}
       </main>
@@ -892,6 +890,7 @@ export function CodingDashboardView() {
 function HeatmapGrid({ heatmap, isDark }: { heatmap: Record<string, number>; isDark: boolean }) {
   const weeks = 53;
   const days = 7;
+  const [tooltip, setTooltip] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
 
   const cells: { date: string; count: number; day: number; week: number }[] = [];
   const today = new Date();
@@ -922,7 +921,7 @@ function HeatmapGrid({ heatmap, isDark }: { heatmap: Record<string, number>; isD
   const activeDays = Object.keys(heatmap).length;
 
   return (
-    <div>
+    <div className="relative">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-[10px] text-[var(--text-secondary)]">{totalSolved} questions solved across {activeDays} active days</span>
       </div>
@@ -935,13 +934,38 @@ function HeatmapGrid({ heatmap, isDark }: { heatmap: Record<string, number>; isD
                   key={cell.date}
                   className="w-[11px] h-[11px] rounded-[2px] hover:ring-1 hover:ring-[var(--text-secondary)]/30 transition-all cursor-default"
                   style={{ backgroundColor: getColor(cell.count) }}
-                  title={`${cell.date}: ${cell.count} solved`}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip({ date: cell.date, count: cell.count, x: rect.left + rect.width / 2, y: rect.top - 8 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
                 />
               ))}
             </div>
           ))}
         </div>
       </div>
+      <AnimatePresence>
+        {tooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-lg border"
+            style={{
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: "translate(-50%, -100%)",
+              background: isDark ? "#1a1c29" : "#ffffff",
+              color: isDark ? "#f3f4f6" : "#0f172a",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"
+            }}
+          >
+            {tooltip.count} solved on {tooltip.date}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex items-center justify-end gap-2 mt-3">
         <span className="text-[9px] text-[var(--text-secondary)]">Less</span>
         {[0, 1, 2, 3, 4].map((level) => {

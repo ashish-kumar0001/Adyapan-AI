@@ -22,6 +22,10 @@ import {
   PremiumProgressBar
 } from "@/components/ui/PremiumComponents";
 import {
+  CodingEmptyState,
+  codingFadeUp
+} from "@/components/coding-hub/CodingHubShared";
+import {
   DashboardSidebar,
   DashboardTopNav,
   AdyapanUser
@@ -587,7 +591,7 @@ export default function CodingRoadmapPage() {
                 <div className="lg:col-span-2 space-y-6">
                   {/* Readiness Scores */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <PremiumCard variant="glass" className="p-5 flex flex-col justify-between">
+                    <PremiumCard variant="glass" className="p-5 flex flex-col justify-between hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Placement Readiness</span>
                         <Trophy className="w-5 h-5 text-amber-500" />
@@ -611,7 +615,7 @@ export default function CodingRoadmapPage() {
                       </div>
                     </PremiumCard>
 
-                    <PremiumCard variant="glass" className="p-5 flex flex-col justify-between">
+                    <PremiumCard variant="glass" className="p-5 flex flex-col justify-between hover:border-orange-500/20 hover:shadow-[0_0_24px_rgba(249,115,22,0.04)] transition-all duration-300">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Interview Readiness</span>
                         <Target className="w-5 h-5 text-orange-500" />
@@ -776,7 +780,7 @@ export default function CodingRoadmapPage() {
                 {/* Right Sidebar: AI Coach + Recommendations */}
                 <div className="space-y-6">
                   {/* AI Coach Guidance */}
-                  <PremiumCard variant="bordered" className="p-5" style={{ borderColor: "rgba(245,158,11,0.1)" }}>
+                  <PremiumCard variant="bordered" className="p-5 hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300" style={{ borderColor: "rgba(245,158,11,0.1)" }}>
                     <div className="flex items-center gap-2.5 mb-3 text-amber-500">
                       <BrainCircuit className="w-5 h-5" />
                       <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">AI Placement Mentor</h3>
@@ -819,7 +823,7 @@ export default function CodingRoadmapPage() {
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>AI Recommendations</h3>
 
-                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start">
+                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start hover:border-amber-500/20 transition-all duration-200">
                         <BookOpen className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <div className="text-[10px] font-bold uppercase" style={{ color: "var(--text-muted)" }}>Study Next</div>
@@ -828,7 +832,7 @@ export default function CodingRoadmapPage() {
                         </div>
                       </PremiumCard>
 
-                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start">
+                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start hover:border-orange-500/20 transition-all duration-200">
                         <Play className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 overflow-hidden">
                           <div className="text-[10px] font-bold uppercase" style={{ color: "var(--text-muted)" }}>Practice Next</div>
@@ -846,7 +850,7 @@ export default function CodingRoadmapPage() {
                         </div>
                       </PremiumCard>
 
-                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start">
+                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start hover:border-purple-500/20 transition-all duration-200">
                         <RefreshCw className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <div className="text-[10px] font-bold uppercase" style={{ color: "var(--text-muted)" }}>Revise Next</div>
@@ -855,7 +859,7 @@ export default function CodingRoadmapPage() {
                         </div>
                       </PremiumCard>
 
-                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start">
+                      <PremiumCard variant="glass" className="p-4 flex gap-3.5 items-start hover:border-red-500/20 transition-all duration-200">
                         <Trophy className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <div className="text-[10px] font-bold uppercase" style={{ color: "var(--text-muted)" }}>Challenge Next</div>
@@ -867,7 +871,7 @@ export default function CodingRoadmapPage() {
                   )}
 
                   {/* Quick Stats */}
-                  <PremiumCard variant="glass" className="p-5">
+                  <PremiumCard variant="glass" className="p-5 hover:border-amber-500/20 hover:shadow-[0_0_24px_rgba(245,158,11,0.04)] transition-all duration-300">
                     <div className="flex items-center gap-2.5 mb-3">
                       <BarChart3 className="w-5 h-5 text-amber-500" />
                       <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Quick Stats</h3>

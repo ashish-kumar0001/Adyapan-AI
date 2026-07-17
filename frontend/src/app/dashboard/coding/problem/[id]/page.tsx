@@ -23,6 +23,11 @@ import {
   PremiumProgressBar
 } from "@/components/ui/PremiumComponents";
 import {
+  CodingEmptyState,
+  ExecutionProgressSteps,
+  codingFadeUp
+} from "@/components/coding-hub/CodingHubShared";
+import {
   DashboardSidebar,
   DashboardTopNav,
   AdyapanUser
@@ -698,20 +703,11 @@ Answer the student's question based on the coding problem. Provide hints or feed
   const renderOutputConsole = () => {
     if (isRunning) {
       return (
-        <div className="flex flex-col items-center justify-center h-full py-8 gap-4">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-            className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full flex items-center justify-center"
+        <div className="flex flex-col items-center justify-center h-full py-8 gap-5">
+          <ExecutionProgressSteps
+            steps={executionSteps}
+            currentStep={executionStepIndex}
           />
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs font-bold text-amber-500 animate-pulse">
-              {executionSteps[executionStepIndex]}
-            </span>
-            <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold">
-              Piston Sandbox Runtime
-            </span>
-          </div>
         </div>
       );
     }
@@ -719,8 +715,9 @@ Answer the student's question based on the coding problem. Provide hints or feed
     if (!runDetails && !output) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-10 text-[var(--text-secondary)] gap-2">
-          <Terminal size={24} className="text-[var(--text-secondary)]/40" />
-          <span>Write code and click "Run" to view compilation/execution output here.</span>
+          <Terminal size={28} className="text-[var(--text-secondary)]/25 mb-1" />
+          <span className="text-xs font-bold text-[var(--text-primary)]">Ready to execute</span>
+          <span className="text-[10px] text-[var(--text-secondary)] text-center">Write code and click "Run" to view compilation/execution output here.</span>
         </div>
       );
     }
@@ -800,8 +797,9 @@ Answer the student's question based on the coding problem. Provide hints or feed
     if (executions.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-10 text-[var(--text-secondary)] gap-2">
-          <Clock size={24} className="text-[var(--text-secondary)]/40" />
-          <span>No execution history found. Run or submit code to generate attempts.</span>
+          <Clock size={24} className="text-[var(--text-secondary)]/30 mb-1" />
+          <span className="text-xs font-bold text-[var(--text-primary)]">No execution history</span>
+          <span className="text-[10px] text-[var(--text-secondary)] text-center">Run or submit code to generate attempts.</span>
         </div>
       );
     }
@@ -821,7 +819,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
             return (
               <div
                 key={exec.id}
-                className="bg-white/5 border border-[var(--border-color)] hover:border-white/15 p-2.5 rounded-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs"
+                className="bg-white/5 border border-[var(--border-color)] hover:border-amber-500/20 hover:bg-white/[0.03] p-2.5 rounded-xl transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs"
               >
                 <div className="flex items-center gap-2.5">
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -1149,32 +1147,10 @@ Answer the student's question based on the coding problem. Provide hints or feed
       ];
       return (
         <div className="flex flex-col items-center justify-center py-20 gap-5">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-            className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full"
+          <ExecutionProgressSteps
+            steps={complexityLoadingSteps.slice(0, 6)}
+            currentStep={complexityStepIndex}
           />
-          <div className="flex flex-col items-center gap-1.5 text-center">
-            <span className="text-xs font-bold text-amber-500 animate-pulse">
-              {complexityLoadingSteps[complexityStepIndex]}
-            </span>
-            <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-semibold">
-              Running Big-O analysis simulations
-            </span>
-          </div>
-
-          {/* Progress dots */}
-          <div className="flex items-center gap-2 mt-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-full">
-            {complexityLoadingSteps.slice(0, 6).map((step, idx) => (
-              <div
-                key={idx}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  idx <= complexityStepIndex ? "bg-amber-500 shadow-[0_0_8px_#f59e0b]" : "bg-slate-300 dark:bg-zinc-800"
-                }`}
-                title={step}
-              />
-            ))}
-          </div>
         </div>
       );
     }
@@ -1189,7 +1165,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
           </p>
           <button
             onClick={handleRequestComplexityAnalysis}
-            className="flex items-center gap-1.5 text-xs px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black rounded-lg transition shadow-md"
+            className="flex items-center gap-1.5 text-xs px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black rounded-lg transition shadow-md hover:shadow-[0_0_16px_rgba(245,158,11,0.2)]"
           >
             <Sparkles size={12} />
             <span>Run Complexity Analysis</span>
@@ -1699,42 +1675,20 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   {/* AI Review Loader */}
                   {isReviewing && (
                     <div className="flex flex-col items-center justify-center py-20 gap-5">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                        className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full"
+                      <ExecutionProgressSteps
+                        steps={reviewLoadingSteps.slice(0, 6)}
+                        currentStep={reviewStepIndex}
                       />
-                      <div className="flex flex-col items-center gap-1.5 text-center">
-                        <span className="text-xs font-bold text-violet-400 animate-pulse">
-                          {reviewLoadingSteps[reviewStepIndex]}
-                        </span>
-                        <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-semibold">
-                          Running AI analysis simulations
-                        </span>
-                      </div>
-
-                      {/* Progress steps dots */}
-                      <div className="flex items-center gap-2 mt-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-full">
-                        {reviewLoadingSteps.slice(0, 6).map((step, idx) => (
-                          <div
-                            key={idx}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                              idx <= reviewStepIndex ? "bg-violet-500 shadow-[0_0_8px_#8b5cf6]" : "bg-slate-300 dark:bg-zinc-800"
-                            }`}
-                            title={step}
-                          />
-                        ))}
-                      </div>
                     </div>
                   )}
 
                   {/* No Review State */}
                   {!isReviewing && !reviewResult && (
                     <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-zinc-400 gap-3">
-                      <Sparkles size={32} className="text-slate-300 dark:text-zinc-700 animate-pulse" />
+                      <Sparkles size={32} className="text-violet-400/30 animate-pulse" />
                       <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">No active review generated for this session</span>
                       <p className="text-[10px] text-slate-400 dark:text-zinc-500 max-w-xs leading-relaxed">
-                        Select a review focus mode below the editor, edit your solution, and click the 🤖 Review Code button to launch structural analyses.
+                        Select a review focus mode below the editor, edit your solution, and click the Review Code button to launch structural analyses.
                       </p>
                     </div>
                   )}
@@ -2405,7 +2359,15 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
                     <div className="flex flex-col gap-3">
                       {filteredNotes.length === 0 ? (
-                        <p className="text-xs text-[var(--text-muted)] text-center py-6">No notes matching query.</p>
+                        <div className="flex flex-col items-center justify-center py-8 gap-2">
+                          <StickyNote size={24} className="text-[var(--text-secondary)]/30" />
+                          <p className="text-xs font-bold text-[var(--text-primary)]">
+                            {searchNote ? "No notes matching query" : "No notes yet"}
+                          </p>
+                          <p className="text-[10px] text-[var(--text-secondary)]">
+                            {searchNote ? "Try a different search term" : "Save personal notes about this problem above"}
+                          </p>
+                        </div>
                       ) : (
                         filteredNotes.map((note) => (
                           <div 
@@ -2471,7 +2433,11 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   {/* Comment List */}
                   <div className="flex flex-col gap-3">
                     {discussions.length === 0 ? (
-                      <p className="text-xs text-[var(--text-muted)] text-center py-6">No discussions yet. Be the first to start the conversation!</p>
+                      <div className="flex flex-col items-center justify-center py-8 gap-2">
+                        <MessageSquare size={24} className="text-[var(--text-secondary)]/30" />
+                        <p className="text-xs font-bold text-[var(--text-primary)]">No discussions yet</p>
+                        <p className="text-[10px] text-[var(--text-secondary)]">Be the first to start the conversation!</p>
+                      </div>
                     ) : (
                       discussions.map((disc) => (
                         <div key={disc.id} className="p-3 bg-white/5 border border-[var(--border-color)] rounded-xl flex gap-3">
@@ -2720,10 +2686,15 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           <span className="text-[var(--text-muted)]">Click "Submit" to run against all test cases.</span>
                         ) : (
                           testResults.map((tr: any, i: number) => (
-                            <div key={i} className={`p-2.5 rounded-lg border text-[10px] font-mono ${
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.05, duration: 0.3 }}
+                              className={`p-2.5 rounded-lg border text-[10px] font-mono transition-all duration-200 ${
                               tr.passed
-                                ? "bg-emerald-500/5 border-emerald-500/20"
-                                : "bg-rose-500/5 border-rose-500/20"
+                                ? "bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40"
+                                : "bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40"
                             }`}>
                               <div className="flex items-center gap-2 mb-1.5">
                                 {tr.passed
@@ -2741,7 +2712,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                                   <div><span className="text-rose-400">Got:</span> {tr.actual}</div>
                                 </div>
                               )}
-                            </div>
+                            </motion.div>
                           ))
                         )}
                       </div>

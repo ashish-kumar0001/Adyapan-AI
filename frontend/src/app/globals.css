@@ -475,4 +475,87 @@ button, input, select, textarea {
   color: var(--text-primary);
 }
 
+/* ── Coding Hub Design Consistency Layer ── */
+
+/* Custom scrollbar for coding hub panels */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+}
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.2);
+}
+
+/* Monaco editor container polish */
+.monaco-editor .margin,
+.monaco-editor .minimap {
+  opacity: 0.9;
+}
+
+/* Code execution pulse animation */
+@keyframes executionPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+.animate-execution-pulse {
+  animation: executionPulse 1.5s ease-in-out infinite;
+}
+
+/* Success glow animation */
+@keyframes successGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
+  50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+}
+.animate-success-glow {
+  animation: successGlow 2s ease-in-out infinite;
+}
+
+/* XP shimmer animation */
+@keyframes xpShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-xp-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: xpShimmer 3s ease-in-out infinite;
+}
+
+/* Floating action button glow */
+@keyframes fabGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); }
+}
+.animate-fab-glow {
+  animation: fabGlow 2.5s ease-in-out infinite;
+}
+
+/* Smooth border transitions for cards */
+.coding-card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.coding-card:hover {
+  border-color: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Light theme coding hub specifics */
+[data-theme="light"] .bg-\[\#070715\] {
+  background-color: var(--bg-dark) !important;
+}
+[data-theme="light"] .bg-\[\#0a0a0f\] {
+  background-color: var(--bg-card) !important;
+}
+[data-theme="light"] .bg-\[\#0d0d12\] {
+  background-color: var(--bg-dark) !important;
+}
+
 

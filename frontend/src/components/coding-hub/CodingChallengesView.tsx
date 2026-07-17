@@ -16,6 +16,7 @@ import {
   Users,
   Search,
   Terminal,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
@@ -51,6 +52,36 @@ interface TestLog {
   passedCount?: number;
   totalCount?: number;
 }
+
+import {
+  CodingEmptyState,
+  CodingSuccessState,
+  ExecutionProgressSteps,
+  DifficultyBadge,
+  XPBadge,
+  GlowCard,
+  codingFadeUp,
+} from "./CodingHubShared";
+
+// ─── Execution Steps ───────────────────────────────────────────────────────
+
+const RUN_STEPS = [
+  "Preparing Environment",
+  "Validating Syntax",
+  "Compiling Code",
+  "Running Tests",
+  "Collecting Results",
+  "Complete"
+];
+
+const SUBMIT_STEPS = [
+  "Preparing Package",
+  "Sending to Evaluation Server",
+  "Running Hidden Test Cases",
+  "Analyzing Performance",
+  "Calculating Score",
+  "Complete"
+];
 
 // ─── Code Templates ─────────────────────────────────────────────────────────
 
@@ -226,17 +257,30 @@ export function CodingChallengesView() {
     }
   };
 
-  // Run Tests (mock compilation)
+  // Run step tracking for execution
+  const [runStepIndex, setRunStepIndex] = useState(0);
+
+  // Run Tests (mock compilation with step-by-step progress)
   const handleRunTests = () => {
     if (!code || runningTests) return;
     setRunningTests(true);
-    setTestLog({ status: null, message: "Compiling code and linking assertions..." });
+    setRunStepIndex(0);
+    setTestLog({ status: null, message: "Preparing environment..." });
+
+    let step = 0;
+    const stepInterval = setInterval(() => {
+      step++;
+      setRunStepIndex(step);
+      if (step === 1) setTestLog({ status: null, message: "Validating syntax structure..." });
+      else if (step === 2) setTestLog({ status: null, message: "Compiling and optimizing code..." });
+      else if (step === 3) setTestLog({ status: null, message: "Running test assertions..." });
+    }, 400);
 
     setTimeout(() => {
+      clearInterval(stepInterval);
+      setRunStepIndex(RUN_STEPS.length - 1);
       setRunningTests(false);
-      // Basic check for brackets/syntax
       try {
-        // Evaluate syntax check
         if (language === "javascript") {
           new Function(code);
         }
@@ -256,14 +300,25 @@ export function CodingChallengesView() {
         });
         toast.error("Compilation error in syntax.");
       }
-    }, 1200);
+    }, 2400);
   };
 
   // Submit Final Code
   const handleSubmit = async () => {
     if (!code || submitting || !activeChallenge) return;
     setSubmitting(true);
-    setTestLog({ status: null, message: "Transmitting package to evaluation server..." });
+    setRunStepIndex(0);
+    setTestLog({ status: null, message: "Preparing evaluation package..." });
+
+    let step = 0;
+    const stepInterval = setInterval(() => {
+      step++;
+      setRunStepIndex(step);
+      if (step === 1) setTestLog({ status: null, message: "Sending to evaluation server..." });
+      else if (step === 2) setTestLog({ status: null, message: "Running hidden test cases..." });
+      else if (step === 3) setTestLog({ status: null, message: "Analyzing performance metrics..." });
+      else if (step === 4) setTestLog({ status: null, message: "Calculating final score..." });
+    }, 500);
 
     try {
       const res = await api.post("/challenges/submit", {
@@ -271,6 +326,9 @@ export function CodingChallengesView() {
         code,
         language,
       });
+
+      clearInterval(stepInterval);
+      setRunStepIndex(SUBMIT_STEPS.length - 1);
 
       const submission = res.data?.submission;
       if (submission) {
@@ -313,6 +371,8 @@ export function CodingChallengesView() {
         throw new Error("No submission data returned");
       }
     } catch (err) {
+      clearInterval(stepInterval);
+      setRunStepIndex(SUBMIT_STEPS.length - 1);
       // Offline fallback simulator (makes the UI fully functional even when API routes are missing)
       const mockSuccess = Math.random() > 0.35;
       if (mockSuccess) {
@@ -629,7 +689,7 @@ export function CodingChallengesView() {
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
                 
                 {/* Problem Statement Card */}
-                <div className="p-5 rounded-2xl border bg-black/20" style={{ borderColor: sidebarBorder }}>
+                <div className="p-5 rounded-2xl border bg-[var(--bg-card)] backdrop-blur-md" style={{ borderColor: sidebarBorder }}>
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
                     <BookOpen className="w-3.5 h-3.5" /> Problem Instructions
                   </div>
@@ -639,7 +699,7 @@ export function CodingChallengesView() {
                 </div>
 
                 {/* Evaluation Results Log card */}
-                <div className="p-5 rounded-2xl border bg-slate-950/40 shadow-inner" style={{ borderColor: sidebarBorder }}>
+                <div className="p-5 rounded-2xl border bg-[var(--bg-card)] backdrop-blur-md" style={{ borderColor: sidebarBorder }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       <Terminal className="w-3.5 h-3.5" /> Output log
@@ -656,6 +716,17 @@ export function CodingChallengesView() {
                       </span>
                     )}
                   </div>
+
+                  {/* Step-by-step progress indicator when running */}
+                  {(runningTests || submitting) && (
+                    <div className="mb-4">
+                      <ExecutionProgressSteps
+                        steps={submitting ? SUBMIT_STEPS : RUN_STEPS}
+                        currentStep={runStepIndex}
+                        isDark={isDark}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-3 font-mono">
                     <div className="flex gap-2 items-start text-xs leading-normal">
@@ -692,8 +763,15 @@ export function CodingChallengesView() {
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-400">
-              <Code className="w-10 h-10 mb-2 animate-pulse text-amber-500/40" />
-              <p>Select a challenge to get started.</p>
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/10"
+              >
+                <Code className="w-7 h-7 text-amber-500" />
+              </motion.div>
+              <p className="text-sm font-bold text-[var(--text-primary)] mb-1">Select a challenge</p>
+              <p className="text-xs text-[var(--text-secondary)]">Choose from the sidebar to start coding</p>
             </div>
           )}
         </div>
@@ -702,20 +780,25 @@ export function CodingChallengesView() {
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
           
           {/* Header toolbar */}
-          <div className="p-3 border-b flex items-center justify-between gap-4 z-10" style={{ borderColor: sidebarBorder }}>
+          <div className="p-3 border-b flex items-center justify-between gap-4 z-10" style={{ borderColor: sidebarBorder, background: isDark ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.02)" }}>
             {/* Language dropdown */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-bold uppercase">Language:</span>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as "javascript" | "python" | "cpp" | "java")}
-                className="bg-black/40 border border-white/10 hover:border-white/20 transition px-3 py-1.5 rounded-xl text-xs font-semibold outline-none"
-              >
-                <option value="javascript">JavaScript</option>
-                <option value="python">Python</option>
-                <option value="cpp">C++</option>
-                <option value="java">Java</option>
-              </select>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Language:</span>
+              <div className="flex items-center gap-0.5 bg-black/20 p-0.5 rounded-lg border" style={{ borderColor: sidebarBorder }}>
+                {(["javascript", "python", "cpp", "java"] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                      language === lang
+                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                        : "text-slate-400 hover:text-slate-200 border border-transparent"
+                    }`}
+                  >
+                    {lang === "cpp" ? "C++" : lang === "javascript" ? "JS" : lang.charAt(0).toUpperCase() + lang.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Reset code */}
@@ -751,31 +834,49 @@ export function CodingChallengesView() {
                 cursorBlinking: "smooth",
                 automaticLayout: true,
                 padding: { top: 12 },
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontLigatures: true,
+                bracketPairColorization: { enabled: true },
+                smoothScrolling: true,
+                cursorSmoothCaretAnimation: "on",
+                renderLineHighlight: "all",
+                roundedSelection: true,
               }}
             />
           </div>
 
           {/* Action trigger footer */}
-          <div className="p-4 border-t bg-black/10 flex justify-end gap-3 z-10" style={{ borderColor: sidebarBorder }}>
-            <motion.button
-              onClick={handleRunTests}
-              disabled={runningTests || submitting || !code}
-              className="px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition rounded-xl text-xs font-bold text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {runningTests ? "Compiling..." : "Run Tests"}
-            </motion.button>
+          <div className="p-4 border-t bg-black/10 dark:bg-white/[0.015] flex justify-between items-center z-10" style={{ borderColor: sidebarBorder }}>
+            <div className="flex items-center gap-2 text-[10px] text-slate-400">
+              <Clock size={10} />
+              <span>Auto-saves active</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <motion.button
+                onClick={handleRunTests}
+                disabled={runningTests || submitting || !code}
+                className="px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition rounded-xl text-[11px] font-bold text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {runningTests ? <RefreshCw size={11} className="animate-spin" /> : <Terminal size={11} />}
+                {runningTests ? "Running..." : "Run Tests"}
+              </motion.button>
 
-            <motion.button
-              onClick={handleSubmit}
-              disabled={submitting || runningTests || !code}
-              className="flex items-center gap-1.5 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black transition rounded-xl text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {submitting ? "Evaluating..." : <><Play className="w-3.5 h-3.5" fill="currentColor" /> Submit Code</>}
-            </motion.button>
+              <motion.button
+                onClick={handleSubmit}
+                disabled={submitting || runningTests || !code}
+                className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black transition rounded-xl text-[11px] font-black disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 border border-amber-400/20"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {submitting ? (
+                  <><RefreshCw size={11} className="animate-spin" /> Evaluating...</>
+                ) : (
+                  <><Play className="w-3.5 h-3.5" fill="currentColor" /> Submit Code</>
+                )}
+              </motion.button>
+            </div>
           </div>
 
         </div>
