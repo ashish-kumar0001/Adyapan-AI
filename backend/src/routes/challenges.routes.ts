@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
+import { executeCode, runTestCases } from "../services/piston.service";
 
 const router = Router();
 router.use(requireAuth);
@@ -166,7 +167,173 @@ router.get("/categories/:slug", async (req: any, res) => {
   }
 });
 
-// ─── Single Challenge Detail ────────────────────────────────────────────────
+// ─── Run Code Against Challenge Test Cases ───────────────────────────────────
+
+router.post("/run", async (req: any, res) => {
+  try {
+    const { challengeId, code, language, stdin } = req.body;
+    if (!challengeId || !code || !language) {
+      return res.status(400).json({ error: "challengeId, code, and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const challenge = await userPrisma.challenge.findUnique({ where: { id: challengeId } });
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    if (stdin) {
+      const result = await executeCode(language, code, stdin);
+      res.json({
+        success: result.success,
+        output: result.stdout,
+        error: result.stderr || result.compile_output,
+        executionTime: result.executionTime,
+        memory: result.memory,
+        status: result.status,
+      });
+    } else {
+      let testCases: Array<{ input: string; expectedOutput: string }> = [];
+      if (challenge.testCases) {
+        const raw = typeof challenge.testCases === "string" ? JSON.parse(challenge.testCases as string) : challenge.testCases;
+        if (Array.isArray(raw)) {
+          testCases = raw.map((tc: any) => ({ input: tc.input, expectedOutput: tc.expected }));
+        }
+      }
+      if (testCases.length === 0) {
+        const result = await executeCode(language, code, "");
+        res.json({
+          success: result.success,
+          output: result.stdout,
+          error: result.stderr || result.compile_output,
+          executionTime: result.executionTime,
+          memory: result.memory,
+          status: result.status,
+          sampleResults: [],
+        });
+        return;
+      }
+      const submission = await runTestCases(language, code, testCases, 15000);
+      res.json({
+        success: submission.allPassed,
+        output: submission.testResults.map((tr) => tr.actualOutput).join("\n---\n"),
+        error: "",
+        executionTime: submission.executionTime,
+        memory: 0,
+        status: submission.allPassed ? "Accepted" : "Failed",
+        sampleResults: submission.testResults.map((tr) => ({
+          input: tr.input,
+          expected: tr.expectedOutput,
+          actual: tr.actualOutput,
+          passed: tr.passed,
+        })),
+      });
+    }
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.run", "Failed to execute code");
+  }
+});
+
+// ─── Submit Challenge ───────────────────────────────────────────────────────
+
+router.post("/submit", async (req: any, res) => {
+  try {
+    const { challengeId, code, language } = req.body;
+    if (!challengeId || !code || !language) {
+      return res.status(400).json({ error: "challengeId, code, and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const challenge = await userPrisma.challenge.findUnique({ where: { id: challengeId } });
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    let testCases: Array<{ input: string; expectedOutput: string }> = [];
+    if (challenge.testCases) {
+      const raw = typeof challenge.testCases === "string" ? JSON.parse(challenge.testCases as string) : challenge.testCases;
+      if (Array.isArray(raw)) {
+        testCases = raw.map((tc: any) => ({ input: tc.input, expectedOutput: tc.expected }));
+      }
+    }
+
+    if (testCases.length === 0) {
+      const result = await executeCode(language, code, "");
+      const status = result.success ? "Accepted" : "Failed";
+      const score = status === "Accepted" ? (challenge.points || 100) : 0;
+
+      const submission = await userPrisma.challengeSubmission.create({
+        data: { userId: req.user.id, challengeId, code, language, status, score },
+      });
+      if (status === "Accepted") {
+        await userPrisma.leaderboard.upsert({
+          where: { id: req.user.id },
+          create: { userId: req.user.id, score },
+          update: { score: { increment: score } },
+        });
+      }
+      res.json({
+        submission,
+        testResults: [{ testCase: 1, input: "(custom)", expected: "(success)", actual: result.stdout || result.stderr, passed: result.success }],
+        allPassed: result.success,
+        totalTests: 1,
+        passedTests: result.success ? 1 : 0,
+        executionTime: result.executionTime,
+        memory: result.memory,
+      });
+      return;
+    }
+
+    const submission = await runTestCases(language, code, testCases, 15000);
+    const isAllPassed = submission.allPassed;
+    const status = isAllPassed ? "Accepted" : "Failed";
+    const score = isAllPassed ? (challenge.points || 100) : 0;
+
+    const record = await userPrisma.challengeSubmission.create({
+      data: { userId: req.user.id, challengeId, code, language, status, score },
+    });
+
+    if (isAllPassed) {
+      await userPrisma.leaderboard.upsert({
+        where: { id: req.user.id },
+        create: { userId: req.user.id, score },
+        update: { score: { increment: score } },
+      });
+    }
+
+    res.json({
+      submission: record,
+      testResults: submission.testResults.map((tr, i) => ({
+        testCase: i + 1,
+        input: tr.input,
+        expected: tr.expectedOutput,
+        actual: tr.actualOutput,
+        passed: tr.passed,
+        executionTime: tr.executionResult.executionTime,
+      })),
+      allPassed: isAllPassed,
+      totalTests: submission.totalTests,
+      passedTests: submission.passedTests,
+      executionTime: submission.executionTime,
+      memory: 0,
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.submit", "Failed to submit challenge");
+  }
+});
+
+// ─── Leaderboard ────────────────────────────────────────────────────────────
+
+router.get("/leaderboard/top", async (_req, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(_req);
+    const leaderboard = await userPrisma.leaderboard.findMany({
+      orderBy: { score: "desc" },
+      take: 10,
+    });
+    res.json({ leaderboard });
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.leaderboard", "Failed to fetch leaderboard");
+  }
+});
+
+// ─── Single Challenge Detail (MUST be last — catch-all param route) ─────────
 
 router.get("/:slug", async (req: any, res) => {
   try {
@@ -208,59 +375,6 @@ router.get("/:slug", async (req: any, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Challenges.detail", "Failed to fetch challenge");
-  }
-});
-
-// ─── Submit Challenge ───────────────────────────────────────────────────────
-
-router.post("/submit", async (req: any, res) => {
-  try {
-    const { challengeId, code, language } = req.body;
-    if (!challengeId || !code) return res.status(400).json({ error: "Missing required fields" });
-
-    const userPrisma = await getUserPrismaFromRequest(req);
-
-    const challenge = await userPrisma.challenge.findUnique({ where: { id: challengeId } });
-    const status = Math.random() > 0.3 ? "Accepted" : "Failed";
-    const score = status === "Accepted" ? (challenge?.points || 100) : 0;
-
-    const submission = await userPrisma.challengeSubmission.create({
-      data: {
-        userId: req.user.id,
-        challengeId,
-        code,
-        language: language || "javascript",
-        status,
-        score,
-      },
-    });
-
-    if (status === "Accepted") {
-      await userPrisma.leaderboard.upsert({
-        where: { id: req.user.id },
-        create: { userId: req.user.id, score },
-        update: { score: { increment: score } },
-      });
-    }
-
-    res.json({ submission });
-  } catch (error) {
-    handleRouteError(res, error, "Challenges.submit", "Failed to submit challenge");
-  }
-});
-
-// ─── Leaderboard ────────────────────────────────────────────────────────────
-
-router.get("/leaderboard/top", async (_req, res) => {
-  try {
-    const userPrisma = await getUserPrismaFromRequest(_req);
-    const leaderboard = await userPrisma.leaderboard.findMany({
-      orderBy: { score: "desc" },
-      take: 10,
-    });
-    res.json({ leaderboard });
-  } catch (error) {
-    handleRouteError(res, error, "Challenges.leaderboard", "Failed to fetch leaderboard");
   }
 });
 

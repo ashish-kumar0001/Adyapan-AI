@@ -377,7 +377,7 @@ export function CodingChallengesView() {
   };
 
   const openProblem = (challenge: ChallengeListItem) => {
-    window.location.href = `/dashboard/coding/problem/${challenge.id}`;
+    window.location.href = `/dashboard/coding/challenge/${challenge.id}`;
   };
 
   // Re-fetch when filters change (only in challenges view)

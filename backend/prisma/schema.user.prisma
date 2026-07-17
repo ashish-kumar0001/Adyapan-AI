@@ -109,7 +109,7 @@ model UploadedResume {
 model CandidateProfile {
   id                 String    @id @default(cuid())
   userId             String    @map("user_id")
-  resumeId           String    @map("resume_id")
+  resumeId           String    @unique @map("resume_id")
   name               String?
   email              String?
   phone              String?
