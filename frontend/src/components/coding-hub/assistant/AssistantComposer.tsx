@@ -82,7 +82,7 @@ export function AssistantComposer({
   };
 
   return (
-    <div className="p-4 flex-shrink-0 z-10">
+    <div className="px-4 pb-4 pt-2 flex-shrink-0 z-10">
       <div className="max-w-4xl mx-auto">
         {/* Mode tabs */}
         <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">

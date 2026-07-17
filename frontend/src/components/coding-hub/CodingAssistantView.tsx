@@ -299,38 +299,14 @@ export default function CodingAssistantView() {
     <div
       className="relative flex overflow-hidden w-full h-full"
       style={{
+        margin: "-1.25rem",
+        width: "calc(100% + 2.5rem)",
+        height: "calc(100% + 2.5rem)",
         background: isDark ? "#070715" : "#f0f4ff",
         color: isDark ? "#fff" : "#1a1a2e",
       }}
     >
       <ChatBackground isDark={isDark} />
-
-      {/* Sidebar toggle */}
-      <AnimatePresence>
-        {!sidebarOpen && (
-          <motion.button
-            key="sidebar-toggle"
-            className="absolute top-3 left-3 z-30 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer"
-            style={{
-              background: `linear-gradient(135deg, ${currentTabColor}, ${currentTabColor}cc)`,
-              color: "#000",
-              boxShadow: `0 2px 10px ${currentTabColor}30`,
-            }}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            onClick={() => setSidebarOpen(true)}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
-              <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
-              <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
-            </svg>
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       <div className="flex flex-1 overflow-hidden relative z-10 w-full h-full">
         {/* Sidebar */}
@@ -342,7 +318,7 @@ export default function CodingAssistantView() {
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-shrink-0 h-full overflow-hidden relative"
-              style={{ zIndex: 10 }}
+              style={{ zIndex: 20 }}
             >
               {/* Close button */}
               <motion.button
@@ -378,14 +354,37 @@ export default function CodingAssistantView() {
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
           {/* Top header */}
           <div
-            className="px-4 py-3 border-b flex items-center justify-between gap-4 z-10"
+            className="px-4 py-3 border-b flex items-center justify-between gap-4 flex-shrink-0 z-10"
             style={{
               borderColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
               background: isDark ? "rgba(7,7,21,0.9)" : "rgba(240,244,255,0.9)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="flex items-center gap-3 ml-10 lg:ml-0">
+            <div className="flex items-center gap-3">
+              {/* Sidebar toggle */}
+              {!sidebarOpen && (
+                <motion.button
+                  className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${currentTabColor}, ${currentTabColor}cc)`,
+                    color: "#000",
+                    boxShadow: `0 2px 10px ${currentTabColor}30`,
+                  }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => setSidebarOpen(true)}
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                    <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                    <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                  </svg>
+                </motion.button>
+              )}
+
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center"
                 style={{
@@ -420,7 +419,7 @@ export default function CodingAssistantView() {
           </div>
 
           {/* Chat messages or welcome */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 md:px-6">
+          <div className="flex-1 overflow-y-auto px-4 py-6 md:px-6 min-h-0">
             {messages.length === 0 && !generating ? (
               /* Welcome screen */
               <div className="max-w-2xl mx-auto h-full flex flex-col justify-center items-center py-8">
