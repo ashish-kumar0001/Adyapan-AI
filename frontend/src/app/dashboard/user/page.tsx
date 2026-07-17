@@ -219,6 +219,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "Study Planner", viewId: "study-planner", category: "Learning Hub" },
   { label: "Learning Streak", viewId: "learning-streak", category: "Learning Hub" },
   { label: "DSA Practice", viewId: "dsa-practice", category: "Coding Hub" },
+  { label: "Coding Dashboard", viewId: "coding-dashboard", category: "Coding Hub" },
   { label: "Coding Assistant", viewId: "coding-assistant", category: "Coding Hub" },
   { label: "Coding Challenges", viewId: "coding-challenges", category: "Coding Hub" },
   { label: "GitHub Portfolio", viewId: "github-portfolio", category: "Coding Hub" },
@@ -271,6 +272,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "coding", label: "Coding Hub", icon: <Code2 size={18} />,
     submenu: [
+      { label: "Coding Dashboard", href: "/dashboard/coding/dashboard" },
       { label: "Coding Roadmap", href: "/dashboard/coding/roadmap" },
       { label: "DSA Practice", href: "/dashboard/coding" },
       { label: "Coding Assistant", href: "#" },
@@ -466,6 +468,7 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
                       else if (sub.label === "Flashcards") onViewTool("flashcards");
                       else if (sub.label === "Coding Assistant") onViewTool("coding-assistant");
                       else if (sub.label === "DSA Practice") onViewTool("dsa-practice");
+                      else if (sub.label === "Coding Dashboard") router.push("/dashboard/coding/dashboard");
                       else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
                       else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
                       else if (sub.label === "AI Chat Assistant") onViewTool("ady-chat");

@@ -1568,6 +1568,272 @@ router.get("/roadmap/readiness", async (req: any, res) => {
   }
 });
 
+// ─── Day 19 AI Coding Dashboard Analytics ────────────────────────────────────
+
+router.get("/dashboard/analytics", async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // 1. User Question Progress
+    const userProgress = await userPrisma.userQuestionProgress.findMany({ where: { userId } });
+    const progressMap = new Map(userProgress.map((p: any) => [p.questionId, p]));
+    const solvedCount = userProgress.filter((p: any) => p.status === "solved").length;
+    const attemptedCount = userProgress.length;
+
+    // 2. Topic Explorer (reuse existing logic pattern)
+    const globalQuestions = await masterPrisma.codingQuestion.findMany({
+      select: { id: true, topic: true, difficulty: true }
+    });
+    const topicNames = [...new Set(globalQuestions.map(q => q.topic))];
+
+    const topicMastery = topicNames.map(topicName => {
+      const topicQs = globalQuestions.filter(q => q.topic === topicName);
+      const totalQ = topicQs.length;
+      const solvedQ = topicQs.filter(q => (progressMap.get(q.id) as any)?.status === "solved").length;
+      return {
+        topic: topicName,
+        score: totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0,
+        solved: solvedQ,
+        total: totalQ
+      };
+    });
+
+    // 3. Difficulty Distribution
+    const solvedQuestionIds = userProgress.filter((p: any) => p.status === "solved").map((p: any) => p.questionId);
+    const solvedQuestions = solvedQuestionIds.length > 0
+      ? await masterPrisma.codingQuestion.findMany({ where: { id: { in: solvedQuestionIds } } })
+      : [];
+    const difficultyDistribution = { Easy: 0, Medium: 0, Hard: 0, Expert: 0 };
+    solvedQuestions.forEach(q => {
+      const d = q.difficulty as keyof typeof difficultyDistribution;
+      if (d in difficultyDistribution) difficultyDistribution[d]++;
+    });
+
+    // 4. Challenge Analytics
+    const challengeSubmissions = await userPrisma.challengeSubmission.findMany({ where: { userId } });
+    const acceptedSubmissions = challengeSubmissions.filter((s: any) => s.status === "Accepted");
+    const challengesCompleted = acceptedSubmissions.length;
+    const challengesStarted = challengeSubmissions.length;
+    const successRate = challengesStarted > 0 ? Math.round((challengesCompleted / challengesStarted) * 100) : 0;
+    const xpEarned = acceptedSubmissions.reduce((sum: number, s: any) => sum + (s.score || 0), 0);
+
+    // 5. Achievement count from streak
+    const achievements = await userPrisma.streakAchievement.findMany({ where: { userId } });
+
+    // 6. Code Review Insights
+    const reviews = await userPrisma.codeReview.findMany({ where: { userId }, orderBy: { generatedAt: "desc" } });
+    const reviewAggregate = reviews.length > 0
+      ? { avg: Math.round(reviews.reduce((s: number, r: any) => s + r.overallScore, 0) / reviews.length) }
+      : { avg: 0 };
+
+    // Most common mistakes from reviews
+    const mistakeMap: Record<string, number> = {};
+    reviews.forEach((r: any) => {
+      const rj = r.reviewJson as any;
+      if (rj?.weaknesses) {
+        (Array.isArray(rj.weaknesses) ? rj.weaknesses : []).forEach((w: string) => {
+          const key = typeof w === "string" ? w.slice(0, 60) : "Unknown";
+          mistakeMap[key] = (mistakeMap[key] || 0) + 1;
+        });
+      }
+    });
+    const commonMistakes = Object.entries(mistakeMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([mistake, count]) => ({ mistake, count }));
+
+    // 7. Complexity Analytics
+    const complexities = await userPrisma.complexityAnalysis.findMany({ where: { userId }, orderBy: { generatedAt: "desc" } });
+    const complexityAggregate = complexities.length > 0
+      ? { avgEfficiency: Math.round(complexities.reduce((s: number, c: any) => s + c.efficiencyScore, 0) / complexities.length) }
+      : { avgEfficiency: 0 };
+
+    const timeComplexityCounts: Record<string, number> = {};
+    const spaceComplexityCounts: Record<string, number> = {};
+    complexities.forEach((c: any) => {
+      const tc = c.timeComplexity || "O(n)";
+      const sc = c.spaceComplexity || "O(1)";
+      timeComplexityCounts[tc] = (timeComplexityCounts[tc] || 0) + 1;
+      spaceComplexityCounts[sc] = (spaceComplexityCounts[sc] || 0) + 1;
+    });
+
+    const mostCommonTimeComplexity = Object.entries(timeComplexityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    const mostCommonSpaceComplexity = Object.entries(spaceComplexityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+
+    // Efficiency trend (last 20 analyses)
+    const efficiencyTrend = complexities.slice(0, 20).reverse().map((c: any) => ({
+      score: c.efficiencyScore,
+      date: c.generatedAt
+    }));
+
+    // 8. Weak Topics
+    const weakTopics = await userPrisma.weakTopic.findMany({
+      where: { userId },
+      orderBy: { strengthScore: "asc" }
+    });
+    const topWeakTopics = weakTopics.slice(0, 5).map((wt: any) => ({
+      topic: wt.topicName,
+      mastery: wt.strengthScore,
+      riskLevel: wt.riskLevel,
+      status: wt.status,
+      revisionPriority: wt.revisionPriority
+    }));
+
+    // 9. Strong Topics (top performing)
+    const strongTopics = [...topicMastery]
+      .sort((a, b) => b.score - a.score)
+      .filter(t => t.score > 0)
+      .slice(0, 5);
+
+    // 10. Roadmap Data
+    const roadmap = await userPrisma.codingRoadmap.findFirst({ where: { userId } });
+    let roadmapProgress = null;
+    if (roadmap) {
+      const roadmapData = roadmap.roadmapJson as any;
+      const milestones = await userPrisma.roadmapMilestone.findMany({ where: { roadmapId: roadmap.id } });
+      const currentMilestone = milestones.find((m: any) => m.status === "in_progress") || milestones.find((m: any) => m.status === "pending");
+      const nextMilestone = milestones.find((m: any) => m.status === "pending");
+      roadmapProgress = {
+        type: roadmap.roadmapType,
+        skillLevel: roadmap.skillLevel,
+        targetCompany: roadmap.targetCompany,
+        completionPercentage: roadmap.completionPercentage,
+        currentTopic: roadmapData?.weeks?.find((w: any) => w.status === "in_progress")?.topics?.[0] || roadmapData?.weeks?.[0]?.topics?.[0] || "N/A",
+        nextMilestone: nextMilestone?.title || currentMilestone?.title || "All Complete",
+        estimatedCompletion: roadmapData?.estimated_completion || "N/A",
+        totalWeeks: roadmap.timelineWeeks,
+        guidance: roadmapData?.guidance || ""
+      };
+    }
+
+    // 11. Activity Heatmap (last 365 days)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const recentProgress = userProgress.filter((p: any) => new Date(p.updatedAt) >= oneYearAgo);
+    const heatmap: Record<string, number> = {};
+    recentProgress.forEach((p: any) => {
+      const day = new Date(p.updatedAt).toISOString().split("T")[0];
+      heatmap[day] = (heatmap[day] || 0) + 1;
+    });
+
+    // 12. Activity Chart (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const last30Progress = userProgress.filter((p: any) => new Date(p.updatedAt) >= thirtyDaysAgo);
+    const dailyData: Record<string, { solved: number; sessions: number; timeSpent: number }> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      dailyData[key] = { solved: 0, sessions: 0, timeSpent: 0 };
+    }
+    last30Progress.forEach((p: any) => {
+      const day = new Date(p.updatedAt).toISOString().split("T")[0];
+      if (dailyData[day]) {
+        if (p.status === "solved") dailyData[day].solved++;
+        dailyData[day].sessions++;
+        dailyData[day].timeSpent += Math.round((p.timeSpent || 0) / 60);
+      }
+    });
+
+    const activityChart = {
+      labels: Object.keys(dailyData),
+      questionsSolved: Object.values(dailyData).map(d => d.solved),
+      sessions: Object.values(dailyData).map(d => d.sessions),
+      timeSpent: Object.values(dailyData).map(d => d.timeSpent)
+    };
+
+    // 13. Streak
+    const streak = await userPrisma.learningStreak.findFirst({ where: { userId } });
+
+    // 14. Code Execution Stats
+    const executionCount = await userPrisma.codeExecution.count({ where: { userId } });
+
+    // 15. AI Coding Brief
+    const now = new Date();
+    const hour = now.getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weeklySolved = userProgress.filter((p: any) => p.status === "solved" && new Date(p.updatedAt) >= weekAgo).length;
+    const weakestTopic = [...topicMastery].sort((a, b) => a.score - b.score).find(t => t.solved > 0 || true);
+
+    // Placement & Interview Readiness (reuse logic from roadmap service)
+    const roadmapWeight = (roadmap?.completionPercentage || 0) * 0.40;
+    const solvedWeight = Math.min(30, (solvedCount / 60) * 30);
+    const complexityWeight = (complexityAggregate.avgEfficiency || 70) * 0.15;
+    const challengeWeight = Math.min(15, challengesCompleted * 5);
+    const placementReadiness = Math.min(100, Math.round(roadmapWeight + solvedWeight + complexityWeight + challengeWeight));
+
+    const topicCoverage = new Set(solvedQuestions.map(q => q.topic)).size;
+    const accuracy = attemptedCount > 0 ? (solvedCount / attemptedCount) * 100 : 0;
+    const coverageWeight = Math.min(35, (topicCoverage / 10) * 35);
+    const reviewWeight = (reviewAggregate.avg || 65) * 0.35;
+    const accuracyWeight = (accuracy || 70) * 0.30;
+    const interviewReadiness = Math.min(100, Math.round(coverageWeight + reviewWeight + accuracyWeight));
+
+    // Optimization opportunities count
+    const optimizationOpportunities = complexities.filter((c: any) => c.efficiencyScore < 70).length;
+
+    res.json({
+      overview: {
+        questionsSolved: solvedCount,
+        challengesCompleted,
+        currentStreak: streak?.currentStreak || 0,
+        roadmapCompletion: roadmap?.completionPercentage || 0,
+        interviewReadiness,
+        placementReadiness
+      },
+      aiBrief: {
+        greeting,
+        weeklySolved,
+        weakestTopic: weakestTopic?.topic || "None",
+        weakestTopicMastery: weakestTopic?.score || 0,
+        interviewReadiness,
+        improvementPotential: Math.min(100 - interviewReadiness, 15)
+      },
+      topicMastery: topicMastery.filter(t => t.total > 0).sort((a, b) => b.score - a.score),
+      difficultyDistribution,
+      activityChart,
+      roadmapProgress,
+      challengeAnalytics: {
+        started: challengesStarted,
+        completed: challengesCompleted,
+        successRate,
+        xpEarned,
+        achievementsUnlocked: achievements.length
+      },
+      reviewInsights: {
+        avgCodeQuality: reviewAggregate.avg,
+        totalReviews: reviews.length,
+        optimizationOpportunities,
+        commonMistakes
+      },
+      complexityAnalytics: {
+        avgEfficiencyScore: complexityAggregate.avgEfficiency,
+        mostCommonTimeComplexity,
+        mostCommonSpaceComplexity,
+        totalAnalyses: complexities.length,
+        efficiencyTrend
+      },
+      weakTopics: topWeakTopics,
+      strongTopics,
+      recentActivity: userProgress
+        .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 8)
+        .map((p: any) => ({ questionId: p.questionId, status: p.status, updatedAt: p.updatedAt })),
+      heatmap,
+      executionStats: {
+        totalExecutions: executionCount,
+        streakPoints: streak?.points || 0
+      }
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.dashboard.analytics", "Failed to fetch dashboard analytics");
+  }
+});
+
 export const codingRouter = router;
 
 
