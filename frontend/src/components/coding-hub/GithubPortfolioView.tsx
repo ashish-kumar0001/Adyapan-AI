@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GitBranch,
   FileText,
   Layout,
-  Send,
   Loader2,
   GitCommit,
   Star,
@@ -17,11 +16,8 @@ import {
   Key,
   Database,
   RefreshCw,
-  Check,
-  ArrowRight,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Info,
 } from "lucide-react";
 import { toast } from "sonner";

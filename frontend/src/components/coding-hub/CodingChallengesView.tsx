@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy,
   Clock,
-  Star,
-  Zap,
   Code,
-  ShieldCheck,
-  ChevronRight,
   Play,
   RotateCcw,
   BookOpen,
@@ -17,10 +13,8 @@ import {
   XCircle,
   HelpCircle,
   Code2,
-  Calendar,
   Users,
   Search,
-  Menu,
   Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
