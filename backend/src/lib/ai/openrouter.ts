@@ -223,8 +223,9 @@ export async function generateJSON<T>(
       const repaired = tryRepairJSON(cached);
       const parsed = JSON.parse(repaired);
       const validated = enforceSchema(parsed, fallback);
-      // Reject cached responses that are empty/all-default
-      const isEmpty = !(validated as any).name && !(validated as any).email && ((validated as any).skills?.length ?? 0) === 0;
+      // Reject cached resume profiles that are empty/all-default (only for resume schemas that have name/email/skills)
+      const isResumeSchema = "name" in (fallback as any) || "email" in (fallback as any);
+      const isEmpty = isResumeSchema && !(validated as any).name && !(validated as any).email && ((validated as any).skills?.length ?? 0) === 0;
       if (isEmpty) {
         console.log(`[AI Engine] Cache hit returned empty profile, discarding and re-fetching`);
       } else {
