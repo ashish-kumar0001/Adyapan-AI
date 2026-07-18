@@ -96,17 +96,23 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
 
     // Get latest ATS report if not provided
     let atsReport: any = null;
-    if (atsReportId) {
-      atsReport = await userPrisma.aTSReport.findFirst({ where: { id: atsReportId, userId } });
-    } else {
-      atsReport = await userPrisma.aTSReport.findFirst({
-        where: { userId, resumeId: resume.id },
-        orderBy: { createdAt: "desc" },
-      });
+    try {
+      if (atsReportId) {
+        atsReport = await userPrisma.aTSReport.findFirst({ where: { id: atsReportId, userId } });
+      } else {
+        atsReport = await userPrisma.aTSReport.findFirst({
+          where: { userId, resumeId: resume.id },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+    } catch (e) {
+      console.warn("[ResumeImprovement] Could not fetch ATS report:", e);
     }
 
     const resumeText = serializeResumeToText(resume);
     if (!resumeText.trim()) throw httpError(400, "Resume content is empty.");
+
+    console.log(`[ResumeImprovement] Generating improvements for user ${userId}, role: ${targetRole || "Software Engineer"}`);
 
     const result = await generateResumeImprovements(
       resumeText,
@@ -117,43 +123,49 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
       targetCompany
     );
 
-    const associatedResumeId = await getOrCreateResumeId(userId, resumeId, userPrisma);
+    console.log(`[ResumeImprovement] Generated ${result.improvements.length} improvements, scores: ${result.overallScoreBefore} -> ${result.overallScoreAfter}`);
 
-    // Save improvement record
-    const improvement = await userPrisma.resumeImprovement.create({
-      data: {
-        userId,
-        resumeId: associatedResumeId,
-        atsReportId: atsReport?.id || null,
-        targetRole: targetRole || "Software Engineer",
-        improvementJson: JSON.parse(JSON.stringify(result)),
-        scoreBefore: result.overallScoreBefore,
-        scoreAfter: result.overallScoreAfter,
-        appliedCount: 0,
-        totalCount: result.improvements.length + result.bulletRewrites.length,
-      },
-    });
-
-    // Create version 1 if this is the first version
-    const existingVersions = await userPrisma.resumeVersion.count({
-      where: { resumeId: associatedResumeId, userId },
-    });
-    if (existingVersions === 0) {
-      await userPrisma.resumeVersion.create({
+    // Try to persist — gracefully skip if tables don't exist yet
+    let improvement: any = null;
+    try {
+      const associatedResumeId = await getOrCreateResumeId(userId, resumeId, userPrisma);
+      improvement = await userPrisma.resumeImprovement.create({
         data: {
           userId,
           resumeId: associatedResumeId,
-          versionNumber: 1,
-          changeSummary: "Original resume",
-          resumeData: JSON.parse(JSON.stringify(resume)),
-          atsScoreBefore: atsReport?.score || null,
-          atsScoreAfter: null,
+          atsReportId: atsReport?.id || null,
+          targetRole: targetRole || "Software Engineer",
+          improvementJson: JSON.parse(JSON.stringify(result)),
+          scoreBefore: result.overallScoreBefore,
+          scoreAfter: result.overallScoreAfter,
+          appliedCount: 0,
+          totalCount: result.improvements.length + result.bulletRewrites.length,
         },
       });
+
+      const existingVersions = await userPrisma.resumeVersion.count({
+        where: { resumeId: associatedResumeId, userId },
+      });
+      if (existingVersions === 0) {
+        await userPrisma.resumeVersion.create({
+          data: {
+            userId,
+            resumeId: associatedResumeId,
+            versionNumber: 1,
+            changeSummary: "Original resume",
+            resumeData: JSON.parse(JSON.stringify(resume)),
+            atsScoreBefore: atsReport?.score || null,
+            atsScoreAfter: null,
+          },
+        });
+      }
+    } catch (dbErr) {
+      console.warn("[ResumeImprovement] DB persistence skipped (tables may not exist yet):", dbErr);
     }
 
     res.json({ success: true, improvement, result });
   } catch (error) {
+    console.error("[ResumeImprovement] generateImprovements error:", error);
     next(error);
   }
 }

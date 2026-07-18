@@ -166,10 +166,17 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
         targetIndustry: targetIndustry || undefined,
         targetCompany: targetCompany || undefined,
       });
-      setResult(res.data.result);
-      showToast("Improvements generated successfully!");
+      if (res.data?.result) {
+        setResult(res.data.result);
+        showToast("Improvements generated successfully!");
+      } else {
+        console.error("[ResumeImprovements] No result in response:", res.data);
+        showToast("No improvements returned. Please try again.");
+      }
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Failed to generate improvements");
+      console.error("[ResumeImprovements] Generate error:", err?.response?.data || err.message || err);
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Failed to generate improvements";
+      showToast(msg);
     } finally {
       setLoading(false);
     }
