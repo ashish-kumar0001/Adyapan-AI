@@ -383,7 +383,7 @@ export function AtsCheckerView({ setView }: Props) {
   // ── State ──────────────────────────────────────────────────────────────────
   type Screen = "home" | "jd" | "loading" | "dashboard" | "history" | "compare" | "final";
   const [screen, setScreen] = useState<Screen>("home");
-  const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights" | "fixes">("overview");
+  const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights">("overview");
 
   const [role, setRole] = useState("General ATS");
   const [file, setFile] = useState<File | null>(null);
@@ -1065,7 +1065,6 @@ export function AtsCheckerView({ setView }: Props) {
                   ["keywords", "Keywords", <Search size={12} />],
                   ["recruiter", "Recruiter", <Users size={12} />],
                   ["insights", "Insights", <Brain size={12} />],
-                  ["fixes", "Fixes", <Lightbulb size={12} />],
                 ] as const).map(([id, label, icon]) => (
                   <motion.button key={id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => setTab(id)}
@@ -1206,16 +1205,11 @@ export function AtsCheckerView({ setView }: Props) {
                   </Card>
 
                   {/* ACTIONS */}
-                  <div className="flex gap-3">
+                  <div className="flex">
                     <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("insights")}
                       className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
                       style={{ background: c.ppBg, color: c.pp, border: `1px solid ${c.pp}30` }}>
                       <Brain size={15} /> Deep Insights
-                    </motion.button>
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("fixes")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
-                      <Sparkles size={15} /> AI Suggestions
                     </motion.button>
                   </div>
                 </motion.div>
@@ -1530,104 +1524,7 @@ export function AtsCheckerView({ setView }: Props) {
                 </motion.div>
               )}
 
-              {/* ═══ TAB: FIXES ═══ */}
-              {tab === "fixes" && (
-                <motion.div key="t-fix" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  {/* AI Recommendations */}
-                  {intel?.improvementRecommendations && intel.improvementRecommendations.length > 0 && (
-                    <Card className="p-5">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Brain size={14} style={{ color: c.pp }} /> AI Improvement Recommendations</h3>
-                      <div className="space-y-2">
-                        {intel.improvementRecommendations.map((rec, i) => {
-                          const open = expandedRec === i;
-                          return (
-                            <div key={i} className="rounded-xl overflow-hidden" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
-                              <button onClick={() => setExpandedRec(open ? null : i)} className="w-full flex items-center gap-2 p-3 text-left">
-                                <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded shrink-0"
-                                  style={{ background: rec.priority === "high" ? c.rdBg : rec.priority === "medium" ? c.amBg : c.blBg, color: rec.priority === "high" ? c.rd : rec.priority === "medium" ? c.am : c.bl }}>
-                                  {rec.priority}
-                                </span>
-                                <span className="text-[11px] font-bold flex-1">{rec.title}</span>
-                                <span className="text-[9px] font-semibold" style={{ color: c.txM }}>{rec.category}</span>
-                                {open ? <ChevronUp size={12} style={{ color: c.txM }} /> : <ChevronDown size={12} style={{ color: c.txM }} />}
-                              </button>
-                              <AnimatePresence>
-                                {open && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden px-3 pb-3">
-                                    <p className="text-[10px] mb-1.5" style={{ color: c.tx2 }}>{rec.description}</p>
-                                    <div className="text-[10px] font-semibold" style={{ color: c.am }}>Impact: {rec.impact}</div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  )}
 
-                  {/* Applied Suggestions */}
-                  {suggestions.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold flex items-center gap-2"><Sparkles size={14} style={{ color: c.am }} /> AI Suggested Improvements</h3>
-                      {suggestions.map((sg, i) => {
-                        const done = applied.has(sg.id);
-                        return (
-                          <motion.div key={sg.id} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.04 }}
-                            whileHover={hov} className="p-4 rounded-xl"
-                            style={{ background: done ? "rgba(16,185,129,0.04)" : c.cb, border: `1px solid ${done ? "rgba(16,185,129,0.2)" : c.bd}` }}>
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-bold">{sg.title}</span>
-                                  <Pill color={sg.impact === "high" ? "#ef4444" : sg.impact === "medium" ? "#f59e0b" : "#3b82f6"}>{sg.impact} impact</Pill>
-                                </div>
-                                <p className="text-[11px]" style={{ color: c.tx2 }}>{sg.description}</p>
-                              </div>
-                              {done ? (
-                                <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
-                                  style={{ background: c.gnBg, color: c.gn, border: `1px solid ${c.gn}30` }}><CheckCircle size={10} /> Applied</span>
-                              ) : (
-                                <motion.button whileHover={btnH} whileTap={btnT} onClick={() => applySugg(sg)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
-                                  style={{ background: c.am, color: "#000" }}><Sparkles size={10} /> Apply</motion.button>
-                              )}
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Strengths & Recs */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><CheckCircle size={13} style={{ color: c.gn }} /> Strengths</h3>
-                      {analysis.strengths.map((s, i) => (
-                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.gn }}>✓</span> {s}</div>
-                      ))}
-                    </Card>
-                    <Card className="p-4">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Star size={13} style={{ color: c.am }} /> Recommendations</h3>
-                      {analysis.recommendations.map((r, i) => (
-                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.am }}>✦</span> {r}</div>
-                      ))}
-                    </Card>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setView("resume-hub")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs"
-                      style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back to Resume Hub</motion.button>
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("final")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
-                      <CheckCircle size={15} /> View Final Score
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           )}
 
