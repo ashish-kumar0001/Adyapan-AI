@@ -68,48 +68,92 @@ async function callAIRobust(
 
   const errors: string[] = [];
 
+  const MAX_PROVIDER_RETRIES = 2;
+
   for (const provider of providers) {
-    try {
-      console.log(`[AI Engine] [Fallback] Trying ${provider.name} using model ${provider.model}...`);
-      
-      const body: Record<string, unknown> = {
-        model: provider.model,
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 4096,
-      };
+    let lastError = "";
 
-      if (options.responseFormat?.type === "json_object") {
-        body.response_format = { type: "json_object" };
+    for (let attempt = 0; attempt <= MAX_PROVIDER_RETRIES; attempt++) {
+      if (attempt > 0) {
+        const backoffMs = Math.min(5000 * attempt, 30000);
+        console.log(`[AI Engine] [Fallback] Retrying ${provider.name} in ${backoffMs}ms (attempt ${attempt + 1}/${MAX_PROVIDER_RETRIES + 1})...`);
+        await new Promise(r => setTimeout(r, backoffMs));
       }
 
-      const res = await fetch(provider.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${provider.key}`,
-        },
-        body: JSON.stringify(body),
-      });
+      try {
+        console.log(`[AI Engine] [Fallback] Trying ${provider.name} using model ${provider.model}${attempt > 0 ? ` (retry ${attempt})` : ""}...`);
+        
+        const body: Record<string, unknown> = {
+          model: provider.model,
+          messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 4096,
+        };
 
-      const data = (await res.json()) as any;
+        if (options.responseFormat?.type === "json_object") {
+          body.response_format = { type: "json_object" };
+        }
 
-      if (!res.ok || data.error) {
-        throw new Error(`${provider.name} error: ${data.error?.message ?? res.statusText}`);
+        const res = await fetch(provider.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${provider.key}`,
+          },
+          body: JSON.stringify(body),
+        });
+
+        const rawText = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          console.error(`[AI Engine] [Fallback] ${provider.name} returned non-JSON (${rawText.length} chars): ${rawText.substring(0, 300)}`);
+          throw new Error(`${provider.name} returned non-JSON response.`);
+        }
+
+        console.log(`[AI Engine] [Fallback] ${provider.name} HTTP ${res.status}, keys: ${Object.keys(data).join(", ")}`);
+
+        if (!res.ok || data.error) {
+          const errMsg = data.error?.message ?? res.statusText;
+          const isRateLimit = res.status === 429;
+          console.error(`[AI Engine] [Fallback] ${provider.name} error (HTTP ${res.status}):`, JSON.stringify(data).substring(0, 500));
+
+          if (isRateLimit && attempt < MAX_PROVIDER_RETRIES) {
+            const retryAfter = res.headers?.get?.("retry-after");
+            const waitSec = retryAfter ? parseInt(retryAfter, 10) : undefined;
+            if (waitSec && waitSec <= 60) {
+              console.log(`[AI Engine] [Fallback] ${provider.name} rate-limited, waiting ${waitSec}s per retry-after header...`);
+              await new Promise(r => setTimeout(r, waitSec * 1000));
+            }
+            lastError = `${provider.name}: ${errMsg}`;
+            continue;
+          }
+
+          throw new Error(`${provider.name} error: ${errMsg}`);
+        }
+
+        const content = data.choices?.[0]?.message?.content;
+        if (!content || content.trim().length === 0) {
+          console.error(`[AI Engine] [Fallback] ${provider.name} empty content. Full response keys: ${Object.keys(data)}, choices: ${JSON.stringify(data.choices).substring(0, 500)}`);
+          throw new Error(`${provider.name} returned empty completion.`);
+        }
+
+        console.log(`[AI Engine] [Fallback] Successfully generated ${content.length} chars via ${provider.name}.`);
+        return content;
+      } catch (e: any) {
+        const msg = e.message || String(e);
+        if (attempt >= MAX_PROVIDER_RETRIES) {
+          console.warn(`[AI Engine] [Fallback] ${provider.name} exhausted retries: ${msg}`);
+          lastError = `${provider.name}: ${msg}`;
+        } else {
+          console.warn(`[AI Engine] [Fallback] ${provider.name} failed (attempt ${attempt + 1}): ${msg}`);
+          lastError = `${provider.name}: ${msg}`;
+        }
       }
-
-      const content = data.choices?.[0]?.message?.content;
-      if (!content || content.trim().length === 0) {
-        throw new Error(`${provider.name} returned empty completion.`);
-      }
-
-      console.log(`[AI Engine] [Fallback] Successfully generated content via ${provider.name}.`);
-      return content;
-    } catch (e: any) {
-      const msg = e.message || String(e);
-      console.warn(`[AI Engine] [Fallback] ${provider.name} failed: ${msg}`);
-      errors.push(`${provider.name}: ${msg}`);
     }
+
+    errors.push(lastError);
   }
 
   throw new Error(`All AI providers failed. Errors: ${errors.join(" | ")}`);
@@ -179,8 +223,14 @@ export async function generateJSON<T>(
       const repaired = tryRepairJSON(cached);
       const parsed = JSON.parse(repaired);
       const validated = enforceSchema(parsed, fallback);
-      console.log(`[AI Engine] Cache hit validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
-      return validated;
+      // Reject cached responses that are empty/all-default
+      const isEmpty = !(validated as any).name && !(validated as any).email && ((validated as any).skills?.length ?? 0) === 0;
+      if (isEmpty) {
+        console.log(`[AI Engine] Cache hit returned empty profile, discarding and re-fetching`);
+      } else {
+        console.log(`[AI Engine] Cache hit validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
+        return validated;
+      }
     } catch (e) {
       console.log(`[AI Engine] Cache hit parse failed, falling through to API call`);
     }
@@ -235,8 +285,8 @@ export async function generateJSON<T>(
       return validated;
     } catch (retryError) {
       console.error(`[AI Engine] Retry JSON generation failed too:`, retryError);
-      console.error(`[AI Engine] Returning fallback structure.`);
-      return fallback;
+      console.error(`[AI Engine] All AI providers exhausted. Throwing error.`);
+      throw new Error("AI extraction failed: all providers are rate-limited or unavailable. Please try again later.");
     }
   }
 }

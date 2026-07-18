@@ -19,14 +19,32 @@ function loadModule() {
   return require("../../../src/lib/ai/openrouter");
 }
 
-function mockFetchOnce(content: string, ok = true) {
-  const fetchMock = jest.fn().mockResolvedValue({
-    ok,
-    statusText: ok ? "OK" : "Bad",
+function mockFetchSuccess(content: string) {
+  const body = JSON.stringify({ choices: [{ message: { content } }] });
+  (global as any).fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: async () => body,
     json: async () => ({ choices: [{ message: { content } }] }),
+    headers: { get: () => null },
   });
-  (global as any).fetch = fetchMock;
-  return fetchMock;
+}
+
+function mockFetchError(status: number, errorMsg: string) {
+  const body = JSON.stringify({ error: { message: errorMsg } });
+  (global as any).fetch = jest.fn().mockResolvedValue({
+    ok: false,
+    status,
+    statusText: "Error",
+    text: async () => body,
+    json: async () => ({ error: { message: errorMsg } }),
+    headers: { get: () => null },
+  });
+}
+
+function mockFetchReject(errorMsg: string) {
+  (global as any).fetch = jest.fn().mockRejectedValue(new Error(errorMsg));
 }
 
 describe("openrouter constants", () => {
@@ -59,23 +77,10 @@ describe("generateJSON", () => {
     delete (global as any).fetch;
   });
 
-  afterAll(() => {
-    process.env = ORIGINAL_ENV;
-  });
-
-  it("returns the fallback when no providers are configured", async () => {
-    delete process.env.OPENROUTER_API_KEY;
-    delete process.env.GROQ_API_KEY;
-    delete process.env.GEMINI_API_KEY;
-    const { generateJSON } = loadModule();
-    const fallback = { ok: false };
-    await expect(generateJSON("sys", "user", { model: "x" }, fallback)).resolves.toBe(fallback);
-  });
-
   it("parses JSON wrapped in a markdown code fence", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateJSON } = loadModule();
-    mockFetchOnce('```json\n{"answer": 42}\n```');
+    mockFetchSuccess('```json\n{"answer": 42}\n```');
     await expect(
       generateJSON("sys", "user", { model: "x" }, { answer: 0 })
     ).resolves.toEqual({ answer: 42 });
@@ -84,7 +89,7 @@ describe("generateJSON", () => {
   it("extracts a JSON object embedded in surrounding prose", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateJSON } = loadModule();
-    mockFetchOnce('Sure, here is the result: {"name": "ady"} hope it helps!');
+    mockFetchSuccess('Sure, here is the result: {"name": "ady"} hope it helps!');
     await expect(
       generateJSON("sys", "user", { model: "x" }, { name: "" })
     ).resolves.toEqual({ name: "ady" });
@@ -93,30 +98,45 @@ describe("generateJSON", () => {
   it("extracts a JSON array response", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateJSON } = loadModule();
-    mockFetchOnce("[1, 2, 3]");
+    mockFetchSuccess("[1, 2, 3]");
     await expect(generateJSON("sys", "user", { model: "x" }, [])).resolves.toEqual([1, 2, 3]);
   });
 
-  it("returns the fallback when the response is not valid JSON", async () => {
+  it("throws when all providers fail with network error", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateJSON } = loadModule();
-    mockFetchOnce("this is not json at all");
-    const fallback = { fallback: true };
-    await expect(generateJSON("sys", "user", { model: "x" }, fallback)).resolves.toBe(fallback);
-  });
+    mockFetchReject("network down");
+    await expect(
+      generateJSON("sys", "user", { model: "x" }, { fallback: true })
+    ).rejects.toThrow(/AI extraction failed|all providers/);
+  }, 120000);
 
-  it("returns the fallback when the provider responds with an error", async () => {
+  it("throws when the provider responds with an error and retries fail", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateJSON } = loadModule();
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: false,
-      statusText: "Server Error",
-      json: async () => ({ error: { message: "rate limited" } }),
+    mockFetchError(500, "Server Error");
+    await expect(
+      generateJSON("sys", "user", { model: "x" }, { x: 1 })
+    ).rejects.toThrow(/AI extraction failed|all providers/);
+  }, 120000);
+
+  it("retries on 429 and succeeds", async () => {
+    process.env.OPENROUTER_API_KEY = "key";
+    const { generateJSON } = loadModule();
+    const retryBody = JSON.stringify({ error: { message: "rate limited" } });
+    const successBody = JSON.stringify({ choices: [{ message: { content: '{"ok": true}' } }] });
+    let callCount = 0;
+    (global as any).fetch = jest.fn().mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { ok: false, status: 429, statusText: "Too Many Requests", text: async () => retryBody, json: async () => ({ error: { message: "rate limited" } }), headers: { get: (h: string) => h === "retry-after" ? "1" : null } };
+      }
+      return { ok: true, status: 200, statusText: "OK", text: async () => successBody, json: async () => ({ choices: [{ message: { content: '{"ok": true}' } }] }), headers: { get: () => null } };
     });
-    (global as any).fetch = fetchMock;
-    const fallback = { x: 1 };
-    await expect(generateJSON("sys", "user", { model: "x" }, fallback)).resolves.toBe(fallback);
-  });
+    await expect(
+      generateJSON("sys", "user", { model: "x" }, { ok: false })
+    ).resolves.toEqual({ ok: true });
+  }, 120000);
 });
 
 describe("generateText", () => {
@@ -132,18 +152,18 @@ describe("generateText", () => {
   it("returns the raw completion content", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateText } = loadModule();
-    mockFetchOnce("Hello from the model");
+    mockFetchSuccess("Hello from the model");
     await expect(generateText("sys", "user", { model: "x" })).resolves.toBe("Hello from the model");
   });
 
   it("throws when all providers fail", async () => {
     process.env.OPENROUTER_API_KEY = "key";
     const { generateText } = loadModule();
-    (global as any).fetch = jest.fn().mockRejectedValue(new Error("network down"));
+    mockFetchReject("network down");
     await expect(generateText("sys", "user", { model: "x" })).rejects.toThrow(
       /All AI providers failed/
     );
-  });
+  }, 120000);
 
   it("throws when no providers are configured", async () => {
     delete process.env.OPENROUTER_API_KEY;

@@ -211,7 +211,14 @@ export async function uploadAndParseResume(req: Request, res: Response, next: Ne
     // 3. AI extraction
     console.log(`[Resume Upload] Step 3: Running AI extraction...`);
     const profile = await extractProfileWithAI(extractedText);
-    console.log(`[Resume Upload] Step 3: AI extraction complete. Name: ${profile.name}, Skills: ${profile.skills.length}`);
+    console.log(`[Resume Upload] Step 3: AI extraction complete. Name: "${profile.name}", Skills: ${profile.skills.length}, Education: ${profile.education.length}, Experience: ${profile.experience.length}`);
+
+    // Guard: detect when AI returned empty fallback (all providers failed)
+    const isEmptyProfile = !profile.name && !profile.email && profile.skills.length === 0 && profile.education.length === 0 && profile.experience.length === 0;
+    if (isEmptyProfile) {
+      console.error(`[Resume Upload] Step 3: AI extraction returned empty fallback. All providers may be rate-limited or unavailable.`);
+      throw httpError(503, "AI extraction service is temporarily unavailable. Please try again in a few minutes. If this persists, contact support.");
+    }
 
     // 4. Calculate scores
     const analysis = calculateCompleteness(profile);
