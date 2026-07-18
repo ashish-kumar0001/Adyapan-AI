@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import {
   Mic, Send, RefreshCw, Sparkles, ChevronRight, History, User, Code,
@@ -9,12 +10,14 @@ import {
   CheckCircle2, XCircle, Info, GraduationCap, Flame, ArrowLeft,
   Camera, Monitor, Wifi, Smartphone, Eye, Users, AlertTriangle,
   Clock, BookOpen, Shield, CheckCheck, Ban, AlertOctagon,
+  BarChart3, ExternalLink, Download,
 } from "lucide-react";
 import type {
   InterviewSession, InterviewMessage, InterviewConfig,
   EnvironmentScanResult, IdentityVerification, ViolationReport,
   ProctoringEvent, InterviewEvaluation,
 } from "./InterviewTypes";
+import { generateInterviewPDF } from "@/utils/interview-pdf";
 
 interface InterviewHubViewProps {
   setView: (v: string) => void;
@@ -36,6 +39,7 @@ type AppScreen =
 
 export function InterviewHubView({ setView, activeModule = "interview-hub", theme = "dark" }: InterviewHubViewProps) {
   const isDark = theme === "dark";
+  const router = useRouter();
   const c = {
     bg: isDark ? "#080710" : "#f0f4ff",
     surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
@@ -690,8 +694,11 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
 
             {/* History */}
             <div className="space-y-4">
-              <h3 className="text-base font-extrabold flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                <History size={16} className="text-amber-500" /> Interview History
+              <h3 className="text-base font-extrabold flex items-center justify-between gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <span className="flex items-center gap-2"><History size={16} className="text-amber-500" /> Interview History</span>
+                <button onClick={() => router.push('/dashboard/interview/analytics')} className="text-[10px] font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-lg border" style={{ borderColor: c.border, color: c.primary }}>
+                  <BarChart3 size={11} /> Analytics
+                </button>
               </h3>
               {historyLoading ? (
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-amber-500" /></div>
@@ -1039,6 +1046,15 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                   className="px-6 py-2 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors disabled:opacity-50 flex items-center gap-2">
                   {loading ? <><Loader2 size={12} className="animate-spin" /> Initializing...</> : <><CheckCheck size={14} /> Accept & Start Interview</>}
                 </button>
+                {activeSession && (
+                  <button
+                    onClick={() => router.push(`/dashboard/interview/room/${activeSession.id}`)}
+                    className="px-4 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5"
+                    style={{ borderColor: c.border, color: c.textSec }}
+                  >
+                    <ExternalLink size={12} /> Open Full Interview Room
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1295,7 +1311,36 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
               </div>
             )}
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3 flex-wrap">
+              {activeSession?.evaluation && (
+                <button
+                  onClick={() => {
+                    if (!activeSession.evaluation) return;
+                    generateInterviewPDF({
+                      sessionId: activeSession.id,
+                      role: activeSession.role,
+                      company: activeSession.company,
+                      type: activeSession.type,
+                      difficulty: activeSession.difficulty,
+                      language: 'english',
+                      durationMinutes: activeSession.durationMinutes,
+                      technology: activeSession.technology,
+                      createdAt: activeSession.createdAt,
+                      endedAt: activeSession.endedAt,
+                      evaluation: activeSession.evaluation as Parameters<typeof generateInterviewPDF>[0]['evaluation'],
+                      violationReport: activeSession.violationReport as Parameters<typeof generateInterviewPDF>[0]['violationReport'],
+                    });
+                  }}
+                  className="py-2.5 px-5 rounded-lg border text-xs font-extrabold flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                  style={{ borderColor: c.border, color: c.textSec }}
+                >
+                  <Download size={13} /> Download PDF Report
+                </button>
+              )}
+              <button onClick={() => router.push('/dashboard/interview/analytics')}
+                className="py-2.5 px-5 rounded-lg border text-xs font-extrabold flex items-center gap-1.5" style={{ borderColor: c.primary, color: c.primary }}>
+                <BarChart3 size={13} /> View Analytics
+              </button>
               <button onClick={restartSession}
                 className="py-2.5 px-6 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors">
                 Back to Dashboard
