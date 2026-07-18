@@ -80,7 +80,9 @@ const INTERVIEW_TYPES = [
   },
 ];
 
-export default function InterviewPage() {
+import { Suspense } from "react";
+
+function InterviewPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const completedSessionId = searchParams?.get("completed");
@@ -620,5 +622,17 @@ export default function InterviewPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function InterviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#080710] flex items-center justify-center">
+        <Loader2 className="animate-spin text-amber-500" size={32} />
+      </div>
+    }>
+      <InterviewPageContent />
+    </Suspense>
   );
 }
