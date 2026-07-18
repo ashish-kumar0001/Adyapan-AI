@@ -4,6 +4,7 @@ import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/components/providers/LenisProvider";
 import ThemeScript from "@/components/providers/ThemeScript";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -36,9 +37,8 @@ export default function RootLayout({
         <ThemeScript />
         <LenisProvider />
         <Toaster position="top-right" richColors closeButton />
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );
 }
-

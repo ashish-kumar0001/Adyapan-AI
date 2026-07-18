@@ -60,7 +60,7 @@ const SUBMIT_STEPS = [
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
-export default function ChallengeWorkspacePage() {
+export default function CodingIDEPage() {
   useRequireAuth("USER");
   const params = useParams();
   const router = useRouter();
@@ -282,7 +282,7 @@ export default function ChallengeWorkspacePage() {
         <ChatBackground isDark={isDark} />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <Loader2 size={28} className="animate-spin" style={{ color: "#f59e0b" }} />
-          <p className="text-xs font-bold" style={{ color: mutedText }}>Loading challenge workspace...</p>
+          <p className="text-xs font-bold" style={{ color: mutedText }}>Loading coding engine...</p>
         </div>
       </div>
     );
