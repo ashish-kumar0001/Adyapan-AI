@@ -1042,7 +1042,7 @@ export default function LandingPage() {
               Live Platform Statistics
             </motion.h2>
             <motion.p variants={staggerItem} className="text-gray-400 text-sm md:text-base leading-relaxed">
-              Real-time platform analytics will appear here once sufficient user activity is recorded.
+              A comprehensive platform built with cutting-edge AI technology.
             </motion.p>
           </motion.div>
 
@@ -1053,9 +1053,18 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <motion.div variants={staggerItem} className="p-12 bg-white/2 border border-dashed border-white/10 rounded-2xl text-center space-y-3 w-full max-w-md">
-              <span className="block text-5xl">📊</span>
-              <p className="text-gray-500 text-sm">Stats coming soon — live once the platform has meaningful data to show.</p>
+            <motion.div variants={staggerItem} className="grid grid-cols-2 gap-4 w-full max-w-md">
+              {[
+                { label: "AI Models Available", value: "10+" },
+                { label: "Challenge Categories", value: "10" },
+                { label: "Coding Challenges", value: "62+" },
+                { label: "Study Features", value: "15+" },
+              ].map((stat, i) => (
+                <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-center space-y-1">
+                  <span className="block text-2xl font-extrabold text-white">{stat.value}</span>
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500">{stat.label}</span>
+                </div>
+              ))}
             </motion.div>
           </motion.div>
         </div>

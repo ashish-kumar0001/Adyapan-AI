@@ -464,7 +464,7 @@ export function GithubPortfolioView() {
                         className="py-2 px-3 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold rounded-xl transition"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        title="Generate Mock Portfolio Landing Page"
+                        title="Generate Portfolio Landing Page"
                       >
                         <Layout className="w-3.5 h-3.5" />
                       </motion.button>

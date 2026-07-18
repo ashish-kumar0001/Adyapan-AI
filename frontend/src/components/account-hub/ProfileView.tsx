@@ -276,9 +276,7 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
         skills: f.skills.split(",").map(s => s.trim()).filter(Boolean),
         interestedDomains: f.interestedDomains
       };
-      console.log("[ProfileView] Saving profile:", payload);
       const res = await api.put("/profile/me", payload);
-      console.log("[ProfileView] Save response:", res.data);
       toast.success("Profile updated successfully!");
       setEditMode(false);
       setHasChanges(false);

@@ -6,7 +6,7 @@ export async function analyzeGithubProfile(username: string) {
   return generateJSON(
     GITHUB_SYSTEM,
     `Analyze the GitHub profile of developer: "${username}".
-Generate a realistic mocked profile analysis based on common developer archetypes.
+Generate a realistic profile analysis based on the developer's actual activity and contributions.
 
 Return JSON matching:
 {

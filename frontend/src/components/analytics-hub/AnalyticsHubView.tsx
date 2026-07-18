@@ -169,10 +169,10 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 {/* Scoring cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: "Mocks Completed", val: "6" },
-                    { label: "Avg Interview Score", val: "82%" },
-                    { label: "Communication Flow", val: "88%" },
-                    { label: "Technical Core", val: "80%" }
+                    { label: "Mocks Completed", val: "0" },
+                    { label: "Avg Interview Score", val: "--" },
+                    { label: "Communication Flow", val: "--" },
+                    { label: "Technical Core", val: "--" }
                   ].map((s, idx) => (
                     <motion.div
                       key={idx}
@@ -272,10 +272,10 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                   >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Resume Quality Metrics</h4>
                     {[
-                      { label: "Professional Summary Quality", score: 95, color: "#10b981" },
-                      { label: "Project Descriptions Weight", score: 85, color: "#06b6d4" },
-                      { label: "Core Skills Coverage", score: 90, color: "#8b5cf6" },
-                      { label: "Education & Details alignment", score: 95, color: "#ec4899" }
+                      { label: "Professional Summary Quality", score: 0, color: "#10b981" },
+                      { label: "Project Descriptions Weight", score: 0, color: "#06b6d4" },
+                      { label: "Core Skills Coverage", score: 0, color: "#8b5cf6" },
+                      { label: "Education & Details alignment", score: 0, color: "#ec4899" }
                     ].map((m, i) => (
                       <motion.div
                         key={m.label}

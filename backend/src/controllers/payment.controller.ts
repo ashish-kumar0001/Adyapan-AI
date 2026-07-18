@@ -103,9 +103,8 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
       ) {
         throw httpError(400, "Invalid payment signature");
       }
-    } else if (env.nodeEnv === "production") {
-      // Never allow the dummy-payment bypass in production.
-      throw httpError(500, "Payment gateway is not configured");
+    } else {
+      throw httpError(500, "Payment gateway is not configured. Cannot verify payment.");
     }
 
     const payment = await prisma.payment.findUnique({ where: { orderId } });

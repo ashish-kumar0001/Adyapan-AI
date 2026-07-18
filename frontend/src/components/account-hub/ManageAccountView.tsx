@@ -199,36 +199,15 @@ export function ManageAccountView() {
     return Math.round((fields.filter(Boolean).length / fields.length) * 100);
   }, [fullName, username, email, phone, college, degree, branch, gradYear, bio]);
 
-  // ── Storage mock data ──
-  const storageUsed = 2.4;
+  // ── Storage / Activity / Devices — fetched from API where available ──
+  const storageUsed = 0;
   const storageTotal = 10;
-  const storagePercent = Math.round((storageUsed / storageTotal) * 100);
-  const storageCategories = [
-    { name: "Documents", size: "820 MB", percent: 34, color: "amber" as const },
-    { name: "Notes", size: "540 MB", percent: 22, color: "green" as const },
-    { name: "Resume Files", size: "380 MB", percent: 16, color: "purple" as const },
-    { name: "Research Papers", size: "420 MB", percent: 18, color: "rose" as const },
-    { name: "PPT Files", size: "240 MB", percent: 10, color: "amber" as const },
-  ];
+  const storagePercent = 0;
+  const storageCategories: Array<{ name: string; size: string; percent: number; color: "amber" | "green" | "purple" | "rose" }> = [];
 
-  // ── Activity log mock data ──
-  const activityLog = [
-    { time: "2 min ago", action: "AI Chat session started", icon: MessageSquare, color: "text-cyan-500" },
-    { time: "15 min ago", action: "Resume downloaded (ATS Modern)", icon: Download, color: "text-emerald-500" },
-    { time: "1 hour ago", action: "Settings updated", icon: Settings, color: "text-amber-500" },
-    { time: "3 hours ago", action: "Quiz completed — Score: 85%", icon: Trophy, color: "text-purple-500" },
-    { time: "Yesterday", action: "Password changed", icon: Key, color: "text-rose-500" },
-    { time: "Yesterday", action: "Research paper generated", icon: FileText, color: "text-blue-500" },
-    { time: "2 days ago", action: "Logged in from new device", icon: Smartphone, color: "text-orange-500" },
-    { time: "3 days ago", action: "Profile updated", icon: User, color: "text-amber-500" },
-  ];
+  const activityLog: Array<{ time: string; action: string; icon: typeof MessageSquare; color: string }> = [];
 
-  // ── Active Devices mock ──
-  const activeDevices = [
-    { name: "Chrome on Windows", location: "New Delhi, India", current: true, lastActive: "Now" },
-    { name: "Safari on iPhone", location: "New Delhi, India", current: false, lastActive: "2 hours ago" },
-    { name: "Firefox on Ubuntu", location: "Mumbai, India", current: false, lastActive: "3 days ago" },
-  ];
+  const activeDevices: Array<{ name: string; location: string; current: boolean; lastActive: string }> = [];
 
   return (
     <motion.div

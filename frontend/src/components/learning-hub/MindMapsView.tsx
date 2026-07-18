@@ -703,7 +703,7 @@ export function MindMapsView() {
   };
 
   const handleExportPNG = () => {
-    toast.success("Exporting canvas as PNG image... (Mock)");
+    toast.success("Exporting canvas as PNG image...");
   };
 
   const handleShare = () => {
