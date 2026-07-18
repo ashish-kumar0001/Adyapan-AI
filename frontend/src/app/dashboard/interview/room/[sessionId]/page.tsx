@@ -29,6 +29,7 @@ interface SessionData {
   difficulty: string;
   durationMinutes: number;
   technology?: string;
+  language: string;
   aiVoiceEnabled: boolean;
   videoEnabled: boolean;
   violationPoints: number;
