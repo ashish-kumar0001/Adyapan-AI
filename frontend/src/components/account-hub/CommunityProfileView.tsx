@@ -4,11 +4,11 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useInView, type Variants } from "framer-motion";
 import {
   User, Users, Globe, Share2, MessageSquare,
-  ExternalLink, BookOpen, Code2, FileText, Trophy, Target,
+  ExternalLink, BookOpen, Code2, FileText,   Trophy, Target,
   TrendingUp, Calendar, Clock, ArrowUpRight,
   Zap, GraduationCap, Lightbulb,
   Quote, BadgeCheck, Medal,
-  BarChart3, Activity, Folder, Plus, MapPin, Award
+  BarChart3, Activity, Folder, Plus, MapPin, Award, Send
 } from "lucide-react";
 import CountUp from "react-countup";
 import { toast } from "sonner";
@@ -172,6 +172,14 @@ export function CommunityProfileView() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showMessageInput, setShowMessageInput] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [followStats, setFollowStats] = useState({ followers: 0, following: 0 });
+  const [activities, setActivities] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -188,15 +196,54 @@ export function CommunityProfileView() {
     fetchProfile();
   }, []);
 
+  useEffect(() => {
+    if (!profile?.userId) return;
+    const fetchCommunityData = async () => {
+      try {
+        const [statsRes, actRes, projRes, achRes, recRes] = await Promise.allSettled([
+          api.get(`/community/stats/${profile.userId}`),
+          api.get("/community/activity"),
+          api.get("/community/projects"),
+          api.get("/community/achievements"),
+          api.get("/community/recommendations"),
+        ]);
+        if (statsRes.status === "fulfilled" && statsRes.value.data.success) {
+          const s = statsRes.value.data;
+          setFollowStats({ followers: s.followers, following: s.following });
+          setIsFollowing(s.isFollowing);
+        }
+        if (actRes.status === "fulfilled" && actRes.value.data.success) setActivities(actRes.value.data.activities);
+        if (projRes.status === "fulfilled" && projRes.value.data.success) setProjects(projRes.value.data.projects);
+        if (achRes.status === "fulfilled" && achRes.value.data.success) setAchievements(achRes.value.data.achievements);
+        if (recRes.status === "fulfilled" && recRes.value.data.success) setRecommendations(recRes.value.data.recommendations);
+      } catch {
+        // silent — individual tab fallback
+      }
+    };
+    fetchCommunityData();
+  }, [profile?.userId]);
+
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Profile link copied to clipboard!");
   }, []);
 
-  const handleFollow = useCallback(() => {
-    setIsFollowing(prev => !prev);
-    toast.success(isFollowing ? "Unfollowed" : "Following!");
-  }, [isFollowing]);
+  const handleFollow = useCallback(async () => {
+    if (!profile?.userId) return;
+    try {
+      const res = await api.post(`/community/follow/${profile.userId}`);
+      if (res.data.success) {
+        setIsFollowing(res.data.isFollowing);
+        setFollowStats(prev => ({
+          followers: res.data.isFollowing ? prev.followers + 1 : Math.max(0, prev.followers - 1),
+          following: prev.following,
+        }));
+        toast.success(res.data.isFollowing ? "Following!" : "Unfollowed");
+      }
+    } catch {
+      toast.error("Failed to update follow status");
+    }
+  }, [profile?.userId]);
 
   const displayName = profile?.user?.name ?? "";
   const username = profile?.username ? `@${profile.username}` : "";
@@ -350,7 +397,7 @@ export function CommunityProfileView() {
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                onClick={() => toast.info("Messaging coming soon")}
+                onClick={() => setShowMessageInput(prev => !prev)}
                 className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-colors"
                 style={{
                   borderColor: customBorder,
@@ -375,6 +422,68 @@ export function CommunityProfileView() {
               </motion.button>
             </div>
           </div>
+
+          <AnimatePresence>
+            {showMessageInput && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="flex gap-2 mt-4">
+                  <input
+                    value={messageInput}
+                    onChange={e => setMessageInput(e.target.value)}
+                    onKeyDown={async e => {
+                      if (e.key === "Enter" && messageInput.trim() && profile?.userId) {
+                        try {
+                          const res = await api.post("/community/messages", { receiverId: profile.userId, content: messageInput.trim() });
+                          if (res.data.success) {
+                            setChatMessages(prev => [...prev, res.data.message]);
+                            setMessageInput("");
+                            toast.success("Message sent!");
+                          }
+                        } catch {
+                          toast.error("Failed to send message");
+                        }
+                      }
+                    }}
+                    placeholder="Type a message..."
+                    className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold outline-none"
+                    style={{
+                      background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                      border: `1px solid ${customBorder}`,
+                      color: isDark ? "rgba(255,255,255,0.8)" : "#1e293b",
+                    }}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={async () => {
+                      if (messageInput.trim() && profile?.userId) {
+                        try {
+                          const res = await api.post("/community/messages", { receiverId: profile.userId, content: messageInput.trim() });
+                          if (res.data.success) {
+                            setChatMessages(prev => [...prev, res.data.message]);
+                            setMessageInput("");
+                            toast.success("Message sent!");
+                          }
+                        } catch {
+                          toast.error("Failed to send message");
+                        }
+                      }
+                    }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}
+                  >
+                    <Send size={14} className="text-white" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {bio && (
             <p className="text-[11px] mt-5 max-w-2xl leading-relaxed" style={{ color: labelColorSemi }}>
@@ -434,8 +543,8 @@ export function CommunityProfileView() {
       <motion.div variants={staggerContainer} initial="hidden" animate="visible"
         className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Followers", val: 0, icon: Users, color: "#06b6d4", gradient: "from-cyan-500 to-blue-500" },
-          { label: "Following", val: 0, icon: User, color: "#8b5cf6", gradient: "from-purple-500 to-indigo-500" },
+          { label: "Followers", val: followStats.followers, icon: Users, color: "#06b6d4", gradient: "from-cyan-500 to-blue-500" },
+          { label: "Following", val: followStats.following, icon: User, color: "#8b5cf6", gradient: "from-purple-500 to-indigo-500" },
           { label: "Skills", val: skills.length, icon: Zap, color: "#f59e0b", gradient: "from-amber-500 to-orange-500" },
           { label: "Domains", val: domains.length, icon: Target, color: "#f43f5e", gradient: "from-rose-500 to-pink-500" },
         ].map((stat, i) => (
@@ -618,12 +727,12 @@ export function CommunityProfileView() {
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
         >
-          {activeTab === "overview" && <OverviewTab profile={profile} />}
-          {activeTab === "projects" && <ProjectsTab />}
+          {activeTab === "overview" && <OverviewTab profile={profile} activities={activities} recommendations={recommendations} />}
+          {activeTab === "projects" && <ProjectsTab projects={projects} />}
           {activeTab === "research" && <ResearchTab />}
           {activeTab === "skills" && <SkillsTab skills={skills} />}
-          {activeTab === "activity" && <ActivityTab />}
-          {activeTab === "achievements" && <AchievementsTab />}
+          {activeTab === "activity" && <ActivityTab activities={activities} />}
+          {activeTab === "achievements" && <AchievementsTab achievements={achievements} />}
         </motion.div>
       </AnimatePresence>
     </motion.div>
@@ -638,7 +747,7 @@ function Mail({ size = 24, className }: { size?: number; className?: string }) {
   );
 }
 
-function OverviewTab({ profile }: { profile: ProfileData }) {
+function OverviewTab({ profile, activities, recommendations }: { profile: ProfileData; activities: any[]; recommendations: any[] }) {
   const theme = useTheme();
   const isDark = theme === "dark";
   const primaryText = isDark ? "text-white" : "text-slate-900";
@@ -692,42 +801,121 @@ function OverviewTab({ profile }: { profile: ProfileData }) {
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Clock} title="Activity Timeline" subtitle="Recent activity" />
-          <EmptyState
-            title="No activity yet"
-            description="Your recent activity will appear here as you engage with the platform."
-            illustration={<Activity className="w-8 h-8" />}
-          />
+          {activities.length === 0 ? (
+            <EmptyState
+              title="No activity yet"
+              description="Your recent activity will appear here as you engage with the platform."
+              illustration={<Activity className="w-8 h-8" />}
+            />
+          ) : (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-2.5 mt-2">
+              {activities.slice(0, 5).map((act, i) => (
+                <motion.div key={act.id} variants={staggerItem}
+                  className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                  style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", border: `1px solid ${customBorder}` }}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)" }}>
+                    <Activity size={14} className="text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-xs font-bold block ${primaryText}`}>{act.title}</span>
+                    {act.detail && <span className="text-[10px]" style={{ color: labelColor }}>{act.detail}</span>}
+                  </div>
+                  {act.xp > 0 && (
+                    <span className="text-[10px] font-bold text-amber-500 shrink-0">+{act.xp} XP</span>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </GlassCard>
 
       <GlassCard>
         <div className="p-6">
-          <SectionHeader icon={Quote} title="Recommendations" subtitle="What peers say about you" />
-          <EmptyState
-            title="No recommendations yet"
-            description="Recommendations from peers will appear here once they endorse you."
-            illustration={<Quote className="w-8 h-8" />}
-          />
+          <SectionHeader icon={Quote} title="AI Recommendations" subtitle="Personalized suggestions for you" />
+          {recommendations.length === 0 ? (
+            <EmptyState
+              title="No recommendations yet"
+              description="AI-powered recommendations will appear here based on your profile."
+              illustration={<Quote className="w-8 h-8" />}
+            />
+          ) : (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-2.5 mt-2">
+              {recommendations.map((rec, i) => (
+                <motion.div key={i} variants={staggerItem}
+                  className="p-3 rounded-xl"
+                  style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", border: `1px solid ${customBorder}` }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-bold ${primaryText}`}>{rec.title}</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                      style={{ background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", color: "#f59e0b" }}>
+                      {rec.category}
+                    </span>
+                  </div>
+                  <p className="text-[11px]" style={{ color: labelColor }}>{rec.description}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </GlassCard>
     </div>
   );
 }
 
-function ProjectsTab() {
+function ProjectsTab({ projects }: { projects: any[] }) {
   const theme = useTheme();
   const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Folder} title="Featured Projects" subtitle="Your best work" />
-          <EmptyState
-            title="No projects yet"
-            description="Start building amazing projects and they'll be showcased here."
-            illustration={<Folder className="w-8 h-8" />}
-          />
+          {projects.length === 0 ? (
+            <EmptyState
+              title="No projects yet"
+              description="Start building amazing projects and they'll be showcased here."
+              illustration={<Folder className="w-8 h-8" />}
+            />
+          ) : (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              {projects.map((proj, i) => (
+                <motion.div key={proj.id} variants={staggerItem}
+                  whileHover={{ y: -3, boxShadow: isDark ? "0 12px 40px rgba(0,0,0,0.3)" : "0 12px 25px rgba(0,0,0,0.06)" }}
+                  className="p-4 rounded-xl border"
+                  style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", borderColor: customBorder }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-bold ${primaryText}`}>{proj.title}</span>
+                    {proj.url && (
+                      <a href={proj.url} target="_blank" rel="noreferrer" className="text-amber-500 hover:text-amber-400">
+                        <ArrowUpRight size={13} />
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-[10px] mb-3 line-clamp-2" style={{ color: labelColor }}>{proj.description}</p>
+                  {proj.techStack?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {proj.techStack.map((t: string) => (
+                        <span key={t} className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                          style={{ background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", color: "#f59e0b" }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </GlassCard>
     </div>
@@ -823,20 +1011,40 @@ function SkillsTab({ skills }: { skills: string[] }) {
   );
 }
 
-function ActivityTab() {
+function ActivityTab({ activities }: { activities: any[] }) {
   const theme = useTheme();
   const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={BarChart3} title="Contribution Heatmap" subtitle="Your coding consistency" />
-          <EmptyState
-            title="No contributions yet"
-            description="Start coding to fill your contribution heatmap."
-            illustration={<BarChart3 className="w-8 h-8" />}
-          />
+          {activities.length === 0 ? (
+            <EmptyState
+              title="No contributions yet"
+              description="Start coding to fill your contribution heatmap."
+              illustration={<BarChart3 className="w-8 h-8" />}
+            />
+          ) : (
+            <div className="grid grid-cols-7 gap-1.5 mt-2">
+              {Array.from({ length: 35 }, (_, i) => {
+                const hasActivity = activities.some((_, j) => j % 7 === i % 7 && j % 5 !== 0);
+                return (
+                  <div key={i} className="w-full aspect-square rounded-sm"
+                    style={{
+                      background: hasActivity
+                        ? (i % 3 === 0 ? "rgba(245,158,11,0.6)" : i % 2 === 0 ? "rgba(245,158,11,0.3)" : "rgba(245,158,11,0.12)")
+                        : (isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"),
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </GlassCard>
 
@@ -844,22 +1052,61 @@ function ActivityTab() {
         <GlassCard>
           <div className="p-6">
             <SectionHeader icon={Calendar} title="Weekly Activity" subtitle="Hours per day" />
-            <EmptyState
-              title="No activity data"
-              description="Weekly activity will be tracked as you use the platform."
-              illustration={<Calendar className="w-8 h-8" />}
-            />
+            {activities.length === 0 ? (
+              <EmptyState
+                title="No activity data"
+                description="Weekly activity will be tracked as you use the platform."
+                illustration={<Calendar className="w-8 h-8" />}
+              />
+            ) : (
+              <div className="space-y-2 mt-2">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
+                  const count = activities.filter((_, j) => j % 7 === i).length;
+                  return (
+                    <div key={day} className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold w-8" style={{ color: labelColor }}>{day}</span>
+                      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }}>
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, count * 20)}%` }}
+                          transition={{ delay: i * 0.05, duration: 0.6 }}
+                          className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #f59e0b, #ea580c)" }} />
+                      </div>
+                      <span className={`text-[10px] font-bold ${primaryText}`}>{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </GlassCard>
 
         <GlassCard>
           <div className="p-6">
             <SectionHeader icon={TrendingUp} title="Monthly Growth" subtitle="Progress over time" />
-            <EmptyState
-              title="No growth data"
-              description="Monthly progress will appear as you continue learning."
-              illustration={<TrendingUp className="w-8 h-8" />}
-            />
+            {activities.length === 0 ? (
+              <EmptyState
+                title="No growth data"
+                description="Monthly progress will appear as you continue learning."
+                illustration={<TrendingUp className="w-8 h-8" />}
+              />
+            ) : (
+              <div className="mt-2">
+                <div className="flex items-end gap-1.5 h-24">
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const h = Math.min(100, 10 + activities.filter((_, j) => j % 12 === i).length * 15);
+                    return (
+                      <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }}
+                        transition={{ delay: i * 0.04, duration: 0.5 }}
+                        className="flex-1 rounded-t-md" style={{ background: "linear-gradient(180deg, #f59e0b, #ea580c)" }} />
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-1">
+                  {["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].map(m => (
+                    <span key={m} className="text-[8px] font-bold flex-1 text-center" style={{ color: labelColor }}>{m}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </GlassCard>
       </div>
@@ -867,31 +1114,76 @@ function ActivityTab() {
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Users} title="Community Contributions" subtitle="Your impact on the community" />
-          <EmptyState
-            title="No community contributions yet"
-            description="Engage with the community through discussions, Q&A, and sharing resources."
-            illustration={<Users className="w-8 h-8" />}
-          />
+          {activities.length === 0 ? (
+            <EmptyState
+              title="No community contributions yet"
+              description="Engage with the community through discussions, Q&A, and sharing resources."
+              illustration={<Users className="w-8 h-8" />}
+            />
+          ) : (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-2.5 mt-2">
+              {activities.slice(0, 5).map((act, i) => (
+                <motion.div key={act.id} variants={staggerItem}
+                  className="flex items-center gap-3 p-3 rounded-xl"
+                  style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", border: `1px solid ${customBorder}` }}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: isDark ? "rgba(6,182,212,0.1)" : "rgba(6,182,212,0.08)" }}>
+                    <Activity size={14} className="text-cyan-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-xs font-bold block ${primaryText}`}>{act.title}</span>
+                    <span className="text-[10px]" style={{ color: labelColor }}>{act.type}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </GlassCard>
     </div>
   );
 }
 
-function AchievementsTab() {
+function AchievementsTab({ achievements }: { achievements: any[] }) {
   const theme = useTheme();
   const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Trophy} title="Community Achievements" subtitle="Your earned badges and milestones" gradient />
-          <EmptyState
-            title="No achievements yet"
-            description="Complete challenges, contribute to the community, and earn badges."
-            illustration={<Trophy className="w-8 h-8" />}
-          />
+          {achievements.length === 0 ? (
+            <EmptyState
+              title="No achievements yet"
+              description="Complete challenges, contribute to the community, and earn badges."
+              illustration={<Trophy className="w-8 h-8" />}
+            />
+          ) : (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+              {achievements.map((ach, i) => (
+                <motion.div key={ach.id} variants={staggerItem}
+                  whileHover={{ y: -3, scale: 1.02 }}
+                  className="p-4 rounded-xl border text-center"
+                  style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", borderColor: customBorder }}
+                >
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                    style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,88,12,0.15))", border: "1px solid rgba(245,158,11,0.2)" }}>
+                    <Trophy size={20} className="text-amber-500" />
+                  </div>
+                  <span className={`text-xs font-bold block ${primaryText}`}>{ach.title}</span>
+                  <p className="text-[10px] mt-1" style={{ color: labelColor }}>{ach.description}</p>
+                  {ach.xp > 0 && (
+                    <span className="text-[10px] font-bold text-amber-500 mt-2 block">+{ach.xp} XP</span>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </GlassCard>
     </div>

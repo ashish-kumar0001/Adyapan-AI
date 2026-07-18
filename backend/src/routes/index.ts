@@ -33,6 +33,8 @@ import { recommendationRouter } from "./recommendation.routes";
 import { researchRouter } from "./research.routes";
 import { plagiarismRouter } from "./plagiarism.routes";
 import { resumeUploadRouter } from "./resume-upload.routes";
+import { jobRouter } from "./job.routes";
+import { communityRouter } from "./community.routes";
 
 export const apiRouter = Router();
 
@@ -76,6 +78,12 @@ apiRouter.use("/research", researchRouter);
 
 // Plagiarism Checker Routes
 apiRouter.use("/plagiarism", plagiarismRouter);
+
+// Job Hub Routes
+apiRouter.use("/job", jobRouter);
+
+// Community Routes
+apiRouter.use("/community", communityRouter);
 
 
 

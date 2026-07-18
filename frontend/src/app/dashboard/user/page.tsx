@@ -784,7 +784,7 @@ export function DashboardTopNav({
                   else if (item === "Assignment") onViewTool("assignment-generator");
                   else if (item === "PPT") onViewTool("ppt-generator");
                   else if (item === "Quiz") onViewTool("quiz-generator");
-                  else onComingSoon();
+                  else if (item === "Research Paper") onViewTool("research-paper-ai");
                 }} style={{
                   display: "block", width: "100%", textAlign: "left",
                   padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",
@@ -819,7 +819,8 @@ export function DashboardTopNav({
               {evalItems.map((item) => (
                 <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={item} onClick={() => {
                   if (item === "ATS Score") onViewTool("ats-checker");
-                  else onComingSoon();
+                  else if (item === "Skill Assessment") onViewTool("analytics-skills");
+                  else if (item === "Placement Readiness") onViewTool("placement-readiness");
                 }} style={{
                   display: "block", width: "100%", textAlign: "left",
                   padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",

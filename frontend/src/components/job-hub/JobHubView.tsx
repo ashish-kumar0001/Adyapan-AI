@@ -9,6 +9,7 @@ import {
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 
 const fadeUp = {
@@ -27,8 +28,8 @@ interface Job {
   company: string;
   logoBg: string;
   location: string;
-  mode: "Remote" | "Hybrid" | "On-site";
-  type: "Full-Time" | "Part-Time" | "Contract";
+  mode: string;
+  type: string;
   salary: string;
   experience: string;
   skills: string[];
@@ -43,22 +44,20 @@ interface Referral {
   id: string;
   company: string;
   role: string;
-  deadline: string;
-  status: "Requested" | "Accepted" | "Under Review";
+  notes?: string;
+  status: string;
   outreachMsg?: string;
 }
 
 interface HiringChallenge {
   id: string;
   title: string;
-  category: "Coding" | "SQL" | "Machine Learning" | "Web Dev";
-  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  difficulty: string;
   duration: string;
   eligibility: string;
   company: string;
-  score?: number;
-  rank?: number;
-  completed: boolean;
+  isActive: boolean;
 }
 
 interface ChatMessage {
@@ -102,7 +101,6 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
   // Saved / Modals
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
-  const [appliedCount, setAppliedCount] = useState(3);
 
   // Jobs & Challenges (from API, initially empty)
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -142,33 +140,56 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     else if (activeModule === "job-challenges") setTab("challenges");
   }, [activeModule]);
 
-  // Load tracker databases from localStorage
+  // Load data from backend API
   useEffect(() => {
-    const savedSaves = localStorage.getItem("ady-job-saves");
-    if (savedSaves) {
-      try { setSavedJobs(JSON.parse(savedSaves)); } catch { /* ignore */ }
-    }
-
-    const savedRefs = localStorage.getItem("ady-job-referrals");
-    if (savedRefs) {
-      try { setReferrals(JSON.parse(savedRefs)); } catch { /* ignore */ }
-    }
+    const fetchData = async () => {
+      try {
+        const [jobsRes, savedRes, referralsRes, challengesRes] = await Promise.allSettled([
+          api.get("/job"),
+          api.get("/job/saved"),
+          api.get("/job/referrals"),
+          api.get("/job/challenges"),
+        ]);
+        if (jobsRes.status === "fulfilled" && jobsRes.value.data?.jobs) {
+          setJobs(jobsRes.value.data.jobs);
+        }
+        if (savedRes.status === "fulfilled" && savedRes.value.data?.savedIds) {
+          setSavedJobs(savedRes.value.data.savedIds);
+        }
+        if (referralsRes.status === "fulfilled" && referralsRes.value.data?.referrals) {
+          setReferrals(referralsRes.value.data.referrals);
+        }
+        if (challengesRes.status === "fulfilled" && challengesRes.value.data?.challenges) {
+          setChallenges(challengesRes.value.data.challenges);
+        }
+      } catch {
+        // Silent fail — UI will show empty states
+      }
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  const handleToggleSaveJob = (id: string, e?: React.MouseEvent) => {
+  const handleToggleSaveJob = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    let updated: string[];
-    if (savedJobs.includes(id)) {
-      updated = savedJobs.filter(x => x !== id);
-    } else {
-      updated = [...savedJobs, id];
+    const wasSaved = savedJobs.includes(id);
+    // Optimistic update
+    setSavedJobs(prev => wasSaved ? prev.filter(x => x !== id) : [...prev, id]);
+    try {
+      const res = await api.post(`/job/saved/${id}`);
+      if (res.data?.saved === false && !wasSaved) {
+        setSavedJobs(prev => prev.filter(x => x !== id));
+      } else if (res.data?.saved === true && wasSaved) {
+        setSavedJobs(prev => [...prev, id]);
+      }
+    } catch {
+      // Revert on error
+      setSavedJobs(prev => wasSaved ? [...prev, id] : prev.filter(x => x !== id));
+      toast.error("Failed to save job. Please try again.");
     }
-    setSavedJobs(updated);
-    localStorage.setItem("ady-job-saves", JSON.stringify(updated));
   };
 
   const handleRunJdAnalyzer = async () => {
@@ -177,39 +198,40 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     setMatchReport(null);
 
     try {
-      // TODO: Call backend API for real compatibility analysis
-      await new Promise(r => setTimeout(r, 500));
-      toast.error("JD Analyzer backend is not available. Please try again later.");
+      const res = await api.post("/job/jd-analyze", { jdText, resumeText: "" });
+      if (res.data?.success && res.data.report) {
+        setMatchReport(res.data.report);
+        toast.success("Analysis complete!");
+      } else {
+        toast.error("Analysis returned no results. Please try again.");
+      }
     } catch (err) {
-      toast.error("JD Analyzer backend is not available. Please try again later.");
+      toast.error("JD Analyzer failed. Please try again later.");
       console.error(err);
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const handleRequestReferralSubmit = (e: React.FormEvent) => {
+  const handleRequestReferralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!refCompany.trim() || !refRole.trim()) return;
 
-    // Generate outreach message from user inputs
-    const notesSection = refNotes.trim()
-      ? `\n\nAdditional context:\n${refNotes.trim()}`
-      : "";
-    const generatedOutreach = `Hi there,\n\nI hope this message finds you well.\n\nI am writing to express my strong interest in the ${refRole} position at ${refCompany}. I believe my skills and experience align well with what your team is looking for.${notesSection}\n\nI would be very grateful if you would consider referring me for this role. Please let me know if you need any additional information from me.\n\nThank you for your time and support.\n\nBest regards,\nCandidate`;
-
-    const newRef: Referral = {
-      id: `ref-${Date.now()}`,
-      company: refCompany.trim(),
-      role: refRole.trim(),
-      deadline: new Date(Date.now() + 30*24*60*60*1000).toISOString().split("T")[0],
-      status: "Requested",
-      outreachMsg: generatedOutreach
-    };
-
-    const updated = [newRef, ...referrals];
-    setReferrals(updated);
-    localStorage.setItem("ady-job-referrals", JSON.stringify(updated));
+    try {
+      const res = await api.post("/job/referrals", {
+        company: refCompany.trim(),
+        role: refRole.trim(),
+        notes: refNotes.trim(),
+      });
+      if (res.data?.success && res.data.referral) {
+        setReferrals(prev => [res.data.referral, ...prev]);
+        toast.success("Referral request created with AI-generated outreach message!");
+      } else {
+        toast.error("Failed to create referral request.");
+      }
+    } catch {
+      toast.error("Failed to create referral request. Please try again.");
+    }
 
     // Clear form
     setRefCompany("Google");
@@ -222,31 +244,22 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
     if (!chatInput.trim() || chatLoading) return;
     const promptText = chatInput.trim();
     setChatInput("");
-    setChatMessages(prev => [...prev, { role: "user", content: promptText }]);
+    const userMessage: ChatMessage = { role: "user", content: promptText };
+    const updatedMessages = [...chatMessages, userMessage];
+    setChatMessages(updatedMessages);
     setChatLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      let responseText = "I parsed your query but didn't find any direct triggers. I can help search for SDE jobs, audit resume files, or draft outreach letters. Try:\n- *'Show remote jobs'* \n- *'Draft referral letter'*";
-
-      if (promptText.toLowerCase().includes("remote")) {
-        setModeFilter("Remote");
-        setTab("matching");
-        responseText = "🔍 **Action Triggered**: Matching filters updated to **Remote** jobs. You can see updated listings in the **Job Matching** tab.";
-      } else if (promptText.toLowerCase().includes("referral")) {
-        setTab("referrals");
-        responseText = "👥 **Action Triggered**: Navigated to **Job Referrals**. You can click 'Request Referral' to instantly auto-generate customized outreach messages.";
-      } else if (promptText.toLowerCase().includes("compare") || promptText.toLowerCase().includes("jd")) {
-        setTab("jd-match");
-        responseText = "📄 **Action Triggered**: Navigated to **Resume vs JD Match**. Paste your target Job Description there to calculate ATS compatibility.";
-      } else if (promptText.toLowerCase().includes("challenge")) {
-        setTab("challenges");
-        responseText = "🏆 **Action Triggered**: Navigated to **Hiring Challenges** to practice mock tests and review coding leaderboards.";
+      const res = await api.post("/job/career-chat", {
+        messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+      });
+      if (res.data?.success && res.data.response) {
+        setChatMessages(prev => [...prev, { role: "assistant", content: res.data.response }]);
+      } else {
+        setChatMessages(prev => [...prev, { role: "assistant", content: "I couldn't process that request. Please try again." }]);
       }
-
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, the career assistant is temporarily unavailable. Please try again later." }]);
     } finally {
       setChatLoading(false);
     }
@@ -718,13 +731,13 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                             <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
                               {ch.category}
                             </motion.span>
-                            {ch.completed ? (
-                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                Rank #{ch.rank}
-                              </motion.span>
-                            ) : (
+                            {ch.isActive ? (
                               <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                                 Active
+                              </motion.span>
+                            ) : (
+                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                                Inactive
                               </motion.span>
                             )}
                           </div>
@@ -736,11 +749,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                         </div>
 
                         <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
-                          {ch.completed ? (
-                            <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-                              <Check size={12} /> Challenge Solved ({ch.score}%)
-                            </span>
-                          ) : (
+                          {ch.isActive ? (
                             <motion.button
                               whileHover={{ scale: 1.04 }}
                               whileTap={{ scale: 0.96 }}
@@ -753,6 +762,10 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                                 <Play size={10} className="fill-current" />
                               </motion.div> Participate Now
                             </motion.button>
+                          ) : (
+                            <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                              <Check size={12} /> Inactive
+                            </span>
                           )}
                         </div>
                       </motion.div>
@@ -854,9 +867,18 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    setAppliedCount(prev => prev + 1);
-                    alert("🚀 Applied successfully! Card added to your application tracker.");
+                  onClick={async () => {
+                    if (!selectedJob) return;
+                    try {
+                      const res = await api.post(`/job/apply/${selectedJob.id}`);
+                      if (res.data?.status === "already_applied") {
+                        toast.info("You have already applied to this job.");
+                      } else {
+                        toast.success("Applied successfully! Card added to your application tracker.");
+                      }
+                    } catch {
+                      toast.error("Failed to apply. Please try again.");
+                    }
                     setSelectedJob(null);
                   }}
                   className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"

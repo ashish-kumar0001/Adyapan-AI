@@ -1049,6 +1049,148 @@ enum Role {
   ADMIN
 }
 
+model Job {
+  id          String   @id @default(cuid())
+  role        String
+  company     String
+  logoBg      String   @default("#f59e0b")
+  location    String
+  mode        String   @default("Remote")
+  type        String   @default("Full-Time")
+  salary      String   @default("")
+  experience  String   @default("")
+  skills      String[]
+  description String
+  responsibilities String[]
+  eligibility String[]
+  deadline    String   @default("")
+  website     String   @default("")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("jobs")
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  status    String   @default("applied")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([jobId])
+  @@unique([userId, jobId])
+  @@map("job_applications")
+}
+
+model Referral {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  company      String
+  role         String
+  notes        String   @default("")
+  outreachMsg  String   @default("") @map("outreach_msg")
+  status       String   @default("Requested")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("referrals")
+}
+
+model HiringChallenge {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  difficulty  String   @default("Medium")
+  duration    String
+  eligibility String   @default("All")
+  company     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("hiring_challenges")
+}
+
+model JobSaved {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@unique([userId, jobId])
+  @@map("job_saved")
+}
+
+model CommunityFollow {
+  id          String   @id @default(cuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([followerId])
+  @@index([followingId])
+  @@unique([followerId, followingId])
+  @@map("community_follows")
+}
+
+model CommunityMessage {
+  id         String   @id @default(cuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("community_messages")
+}
+
+model CommunityActivity {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  detail    String   @default("")
+  xp        Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("community_activities")
+}
+
+model CommunityAchievement {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  description String
+  icon        String   @default("trophy")
+  xp          Int      @default(0)
+  unlockedAt  DateTime @default(now()) @map("unlocked_at")
+
+  @@index([userId])
+  @@map("community_achievements")
+}
+
+model CommunityProject {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  description String
+  techStack   String[]
+  url         String?
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("community_projects")
+}
+
 model CodingQuestion {
   id                  String   @id @default(cuid())
   externalId          String   @unique @map("external_id")

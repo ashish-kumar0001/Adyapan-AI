@@ -148,21 +148,8 @@ export function GithubPortfolioView() {
       } else {
         throw new Error("Analysis failed");
       }
-    } catch {
-      // Robust Mock Analysis fallback
-      const mockData: GithubAnalysis = {
-        summary: `Highly active developer specializing in responsive React applications, scalable Express backends, and modular system architectures.`,
-        topLanguages: ["TypeScript", "JavaScript", "Python", "HTML/CSS"],
-        estimatedCommits: 1450,
-        estimatedStars: 68,
-        keyProjects: [
-          { name: "react-dashboard-framework", description: "Glassmorphic admin panel with state charting." },
-          { name: "express-token-bucket", description: "High throughput middleware for microservice limits." },
-          { name: "python-image-processor", description: "AI-assisted compression workflow using Cloud buckets." },
-        ],
-      };
-      setAnalysis(mockData);
-      toast.info("Backend unseeded. Loaded mock profile simulation.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to analyze GitHub profile");
     } finally {
       setLoading(false);
     }
@@ -179,12 +166,8 @@ export function GithubPortfolioView() {
         setActivePreviewTab("preview");
         toast.success("README.md generated successfully!");
       }
-    } catch {
-      // Mock README fallback
-      const mockReadme = `# ${projectName}\n\nAn optimized development codebase configured for performance.\n\n[![Status](https://img.shields.io/badge/status-active-success.svg)]()\n[![License](https://img.shields.io/badge/license-MIT-blue.svg)]()\n\n## Overview\n${projectContext || "A modern software component built using industry standard design patterns."}\n\n## Features\n- ⚡ High performance operations\n- 📦 Modular package tree\n- 🛠️ Fully configured build pipeline\n\n## Installation\n\`\`\`bash\nnpm install ${projectName.toLowerCase().replace(/\s+/g, "-")}\n\`\`\`\n\n## Usage\n\`\`\`javascript\nconst app = require('${projectName.toLowerCase().replace(/\s+/g, "-")}');\napp.start();\n\`\`\`\n\n## Contributing\nPull requests are welcome. For major changes, please open an issue first.`;
-      setReadmeContent(mockReadme);
-      setActivePreviewTab("preview");
-      toast.info("Backend unseeded. Loaded mock README template.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to generate README");
     } finally {
       setLoading(false);
     }
@@ -207,23 +190,8 @@ export function GithubPortfolioView() {
         setActivePreviewTab("website");
         toast.success("Portfolio website generated!");
       }
-    } catch {
-      // Mock Portfolio fallback
-      const mockPortfolio: PortfolioData = {
-        homeHero: {
-          tagline: `Hi, I am @${username || "developer"}`,
-          bio: analysis?.summary || "Specializing in high quality application design and full stack development.",
-        },
-        aboutSection: `I am a software engineer focused on crafting clean, testable code. My technical skills center around modern systems like ${analysis?.topLanguages.join(", ") || "TypeScript and JavaScript"}. Across my repository profile, I have accumulated over ${analysis?.estimatedCommits || 1000} commits and earned ${analysis?.estimatedStars || 20} stars.`,
-        projectsToHighlight: (analysis?.keyProjects || []).map((p) => ({
-          title: p.name,
-          tech: "React & Node.js",
-          summary: p.description,
-        })),
-      };
-      setPortfolio(mockPortfolio);
-      setActivePreviewTab("website");
-      toast.info("Backend unseeded. Loaded mock portfolio template.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to generate portfolio");
     } finally {
       setLoading(false);
     }
