@@ -26,3 +26,4 @@ initSocketServer(server);
 server.listen(env.port, "0.0.0.0", () => {
   console.log(`Adyapan AI API running on http://0.0.0.0:${env.port}`);
 });
+// Touch to reload dev server with regenerated prisma client types
