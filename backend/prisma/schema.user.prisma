@@ -44,6 +44,16 @@ model ATSReport {
   createdAt       DateTime @default(now()) @map("created_at")
   resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
+  overallScore     Int?     @map("overall_score")
+  formattingScore  Int?     @map("formatting_score")
+  keywordScore     Int?     @map("keyword_score")
+  experienceScore  Int?     @map("experience_score")
+  projectScore     Int?     @map("project_score")
+  skillsScore      Int?     @map("skills_score")
+  educationScore   Int?     @map("education_score")
+  readabilityScore Int?     @map("readability_score")
+  reportJson       Json?    @map("report_json")
+
   @@index([userId])
   @@index([createdAt])
   @@map("ats_reports")

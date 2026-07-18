@@ -52,6 +52,15 @@ interface ATSDeepAnalysis {
     experience: number; education: number;
   };
   recommendations: string[]; formattingIssues: string[]; strengths: string[];
+  formattingScore?: number;
+  keywordScore?: number;
+  projectScore?: number;
+  skillsScore?: number;
+  experienceScore?: number;
+  educationScore?: number;
+  readabilityScore?: number;
+  strongKeywords?: string[];
+  weakKeywords?: string[];
 }
 
 interface ATSIntelligence {
@@ -162,9 +171,14 @@ function Dots() {
 }
 
 const ROLES = [
-  "Software Engineer", "Full Stack Developer", "Frontend Developer",
-  "Backend Developer", "Data Analyst", "Data Scientist", "AI Engineer",
-  "DevOps Engineer", "Cloud Engineer", "Product Manager",
+  "General ATS",
+  "Software Engineer",
+  "Data Analyst",
+  "Data Scientist",
+  "Backend Developer",
+  "Frontend Developer",
+  "Full Stack Developer",
+  "AI Engineer",
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -192,7 +206,7 @@ export function AtsCheckerView({ setView }: Props) {
   const [screen, setScreen] = useState<Screen>("home");
   const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights" | "fixes">("overview");
 
-  const [role, setRole] = useState("Software Engineer");
+  const [role, setRole] = useState("General ATS");
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
   const [resumes, setResumes] = useState<ResumeBrief[]>([]);
@@ -228,9 +242,13 @@ export function AtsCheckerView({ setView }: Props) {
   const chatEnd = useRef<HTMLDivElement>(null);
 
   const loadSteps = [
-    "Uploading Resume", "Extracting Text", "Evaluating ATS Structure",
-    "Analyzing Keywords", "Checking Sections", "Reviewing Formatting",
-    "Generating Insights", "Preparing Recommendations",
+    "Analyzing Resume",
+    "Evaluating ATS Structure",
+    "Checking Keywords",
+    "Reviewing Sections",
+    "Generating Insights",
+    "Preparing Recommendations",
+    "Analysis Complete",
   ];
 
   useEffect(() => {
@@ -276,6 +294,16 @@ export function AtsCheckerView({ setView }: Props) {
     }],
   } : null;
 
+  const categoryScores = analysis ? [
+    { label: "Formatting Score", score: analysis.formattingScore ?? (analysis.formatting === "Excellent" ? 95 : analysis.formatting === "Good" ? 80 : analysis.formatting === "Fair" ? 60 : 40), color: "#8b5cf6" },
+    { label: "Keyword Score", score: analysis.keywordScore ?? Math.round((analysis.keywordsFound.length / Math.max(1, analysis.keywordsFound.length + (analysis.keywordsMissing || []).length)) * 100), color: "#3b82f6" },
+    { label: "Project Score", score: analysis.projectScore ?? (analysis.sectionScores.projects?.score ? analysis.sectionScores.projects.score * 10 : 70), color: "#10b981" },
+    { label: "Skills Score", score: analysis.skillsScore ?? (analysis.sectionScores.skills?.score ? analysis.sectionScores.skills.score * 10 : 85), color: "#f59e0b" },
+    { label: "Experience Score", score: analysis.experienceScore ?? (analysis.sectionScores.experience?.score ? analysis.sectionScores.experience.score * 10 : 70), color: "#ef4444" },
+    { label: "Education Score", score: analysis.educationScore ?? (analysis.sectionScores.education?.score ? analysis.sectionScores.education.score * 10 : 80), color: "#ec4899" },
+    { label: "Readability Score", score: analysis.readabilityScore ?? (analysis.readability === "Excellent" ? 95 : analysis.readability === "Good" ? 80 : analysis.readability === "Fair" ? 60 : 40), color: "#06b6d4" },
+  ] : [];
+
   const radarOpts = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
@@ -310,6 +338,7 @@ export function AtsCheckerView({ setView }: Props) {
   };
 
   const startAnalysis = async () => {
+    setScreen("loading");
     setLoading(true); setLoadStep(0);
     const iv = setInterval(() => setLoadStep(p => Math.min(p + 1, loadSteps.length - 1)), 700);
     try {
@@ -744,30 +773,48 @@ export function AtsCheckerView({ setView }: Props) {
                     ))}
                   </motion.div>
 
-                  {/* STRENGTH BARS */}
+                  {/* ATS CATEGORY SCORES */}
                   <Card className="p-5">
-                    <h3 className="text-xs font-bold mb-4">Resume Strength</h3>
-                    <div className="space-y-3">
-                      {([
-                        ["Summary", analysis.strengthBars.summary, "#8b5cf6"],
-                        ["Skills", analysis.strengthBars.skills, "#3b82f6"],
-                        ["Experience", analysis.strengthBars.experience, "#f59e0b"],
-                        ["Projects", analysis.strengthBars.projects, "#10b981"],
-                        ["Education", analysis.strengthBars.education, "#ec4899"],
-                      ] as const).map(([l, v, cl]) => (
-                        <div key={l}>
-                          <div className="flex justify-between text-[10px] font-bold mb-1">
-                            <span style={{ color: c.tx2 }}>{l}</span>
-                            <span style={{ color: cl }}>{v}%</span>
+                    <h3 className="text-xs font-bold mb-4 flex items-center gap-2">
+                      <BarChart3 size={14} style={{ color: c.am }} /> ATS Category Scores
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {categoryScores.map((cat, i) => (
+                        <div key={cat.label} className="p-3 rounded-xl transition-all" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-[10px] font-bold" style={{ color: c.tx2 }}>{cat.label}</span>
+                            <span className="text-xs font-extrabold" style={{ color: cat.color }}>
+                              <CountUp end={cat.score} />%
+                            </span>
                           </div>
-                          <div className="h-2 rounded-full overflow-hidden" style={{ background: c.sf }}>
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${v}%` }} transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-                              className="h-full rounded-full" style={{ background: cl }} />
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: c.d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${cat.score}%` }} transition={{ duration: 1.2, delay: i * 0.08, ease: "easeOut" }}
+                              className="h-full rounded-full" style={{ background: cat.color }} />
                           </div>
                         </div>
                       ))}
                     </div>
                   </Card>
+
+                  {/* MISSING SECTIONS ALERT */}
+                  {intel?.missingSections && intel.missingSections.length > 0 && (
+                    <Card className="p-5" style={{ background: "rgba(239,68,68,0.02)", borderColor: "rgba(239,68,68,0.15)" }}>
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.rd }}>
+                        <AlertTriangle size={14} /> Missing Critical Sections Detected
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {intel.missingSections.map((ms, i) => (
+                          <div key={ms.section} className="flex items-start gap-2.5 p-2.5 rounded-xl" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
+                            <XCircle size={14} className="mt-0.5 shrink-0" style={{ color: c.rd }} />
+                            <div>
+                              <div className="text-[11px] font-bold" style={{ color: c.tx }}>{ms.section}</div>
+                              <div className="text-[9px]" style={{ color: c.tx2 }}>{ms.reason}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
 
                   {/* FORMATTING CHECK */}
                   <Card className="p-5">
@@ -892,13 +939,25 @@ export function AtsCheckerView({ setView }: Props) {
 
                   <Card className="p-5">
                     <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
-                      <CheckCircle size={14} style={{ color: c.gn }} /> Found Keywords ({analysis.keywordAnalysis.found.length})
+                      <CheckCircle size={14} style={{ color: c.gn }} /> Strong Keywords ({(analysis.strongKeywords || []).length || Math.ceil(analysis.keywordAnalysis.found.length / 2)})
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {analysis.keywordAnalysis.found.map(kw => (
+                      {(analysis.strongKeywords && analysis.strongKeywords.length > 0 ? analysis.strongKeywords : analysis.keywordAnalysis.found.slice(0, Math.ceil(analysis.keywordAnalysis.found.length / 2))).map(kw => (
                         <Pill key={kw} color="#10b981">✓ {kw}</Pill>
                       ))}
-                      {analysis.keywordAnalysis.found.length === 0 && <span className="text-[10px]" style={{ color: c.txM }}>No keywords detected</span>}
+                      {analysis.keywordAnalysis.found.length === 0 && <span className="text-[10px]" style={{ color: c.txM }}>No strong keywords detected</span>}
+                    </div>
+                  </Card>
+
+                  <Card className="p-5">
+                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                      <AlertTriangle size={14} style={{ color: c.am }} /> Weak Keywords ({(analysis.weakKeywords || []).length || Math.floor(analysis.keywordAnalysis.found.length / 2)})
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(analysis.weakKeywords && analysis.weakKeywords.length > 0 ? analysis.weakKeywords : analysis.keywordAnalysis.found.slice(Math.ceil(analysis.keywordAnalysis.found.length / 2))).map(kw => (
+                        <Pill key={kw} color="#f59e0b">⚠ {kw}</Pill>
+                      ))}
+                      {analysis.keywordAnalysis.found.length === 0 && <span className="text-[10px]" style={{ color: c.txM }}>No weak keywords detected</span>}
                     </div>
                   </Card>
 
@@ -910,6 +969,7 @@ export function AtsCheckerView({ setView }: Props) {
                       {analysis.keywordAnalysis.missing.map(kw => (
                         <Pill key={kw} color="#ef4444">✗ {kw}</Pill>
                       ))}
+                      {analysis.keywordAnalysis.missing.length === 0 && <span className="text-[10px]" style={{ color: c.txM }}>No missing keywords</span>}
                     </div>
                   </Card>
 

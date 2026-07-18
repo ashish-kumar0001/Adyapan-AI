@@ -187,7 +187,18 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
           recruiterScore: analysis.recruiterScore,
           scoreLabel: analysis.scoreLabel,
           keywordsFound: analysis.keywordsFound,
+          strongKeywords: analysis.strongKeywords || [],
+          weakKeywords: analysis.weakKeywords || [],
         })),
+        overallScore: analysis.score,
+        formattingScore: analysis.formattingScore ?? (analysis.formatting === "Excellent" ? 95 : analysis.formatting === "Good" ? 80 : analysis.formatting === "Fair" ? 60 : 40),
+        keywordScore: analysis.keywordScore ?? Math.round((analysis.keywordsFound.length / Math.max(1, analysis.keywordsFound.length + (analysis.keywordsMissing || []).length)) * 100),
+        experienceScore: analysis.experienceScore ?? (analysis.sectionScores.experience?.score ? analysis.sectionScores.experience.score * 10 : 70),
+        projectScore: analysis.projectScore ?? (analysis.sectionScores.projects?.score ? analysis.sectionScores.projects.score * 10 : 70),
+        skillsScore: analysis.skillsScore ?? (analysis.sectionScores.skills?.score ? analysis.sectionScores.skills.score * 10 : 80),
+        educationScore: analysis.educationScore ?? (analysis.sectionScores.education?.score ? analysis.sectionScores.education.score * 10 : 80),
+        readabilityScore: analysis.readabilityScore ?? (analysis.readability === "Excellent" ? 95 : analysis.readability === "Good" ? 80 : analysis.readability === "Fair" ? 60 : 40),
+        reportJson: JSON.parse(JSON.stringify(analysis)),
       },
     });
 
