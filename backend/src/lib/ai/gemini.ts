@@ -1554,3 +1554,256 @@ Keep responses concise for short durations and detailed for longer durations. Us
   };
   return generateJSON<LearnLessonData>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESUME IMPROVEMENT ENGINE (Day 23)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const IMPROVEMENT_SYSTEM = "You are a senior technical recruiter, ATS specialist, and resume consultant with 15+ years of experience at FAANG companies. Analyze resumes critically and provide actionable, specific improvements. Never invent achievements, technologies, certifications, or experience. Only rewrite content the candidate actually has, but improve how it's presented. Explain every recommendation and estimate its impact.";
+
+export interface SectionImprovement {
+  section: string;
+  sectionTitle: string;
+  currentContent: string;
+  improvedContent: string;
+  whyImprove: string;
+  recruiterPerspective: string;
+  atsImpact: string;
+  interviewImpact: string;
+  expectedBenefit: string;
+  scoreBefore: number;
+  scoreAfter: number;
+  category: "summary" | "projects" | "experience" | "skills" | "keywords" | "education" | "achievements" | "certifications" | "formatting";
+  priority: "high" | "medium" | "low";
+  applied: boolean;
+}
+
+export interface ResumeImprovementResult {
+  overallScoreBefore: number;
+  overallScoreAfter: number;
+  improvements: SectionImprovement[];
+  summaryImprovements: {
+    versions: Array<{
+      label: string;
+      content: string;
+      targetRole: string;
+    }>;
+  };
+  keywordOptimization: {
+    missingKeywords: string[];
+    suggestedKeywords: string[];
+    weakKeywords: string[];
+    strongKeywords: string[];
+    oneClickInsertions: Array<{
+      keyword: string;
+      where: string;
+      reason: string;
+    }>;
+  };
+  bulletRewrites: Array<{
+    original: string;
+    shortVersion: string;
+    professionalVersion: string;
+    impactVersion: string;
+    faangVersion: string;
+    section: string;
+  }>;
+  actionVerbReplacements: Array<{
+    original: string;
+    improved: string;
+    section: string;
+  }>;
+  metricEnhancements: Array<{
+    original: string;
+    suggested: string;
+    metric: string;
+    section: string;
+  }>;
+  improvementScore: {
+    resumeQuality: { before: number; after: number };
+    atsScore: { before: number; after: number };
+    recruiterAppeal: { before: number; after: number };
+    technicalQuality: { before: number; after: number };
+    readability: { before: number; after: number };
+  };
+}
+
+/**
+ * Generate comprehensive resume improvements across all sections
+ */
+export async function generateResumeImprovements(
+  resumeText: string,
+  resumeData: any,
+  atsReport: any,
+  targetRole: string,
+  targetIndustry?: string,
+  targetCompany?: string
+): Promise<ResumeImprovementResult> {
+  const prompt = `You are a senior technical recruiter and resume consultant. Analyze this resume alongside its ATS report and generate comprehensive, actionable improvements.
+
+RESUME:
+"""
+${resumeText}
+"""
+
+ATS REPORT:
+${JSON.stringify(atsReport || {}, null, 2)}
+
+TARGET ROLE: ${targetRole || "Software Engineer"}
+${targetIndustry ? `TARGET INDUSTRY: ${targetIndustry}` : ""}
+${targetCompany ? `TARGET COMPANY: ${targetCompany}` : ""}
+
+CRITICAL RULES:
+1. NEVER invent new achievements, technologies, certifications, or experiences
+2. ONLY rewrite content the candidate actually has, but improve how it's presented
+3. Every suggestion must be specific and actionable
+4. Estimate the ATS score impact for each change
+5. Explain from a recruiter's perspective
+
+Generate a JSON object with this exact schema:
+{
+  "overallScoreBefore": <integer 0-100, the current resume quality score>,
+  "overallScoreAfter": <integer 0-100, the expected score after all improvements>,
+  "improvements": [
+    {
+      "section": "<section_key: summary|projects|experience|skills|keywords|education|achievements|certifications|formatting>",
+      "sectionTitle": "<Human readable section name>",
+      "currentContent": "<exact current text from the resume>",
+      "improvedContent": "<improved version of the content>",
+      "whyImprove": "<specific explanation of what's wrong and why>",
+      "recruiterPerspective": "<how a recruiter would interpret the current vs improved>",
+      "atsImpact": "<estimated ATS score change, e.g. '+8'>",
+      "interviewImpact": "<how this affects interview chances>",
+      "expectedBenefit": "<concrete expected outcome>",
+      "scoreBefore": <integer 0-10 for this section>,
+      "scoreAfter": <integer 0-10 for this section after improvement>,
+      "category": "<matching section>",
+      "priority": "<high|medium|low>"
+    }
+  ],
+  "summaryImprovements": {
+    "versions": [
+      { "label": "Fresh Graduate", "content": "<summary optimized for entry-level>", "targetRole": "${targetRole}" },
+      { "label": "Software Engineer", "content": "<summary optimized for SWE role>", "targetRole": "${targetRole}" },
+      { "label": "AI Engineer", "content": "<summary optimized for AI role>", "targetRole": "${targetRole}" },
+      { "label": "Backend Developer", "content": "<summary optimized for backend>", "targetRole": "${targetRole}" },
+      { "label": "Data Analyst", "content": "<summary optimized for data analyst>", "targetRole": "${targetRole}" }
+    ]
+  },
+  "keywordOptimization": {
+    "missingKeywords": ["<keywords missing from resume that are important for the role>"],
+    "suggestedKeywords": ["<keywords that should be added naturally>"],
+    "weakKeywords": ["<keywords mentioned but not well supported>"],
+    "strongKeywords": ["<keywords well supported by content>"],
+    "oneClickInsertions": [
+      { "keyword": "<keyword>", "where": "<which section to add it>", "reason": "<why this keyword matters>" }
+    ]
+  },
+  "bulletRewrites": [
+    {
+      "original": "<exact original bullet point>",
+      "shortVersion": "<concise version>",
+      "professionalVersion": "<professional version>",
+      "impactVersion": "<impact-focused version with metrics>",
+      "faangVersion": "<FAANG-style version>",
+      "section": "<which section this bullet is from>"
+    }
+  ],
+  "actionVerbReplacements": [
+    { "original": "<weak verb phrase>", "improved": "<strong verb phrase>", "section": "<section>" }
+  ],
+  "metricEnhancements": [
+    { "original": "<current text without metric>", "suggested": "<text with suggested metric placeholder>", "metric": "<type of metric to add, e.g. 'percentage', 'time saved', 'users impacted'>", "section": "<section>" }
+  ],
+  "improvementScore": {
+    "resumeQuality": { "before": <int>, "after": <int> },
+    "atsScore": { "before": <int>, "after": <int> },
+    "recruiterAppeal": { "before": <int>, "after": <int> },
+    "technicalQuality": { "before": <int>, "after": <int> },
+    "readability": { "before": <int>, "after": <int> }
+  }
+}
+
+Focus on:
+- Strong action verbs (Architected, Spearheaded, Engineered, Optimized)
+- Quantifiable impact (percentages, time saved, users impacted)
+- ATS keyword density
+- Recruiter readability (6-second scan test)
+- Technical depth without jargon
+- Business impact connection`;
+
+  const fallback: ResumeImprovementResult = {
+    overallScoreBefore: 55,
+    overallScoreAfter: 78,
+    improvements: [],
+    summaryImprovements: { versions: [] },
+    keywordOptimization: {
+      missingKeywords: [], suggestedKeywords: [], weakKeywords: [], strongKeywords: [],
+      oneClickInsertions: [],
+    },
+    bulletRewrites: [],
+    actionVerbReplacements: [],
+    metricEnhancements: [],
+    improvementScore: {
+      resumeQuality: { before: 55, after: 78 },
+      atsScore: { before: 50, after: 75 },
+      recruiterAppeal: { before: 50, after: 75 },
+      technicalQuality: { before: 55, after: 78 },
+      readability: { before: 60, after: 80 },
+    },
+  };
+
+  return generateJSON<ResumeImprovementResult>(IMPROVEMENT_SYSTEM, prompt, { model: MODELS.BALANCED, maxTokens: 8192, responseFormat: { type: "json_object" } }, fallback);
+}
+
+/**
+ * Apply a single improvement to resume data
+ */
+export async function applyResumeImprovement(
+  resumeData: any,
+  section: string,
+  currentContent: string,
+  improvedContent: string
+): Promise<any> {
+  const updated = JSON.parse(JSON.stringify(resumeData));
+
+  if (section === "summary" && updated.personalInfo) {
+    updated.personalInfo.summary = improvedContent;
+  } else if (section === "projects" && Array.isArray(updated.projects)) {
+    const idx = updated.projects.findIndex((p: any) =>
+      (p.description || "").includes(currentContent.substring(0, 50))
+    );
+    if (idx !== -1) updated.projects[idx].description = improvedContent;
+  } else if (section === "experience" && Array.isArray(updated.experience)) {
+    const idx = updated.experience.findIndex((e: any) =>
+      (e.description || "").includes(currentContent.substring(0, 50))
+    );
+    if (idx !== -1) updated.experience[idx].description = improvedContent;
+  } else if (section === "skills" && Array.isArray(updated.skills)) {
+    updated.skills = improvedContent.split(/,\s*|\n/).map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  return updated;
+}
+
+/**
+ * Restore a resume to a specific version
+ */
+export async function generateVersionSummary(
+  oldData: any,
+  newData: any,
+  targetRole: string
+): Promise<string> {
+  const prompt = `Compare these two resume versions and generate a brief change summary (1-2 sentences).
+
+OLD VERSION keys: ${Object.keys(oldData).join(", ")}
+NEW VERSION keys: ${Object.keys(newData).join(", ")}
+
+What changed? Be specific but concise.`;
+
+  try {
+    return await generateText(IMPROVEMENT_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
+    return "Resume updated with AI-powered improvements.";
+  }
+}

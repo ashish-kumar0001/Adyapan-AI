@@ -35,6 +35,7 @@ import { plagiarismRouter } from "./plagiarism.routes";
 import { resumeUploadRouter } from "./resume-upload.routes";
 import { jobRouter } from "./job.routes";
 import { communityRouter } from "./community.routes";
+import { resumeImprovementRouter } from "./resume-improvement.routes";
 
 export const apiRouter = Router();
 
@@ -84,6 +85,9 @@ apiRouter.use("/job", jobRouter);
 
 // Community Routes
 apiRouter.use("/community", communityRouter);
+
+// Resume Improvement Engine Routes
+apiRouter.use("/resume-improvements", resumeImprovementRouter);
 
 
 

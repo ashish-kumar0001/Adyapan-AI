@@ -64,6 +64,9 @@ const LinkedInView = dynamic(() => import("@/components/resume-hub/LinkedInView"
 const ResumeUploadView = dynamic(() => import("@/components/resume-hub/ResumeUploadView").then(m => m.ResumeUploadView), {
   loading: () => <DashboardWidgetSkeleton title="Resume Upload" />
 });
+const ResumeImprovementsView = dynamic(() => import("@/components/resume-hub/ResumeImprovementsView").then(m => m.ResumeImprovementsView), {
+  loading: () => <DashboardWidgetSkeleton title="Resume Improvements" />
+});
 const AdyChatView = dynamic(() => import("@/components/ady-chat/AdyChatView").then(m => m.AdyChatView), {
   loading: () => <DashboardWidgetSkeleton title="Ady Chat" />
 });
@@ -288,7 +291,8 @@ export const sidebarItems: SidebarItem[] = [
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
       { label: "Upload Resume", href: "#" }, { label: "Resume Builder", href: "#" },
-      { label: "ATS Score Checker", href: "#" }, { label: "Cover Letter Generator", href: "#" },
+      { label: "ATS Score Checker", href: "#" }, { label: "Resume Improvements", href: "#" },
+      { label: "Cover Letter Generator", href: "#" },
       { label: "LinkedIn Optimizer", href: "#" },
     ],
   },
@@ -487,6 +491,7 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
                       else if (sub.label === "Resume Builder") onViewTool("resume-hub");
                       else if (sub.label === "Upload Resume") onViewTool("resume-upload");
                       else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
+                      else if (sub.label === "Resume Improvements") onViewTool("resume-improvements");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
                       else if (sub.label === "Study Assistant") onViewTool("study-assistant");
@@ -2179,6 +2184,8 @@ function UserDashboardContent() {
           <HubErrorBoundary><ResumeUploadView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "ats-checker" ? (
           <HubErrorBoundary><AtsCheckerView setView={setActiveView} /></HubErrorBoundary>
+        ) : activeView === "resume-improvements" ? (
+          <HubErrorBoundary><ResumeImprovementsView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "cover-letter" ? (
           <HubErrorBoundary><CoverLetterView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "linkedin-optimizer" ? (

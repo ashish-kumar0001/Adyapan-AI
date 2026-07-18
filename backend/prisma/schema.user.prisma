@@ -25,9 +25,11 @@ model Resume {
   languages      Json?
   pdfUrl         String?          @map("pdf_url")
   targetCompany  String?          @map("target_company")
-  atsReports     ATSReport[]
-  coverLetters   CoverLetter[]
-  resumeAnalyses ResumeAnalysis[]
+  atsReports         ATSReport[]
+  coverLetters       CoverLetter[]
+  resumeAnalyses     ResumeAnalysis[]
+  resumeImprovements ResumeImprovement[]
+  resumeVersions     ResumeVersion[]
 
   @@index([userId])
   @@index([createdAt])
@@ -1360,6 +1362,42 @@ model RoadmapMilestone {
 
   @@index([roadmapId])
   @@map("roadmap_milestones")
+}
+
+model ResumeImprovement {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  resumeId         String   @map("resume_id")
+  atsReportId      String?  @map("ats_report_id")
+  targetRole       String?  @map("target_role")
+  improvementJson  Json     @map("improvement_json")
+  scoreBefore      Int      @map("score_before")
+  scoreAfter       Int      @map("score_after")
+  appliedCount     Int      @default(0) @map("applied_count")
+  totalCount       Int      @default(0) @map("total_count")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([createdAt])
+  @@map("resume_improvements")
+}
+
+model ResumeVersion {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  resumeId        String   @map("resume_id")
+  versionNumber   Int      @map("version_number")
+  changeSummary   String?  @map("change_summary")
+  resumeData      Json     @map("resume_data")
+  atsScoreBefore  Int?     @map("ats_score_before")
+  atsScoreAfter   Int?     @map("ats_score_after")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([createdAt])
+  @@map("resume_versions")
 }
 
 
