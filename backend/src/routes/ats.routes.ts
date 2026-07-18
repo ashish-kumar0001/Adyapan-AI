@@ -8,6 +8,9 @@ import {
   getATSSuggestions,
   applyImprovement,
   atsChatHandler,
+  analyzeATSIntelligence,
+  compareResumeVersions,
+  getLatestATSReport,
 } from "../controllers/ats.controller";
 import { requireAuth } from "../middleware/auth";
 
@@ -23,5 +26,8 @@ atsRouter.post("/jd-match", requireAuth, uploadMemory.single("resume"), analyzeJ
 atsRouter.post("/suggestions", requireAuth, getATSSuggestions);
 atsRouter.post("/apply-improvement", requireAuth, applyImprovement);
 atsRouter.post("/chat", requireAuth, atsChatHandler);
+atsRouter.post("/intelligence", requireAuth, uploadMemory.single("resume"), analyzeATSIntelligence);
+atsRouter.post("/compare", requireAuth, compareResumeVersions);
+atsRouter.get("/latest", requireAuth, getLatestATSReport);
 atsRouter.get("/history", requireAuth, listATSReports);
 atsRouter.get("/:id", requireAuth, getATSReport);

@@ -447,6 +447,203 @@ Return ONLY the improved content. Be concise and professional.`;
   }
 }
 
+// ─── ATS Intelligence Engine (Day 22) ───────────────────────────────────────
+
+export interface ATSIntelligenceResult {
+  recruiterView: {
+    firstImpression: string;
+    topStrengths: string[];
+    redFlags: string[];
+    interviewWorthy: boolean;
+    hiringDecision: string;
+  };
+  insights: {
+    strengths: string[];
+    weaknesses: string[];
+    risks: string[];
+    opportunities: string[];
+  };
+  missingSections: Array<{
+    section: string;
+    importance: "critical" | "important" | "nice-to-have";
+    reason: string;
+  }>;
+  structureAnalysis: {
+    isAtsCompatible: boolean;
+    issues: Array<{ issue: string; severity: "high" | "medium" | "low"; fix: string }>;
+    overallFormat: string;
+  };
+  detailedAnalysis: {
+    contactInfo: { present: boolean; score: number; notes: string[] };
+    summary: { present: boolean; score: number; quality: string; notes: string[] };
+    skills: { present: boolean; score: number; count: number; notes: string[] };
+    projects: { present: boolean; score: number; count: number; quality: string; notes: string[] };
+    experience: { present: boolean; score: number; count: number; notes: string[] };
+    education: { present: boolean; score: number; notes: string[] };
+    certifications: { present: boolean; score: number; count: number; notes: string[] };
+    achievements: { present: boolean; score: number; count: number; notes: string[] };
+    links: { present: boolean; score: number; notes: string[] };
+  };
+  readabilityAnalysis: {
+    overallGrade: string;
+    sentenceLength: string;
+    bulletUsage: string;
+    formattingConsistency: string;
+    scanningEase: string;
+    recruiterFriendliness: string;
+  };
+  improvementRecommendations: Array<{
+    priority: "high" | "medium" | "low";
+    category: string;
+    title: string;
+    description: string;
+    impact: string;
+  }>;
+  jobTargetAnalysis?: {
+    role: string;
+    matchScore: number;
+    alignedSkills: string[];
+    gapSkills: string[];
+    roleSpecificAdvice: string[];
+  };
+}
+
+export async function analyzeResumeIntelligence(
+  resumeText: string,
+  targetRole: string,
+  jobDescription?: string
+): Promise<ATSIntelligenceResult> {
+  const prompt = `You are a senior ATS specialist and technical recruiter with 15+ years of experience at FAANG companies. Perform an exhaustive intelligence analysis of this resume for the target role: "${targetRole}".
+${jobDescription ? `\nAlso compare against this Job Description:\n"""\n${jobDescription}\n"""\n` : ""}
+
+Resume:
+"""
+${resumeText}
+"""
+
+Analyze like a real recruiter would. Be brutally honest and specific. Output JSON with this exact schema:
+
+{
+  "recruiterView": {
+    "firstImpression": "string - what a recruiter notices in the first 6 seconds",
+    "topStrengths": ["string - top 3 strengths a recruiter sees"],
+    "redFlags": ["string - things that concern a recruiter"],
+    "interviewWorthy": boolean,
+    "hiringDecision": "string - Would you interview this candidate? Why/why not?"
+  },
+  "insights": {
+    "strengths": ["string - 3-5 specific strengths with evidence"],
+    "weaknesses": ["string - 3-5 specific weaknesses with evidence"],
+    "risks": ["string - 2-3 risks for this candidate"],
+    "opportunities": ["string - 2-3 improvement opportunities"]
+  },
+  "missingSections": [
+    { "section": "string", "importance": "critical|important|nice-to-have", "reason": "string" }
+  ],
+  "structureAnalysis": {
+    "isAtsCompatible": boolean,
+    "issues": [{ "issue": "string", "severity": "high|medium|low", "fix": "string" }],
+    "overallFormat": "Excellent|Good|Fair|Poor"
+  },
+  "detailedAnalysis": {
+    "contactInfo": { "present": boolean, "score": 0-10, "notes": ["string"] },
+    "summary": { "present": boolean, "score": 0-10, "quality": "string", "notes": ["string"] },
+    "skills": { "present": boolean, "score": 0-10, "count": 0, "notes": ["string"] },
+    "projects": { "present": boolean, "score": 0-10, "count": 0, "quality": "string", "notes": ["string"] },
+    "experience": { "present": boolean, "score": 0-10, "count": 0, "notes": ["string"] },
+    "education": { "present": boolean, "score": 0-10, "notes": ["string"] },
+    "certifications": { "present": boolean, "score": 0-10, "count": 0, "notes": ["string"] },
+    "achievements": { "present": boolean, "score": 0-10, "count": 0, "notes": ["string"] },
+    "links": { "present": boolean, "score": 0-10, "notes": ["string"] }
+  },
+  "readabilityAnalysis": {
+    "overallGrade": "A+|A|B+|B|C+|C|D|F",
+    "sentenceLength": "string",
+    "bulletUsage": "string",
+    "formattingConsistency": "string",
+    "scanningEase": "string",
+    "recruiterFriendliness": "string"
+  },
+  "improvementRecommendations": [
+    { "priority": "high|medium|low", "category": "string", "title": "string", "description": "string", "impact": "string" }
+  ],
+  "jobTargetAnalysis": {
+    "role": "${targetRole}",
+    "matchScore": 0-100,
+    "alignedSkills": ["string"],
+    "gapSkills": ["string"],
+    "roleSpecificAdvice": ["string"]
+  }
+}
+
+Be thorough, specific, and actionable. Score honestly. Do not be generic.`;
+
+  const fallback: ATSIntelligenceResult = {
+    recruiterView: { firstImpression: "Resume needs significant improvement", topStrengths: [], redFlags: [], interviewWorthy: false, hiringDecision: "Needs revision" },
+    insights: { strengths: [], weaknesses: [], risks: [], opportunities: [] },
+    missingSections: [],
+    structureAnalysis: { isAtsCompatible: false, issues: [], overallFormat: "Fair" },
+    detailedAnalysis: {
+      contactInfo: { present: false, score: 5, notes: [] },
+      summary: { present: false, score: 3, quality: "Missing", notes: [] },
+      skills: { present: false, score: 5, count: 0, notes: [] },
+      projects: { present: false, score: 3, count: 0, quality: "Missing", notes: [] },
+      experience: { present: false, score: 3, count: 0, notes: [] },
+      education: { present: false, score: 5, notes: [] },
+      certifications: { present: false, score: 3, count: 0, notes: [] },
+      achievements: { present: false, score: 3, count: 0, notes: [] },
+      links: { present: false, score: 3, notes: [] },
+    },
+    readabilityAnalysis: { overallGrade: "C", sentenceLength: "N/A", bulletUsage: "N/A", formattingConsistency: "N/A", scanningEase: "N/A", recruiterFriendliness: "N/A" },
+    improvementRecommendations: [],
+  };
+  return generateJSON<ATSIntelligenceResult>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+}
+
+export interface ResumeComparisonResult {
+  versionA: { score: number; strengths: string[]; weaknesses: string[] };
+  versionB: { score: number; strengths: string[]; weaknesses: string[] };
+  improvements: Array<{ area: string; oldScore: number; newScore: number; change: string; notes: string }>;
+  recommendation: string;
+  overallImprovement: number;
+}
+
+export async function compareResumes(
+  resumeAText: string,
+  resumeBText: string,
+  targetRole: string
+): Promise<ResumeComparisonResult> {
+  const prompt = `Compare these two resume versions for the target role: "${targetRole}".
+
+Resume Version A:
+"""
+${resumeAText}
+"""
+
+Resume Version B:
+"""
+${resumeBText}
+"""
+
+Output JSON:
+{
+  "versionA": { "score": 0-100, "strengths": ["string"], "weaknesses": ["string"] },
+  "versionB": { "score": 0-100, "strengths": ["string"], "weaknesses": ["string"] },
+  "improvements": [{ "area": "string", "oldScore": 0-100, "newScore": 0-100, "change": "+/-N", "notes": "string" }],
+  "recommendation": "string - which version is better and why",
+  "overallImprovement": 0 (positive = B is better, negative = A is better)
+}`;
+
+  const fallback: ResumeComparisonResult = {
+    versionA: { score: 65, strengths: [], weaknesses: [] },
+    versionB: { score: 65, strengths: [], weaknesses: [] },
+    improvements: [],
+    recommendation: "Both versions are similar",
+    overallImprovement: 0,
+  };
+  return generateJSON<ResumeComparisonResult>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+}
+
 interface CoverLetterResult {
   greeting: string;
   introduction: string;

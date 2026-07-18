@@ -7,6 +7,8 @@ import {
   generateATSSuggestions,
   applyATSSuggestion,
   atsAIChat,
+  analyzeResumeIntelligence,
+  compareResumes,
 } from "../lib/ai/gemini";
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
@@ -369,6 +371,105 @@ export async function getATSReport(req: Request, res: Response, next: NextFuncti
     if (!report) {
       throw httpError(404, "ATS Report not found");
     }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 8. ATS Intelligence Analysis (Day 22)
+ */
+export async function analyzeATSIntelligence(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+
+    const targetRole = req.body.targetRole || "Software Engineer";
+    const resumeId = req.body.resumeId || "";
+    const jobDescription = req.body.jobDescription || "";
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    let resumeText = "";
+
+    if (req.file) {
+      resumeText = await extractTextFromFile(req.file);
+    } else if (resumeId) {
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (!resume) throw httpError(404, "Resume not found");
+      resumeText = serializeResumeToText(resume);
+    } else {
+      const latestResume = await userPrisma.resume.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (latestResume) {
+        resumeText = serializeResumeToText(latestResume);
+      } else {
+        throw httpError(400, "No resume found. Please upload a file or create a resume first.");
+      }
+    }
+
+    if (!resumeText.trim()) {
+      throw httpError(400, "Could not extract text from the resume.");
+    }
+
+    const intelligence = await analyzeResumeIntelligence(resumeText, targetRole, jobDescription);
+
+    res.json({ success: true, intelligence });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 9. Compare Two Resume Versions (Day 22)
+ */
+export async function compareResumeVersions(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+
+    const { resumeIdA, resumeIdB, targetRole } = req.body;
+    if (!resumeIdA || !resumeIdB) {
+      throw httpError(400, "Both resumeIdA and resumeIdB are required");
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const resumeA = await userPrisma.resume.findFirst({ where: { id: resumeIdA, userId } });
+    if (!resumeA) throw httpError(404, "Resume A not found");
+
+    const resumeB = await userPrisma.resume.findFirst({ where: { id: resumeIdB, userId } });
+    if (!resumeB) throw httpError(404, "Resume B not found");
+
+    const textA = serializeResumeToText(resumeA);
+    const textB = serializeResumeToText(resumeB);
+
+    const comparison = await compareResumes(textA, textB, targetRole || "Software Engineer");
+
+    res.json({ success: true, comparison });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 10. Get Latest ATS Report (Day 22)
+ */
+export async function getLatestATSReport(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const report = await userPrisma.aTSReport.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        resume: {
+          select: { title: true },
+        },
+      },
+    });
 
     res.json({ success: true, report });
   } catch (error) {
