@@ -1639,81 +1639,87 @@ export async function generateResumeImprovements(
   targetIndustry?: string,
   targetCompany?: string
 ): Promise<ResumeImprovementResult> {
-  const prompt = `You are a senior technical recruiter and resume consultant. Analyze this resume alongside its ATS report and generate comprehensive, actionable improvements.
+  // Slim the ATS data — only send key scores, not the full reportJson blob
+  const atsSummary = atsReport ? {
+    score: atsReport.score ?? atsReport.overallScore ?? null,
+    keywordScore: atsReport.keywordScore ?? null,
+    formattingScore: atsReport.formattingScore ?? null,
+    experienceScore: atsReport.experienceScore ?? null,
+    projectScore: atsReport.projectScore ?? null,
+    skillsScore: atsReport.skillsScore ?? null,
+    readabilityScore: atsReport.readabilityScore ?? null,
+    missingKeywords: atsReport.missingKeywords || (atsReport.reportJson?.keywordsMissing ?? []),
+    recommendations: Array.isArray(atsReport.recommendations)
+      ? atsReport.recommendations.slice(0, 10)
+      : (atsReport.reportJson?.recommendations ?? []).slice(0, 10),
+  } : {};
+
+  const prompt = `Improve this resume for the role "${targetRole || "Software Engineer"}".
+${targetIndustry ? `Industry: ${targetIndustry}. ` : ""}${targetCompany ? `Company: ${targetCompany}. ` : ""}
 
 RESUME:
-"""
 ${resumeText}
-"""
 
-ATS REPORT:
-${JSON.stringify(atsReport || {}, null, 2)}
+ATS SCORES: ${JSON.stringify(atsSummary)}
 
-TARGET ROLE: ${targetRole || "Software Engineer"}
-${targetIndustry ? `TARGET INDUSTRY: ${targetIndustry}` : ""}
-${targetCompany ? `TARGET COMPANY: ${targetCompany}` : ""}
+RULES:
+- NEVER invent new achievements, technologies, or experiences. Only rewrite what exists.
+- Every suggestion must be specific and actionable.
 
-CRITICAL RULES:
-1. NEVER invent new achievements, technologies, certifications, or experiences
-2. ONLY rewrite content the candidate actually has, but improve how it's presented
-3. Every suggestion must be specific and actionable
-4. Estimate the ATS score impact for each change
-5. Explain from a recruiter's perspective
-
-Generate a JSON object with this exact schema:
+Return a JSON object:
 {
-  "overallScoreBefore": <integer 0-100, the current resume quality score>,
-  "overallScoreAfter": <integer 0-100, the expected score after all improvements>,
+  "overallScoreBefore": <int 0-100>,
+  "overallScoreAfter": <int 0-100>,
   "improvements": [
     {
-      "section": "<section_key: summary|projects|experience|skills|keywords|education|achievements|certifications|formatting>",
-      "sectionTitle": "<Human readable section name>",
-      "currentContent": "<exact current text from the resume>",
-      "improvedContent": "<improved version of the content>",
-      "whyImprove": "<specific explanation of what's wrong and why>",
-      "recruiterPerspective": "<how a recruiter would interpret the current vs improved>",
-      "atsImpact": "<estimated ATS score change, e.g. '+8'>",
-      "interviewImpact": "<how this affects interview chances>",
-      "expectedBenefit": "<concrete expected outcome>",
-      "scoreBefore": <integer 0-10 for this section>,
-      "scoreAfter": <integer 0-10 for this section after improvement>,
-      "category": "<matching section>",
+      "section": "<summary|projects|experience|skills|keywords|education|achievements|certifications|formatting>",
+      "sectionTitle": "<Readable Name>",
+      "currentContent": "<exact current text>",
+      "improvedContent": "<improved version>",
+      "whyImprove": "<what's wrong>",
+      "recruiterPerspective": "<recruiter view>",
+      "atsImpact": "<e.g. '+8'>",
+      "interviewImpact": "<effect on interview chances>",
+      "expectedBenefit": "<outcome>",
+      "scoreBefore": <int 0-10>,
+      "scoreAfter": <int 0-10>,
+      "category": "<same as section>",
       "priority": "<high|medium|low>"
     }
   ],
   "summaryImprovements": {
     "versions": [
-      { "label": "Fresh Graduate", "content": "<summary optimized for entry-level>", "targetRole": "${targetRole}" },
-      { "label": "Software Engineer", "content": "<summary optimized for SWE role>", "targetRole": "${targetRole}" },
-      { "label": "AI Engineer", "content": "<summary optimized for AI role>", "targetRole": "${targetRole}" },
-      { "label": "Backend Developer", "content": "<summary optimized for backend>", "targetRole": "${targetRole}" },
-      { "label": "Data Analyst", "content": "<summary optimized for data analyst>", "targetRole": "${targetRole}" }
+      { "label": "Fresh Graduate", "content": "<summary>", "targetRole": "${targetRole}" },
+      { "label": "Software Engineer", "content": "<summary>", "targetRole": "${targetRole}" },
+      { "label": "AI Engineer", "content": "<summary>", "targetRole": "${targetRole}" },
+      { "label": "Backend Developer", "content": "<summary>", "targetRole": "${targetRole}" },
+      { "label": "Data Analyst", "content": "<summary>", "targetRole": "${targetRole}" }
     ]
   },
   "keywordOptimization": {
-    "missingKeywords": ["<keywords missing from resume that are important for the role>"],
-    "suggestedKeywords": ["<keywords that should be added naturally>"],
-    "weakKeywords": ["<keywords mentioned but not well supported>"],
-    "strongKeywords": ["<keywords well supported by content>"],
+    "missingKeywords": ["..."],
+    "suggestedKeywords": ["..."],
+    "weakKeywords": ["..."],
+    "strongKeywords": ["..."],
     "oneClickInsertions": [
-      { "keyword": "<keyword>", "where": "<which section to add it>", "reason": "<why this keyword matters>" }
+      { "keyword": "...", "where": "skills", "reason": "..." }
     ]
   },
   "bulletRewrites": [
     {
-      "original": "<exact original bullet point>",
-      "shortVersion": "<concise version>",
-      "professionalVersion": "<professional version>",
-      "impactVersion": "<impact-focused version with metrics>",
-      "faangVersion": "<FAANG-style version>",
-      "section": "<which section this bullet is from>"
+      "original": "<original bullet>",
+      "shortVersion": "<concise>",
+      "professionalVersion": "<professional>",
+      "impactVersion": "<with metrics>",
+      "faangVersion": "<FAANG style>",
+      "section": "<section>"
     }
   ],
   "actionVerbReplacements": [
-    { "original": "<weak verb phrase>", "improved": "<strong verb phrase>", "section": "<section>" }
+    { "original": "<weak>", "improved": "<strong>", "section": "<section>" }
   ],
   "metricEnhancements": [
-    { "original": "<current text without metric>", "suggested": "<text with suggested metric placeholder>", "metric": "<type of metric to add, e.g. 'percentage', 'time saved', 'users impacted'>", "section": "<section>" }
+    { "original": "<text>", "suggested": "<with metric>", "metric": "<type>", "section": "<section>" }
   ],
   "improvementScore": {
     "resumeQuality": { "before": <int>, "after": <int> },
@@ -1722,15 +1728,7 @@ Generate a JSON object with this exact schema:
     "technicalQuality": { "before": <int>, "after": <int> },
     "readability": { "before": <int>, "after": <int> }
   }
-}
-
-Focus on:
-- Strong action verbs (Architected, Spearheaded, Engineered, Optimized)
-- Quantifiable impact (percentages, time saved, users impacted)
-- ATS keyword density
-- Recruiter readability (6-second scan test)
-- Technical depth without jargon
-- Business impact connection`;
+}`;
 
   const fallback: ResumeImprovementResult = {
     overallScoreBefore: 55,
@@ -1753,7 +1751,12 @@ Focus on:
     },
   };
 
-  return generateJSON<ResumeImprovementResult>(IMPROVEMENT_SYSTEM, prompt, { model: MODELS.BALANCED, maxTokens: 8192, responseFormat: { type: "json_object" } }, fallback);
+  try {
+    return await generateJSON<ResumeImprovementResult>(IMPROVEMENT_SYSTEM, prompt, { model: MODELS.BALANCED, maxTokens: 16384, responseFormat: { type: "json_object" } }, fallback);
+  } catch (error) {
+    console.error("[Gemini] generateResumeImprovements failed, using fallback:", error);
+    return fallback;
+  }
 }
 
 /**
