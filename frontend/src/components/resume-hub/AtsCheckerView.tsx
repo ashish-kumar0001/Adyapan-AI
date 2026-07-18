@@ -126,20 +126,33 @@ const mkC = (t: string) => {
     tx: d ? "#e5e7eb" : "#0f172a",
     tx2: d ? "#9ca3af" : "#475569",
     txM: d ? "#6b7280" : "#94a3b8",
-    bg: d ? "rgba(255,255,255,0.025)" : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
-    sf: d ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-    sfH: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-    bd: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)",
-    bdH: d ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-    cb: d ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
-    cs: d ? "none" : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.08)" : "rgba(245,158,11,0.06)",
-    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.06)",
-    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.06)",
-    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.06)",
-    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.1)" : "rgba(139,92,246,0.06)",
-    dv: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    bg: d
+      ? "linear-gradient(135deg, #0a0e1a 0%, #0d1520 30%, #111827 60%, #0a0e1a 100%)"
+      : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
+    sf: d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
+    sfH: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+    bd: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    bdH: d ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
+    cb: d
+      ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
+      : "rgba(255,255,255,0.85)",
+    cs: d
+      ? "0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)"
+      : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
+    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
+    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.06)",
+    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.06)",
+    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.06)",
+    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.12)" : "rgba(139,92,246,0.06)",
+    dv: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
     chat: d ? "#0a0e14" : "#f8fafc",
+    glass: d ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
+    glassBd: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+    selectBg: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.02)",
+    selectOpt: d ? "#1a2035" : "#ffffff",
+    orb1: d ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.04)",
+    orb2: d ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.03)",
+    orb3: d ? "rgba(59,130,246,0.05)" : "rgba(59,130,246,0.03)",
   };
 };
 
@@ -181,6 +194,149 @@ const ROLES = [
   "AI Engineer",
 ];
 
+const ROLE_ICONS: Record<string, string> = {
+  "General ATS": "🎯",
+  "Software Engineer": "💻",
+  "Data Analyst": "📊",
+  "Data Scientist": "🧠",
+  "Backend Developer": "⚙️",
+  "Frontend Developer": "🎨",
+  "Full Stack Developer": "🚀",
+  "AI Engineer": "🤖",
+};
+
+function FloatingOrbs({ theme }: { theme: string }) {
+  const d = theme === "dark";
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      <motion.div
+        className="absolute rounded-full blur-[120px]"
+        style={{ top: "-8%", right: "10%", width: 320, height: 320, background: d ? "rgba(245,158,11,0.08)" : "rgba(245,158,11,0.06)" }}
+        animate={{ scale: [1, 1.15, 1], x: [0, 25, 0], y: [0, -15, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute rounded-full blur-[140px]"
+        style={{ bottom: "5%", left: "5%", width: 360, height: 360, background: d ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)" }}
+        animate={{ scale: [1, 1.12, 1], x: [0, -30, 0], y: [0, 20, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+      />
+      <motion.div
+        className="absolute rounded-full blur-[100px]"
+        style={{ top: "35%", left: "45%", width: 250, height: 250, background: d ? "rgba(59,130,246,0.05)" : "rgba(59,130,246,0.04)" }}
+        animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.4, 0.7, 0.4] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+      />
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: 3 + i * 1.5,
+            height: 3 + i * 1.5,
+            background: i % 2 === 0 ? "rgba(245,158,11,0.3)" : "rgba(139,92,246,0.25)",
+            top: `${15 + i * 12}%`,
+            left: `${10 + i * 15}%`,
+          }}
+          animate={{
+            y: [0, -20 - i * 5, 0],
+            opacity: [0.3, 0.8, 0.3],
+            scale: [1, 1.3, 1],
+          }}
+          transition={{
+            duration: 4 + i * 0.8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.6,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChange: (v: string) => void; theme: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const d = theme === "dark";
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative" style={{ zIndex: open ? 50 : "auto" }}>
+      <motion.button
+        whileHover={{ scale: 1.01, borderColor: "rgba(245,158,11,0.5)" }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => setOpen(p => !p)}
+        className="w-full flex items-center justify-between p-3.5 rounded-xl text-sm outline-none cursor-pointer"
+        style={{
+          background: d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
+          border: `1px solid ${d ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+          color: d ? "#e5e7eb" : "#0f172a",
+          textAlign: "left",
+        }}
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="text-base">{ROLE_ICONS[value] || "🎯"}</span>
+          <span className="font-semibold text-sm">{value}</span>
+        </span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={14} style={{ color: d ? "#6b7280" : "#94a3b8" }} />
+        </motion.span>
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute w-full mt-2 rounded-xl overflow-hidden"
+            style={{
+              zIndex: 9999,
+              background: d ? "rgba(15,20,35,0.98)" : "#ffffff",
+              border: `1px solid ${d ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+              boxShadow: d
+                ? "0 16px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4)"
+                : "0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)",
+              maxHeight: "240px",
+              overflowY: "auto",
+            }}
+          >
+            {ROLES.map((r) => (
+              <button
+                key={r}
+                onMouseDown={(e) => { e.preventDefault(); onChange(r); setOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-left transition-colors"
+                style={{
+                  background: r === value
+                    ? d ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)"
+                    : "transparent",
+                  color: d ? "#e5e7eb" : "#0f172a",
+                  borderBottom: `1px solid ${d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
+                }}
+              >
+                <span className="text-base w-7 text-center">{ROLE_ICONS[r] || "🎯"}</span>
+                <span className="text-sm font-medium flex-1">{r}</span>
+                {r === value && (
+                  <CheckCircle size={14} style={{ color: "#f59e0b" }} />
+                )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ANIMATION VARIANTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -204,7 +360,7 @@ export function AtsCheckerView({ setView }: Props) {
   // ── State ──────────────────────────────────────────────────────────────────
   type Screen = "home" | "jd" | "loading" | "dashboard" | "history" | "compare" | "final";
   const [screen, setScreen] = useState<Screen>("home");
-  const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights" | "fixes">("overview");
+  const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights">("overview");
 
   const [role, setRole] = useState("General ATS");
   const [file, setFile] = useState<File | null>(null);
@@ -269,11 +425,11 @@ export function AtsCheckerView({ setView }: Props) {
     labels: ["Summary", "Skills", "Experience", "Projects", "Education"],
     datasets: [{
       data: [
-        analysis.sectionScores.summary.score * 10,
-        analysis.sectionScores.skills.score * 10,
-        analysis.sectionScores.experience.score * 10,
-        analysis.sectionScores.projects.score * 10,
-        analysis.sectionScores.education.score * 10,
+        (analysis.sectionScores?.summary?.score ?? 7) * 10,
+        (analysis.sectionScores?.skills?.score ?? 8) * 10,
+        (analysis.sectionScores?.experience?.score ?? 7) * 10,
+        (analysis.sectionScores?.projects?.score ?? 7) * 10,
+        (analysis.sectionScores?.education?.score ?? 8) * 10,
       ],
       backgroundColor: "rgba(245,158,11,0.12)",
       borderColor: "#f59e0b",
@@ -286,7 +442,10 @@ export function AtsCheckerView({ setView }: Props) {
   const barData = analysis ? {
     labels: ["Found", "Missing"],
     datasets: [{
-      data: [analysis.keywordAnalysis.found.length, analysis.keywordAnalysis.missing.length],
+      data: [
+        (analysis.keywordAnalysis?.found || analysis.keywordsFound || []).length,
+        (analysis.keywordAnalysis?.missing || analysis.keywordsMissing || []).length
+      ],
       backgroundColor: ["rgba(16,185,129,0.7)", "rgba(239,68,68,0.7)"],
       borderColor: ["#10b981", "#ef4444"],
       borderWidth: 1,
@@ -356,6 +515,9 @@ export function AtsCheckerView({ setView }: Props) {
         api.post("/ats/intelligence", fd, { headers: hdrs }),
       ]);
       clearInterval(iv); setLoadStep(loadSteps.length - 1);
+      if (aR.status === "rejected") {
+        throw new Error(aR.reason?.response?.data?.message || aR.reason?.message || "Failed to analyze resume.");
+      }
       if (aR.status === "fulfilled" && aR.value.data.analysis) {
         setAnalysis(aR.value.data.analysis);
         setUpdScore(aR.value.data.analysis.score);
@@ -366,6 +528,7 @@ export function AtsCheckerView({ setView }: Props) {
       if (aR.status === "fulfilled") genSuggestions(aR.value.data.analysis);
     } catch (err) {
       clearInterval(iv);
+      setScreen("home");
       alert(`Failed to analyze. ${err instanceof Error ? err.message : "Try again."}`);
     } finally { setLoading(false); }
   };
@@ -436,11 +599,17 @@ export function AtsCheckerView({ setView }: Props) {
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col min-h-[calc(100vh-120px)] antialiased"
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col min-h-[calc(100vh-120px)] antialiased relative"
       style={{ color: c.tx, background: c.bg, backgroundAttachment: "fixed" }}>
 
       {/* ─── HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.dv}` }}>
+      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2 relative z-20"
+        style={{
+          borderBottom: `1px solid ${c.dv}`,
+          background: c.d ? "rgba(10,14,26,0.8)" : "rgba(255,255,255,0.8)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}>
         {screen !== "home" && (
           <motion.button whileHover={btnH} whileTap={btnT}
             onClick={() => { if (screen === "dashboard") setScreen("home"); else if (screen === "history" || screen === "compare") setScreen("home"); else setScreen("home"); }}
@@ -484,104 +653,286 @@ export function AtsCheckerView({ setView }: Props) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
+      <div className="flex-1 overflow-y-auto px-5 pb-6 relative z-10">
         <AnimatePresence mode="wait">
 
           {/* ═══════ HOME ═══════ */}
           {screen === "home" && (
-            <motion.div key="home" {...AP.page} transition={{ duration: 0.3 }} className="space-y-5 pt-5">
-              {/* Empty state */}
-              {!file && !selId && resumes.length === 0 && (
-                <EmptyState
-                  title="Upload a resume to generate ATS analysis"
-                  description="Upload your resume or create one with Resume Builder to get started."
-                  actionLabel="Resume Builder"
-                  onAction={() => setView("resume-builder")}
-                  illustration={<BarChart3 size={32} />}
-                />
-              )}
+            <motion.div key="home" {...AP.page} transition={{ duration: 0.4 }} className="pt-4 relative">
+              <FloatingOrbs theme={theme} />
 
-              {/* Role Selector */}
-              <Card className="p-5">
-                <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: c.tx2 }}>Target Job Role</label>
-                <div className="relative">
-                  <select value={role} onChange={e => setRole(e.target.value)}
-                    className="w-full p-3 rounded-xl text-sm outline-none appearance-none cursor-pointer"
-                    style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }}>
-                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.txM }} />
-                </div>
-              </Card>
+              {/* Hero Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="text-center mb-8 relative z-10"
+              >
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.15 }}
+                  className="w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center relative"
+                  style={{
+                    background: "linear-gradient(135deg, #f59e0b, #d97706, #b45309)",
+                    boxShadow: "0 8px 32px rgba(245,158,11,0.35), 0 2px 8px rgba(245,158,11,0.2)",
+                  }}
+                >
+                  <BarChart3 size={36} style={{ color: "#000" }} />
+                  <motion.div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{ border: "2px solid rgba(245,158,11,0.3)" }}
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Existing Resumes */}
-                {resumes.length > 0 && (
-                  <Card className="p-5">
-                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><FileText size={15} style={{ color: c.am }} /> Choose Resume</h3>
-                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                      {resumes.map(r => (
-                        <motion.button key={r.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                          onClick={() => { setSelId(r.id); setFile(null); }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
-                          style={{
-                            background: selId === r.id ? "rgba(245,158,11,0.08)" : c.sf,
-                            border: `1px solid ${selId === r.id ? "rgba(245,158,11,0.3)" : c.bd}`,
-                          }}>
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
-                            <FileText size={14} style={{ color: c.am }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">{r.title}</div>
-                            <div className="text-[10px]" style={{ color: c.txM }}>{r.template} · {new Date(r.updatedAt).toLocaleDateString()}</div>
-                          </div>
-                          {selId === r.id && <CheckCircle size={16} style={{ color: c.am }} />}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </Card>
+                <motion.h1
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.5 }}
+                  className="text-2xl font-extrabold mb-2"
+                  style={{ fontFamily: "'Outfit',sans-serif", color: c.tx }}
+                >
+                  ATS Intelligence Engine
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.5 }}
+                  className="text-sm max-w-md mx-auto leading-relaxed"
+                  style={{ color: c.tx2 }}
+                >
+                  Analyze your resume like a real ATS system. Discover weaknesses, missing keywords, and get AI-powered improvement recommendations.
+                </motion.p>
+
+                {/* Feature pills */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45, duration: 0.5 }}
+                  className="flex flex-wrap justify-center gap-2 mt-4"
+                >
+                  {[
+                    { icon: <BarChart3 size={10} />, label: "ATS Score", cl: "#f59e0b" },
+                    { icon: <Search size={10} />, label: "Keyword Analysis", cl: "#3b82f6" },
+                    { icon: <Users size={10} />, label: "Recruiter View", cl: "#8b5cf6" },
+                    { icon: <Lightbulb size={10} />, label: "AI Insights", cl: "#10b981" },
+                  ].map((f, i) => (
+                    <motion.span
+                      key={f.label}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 300, damping: 20 }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold"
+                      style={{
+                        background: `${f.cl}12`,
+                        color: f.cl,
+                        border: `1px solid ${f.cl}25`,
+                      }}
+                    >
+                      {f.icon} {f.label}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              </motion.div>
+
+              <div className="space-y-5 relative z-10">
+                {/* Empty state */}
+                {!file && !selId && resumes.length === 0 && (
+                  <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                    <EmptyState
+                      title="Upload a resume to generate ATS analysis"
+                      description="Upload your resume or create one with Resume Builder to get started."
+                      actionLabel="Resume Builder"
+                      onAction={() => setView("resume-builder")}
+                      illustration={<BarChart3 size={32} />}
+                    />
+                  </motion.div>
                 )}
 
-                {/* Upload */}
-                <Card className="p-5">
-                  <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Upload size={15} style={{ color: c.am }} /> Upload Resume</h3>
-                  <div onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={handleDrop}
-                    onClick={() => fileRef.current?.click()}
-                    className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
-                    style={{ borderColor: drag ? c.am : c.bd, background: drag ? "rgba(245,158,11,0.04)" : c.sf }}>
-                    <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={e => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setSelId(""); } }} className="hidden" />
-                    {file ? (
-                      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-2">
-                        <FileText size={32} className="mx-auto" style={{ color: c.am }} />
-                        <p className="text-sm font-bold">{file.name}</p>
-                        <p className="text-[10px]" style={{ color: c.txM }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        <button onClick={e => { e.stopPropagation(); setFile(null); }}
-                          className="text-[10px] font-bold inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
-                          style={{ background: c.rdBg, color: c.rd, border: `1px solid ${c.rd}30` }}><X size={11} /> Remove</button>
-                      </motion.div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload size={36} className="mx-auto" style={{ color: c.txM }} />
-                        <p className="text-sm font-bold">Drag & drop your resume</p>
-                        <p className="text-[10px]" style={{ color: c.txM }}>PDF, DOCX up to 5MB</p>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </div>
+                {/* Role Selector */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.4 }}
+                  className="relative"
+                  style={{ zIndex: 30 }}
+                >
+                  <Card className="p-5 relative" style={{
+                    background: c.d
+                      ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
+                      : "rgba(255,255,255,0.85)",
+                    boxShadow: c.d
+                      ? "0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)"
+                      : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
+                  }}>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5" style={{ color: c.tx2 }}>
+                      <Target size={11} style={{ color: c.am }} /> Target Job Role
+                    </label>
+                    <CustomRoleDropdown value={role} onChange={setRole} theme={theme} />
+                  </Card>
+                </motion.div>
 
-              {/* Continue */}
-              <motion.button whileHover={btnH} whileTap={btnT} disabled={!file && !selId}
-                onClick={() => setScreen("jd")}
-                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
-                style={{
-                  background: (!file && !selId) ? c.sf : "linear-gradient(135deg,#f59e0b,#d97706)",
-                  color: (!file && !selId) ? c.txM : "#000",
-                  border: (!file && !selId) ? `1px solid ${c.bd}` : "none",
-                  opacity: (!file && !selId) ? 0.5 : 1,
-                }}>
-                <Zap size={15} /> Continue to Analysis <ChevronRight size={16} />
-              </motion.button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Existing Resumes */}
+                  {resumes.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6, duration: 0.4 }}
+                    >
+                      <Card className="p-5" style={{
+                        background: c.d
+                          ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
+                          : "rgba(255,255,255,0.85)",
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
+                      }}>
+                        <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><FileText size={15} style={{ color: c.am }} /> Choose Resume</h3>
+                        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                          {resumes.map((r, i) => (
+                            <motion.button key={r.id}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.65 + i * 0.05 }}
+                              whileHover={{ scale: 1.015, borderColor: "rgba(245,158,11,0.4)" }}
+                              whileTap={{ scale: 0.985 }}
+                              onClick={() => { setSelId(r.id); setFile(null); }}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                              style={{
+                                background: selId === r.id ? "rgba(245,158,11,0.08)" : c.sf,
+                                border: `1px solid ${selId === r.id ? "rgba(245,158,11,0.3)" : c.bd}`,
+                              }}>
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
+                                <FileText size={14} style={{ color: c.am }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold truncate">{r.title}</div>
+                                <div className="text-[10px]" style={{ color: c.txM }}>{r.template} · {new Date(r.updatedAt).toLocaleDateString()}</div>
+                              </div>
+                              {selId === r.id && (
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={AP.spring}>
+                                  <CheckCircle size={16} style={{ color: c.am }} />
+                                </motion.div>
+                              )}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </Card>
+                    </motion.div>
+                  )}
+
+                  {/* Upload */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6, duration: 0.4 }}
+                  >
+                    <Card className="p-5" style={{
+                      background: c.d
+                        ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
+                        : "rgba(255,255,255,0.85)",
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
+                    }}>
+                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Upload size={15} style={{ color: c.am }} /> Upload Resume</h3>
+                      <div onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={handleDrop}
+                        onClick={() => fileRef.current?.click()}
+                        className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all relative overflow-hidden"
+                        style={{ borderColor: drag ? c.am : c.bd, background: drag ? "rgba(245,158,11,0.04)" : c.sf }}>
+                        {/* Decorative corner glow on hover */}
+                        <motion.div
+                          className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none"
+                          style={{ background: "radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%)" }}
+                          animate={{ scale: drag ? 1.5 : 1, opacity: drag ? 1 : 0.3 }}
+                          transition={{ duration: 0.4 }}
+                        />
+                        <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={e => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setSelId(""); } }} className="hidden" />
+                        {file ? (
+                          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-2 relative z-10">
+                            <motion.div
+                              animate={{ rotate: [0, -5, 5, 0] }}
+                              transition={{ duration: 0.5, delay: 0.2 }}
+                            >
+                              <FileText size={32} className="mx-auto" style={{ color: c.am }} />
+                            </motion.div>
+                            <p className="text-sm font-bold">{file.name}</p>
+                            <p className="text-[10px]" style={{ color: c.txM }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <button onClick={e => { e.stopPropagation(); setFile(null); }}
+                              className="text-[10px] font-bold inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
+                              style={{ background: c.rdBg, color: c.rd, border: `1px solid ${c.rd}30` }}><X size={11} /> Remove</button>
+                          </motion.div>
+                        ) : (
+                          <div className="space-y-3 relative z-10">
+                            <motion.div
+                              animate={{ y: [0, -6, 0] }}
+                              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                            >
+                              <Upload size={36} className="mx-auto" style={{ color: drag ? c.am : c.txM }} />
+                            </motion.div>
+                            <p className="text-sm font-bold" style={{ color: drag ? c.am : c.tx }}>Drag & drop your resume</p>
+                            <p className="text-[10px]" style={{ color: c.txM }}>PDF, DOCX up to 5MB</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
+                </div>
+
+                {/* Feature Highlights */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75, duration: 0.4 }}
+                  className="grid grid-cols-3 gap-3"
+                >
+                  {[
+                    { icon: <Search size={16} />, title: "Keyword Analysis", desc: "Find missing technical & soft skills", cl: "#3b82f6" },
+                    { icon: <Users size={16} />, title: "Recruiter View", desc: "See what recruiters notice first", cl: "#8b5cf6" },
+                    { icon: <Lightbulb size={16} />, title: "AI Improvements", desc: "Get actionable fix recommendations", cl: "#10b981" },
+                  ].map((f, i) => (
+                    <motion.div
+                      key={f.title}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 + i * 0.1, type: "spring", stiffness: 300, damping: 25 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="p-3.5 rounded-xl text-center"
+                      style={{
+                        background: c.d ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.015)",
+                        border: `1px solid ${c.bd}`,
+                      }}
+                    >
+                      <div className="w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center" style={{ background: `${f.cl}15`, color: f.cl }}>
+                        {f.icon}
+                      </div>
+                      <div className="text-[11px] font-bold mb-0.5" style={{ color: c.tx }}>{f.title}</div>
+                      <div className="text-[9px] leading-tight" style={{ color: c.txM }}>{f.desc}</div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Continue */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9, duration: 0.4 }}
+                >
+                  <motion.button whileHover={file || selId ? { scale: 1.02, boxShadow: "0 8px 32px rgba(245,158,11,0.3)" } : {}} whileTap={btnT} disabled={!file && !selId}
+                    onClick={() => setScreen("jd")}
+                    className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
+                    style={{
+                      background: (!file && !selId) ? c.sf : "linear-gradient(135deg,#f59e0b,#d97706)",
+                      color: (!file && !selId) ? c.txM : "#000",
+                      border: (!file && !selId) ? `1px solid ${c.bd}` : "none",
+                      opacity: (!file && !selId) ? 0.5 : 1,
+                      boxShadow: (!file && !selId) ? "none" : "0 4px 16px rgba(245,158,11,0.25)",
+                    }}>
+                    <Zap size={15} /> Continue to Analysis <ChevronRight size={16} />
+                  </motion.button>
+                </motion.div>
+              </div>
             </motion.div>
           )}
 
@@ -661,24 +1012,21 @@ export function AtsCheckerView({ setView }: Props) {
               <Card className="p-8 text-center">
                 {/* Spinner */}
                 <div className="relative w-20 h-20 mx-auto mb-6">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-full h-full rounded-full" style={{ border: `3px solid ${c.bd}`, borderTopColor: c.am }} />
+                  <div className="w-full h-full rounded-full border-3 animate-spin" style={{ border: `3px solid ${c.bd}`, borderTopColor: c.am }} />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <BarChart3 size={22} style={{ color: c.am }} />
                   </div>
                 </div>
-                <h2 className="text-lg font-extrabold mb-6">Analyzing Resume...</h2>
+                <h2 className="text-lg font-extrabold mb-6 animate-pulse">Analyzing Resume...</h2>
                 <div className="space-y-2.5 text-left">
                   {loadSteps.map((step, i) => (
-                    <motion.div key={step} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
-                      className="flex items-center gap-3 p-2.5 rounded-xl transition-all"
+                    <div key={step} className="flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300"
                       style={{ background: i <= loadStep ? "rgba(245,158,11,0.04)" : "transparent" }}>
                       {i < loadStep ? <CheckCircle size={16} style={{ color: c.gn }} /> :
-                       i === loadStep ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                         className="w-4 h-4 rounded-full border-2" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} /> :
+                       i === loadStep ? <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} /> :
                        <div className="w-4 h-4 rounded-full" style={{ background: c.sf, border: `1px solid ${c.bd}` }} />}
                       <span className="text-xs" style={{ color: i <= loadStep ? c.tx : c.txM, fontWeight: i <= loadStep ? 700 : 400 }}>{step}</span>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </Card>
@@ -697,7 +1045,6 @@ export function AtsCheckerView({ setView }: Props) {
                   ["keywords", "Keywords", <Search size={12} />],
                   ["recruiter", "Recruiter", <Users size={12} />],
                   ["insights", "Insights", <Brain size={12} />],
-                  ["fixes", "Fixes", <Lightbulb size={12} />],
                 ] as const).map(([id, label, icon]) => (
                   <motion.button key={id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => setTab(id)}
@@ -823,11 +1170,11 @@ export function AtsCheckerView({ setView }: Props) {
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {([
-                        ["One Page", analysis.formattingCheck.onePage],
-                        ["Fonts OK", analysis.formattingCheck.fontsConsistent],
-                        ["ATS Friendly", analysis.formattingCheck.atsFriendly],
-                        ["Headings OK", analysis.formattingCheck.headingsCorrect],
-                        ["Contact OK", analysis.formattingCheck.contactPresent],
+                        ["One Page", analysis.formattingCheck?.onePage],
+                        ["Fonts OK", analysis.formattingCheck?.fontsConsistent],
+                        ["ATS Friendly", analysis.formattingCheck?.atsFriendly],
+                        ["Headings OK", analysis.formattingCheck?.headingsCorrect],
+                        ["Contact OK", analysis.formattingCheck?.contactPresent],
                       ] as const).map(([l, ok]) => (
                         <div key={l} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: c.sf }}>
                           {ok ? <CheckCircle size={13} style={{ color: c.gn }} /> : <XCircle size={13} style={{ color: c.rd }} />}
@@ -838,16 +1185,11 @@ export function AtsCheckerView({ setView }: Props) {
                   </Card>
 
                   {/* ACTIONS */}
-                  <div className="flex gap-3">
+                  <div className="flex">
                     <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("insights")}
                       className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
                       style={{ background: c.ppBg, color: c.pp, border: `1px solid ${c.pp}30` }}>
                       <Brain size={15} /> Deep Insights
-                    </motion.button>
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("fixes")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
-                      <Sparkles size={15} /> AI Suggestions
                     </motion.button>
                   </div>
                 </motion.div>
@@ -859,11 +1201,11 @@ export function AtsCheckerView({ setView }: Props) {
                   {/* Section Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {([
-                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores.summary],
-                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores.skills],
-                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores.experience],
-                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores.projects],
-                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores.education],
+                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores?.summary || { score: 7, suggestions: [] }],
+                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores?.skills || { score: 8, suggestions: [] }],
+                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores?.experience || { score: 7, suggestions: [] }],
+                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores?.projects || { score: 7, suggestions: [] }],
+                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores?.education || { score: 8, suggestions: [] }],
                     ] as const).map(([k, lbl, ic, data], i) => (
                       <motion.div key={k} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.06 }}
                         whileHover={hov} className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
@@ -1162,104 +1504,7 @@ export function AtsCheckerView({ setView }: Props) {
                 </motion.div>
               )}
 
-              {/* ═══ TAB: FIXES ═══ */}
-              {tab === "fixes" && (
-                <motion.div key="t-fix" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  {/* AI Recommendations */}
-                  {intel?.improvementRecommendations && intel.improvementRecommendations.length > 0 && (
-                    <Card className="p-5">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Brain size={14} style={{ color: c.pp }} /> AI Improvement Recommendations</h3>
-                      <div className="space-y-2">
-                        {intel.improvementRecommendations.map((rec, i) => {
-                          const open = expandedRec === i;
-                          return (
-                            <div key={i} className="rounded-xl overflow-hidden" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
-                              <button onClick={() => setExpandedRec(open ? null : i)} className="w-full flex items-center gap-2 p-3 text-left">
-                                <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded shrink-0"
-                                  style={{ background: rec.priority === "high" ? c.rdBg : rec.priority === "medium" ? c.amBg : c.blBg, color: rec.priority === "high" ? c.rd : rec.priority === "medium" ? c.am : c.bl }}>
-                                  {rec.priority}
-                                </span>
-                                <span className="text-[11px] font-bold flex-1">{rec.title}</span>
-                                <span className="text-[9px] font-semibold" style={{ color: c.txM }}>{rec.category}</span>
-                                {open ? <ChevronUp size={12} style={{ color: c.txM }} /> : <ChevronDown size={12} style={{ color: c.txM }} />}
-                              </button>
-                              <AnimatePresence>
-                                {open && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden px-3 pb-3">
-                                    <p className="text-[10px] mb-1.5" style={{ color: c.tx2 }}>{rec.description}</p>
-                                    <div className="text-[10px] font-semibold" style={{ color: c.am }}>Impact: {rec.impact}</div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  )}
 
-                  {/* Applied Suggestions */}
-                  {suggestions.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold flex items-center gap-2"><Sparkles size={14} style={{ color: c.am }} /> AI Suggested Improvements</h3>
-                      {suggestions.map((sg, i) => {
-                        const done = applied.has(sg.id);
-                        return (
-                          <motion.div key={sg.id} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.04 }}
-                            whileHover={hov} className="p-4 rounded-xl"
-                            style={{ background: done ? "rgba(16,185,129,0.04)" : c.cb, border: `1px solid ${done ? "rgba(16,185,129,0.2)" : c.bd}` }}>
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-bold">{sg.title}</span>
-                                  <Pill color={sg.impact === "high" ? "#ef4444" : sg.impact === "medium" ? "#f59e0b" : "#3b82f6"}>{sg.impact} impact</Pill>
-                                </div>
-                                <p className="text-[11px]" style={{ color: c.tx2 }}>{sg.description}</p>
-                              </div>
-                              {done ? (
-                                <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
-                                  style={{ background: c.gnBg, color: c.gn, border: `1px solid ${c.gn}30` }}><CheckCircle size={10} /> Applied</span>
-                              ) : (
-                                <motion.button whileHover={btnH} whileTap={btnT} onClick={() => applySugg(sg)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
-                                  style={{ background: c.am, color: "#000" }}><Sparkles size={10} /> Apply</motion.button>
-                              )}
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Strengths & Recs */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><CheckCircle size={13} style={{ color: c.gn }} /> Strengths</h3>
-                      {analysis.strengths.map((s, i) => (
-                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.gn }}>✓</span> {s}</div>
-                      ))}
-                    </Card>
-                    <Card className="p-4">
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Star size={13} style={{ color: c.am }} /> Recommendations</h3>
-                      {analysis.recommendations.map((r, i) => (
-                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.am }}>✦</span> {r}</div>
-                      ))}
-                    </Card>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setView("resume-hub")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs"
-                      style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back to Resume Hub</motion.button>
-                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("final")}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
-                      <CheckCircle size={15} /> View Final Score
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           )}
 
