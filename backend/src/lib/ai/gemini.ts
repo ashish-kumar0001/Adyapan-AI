@@ -256,6 +256,15 @@ export interface ATSDeepAnalysis {
   recommendations: string[];
   formattingIssues: string[];
   strengths: string[];
+  formattingScore?: number;
+  keywordScore?: number;
+  projectScore?: number;
+  skillsScore?: number;
+  experienceScore?: number;
+  educationScore?: number;
+  readabilityScore?: number;
+  strongKeywords?: string[];
+  weakKeywords?: string[];
 }
 
 export async function analyzeResumeDeep(
@@ -275,8 +284,17 @@ Output a JSON object with this exact schema:
 {
   "score": integer 0-100 (overall ATS readiness score),
   "scoreLabel": string (one of "Poor", "Fair", "Good", "Very Good", "Excellent"),
+  "formattingScore": integer 0-100 (score for format guidelines and page-length compliance),
+  "keywordScore": integer 0-100 (score representing target role keyword matching density),
+  "projectScore": integer 0-100 (score for project details, achievements, and impact statements),
+  "skillsScore": integer 0-100 (score representing tech stack completeness and relevance),
+  "experienceScore": integer 0-100 (score representing career history detail and layout quality),
+  "educationScore": integer 0-100 (score representing degrees, coursework, and credentials),
+  "readabilityScore": integer 0-100 (score representing bullet structures, text alignment, and length),
   "keywordsFound": array of strings (keywords present in resume that match the target role),
   "keywordsMissing": array of strings (important keywords for the role not found in resume),
+  "strongKeywords": array of strings (keywords from the resume that are strongly evidenced/proven by descriptions),
+  "weakKeywords": array of strings (keywords mentioned in the resume but lacking descriptions/projects),
   "readability": string ("Excellent", "Good", "Fair", "Poor"),
   "length": string (e.g. "1 Page", "2 Pages"),
   "formatting": string ("Excellent", "Good", "Fair", "Poor"),
@@ -315,7 +333,9 @@ Be thorough and specific. Score honestly.`;
 
   const fallback: ATSDeepAnalysis = {
     score: 65, scoreLabel: "Fair",
+    formattingScore: 70, keywordScore: 60, projectScore: 65, skillsScore: 80, experienceScore: 60, educationScore: 85, readabilityScore: 75,
     keywordsFound: ["Python", "JavaScript"], keywordsMissing: ["Docker", "AWS", "Kubernetes"],
+    strongKeywords: ["Python"], weakKeywords: ["JavaScript"],
     readability: "Good", length: "1 Page", formatting: "Good", recruiterScore: 7.2,
     sectionScores: {
       summary: { score: 7, suggestions: ["Add measurable achievements"] },
@@ -520,6 +540,12 @@ Resume:
 """
 ${resumeText}
 """
+
+Instructions for Analysis:
+1. Detect any missing sections or essential elements: Summary, Projects, Experience, Certifications, Portfolio Links, GitHub, LinkedIn. Populate in "missingSections" if not found.
+2. Perform an ATS Compatibility Layout Check: Look for Bad Formatting, Table-heavy Layouts, Poor Headings, Complex Designs, or Unreadable Layouts. Populate any issues in "structureAnalysis.issues" and describe them clearly with actionable fixes.
+3. Classify keywords carefully: Programming Languages, Frameworks, Tools, Databases, Cloud Technologies, Soft Skills, and identify missing ones.
+4. Analyze recruiter first impressions, red flags, hiring decision, strengths, weaknesses, risks, and prioritize high/medium/low recommendations.
 
 Analyze like a real recruiter would. Be brutally honest and specific. Output JSON with this exact schema:
 
