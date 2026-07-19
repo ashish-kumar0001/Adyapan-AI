@@ -13,43 +13,68 @@ export interface OpenRouterOptions {
   responseFormat?: { type: "json_object" | "text" };
 }
 
-// Sequential fallback completion engine: Gemini → Groq → OpenRouter
+// Gemini model fallback chain — tried in order when one is unavailable
+const GEMINI_MODEL_FALLBACKS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+];
+
+// Groq model fallback chain
+const GROQ_MODEL_FALLBACKS_STRONG = [
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+];
+const GROQ_MODEL_FALLBACKS_FAST = [
+  "llama-3.1-8b-instant",
+  "llama-3.3-70b-versatile",
+];
+
+// Sequential fallback completion engine: Gemini (multiple models) → Groq (multiple models) → OpenRouter
 async function callAIRobust(
   messages: OpenRouterMessage[],
   options: OpenRouterOptions
 ): Promise<string> {
-  const providers = [];
+  const providers: { name: string; url: string; key: string; model: string }[] = [];
 
-  // 1. Add Google Gemini if key exists (primary)
+  // 1. Add Google Gemini with fallback models (primary)
   if (env.geminiApiKey) {
-    let geminiModel = "gemini-2.5-flash";
-    if (options.model?.includes("gemini")) {
-      geminiModel = options.model.split("/").pop() || "gemini-2.5-flash";
+    const modelLower = options.model?.toLowerCase() ?? "";
+    const requestedModel = modelLower.includes("gemini")
+      ? options.model.split("/").pop() || ""
+      : "";
+
+    // If a specific Gemini model was requested, try it first then fall back
+    const modelsToTry = requestedModel
+      ? [requestedModel, ...GEMINI_MODEL_FALLBACKS.filter(m => m !== requestedModel)]
+      : [...GEMINI_MODEL_FALLBACKS];
+
+    for (const m of modelsToTry) {
+      providers.push({
+        name: `Gemini (${m})`,
+        url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        key: env.geminiApiKey,
+        model: m,
+      });
     }
-    providers.push({
-      name: "Gemini",
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      key: env.geminiApiKey,
-      model: geminiModel
-    });
   }
 
-  // 2. Add Groq if key exists (secondary)
+  // 2. Add Groq with fallback models (secondary)
   if (env.groqApiKey) {
-    let groqModel = "llama-3.3-70b-versatile";
     const modelLower = options.model?.toLowerCase() ?? "";
     const isMiniOrFast = (modelLower.includes("mini") && !modelLower.includes("gemini")) ||
                          (modelLower.includes("fast") && !modelLower.includes("flash")) ||
                          modelLower.includes("cheap");
-    if (isMiniOrFast) {
-      groqModel = "llama-3.1-8b-instant";
+    const groqChain = isMiniOrFast ? GROQ_MODEL_FALLBACKS_FAST : GROQ_MODEL_FALLBACKS_STRONG;
+
+    for (const m of groqChain) {
+      providers.push({
+        name: `Groq (${m})`,
+        url: "https://api.groq.com/openai/v1/chat/completions",
+        key: env.groqApiKey,
+        model: m,
+      });
     }
-    providers.push({
-      name: "Groq",
-      url: "https://api.groq.com/openai/v1/chat/completions",
-      key: env.groqApiKey,
-      model: groqModel
-    });
   }
 
   // 3. Add OpenRouter if key exists (tertiary)
@@ -58,7 +83,7 @@ async function callAIRobust(
       name: "OpenRouter",
       url: "https://openrouter.ai/api/v1/chat/completions",
       key: env.openrouterApiKey,
-      model: options.model || "openai/gpt-4o-mini"
+      model: options.model || "openai/gpt-4o-mini",
     });
   }
 
@@ -68,106 +93,80 @@ async function callAIRobust(
 
   const errors: string[] = [];
 
-  const MAX_PROVIDER_RETRIES = 2;
-
   for (const provider of providers) {
-    let lastError = "";
+    try {
+      const body: Record<string, unknown> = {
+        model: provider.model,
+        messages,
+        temperature: options.temperature ?? 0.7,
+        max_tokens: options.maxTokens ?? 4096,
+      };
 
-    for (let attempt = 0; attempt <= MAX_PROVIDER_RETRIES; attempt++) {
-      if (attempt > 0) {
-        const backoffMs = Math.min(5000 * attempt, 30000);
-        await new Promise(r => setTimeout(r, backoffMs));
+      if (options.responseFormat?.type === "json_object") {
+        body.response_format = { type: "json_object" };
       }
 
+      const controller = new AbortController();
+      const fetchTimeoutMs = (options.maxTokens ?? 4096) > 4096 ? 120000 : 60000;
+      const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
+
+      let res: Response;
       try {
-        const body: Record<string, unknown> = {
-          model: provider.model,
-          messages,
-          temperature: options.temperature ?? 0.7,
-          max_tokens: options.maxTokens ?? 4096,
-        };
-
-        if (options.responseFormat?.type === "json_object") {
-          body.response_format = { type: "json_object" };
-        }
-
-        const controller = new AbortController();
-        const fetchTimeoutMs = (options.maxTokens ?? 4096) > 4096 ? 120000 : 60000;
-        const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
-
-        let res: Response;
-        try {
-          res = await fetch(provider.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${provider.key}`,
-            },
-            body: JSON.stringify(body),
-            signal: controller.signal,
-          });
-        } catch (fetchErr) {
-          clearTimeout(timeoutId);
-          throw fetchErr;
-        }
+        res = await fetch(provider.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${provider.key}`,
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
         clearTimeout(timeoutId);
-
-        const rawText = await res.text();
-        let data: any;
-        try {
-          data = JSON.parse(rawText);
-        } catch {
-          console.error(`[AI Engine] [Fallback] ${provider.name} returned non-JSON (${rawText.length} chars): ${rawText.substring(0, 300)}`);
-          throw new Error(`${provider.name} returned non-JSON response.`);
-        }
-
-        if (!res.ok || data.error) {
-          const errMsg = data.error?.message ?? res.statusText;
-          const isRateLimit = res.status === 429;
-          console.error(`[AI Engine] [Fallback] ${provider.name} error (HTTP ${res.status}):`, JSON.stringify(data).substring(0, 500));
-
-          if (isRateLimit && attempt < MAX_PROVIDER_RETRIES) {
-            const retryAfter = res.headers?.get?.("retry-after");
-            const waitSec = retryAfter ? parseInt(retryAfter, 10) : undefined;
-            if (waitSec && waitSec <= 60) {
-              await new Promise(r => setTimeout(r, waitSec * 1000));
-            }
-            lastError = `${provider.name}: ${errMsg}`;
-            continue;
-          }
-
-          throw new Error(`${provider.name} error: ${errMsg}`);
-        }
-
-        const content = data.choices?.[0]?.message?.content;
-        if (!content || content.trim().length === 0) {
-          console.error(`[AI Engine] [Fallback] ${provider.name} empty content. Full response keys: ${Object.keys(data)}, choices: ${JSON.stringify(data.choices).substring(0, 500)}`);
-          throw new Error(`${provider.name} returned empty completion.`);
-        }
-
-        return content;
-      } catch (e: any) {
-        const msg = e.message || String(e);
-        const isAbort = e?.name === "AbortError" || msg.includes("abort") || msg.includes("This operation was aborted");
-        if (isAbort) {
-          console.warn(`[AI Engine] [Fallback] ${provider.name} request timed out`);
-          lastError = `${provider.name}: Request timed out`;
-          break;
-        }
-        if (attempt >= MAX_PROVIDER_RETRIES) {
-          console.warn(`[AI Engine] [Fallback] ${provider.name} exhausted retries: ${msg}`);
-          lastError = `${provider.name}: ${msg}`;
-        } else {
-          console.warn(`[AI Engine] [Fallback] ${provider.name} failed (attempt ${attempt + 1}): ${msg}`);
-          lastError = `${provider.name}: ${msg}`;
-        }
+        throw fetchErr;
       }
-    }
+      clearTimeout(timeoutId);
 
-    errors.push(lastError);
+      const rawText = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        console.error(`[AI Engine] ${provider.name} returned non-JSON (${rawText.length} chars): ${rawText.substring(0, 300)}`);
+        throw new Error(`${provider.name} returned non-JSON response.`);
+      }
+
+      if (!res.ok || data.error) {
+        const errMsg = data.error?.message ?? res.statusText;
+        const isRateLimit = res.status === 429;
+        console.error(`[AI Engine] ${provider.name} error (HTTP ${res.status}):`, JSON.stringify(data).substring(0, 500));
+        throw new Error(`${provider.name} error: ${errMsg}`);
+      }
+
+      const content = data.choices?.[0]?.message?.content;
+      if (!content || content.trim().length === 0) {
+        console.error(`[AI Engine] ${provider.name} empty content. Full response keys: ${Object.keys(data)}, choices: ${JSON.stringify(data.choices).substring(0, 500)}`);
+        throw new Error(`${provider.name} returned empty completion.`);
+      }
+
+      console.log(`[AI Engine] Success with ${provider.name}`);
+      return content;
+    } catch (e: any) {
+      const msg = e.message || String(e);
+      const isAbort = e?.name === "AbortError" || msg.includes("abort") || msg.includes("This operation was aborted");
+      if (isAbort) {
+        console.warn(`[AI Engine] ${provider.name} request timed out, trying next...`);
+        errors.push(`${provider.name}: Request timed out`);
+      } else {
+        console.warn(`[AI Engine] ${provider.name} failed: ${msg} — trying next...`);
+        errors.push(`${provider.name}: ${msg}`);
+      }
+      // No retry per-model — just move to the next model/provider in the chain
+      continue;
+    }
   }
 
-  throw new Error(`All AI providers failed. Errors: ${errors.join(" | ")}`);
+  throw new Error(`All AI providers/models failed. Tried ${providers.length} options: ${errors.join(" | ")}`);
 }
 
 // Extracts clean JSON string by finding first '{' or '[' and matching to final '}' or ']'
