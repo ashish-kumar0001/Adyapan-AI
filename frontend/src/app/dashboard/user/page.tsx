@@ -2198,7 +2198,7 @@ function UserDashboardContent() {
           <HubErrorBoundary><AdyChatView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
           <HubErrorBoundary><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
-        ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" ? (
+        ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" || activeView === "internship-saved" ? (
           <HubErrorBoundary><InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "job-hub" || activeView === "job-matching" || activeView === "job-jd-match" || activeView === "job-referrals" || activeView === "job-challenges" ? (
           <HubErrorBoundary><JobHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>

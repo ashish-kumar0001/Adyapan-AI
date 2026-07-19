@@ -1632,7 +1632,7 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
             const chStatus = getStatusColor(ch.status);
             const isActive = ch.status.toLowerCase() === "active" || ch.status.toLowerCase() === "open";
             return (
-              <motion.div key={ch.id} variants={staggerItem}
+              <motion.div key={ch.id}
                 variants={cardHover} initial="rest" whileHover="hover"
                 className="rounded-2xl border p-5 space-y-3 transition-all"
                 style={{ background: c.cardBg, borderColor: c.border }}>
