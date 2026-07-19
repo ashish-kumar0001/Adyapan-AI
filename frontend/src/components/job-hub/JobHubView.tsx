@@ -51,6 +51,7 @@ interface JobListing {
   isFeatured?: boolean;
   isSaved?: boolean;
   isGovernment?: boolean;
+  isAdzuna?: boolean;
   matchScore?: number;
   applyUrl?: string;
   category?: string;
@@ -59,6 +60,28 @@ interface JobListing {
   city?: string;
   companyId?: string;
 }
+
+const ADZUNA_COUNTRIES = [
+  { code: "gb", name: "United Kingdom" },
+  { code: "us", name: "United States" },
+  { code: "in", name: "India" },
+  { code: "de", name: "Germany" },
+  { code: "fr", name: "France" },
+  { code: "au", name: "Australia" },
+  { code: "ca", name: "Canada" },
+  { code: "nz", name: "New Zealand" },
+  { code: "br", name: "Brazil" },
+  { code: "pl", name: "Poland" },
+  { code: "at", name: "Austria" },
+  { code: "za", name: "South Africa" },
+  { code: "be", name: "Belgium" },
+  { code: "ch", name: "Switzerland" },
+  { code: "es", name: "Spain" },
+  { code: "it", name: "Italy" },
+  { code: "mx", name: "Mexico" },
+  { code: "nl", name: "Netherlands" },
+  { code: "sg", name: "Singapore" },
+];
 
 interface JobStats {
   total: number;
@@ -409,6 +432,15 @@ function JobCard({ job, c, onOpen, onSave }: {
         </div>
       )}
 
+      {job.isAdzuna && (
+        <div className="absolute top-0 left-0">
+          <div className="px-2.5 py-1 text-[8px] font-black uppercase tracking-wider rounded-br-xl"
+            style={{ background: "rgba(99,102,241,0.15)", color: "#6366f1" }}>
+            <Globe size={8} className="inline mr-1" /> External
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start gap-3 mb-3">
         <CompanyLogo company={job.company} logoUrl={job.logoUrl} />
         <div className="flex-1 min-w-0">
@@ -729,6 +761,19 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   }, []);
 
   const toggleSaveJob = useCallback(async (jobId: string) => {
+    if (jobId.startsWith("adzuna_")) {
+      setSavedJobs(prev => {
+        const next = new Set(prev);
+        if (next.has(jobId)) { next.delete(jobId); toast.success("Removed from saved"); }
+        else { next.add(jobId); toast.success("Saved locally!"); }
+        return next;
+      });
+      if (detailData?.id === jobId) {
+        setDetailData(d => d ? { ...d, isSaved: !d.isSaved } : d);
+      }
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, isSaved: !j.isSaved } : j));
+      return;
+    }
     try {
       await api.post(`/job-listing/saved/${jobId}`);
       setSavedJobs(prev => {
@@ -752,6 +797,13 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
     setAiSummary(null);
     setSkillGap(null);
     setSimilarJobs([]);
+
+    if (job.isAdzuna || job.id.startsWith("adzuna_")) {
+      setDetailData({ ...job, isSaved: savedJobs.has(job.id) });
+      setDetailLoading(false);
+      return;
+    }
+
     try {
       const res = await api.get(`/job-listing/${job.id}`);
       const data = res.data.job || res.data;
@@ -897,6 +949,10 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   }, []);
 
   const applyToJob = useCallback(async (jobId: string) => {
+    if (jobId.startsWith("adzuna_")) {
+      toast.success("Opening external application page...");
+      return;
+    }
     try {
       await api.post(`/job-listing/apply/${jobId}`);
       toast.success("Application submitted!");
@@ -1158,10 +1214,12 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
                 {/* Country */}
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Country</label>
-                  <input value={filters.country} onChange={e => updateFilter("country", e.target.value)}
-                    placeholder="e.g. India"
-                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
-                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                  <select value={filters.country} onChange={e => updateFilter("country", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none cursor-pointer"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }}>
+                    <option value="">All Countries</option>
+                    {ADZUNA_COUNTRIES.map(co => <option key={co.code} value={co.name}>{co.name}</option>)}
+                  </select>
                 </div>
                 {/* State */}
                 <div className="space-y-1">
@@ -2051,6 +2109,11 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
                       {job.isGovernment && (
                         <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>
                           <Shield size={8} className="inline mr-0.5" /> Government
+                        </span>
+                      )}
+                      {job.isAdzuna && (
+                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase" style={{ background: "rgba(99,102,241,0.15)", color: "#6366f1" }}>
+                          <Globe size={8} className="inline mr-0.5" /> External
                         </span>
                       )}
                     </div>

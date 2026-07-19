@@ -3,10 +3,11 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
+import { searchAdzunaJobs, searchAllCountries, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
 
 export const jobListingRouter = Router();
 
-// ─── GET / ─ List jobs with filters ────────────────────────────────────────
+// ─── GET / ─ List jobs with filters (DB + Adzuna merged) ───────────────────
 jobListingRouter.get("/", async (req: Request, res: Response) => {
   try {
     const prisma = await getUserPrismaFromRequest(req);
@@ -29,12 +30,14 @@ jobListingRouter.get("/", async (req: Request, res: Response) => {
       order = "desc",
       page = "1",
       limit = "20",
+      source = "all",
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
 
+    // ── DB query ──
     const where: any = { isActive: true };
 
     if (search && typeof search === "string") {
@@ -120,22 +123,67 @@ jobListingRouter.get("/", async (req: Request, res: Response) => {
     const sortField = validSortFields[sortBy as string] || "postedDate";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
-    const [jobs, total] = await Promise.all([
-      prisma.jobListing.findMany({
-        where,
-        orderBy: { [sortField]: sortOrder },
-        skip,
-        take: limitNum,
-      }),
-      prisma.jobListing.count({ where }),
-    ]);
+    // ── Fetch from DB ──
+    const shouldFetchDB = source === "all" || source === "db";
+    const shouldFetchAdzuna = source === "all" || source === "adzuna";
+
+    const [dbJobs, dbTotal] = shouldFetchDB
+      ? await Promise.all([
+          prisma.jobListing.findMany({
+            where,
+            orderBy: { [sortField]: sortOrder },
+            skip,
+            take: limitNum,
+          }),
+          prisma.jobListing.count({ where }),
+        ])
+      : [[] as any[], 0];
+
+    // ── Fetch from Adzuna ──
+    let adzunaJobs: NormalizedJob[] = [];
+    let adzunaCount = 0;
+
+    if (shouldFetchAdzuna) {
+      const adzunaCountry = (country && typeof country === "string") ? country.trim().toLowerCase() : undefined;
+
+      const adzunaResult = await searchAdzunaJobs({
+        what: (search as string) || undefined,
+        where: (location as string) || undefined,
+        country: adzunaCountry || "gb",
+        page: pageNum,
+        resultsPerPage: limitNum,
+        sortBy: sortBy === "salary" ? "salary" : "date",
+        sortDirection: order === "asc" ? "asc" : "desc",
+        salaryMin: salaryMin ? parseInt(salaryMin as string, 10) : undefined,
+        salaryMax: salaryMax ? parseInt(salaryMax as string, 10) : undefined,
+        category: (category as string) || undefined,
+        fullTime: employmentType === "Full-Time" ? true : undefined,
+        permanent: employmentType === "Full-Time" ? true : undefined,
+      });
+
+      adzunaJobs = adzunaResult.jobs;
+      adzunaCount = adzunaResult.count;
+    }
+
+    // ── Merge results ──
+    const allJobs = [
+      ...dbJobs.map((j: any) => ({ ...j, isAdzuna: false })),
+      ...adzunaJobs,
+    ];
+
+    const totalCount = dbTotal + adzunaCount;
+    const totalPages = Math.ceil(totalCount / limitNum);
 
     res.json({
       success: true,
-      jobs,
-      total,
+      jobs: allJobs,
+      total: totalCount,
       page: pageNum,
-      totalPages: Math.ceil(total / limitNum),
+      totalPages,
+      sources: {
+        db: dbTotal,
+        adzuna: adzunaCount,
+      },
     });
   } catch (error) {
     handleRouteError(res, error, "JobListing.list", "Failed to fetch job listings");
@@ -263,6 +311,76 @@ jobListingRouter.get("/stats", async (req: Request, res: Response) => {
     res.json({ success: true, stats });
   } catch (error) {
     handleRouteError(res, error, "JobListing.stats", "Failed to fetch job stats");
+  }
+});
+
+// ─── GET /adzuna/countries ─ Supported Adzuna countries ────────────────────
+jobListingRouter.get("/adzuna/countries", async (_req: Request, res: Response) => {
+  try {
+    const countries = getSupportedCountries();
+    res.json({ success: true, countries });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaCountries", "Failed to fetch countries");
+  }
+});
+
+// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
+jobListingRouter.get("/adzuna/categories", async (req: Request, res: Response) => {
+  try {
+    const country = (req.query.country as string) || "gb";
+    const categories = await getAdzunaCategories(country);
+    res.json({ success: true, categories });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaCategories", "Failed to fetch categories");
+  }
+});
+
+// ─── GET /adzuna/search ─ Direct Adzuna search ─────────────────────────────
+jobListingRouter.get("/adzuna/search", async (req: Request, res: Response) => {
+  try {
+    const {
+      what,
+      where,
+      country = "gb",
+      page = "1",
+      limit = "20",
+      sortBy = "date",
+      sortDirection = "desc",
+      salaryMin,
+      salaryMax,
+      category,
+      fullTime,
+      permanent,
+      maxDaysOld,
+      whatExclude,
+    } = req.query;
+
+    const result = await searchAdzunaJobs({
+      what: what as string,
+      where: where as string,
+      country: country as string,
+      page: parseInt(page as string, 10) || 1,
+      resultsPerPage: Math.min(parseInt(limit as string, 10) || 20, 50),
+      sortBy: sortBy as string,
+      sortDirection: sortDirection as string,
+      salaryMin: salaryMin ? parseInt(salaryMin as string, 10) : undefined,
+      salaryMax: salaryMax ? parseInt(salaryMax as string, 10) : undefined,
+      category: category as string,
+      fullTime: fullTime === "true",
+      permanent: permanent === "true",
+      maxDaysOld: maxDaysOld ? parseInt(maxDaysOld as string, 10) : undefined,
+      whatExclude: whatExclude as string,
+    });
+
+    res.json({
+      success: true,
+      jobs: result.jobs,
+      count: result.count,
+      page: parseInt(page as string, 10) || 1,
+      totalPages: Math.ceil(result.count / (parseInt(limit as string, 10) || 20)),
+    });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaSearch", "Failed to search Adzuna");
   }
 });
 

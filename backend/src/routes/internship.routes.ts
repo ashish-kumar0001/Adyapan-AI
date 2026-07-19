@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
+import { searchAdzunaJobs, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
 
 const internshipRouter = Router();
 
@@ -24,6 +25,7 @@ internshipRouter.get("/", async (req, res) => {
       order = "desc",
       page = "1",
       limit = "20",
+      source = "all",
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
@@ -91,22 +93,54 @@ internshipRouter.get("/", async (req, res) => {
     const sortField = validSortFields[sortBy as string] || "createdAt";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
-    const [internships, total] = await Promise.all([
-      prisma.internship.findMany({
-        where,
-        orderBy: { [sortField]: sortOrder },
-        skip,
-        take: limitNum,
-      }),
-      prisma.internship.count({ where }),
-    ]);
+    const shouldFetchDB = source === "all" || source === "db";
+    const shouldFetchAdzuna = source === "all" || source === "adzuna";
+
+    const [dbInternships, dbTotal] = shouldFetchDB
+      ? await Promise.all([
+          prisma.internship.findMany({
+            where,
+            orderBy: { [sortField]: sortOrder },
+            skip,
+            take: limitNum,
+          }),
+          prisma.internship.count({ where }),
+        ])
+      : [[] as any[], 0];
+
+    let adzunaJobs: NormalizedJob[] = [];
+    let adzunaCount = 0;
+
+    if (shouldFetchAdzuna) {
+      const adzunaCountry = (country && typeof country === "string") ? country.trim().toLowerCase() : undefined;
+      const adzunaResult = await searchAdzunaJobs({
+        what: (search as string) || undefined,
+        where: (location as string) || undefined,
+        country: adzunaCountry || "gb",
+        page: pageNum,
+        resultsPerPage: limitNum,
+        sortBy: sortBy === "stipend" ? "salary" : "date",
+        sortDirection: order === "asc" ? "asc" : "desc",
+        category: (category as string) || undefined,
+      });
+      adzunaJobs = adzunaResult.jobs;
+      adzunaCount = adzunaResult.count;
+    }
+
+    const allItems = [
+      ...dbInternships.map((i: any) => ({ ...i, isAdzuna: false })),
+      ...adzunaJobs,
+    ];
+
+    const totalCount = dbTotal + adzunaCount;
 
     res.json({
       success: true,
-      internships,
-      total,
+      internships: allItems,
+      total: totalCount,
       page: pageNum,
-      totalPages: Math.ceil(total / limitNum),
+      totalPages: Math.ceil(totalCount / limitNum),
+      sources: { db: dbTotal, adzuna: adzunaCount },
     });
   } catch (error) {
     handleRouteError(res, error, "Internship.list", "Failed to fetch internships");
@@ -217,6 +251,64 @@ internshipRouter.get("/user/applications", requireAuth, async (req, res) => {
     res.json({ success: true, applications });
   } catch (error) {
     handleRouteError(res, error, "Internship.applications", "Failed to fetch applications");
+  }
+});
+
+// ─── GET /adzuna/countries ─ Supported Adzuna countries ────────────────────
+internshipRouter.get("/adzuna/countries", async (_req, res) => {
+  try {
+    const countries = getSupportedCountries();
+    res.json({ success: true, countries });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaCountries", "Failed to fetch countries");
+  }
+});
+
+// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
+internshipRouter.get("/adzuna/categories", async (req, res) => {
+  try {
+    const country = (req.query.country as string) || "gb";
+    const categories = await getAdzunaCategories(country);
+    res.json({ success: true, categories });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaCategories", "Failed to fetch categories");
+  }
+});
+
+// ─── GET /adzuna/search ─ Direct Adzuna search for internships ─────────────
+internshipRouter.get("/adzuna/search", async (req, res) => {
+  try {
+    const {
+      what,
+      where,
+      country = "gb",
+      page = "1",
+      limit = "20",
+      sortBy = "date",
+      sortDirection = "desc",
+      category,
+    } = req.query;
+
+    const result = await searchAdzunaJobs({
+      what: what as string,
+      where: where as string,
+      country: country as string,
+      page: parseInt(page as string, 10) || 1,
+      resultsPerPage: Math.min(parseInt(limit as string, 10) || 20, 50),
+      sortBy: sortBy as string,
+      sortDirection: sortDirection as string,
+      category: category as string,
+    });
+
+    res.json({
+      success: true,
+      jobs: result.jobs,
+      count: result.count,
+      page: parseInt(page as string, 10) || 1,
+      totalPages: Math.ceil(result.count / (parseInt(limit as string, 10) || 20)),
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaSearch", "Failed to search Adzuna");
   }
 });
 
