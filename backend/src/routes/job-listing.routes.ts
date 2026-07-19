@@ -3,7 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
-import { searchAdzunaJobs, searchAllCountries, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+import { searchAdzunaJobs, getAdzunaSalary, getAdzunaCompanyReviews, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
 
 export const jobListingRouter = Router();
 
@@ -147,18 +147,9 @@ jobListingRouter.get("/", async (req: Request, res: Response) => {
       const adzunaCountry = (country && typeof country === "string") ? country.trim().toLowerCase() : undefined;
 
       const adzunaResult = await searchAdzunaJobs({
-        what: (search as string) || undefined,
-        where: (location as string) || undefined,
+        keywords: (search as string) || undefined,
+        location: (location as string) || undefined,
         country: adzunaCountry || "gb",
-        page: pageNum,
-        resultsPerPage: limitNum,
-        sortBy: sortBy === "salary" ? "salary" : "date",
-        sortDirection: order === "asc" ? "asc" : "desc",
-        salaryMin: salaryMin ? parseInt(salaryMin as string, 10) : undefined,
-        salaryMax: salaryMax ? parseInt(salaryMax as string, 10) : undefined,
-        category: (category as string) || undefined,
-        fullTime: employmentType === "Full-Time" ? true : undefined,
-        permanent: employmentType === "Full-Time" ? true : undefined,
       });
 
       adzunaJobs = adzunaResult.jobs;
@@ -324,63 +315,71 @@ jobListingRouter.get("/adzuna/countries", async (_req: Request, res: Response) =
   }
 });
 
-// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
-jobListingRouter.get("/adzuna/categories", async (req: Request, res: Response) => {
-  try {
-    const country = (req.query.country as string) || "gb";
-    const categories = await getAdzunaCategories(country);
-    res.json({ success: true, categories });
-  } catch (error) {
-    handleRouteError(res, error, "JobListing.adzunaCategories", "Failed to fetch categories");
-  }
-});
-
-// ─── GET /adzuna/search ─ Direct Adzuna search ─────────────────────────────
+// ─── GET /adzuna/search ─ Direct Adzuna job search ──────────────────────────
 jobListingRouter.get("/adzuna/search", async (req: Request, res: Response) => {
   try {
     const {
-      what,
-      where,
+      keywords,
+      location,
       country = "gb",
-      page = "1",
-      limit = "20",
-      sortBy = "date",
-      sortDirection = "desc",
-      salaryMin,
-      salaryMax,
-      category,
-      fullTime,
-      permanent,
-      maxDaysOld,
-      whatExclude,
+      radius,
     } = req.query;
 
     const result = await searchAdzunaJobs({
-      what: what as string,
-      where: where as string,
+      keywords: keywords as string,
+      location: location as string,
       country: country as string,
-      page: parseInt(page as string, 10) || 1,
-      resultsPerPage: Math.min(parseInt(limit as string, 10) || 20, 50),
-      sortBy: sortBy as string,
-      sortDirection: sortDirection as string,
-      salaryMin: salaryMin ? parseInt(salaryMin as string, 10) : undefined,
-      salaryMax: salaryMax ? parseInt(salaryMax as string, 10) : undefined,
-      category: category as string,
-      fullTime: fullTime === "true",
-      permanent: permanent === "true",
-      maxDaysOld: maxDaysOld ? parseInt(maxDaysOld as string, 10) : undefined,
-      whatExclude: whatExclude as string,
+      radius: radius ? parseInt(radius as string, 10) : undefined,
     });
 
     res.json({
       success: true,
       jobs: result.jobs,
       count: result.count,
-      page: parseInt(page as string, 10) || 1,
-      totalPages: Math.ceil(result.count / (parseInt(limit as string, 10) || 20)),
     });
   } catch (error) {
     handleRouteError(res, error, "JobListing.adzunaSearch", "Failed to search Adzuna");
+  }
+});
+
+// ─── GET /adzuna/salary ─ Salary information from Adzuna ───────────────────
+jobListingRouter.get("/adzuna/salary", async (req: Request, res: Response) => {
+  try {
+    const { job_title, location } = req.query;
+
+    if (!job_title || typeof job_title !== "string") {
+      res.status(400).json({ success: false, error: "job_title is required" });
+      return;
+    }
+
+    const salary = await getAdzunaSalary({
+      jobTitle: job_title,
+      location: location as string,
+    });
+
+    res.json({ success: true, salary });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaSalary", "Failed to fetch salary info");
+  }
+});
+
+// ─── GET /adzuna/reviews ─ Company reviews from Adzuna ─────────────────────
+jobListingRouter.get("/adzuna/reviews", async (req: Request, res: Response) => {
+  try {
+    const { company_name } = req.query;
+
+    if (!company_name || typeof company_name !== "string") {
+      res.status(400).json({ success: false, error: "company_name is required" });
+      return;
+    }
+
+    const reviews = await getAdzunaCompanyReviews({
+      companyName: company_name,
+    });
+
+    res.json({ success: true, reviews });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaReviews", "Failed to fetch company reviews");
   }
 });
 

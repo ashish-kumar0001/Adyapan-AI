@@ -3,7 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
-import { searchAdzunaJobs, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+import { searchAdzunaJobs, getAdzunaSalary, getAdzunaCompanyReviews, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
 
 const internshipRouter = Router();
 
@@ -114,14 +114,9 @@ internshipRouter.get("/", async (req, res) => {
     if (shouldFetchAdzuna) {
       const adzunaCountry = (country && typeof country === "string") ? country.trim().toLowerCase() : undefined;
       const adzunaResult = await searchAdzunaJobs({
-        what: (search as string) || undefined,
-        where: (location as string) || undefined,
+        keywords: (search as string) || undefined,
+        location: (location as string) || undefined,
         country: adzunaCountry || "gb",
-        page: pageNum,
-        resultsPerPage: limitNum,
-        sortBy: sortBy === "stipend" ? "salary" : "date",
-        sortDirection: order === "asc" ? "asc" : "desc",
-        category: (category as string) || undefined,
       });
       adzunaJobs = adzunaResult.jobs;
       adzunaCount = adzunaResult.count;
@@ -264,51 +259,55 @@ internshipRouter.get("/adzuna/countries", async (_req, res) => {
   }
 });
 
-// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
-internshipRouter.get("/adzuna/categories", async (req, res) => {
-  try {
-    const country = (req.query.country as string) || "gb";
-    const categories = await getAdzunaCategories(country);
-    res.json({ success: true, categories });
-  } catch (error) {
-    handleRouteError(res, error, "Internship.adzunaCategories", "Failed to fetch categories");
-  }
-});
-
 // ─── GET /adzuna/search ─ Direct Adzuna search for internships ─────────────
 internshipRouter.get("/adzuna/search", async (req, res) => {
   try {
-    const {
-      what,
-      where,
-      country = "gb",
-      page = "1",
-      limit = "20",
-      sortBy = "date",
-      sortDirection = "desc",
-      category,
-    } = req.query;
+    const { keywords, location, country = "gb", radius } = req.query;
 
     const result = await searchAdzunaJobs({
-      what: what as string,
-      where: where as string,
+      keywords: keywords as string,
+      location: location as string,
       country: country as string,
-      page: parseInt(page as string, 10) || 1,
-      resultsPerPage: Math.min(parseInt(limit as string, 10) || 20, 50),
-      sortBy: sortBy as string,
-      sortDirection: sortDirection as string,
-      category: category as string,
+      radius: radius ? parseInt(radius as string, 10) : undefined,
     });
 
     res.json({
       success: true,
       jobs: result.jobs,
       count: result.count,
-      page: parseInt(page as string, 10) || 1,
-      totalPages: Math.ceil(result.count / (parseInt(limit as string, 10) || 20)),
     });
   } catch (error) {
     handleRouteError(res, error, "Internship.adzunaSearch", "Failed to search Adzuna");
+  }
+});
+
+// ─── GET /adzuna/salary ─ Salary information from Adzuna ───────────────────
+internshipRouter.get("/adzuna/salary", async (req, res) => {
+  try {
+    const { job_title, location } = req.query;
+    if (!job_title || typeof job_title !== "string") {
+      res.status(400).json({ success: false, error: "job_title is required" });
+      return;
+    }
+    const salary = await getAdzunaSalary({ jobTitle: job_title, location: location as string });
+    res.json({ success: true, salary });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaSalary", "Failed to fetch salary info");
+  }
+});
+
+// ─── GET /adzuna/reviews ─ Company reviews from Adzuna ─────────────────────
+internshipRouter.get("/adzuna/reviews", async (req, res) => {
+  try {
+    const { company_name } = req.query;
+    if (!company_name || typeof company_name !== "string") {
+      res.status(400).json({ success: false, error: "company_name is required" });
+      return;
+    }
+    const reviews = await getAdzunaCompanyReviews({ companyName: company_name });
+    res.json({ success: true, reviews });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaReviews", "Failed to fetch company reviews");
   }
 });
 
