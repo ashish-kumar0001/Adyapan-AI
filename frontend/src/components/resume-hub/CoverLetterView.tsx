@@ -37,6 +37,15 @@ interface ResumeBrief {
   title: string;
   template: string;
   updatedAt: string;
+  type: "builder";
+}
+
+interface UploadedResumeBrief {
+  id: string;
+  fileName: string;
+  fileType: string;
+  createdAt: string;
+  type: "uploaded";
 }
 
 interface ParsedJD {
@@ -207,8 +216,10 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
   // ── Resume ────────────────────────────────────────────────────────────────
   const [resumes, setResumes] = useState<ResumeBrief[]>([]);
+  const [uploadedResumes, setUploadedResumes] = useState<UploadedResumeBrief[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadingCV, setUploadingCV] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Job Description ───────────────────────────────────────────────────────
@@ -315,7 +326,14 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   const loadResumes = useCallback(async () => {
     try {
       const res = await api.get("/resume/list");
-      setResumes(res.data.resumes || []);
+      setResumes((res.data.resumes || []).map((r: any) => ({ ...r, type: "builder" as const })));
+    } catch (err) { console.error(err); }
+  }, []);
+
+  const loadUploadedResumes = useCallback(async () => {
+    try {
+      const res = await api.get("/resume-upload/list");
+      setUploadedResumes((res.data.resumes || []).map((r: any) => ({ id: r.id, fileName: r.fileName, fileType: r.fileType, createdAt: r.createdAt, type: "uploaded" as const })));
     } catch (err) { console.error(err); }
   }, []);
 
@@ -326,7 +344,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
     } catch (err) { console.error(err); }
   }, []);
 
-  useEffect(() => { loadResumes(); loadHistory(); }, [loadResumes, loadHistory]);
+  useEffect(() => { loadResumes(); loadUploadedResumes(); loadHistory(); }, [loadResumes, loadUploadedResumes, loadHistory]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // UNDO / REDO
@@ -518,10 +536,29 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
     setLoadingStep(0);
     setGenerationError(null);
     setScreen("generating");
-    const stepInterval = setInterval(() => setLoadingStep((prev) => Math.min(prev + 1, GENERATING_STEPS.length - 1)), 1500);
+    let stepInterval: ReturnType<typeof setInterval> | null = null;
     try {
+      let finalResumeId = selectedResumeId;
+
+      if (!finalResumeId && uploadFile) {
+        setLoadingStep(0);
+        const formData = new FormData();
+        formData.append("resume", uploadFile);
+        const uploadRes = await api.post("/resume-upload/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (uploadRes.data.success && uploadRes.data.resume) {
+          finalResumeId = uploadRes.data.resume.id;
+          setSelectedResumeId(finalResumeId);
+          loadUploadedResumes();
+        }
+      }
+
+      setLoadingStep(0);
+      stepInterval = setInterval(() => setLoadingStep((prev) => Math.min(prev + 1, GENERATING_STEPS.length - 1)), 1500);
+
       const res = await api.post("/cover-letter/generate", {
-        resumeId: selectedResumeId || undefined,
+        resumeId: finalResumeId || undefined,
         companyName,
         role,
         jobDescription,
@@ -533,7 +570,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
         companyInsights: companyInsights || undefined,
         roleMatch: roleMatch || undefined,
       });
-      clearInterval(stepInterval);
+      if (stepInterval) clearInterval(stepInterval);
       if (res.data.success && res.data.coverLetter) {
         const cl = res.data.coverLetter;
         setCoverLetter(cl);
@@ -551,7 +588,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
         setScreen("configure");
       }
     } catch (err: any) {
-      clearInterval(stepInterval);
+      if (stepInterval) clearInterval(stepInterval);
       const errMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Something went wrong. Please try again.";
       console.error(err);
       setGenerationError(errMsg);
@@ -560,7 +597,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedResumeId, companyName, role, jobDescription, tone, letterType, length, mode, parsedJD, companyInsights, roleMatch, loadHistory]);
+  }, [selectedResumeId, uploadFile, companyName, role, jobDescription, tone, letterType, length, mode, parsedJD, companyInsights, roleMatch, loadHistory, loadUploadedResumes]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AI CHAT
@@ -895,10 +932,25 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               ))}
             </div>
           )}
+          {uploadedResumes.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {uploadedResumes.map((r, i) => (
+                <motion.button key={r.id} variants={fadeUp} custom={resumes.length + i} whileHover={{ y: -2, scale: 1.005 }}
+                  onClick={() => { setSelectedResumeId(r.id); setUploadFile(null); }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                  style={{ background: selectedResumeId === r.id ? c.amberBg : "transparent", border: `1px solid ${selectedResumeId === r.id ? c.amber : "transparent"}`, color: c.text }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.greenBg }}><FileUp size={14} style={{ color: c.green }} /></div>
+                  <div className="flex-1 min-w-0"><div className="text-xs font-bold truncate">{r.fileName}</div><div className="text-[10px]" style={{ color: c.textMuted }}>Uploaded · {r.fileType.toUpperCase()}</div></div>
+                  {selectedResumeId === r.id && <Check size={14} style={{ color: c.amber }} />}
+                </motion.button>
+              ))}
+            </div>
+          )}
           <motion.div whileHover={{ y: -2 }} onClick={() => fileInputRef.current?.click()}
             className="p-4 rounded-xl text-center cursor-pointer" style={{ background: uploadFile ? c.amberBg : "transparent", border: `1px dashed ${uploadFile ? c.amber : c.border}` }}>
             <Upload size={24} className="mx-auto mb-1.5" style={{ color: uploadFile ? c.amber : c.textMuted }} />
             <p className="text-[10px] font-bold" style={{ color: uploadFile ? c.amber : c.textSec }}>{uploadFile ? uploadFile.name : "Upload PDF / DOCX"}</p>
+            {uploadFile && <p className="text-[9px] mt-1 font-semibold" style={{ color: c.textMuted }}>Will be uploaded & saved on Generate</p>}
           </motion.div>
           <input ref={fileInputRef} type="file" accept=".pdf,.docx" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setUploadFile(f); setSelectedResumeId(null); } }} />
         </motion.div>

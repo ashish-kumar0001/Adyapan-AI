@@ -55,6 +55,65 @@ ${languages.filter(Boolean).join(", ")}
   `.trim();
 }
 
+function serializeCandidateProfile(profile: any): string {
+  const edu = (profile.education as any[]) || [];
+  const exp = (profile.experience as any[]) || [];
+  const proj = (profile.projects as any[]) || [];
+  const skills = Array.isArray(profile.skills) ? profile.skills : [];
+  const certs = (profile.certifications as any[]) || [];
+  const achievements = Array.isArray(profile.achievements) ? profile.achievements : [];
+  const languages = Array.isArray(profile.languages) ? profile.languages : [];
+  const links = (profile.links as any) || {};
+
+  return `
+Candidate Name: ${profile.name || "N/A"}
+Email: ${profile.email || "N/A"}
+Phone: ${profile.phone || "N/A"}
+Location: ${profile.location || "N/A"}
+Summary: ${profile.summary || "N/A"}
+LinkedIn: ${links.linkedin || "N/A"}
+GitHub: ${links.github || "N/A"}
+Portfolio: ${links.portfolio || "N/A"}
+
+EDUCATION:
+${edu.map((e: any) => `• ${e.degree || "Degree"} in ${e.fieldOfStudy || "Specialization"} from ${e.institution || "Institution"} (${e.startDate || ""} - ${e.endDate || ""})${e.grade ? ` — GPA: ${e.grade}` : ""}`).join("\n")}
+
+WORK EXPERIENCE:
+${exp.map((x: any) => `• ${x.role || "Role"} at ${x.company || "Company"} (${x.startDate || ""} - ${x.endDate || ""}): ${x.description || ""}`).join("\n")}
+
+PROJECTS:
+${proj.map((pr: any) => `• ${pr.name || pr.title || "Project"} (${pr.techStack || ""}): ${pr.description || ""}`).join("\n")}
+
+TECHNICAL SKILLS:
+${skills.join(", ")}
+
+CERTIFICATIONS:
+${certs.map((c: any) => `• ${c.name || c.title || "Certification"} from ${c.issuer || ""}${c.date ? ` (${c.date})` : ""}`).join("\n")}
+
+ACHIEVEMENTS:
+${achievements.filter(Boolean).join("\n")}
+
+LANGUAGES:
+${languages.filter(Boolean).join(", ")}
+  `.trim();
+}
+
+async function resolveResumeText(userPrisma: any, resumeId: string, userId: string): Promise<string> {
+  // Try manual Resume builder first
+  const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+  if (resume) return serializeResumeToText(resume);
+
+  // Try uploaded resume with candidate profile
+  const uploaded = await userPrisma.uploadedResume.findFirst({
+    where: { id: resumeId, userId },
+    include: { candidateProfile: true },
+  });
+  if (uploaded?.candidateProfile) return serializeCandidateProfile(uploaded.candidateProfile);
+  if (uploaded?.extractedText) return uploaded.extractedText;
+
+  return "";
+}
+
 /**
  * 1. Generate Cover Letter (Enhanced v2)
  */
@@ -73,8 +132,7 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
 
     let resumeText = "";
     if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (resume) resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, resumeId, userId);
     }
 
     const selectedTone = tone || "Professional";
@@ -161,8 +219,7 @@ export async function getRoleMatch(req: Request, res: Response, next: NextFuncti
 
     let resumeText = "";
     if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (resume) resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, resumeId, userId);
     }
 
     const match = await generateRoleMatch(resumeText, parsedJD);
@@ -190,8 +247,7 @@ export async function scoreCoverLetterEndpoint(req: Request, res: Response, next
 
     let resumeText = "";
     if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (resume) resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, resumeId, userId);
     }
 
     const defaultJD = { companyName: letter.companyName, role: letter.role, requiredSkills: [], preferredSkills: [], responsibilities: [], experienceLevel: "", keywords: [], techStack: [], softSkills: [], qualifications: [], salaryRange: null, location: null, employmentType: null, summary: "" };
@@ -230,8 +286,7 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
 
     let resumeText = "";
     if (letter.resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: letter.resumeId, userId } });
-      if (resume) resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, letter.resumeId, userId);
     }
 
     const result = await generateCoverLetterChat(
@@ -316,8 +371,7 @@ export async function getImprovements(req: Request, res: Response, next: NextFun
 
     let resumeText = "";
     if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (resume) resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, resumeId, userId);
     }
 
     const improvements = await generateCoverLetterImprovements(
