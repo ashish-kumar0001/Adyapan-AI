@@ -91,14 +91,26 @@ async function callAIRobust(
           body.response_format = { type: "json_object" };
         }
 
-        const res = await fetch(provider.url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${provider.key}`,
-          },
-          body: JSON.stringify(body),
-        });
+        const controller = new AbortController();
+        const fetchTimeoutMs = (options.maxTokens ?? 4096) > 4096 ? 120000 : 60000;
+        const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
+
+        let res: Response;
+        try {
+          res = await fetch(provider.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${provider.key}`,
+            },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+        } catch (fetchErr) {
+          clearTimeout(timeoutId);
+          throw fetchErr;
+        }
+        clearTimeout(timeoutId);
 
         const rawText = await res.text();
         let data: any;
@@ -136,6 +148,12 @@ async function callAIRobust(
         return content;
       } catch (e: any) {
         const msg = e.message || String(e);
+        const isAbort = e?.name === "AbortError" || msg.includes("abort") || msg.includes("This operation was aborted");
+        if (isAbort) {
+          console.warn(`[AI Engine] [Fallback] ${provider.name} request timed out`);
+          lastError = `${provider.name}: Request timed out`;
+          break;
+        }
         if (attempt >= MAX_PROVIDER_RETRIES) {
           console.warn(`[AI Engine] [Fallback] ${provider.name} exhausted retries: ${msg}`);
           lastError = `${provider.name}: ${msg}`;
