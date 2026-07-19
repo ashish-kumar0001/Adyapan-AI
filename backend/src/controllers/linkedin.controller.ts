@@ -15,6 +15,19 @@ import {
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function clampScore(val: any): number {
+  const n = Number(val);
+  if (isNaN(n)) return 50;
+  return Math.round(Math.max(0, Math.min(100, n)));
+}
+
+function safeStr(val: any): string {
+  if (typeof val === "string") return val;
+  if (val === null || val === undefined) return "";
+  return String(val);
+}
+
 // ─── 1. Full LinkedIn Profile Optimization ──────────────────────────────────
 export async function generateFullLinkedInProfile(req: Request, res: Response, next: NextFunction) {
   try {
@@ -26,7 +39,7 @@ export async function generateFullLinkedInProfile(req: Request, res: Response, n
     let candidateProfile: any = null;
     let atsReport: any = null;
 
-    // Try to get resume data from builder
+    // Try to get resume data from builder first
     if (resumeId) {
       const resume = await userPrisma.resume.findUnique({ where: { id: resumeId } });
       if (resume) {
@@ -39,70 +52,96 @@ export async function generateFullLinkedInProfile(req: Request, res: Response, n
           resume.education ? JSON.stringify(resume.education) : "",
           resume.certifications ? JSON.stringify(resume.certifications) : "",
         ].filter(Boolean).join("\n");
+        // Get ATS report for this builder resume
+        atsReport = await userPrisma.aTSReport.findFirst({
+          where: { userId, resumeId },
+          orderBy: { createdAt: "desc" },
+        });
       }
     }
 
-    // Try uploaded resume
+    // If no builder resume found, try uploaded resumes
     if (!resumeText) {
-      const uploaded = await userPrisma.uploadedResume.findFirst({
-        where: { userId, isActive: true },
-        include: { candidateProfile: true },
-      });
-      if (uploaded) {
-        resumeText = uploaded.extractedText || "";
-        candidateProfile = uploaded.candidateProfile;
+      // If a specific resumeId was provided, try to find it as an uploaded resume
+      if (resumeId) {
+        const uploaded = await userPrisma.uploadedResume.findUnique({
+          where: { id: resumeId },
+          include: { candidateProfile: true },
+        });
+        if (uploaded) {
+          resumeText = uploaded.extractedText || "";
+          candidateProfile = uploaded.candidateProfile;
+        }
+      }
+      // Fallback: use the active uploaded resume
+      if (!resumeText && !candidateProfile) {
+        const uploaded = await userPrisma.uploadedResume.findFirst({
+          where: { userId, isActive: true },
+          include: { candidateProfile: true },
+        });
+        if (uploaded) {
+          resumeText = uploaded.extractedText || "";
+          candidateProfile = uploaded.candidateProfile;
+        }
       }
     }
 
-    // Try ATS report
-    if (resumeId) {
-      atsReport = await userPrisma.aTSReport.findFirst({
-        where: { userId, resumeId },
-        orderBy: { createdAt: "desc" },
-      });
+    // Build resume text from candidate profile if still empty
+    if (!resumeText && candidateProfile) {
+      resumeText = [
+        candidateProfile.name ? `Name: ${candidateProfile.name}` : "",
+        candidateProfile.summary || "",
+        candidateProfile.experience ? JSON.stringify(candidateProfile.experience) : "",
+        candidateProfile.projects ? JSON.stringify(candidateProfile.projects) : "",
+        candidateProfile.skills ? JSON.stringify(candidateProfile.skills) : "",
+        candidateProfile.education ? JSON.stringify(candidateProfile.education) : "",
+        candidateProfile.certifications ? JSON.stringify(candidateProfile.certifications) : "",
+      ].filter(Boolean).join("\n");
     }
 
-    if (!resumeText && !candidateProfile) {
+    if (!resumeText) {
       return res.status(400).json({ success: false, error: "No resume data found. Please upload a resume first." });
     }
 
     const profile = await generateLinkedInFullProfile({
-      resumeText: resumeText || JSON.stringify(candidateProfile || {}),
+      resumeText,
       candidateProfile,
-      atsReport: atsReport?.reportJson || atsReport,
+      atsReport: atsReport?.reportJson || null,
       targetRole: targetRole || "Software Engineer",
     });
 
-    // Save to database
+    // Save to database — clamp all scores to integers 0-100
     const report = await userPrisma.linkedInReport.create({
       data: {
         userId,
-        headline: profile.headline,
-        aboutSection: profile.aboutSection,
-        skills: JSON.stringify(profile.skills),
-        recommendations: JSON.stringify(profile.recommendations),
-        score: profile.scores.overall,
-        experienceJson: JSON.stringify(profile.experience),
-        projectsJson: JSON.stringify(profile.projects),
-        featuredJson: JSON.stringify(profile.featured),
-        networkingJson: JSON.stringify(profile.networking),
-        contentIdeasJson: JSON.stringify(profile.contentIdeas),
-        headlineScore: profile.scores.headline,
-        aboutScore: profile.scores.about,
-        experienceScore: profile.scores.experience,
-        projectsScore: profile.scores.projects,
-        skillsScore: profile.scores.skills,
-        keywordScore: profile.scores.keyword,
-        visibilityScore: profile.scores.visibility,
-        completenessScore: profile.completeness.score,
-        completenessJson: JSON.stringify(profile.completeness),
+        headline: safeStr(profile.headline),
+        aboutSection: safeStr(profile.aboutSection),
+        skills: JSON.stringify(profile.skills || []),
+        recommendations: JSON.stringify(profile.recommendations || []),
+        score: clampScore(profile.scores?.overall),
+        experienceJson: JSON.stringify(profile.experience || []),
+        projectsJson: JSON.stringify(profile.projects || []),
+        featuredJson: JSON.stringify(profile.featured || []),
+        networkingJson: JSON.stringify(profile.networking || {}),
+        contentIdeasJson: JSON.stringify(profile.contentIdeas || []),
+        headlineScore: clampScore(profile.scores?.headline),
+        aboutScore: clampScore(profile.scores?.about),
+        experienceScore: clampScore(profile.scores?.experience),
+        projectsScore: clampScore(profile.scores?.projects),
+        skillsScore: clampScore(profile.scores?.skills),
+        keywordScore: clampScore(profile.scores?.keyword),
+        visibilityScore: clampScore(profile.scores?.visibility),
+        completenessScore: clampScore(profile.completeness?.score),
+        completenessJson: JSON.stringify(profile.completeness || {}),
         targetRole: targetRole || "Software Engineer",
         versionNumber: 1,
+        versionLabel: `v1 — ${targetRole || "Software Engineer"}`,
       },
     });
 
     res.status(201).json({ success: true, profile, reportId: report.id });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[LinkedIn] generateFullLinkedInProfile error:", error?.message || error);
     next(error);
   }
 }
@@ -125,11 +164,11 @@ export async function analyzeLinkedIn(req: Request, res: Response, next: NextFun
     const report = await userPrisma.linkedInReport.create({
       data: {
         userId,
-        headline: reportData.headline,
-        aboutSection: reportData.aboutSection,
-        skills: JSON.stringify(reportData.skills),
-        recommendations: JSON.stringify(reportData.recommendations),
-        score: reportData.score,
+        headline: safeStr(reportData.headline),
+        aboutSection: safeStr(reportData.aboutSection),
+        skills: JSON.stringify(reportData.skills || []),
+        recommendations: JSON.stringify(reportData.recommendations || []),
+        score: clampScore(reportData.score),
         targetRole: targetRole || "Software Engineer",
       },
     });
