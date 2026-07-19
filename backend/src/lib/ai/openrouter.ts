@@ -233,15 +233,15 @@ export async function generateJSON<T>(
       const parsed = JSON.parse(repaired);
       const validated = enforceSchema(parsed, fallback);
       // Reject cached resume profiles that are empty/all-default (only for resume schemas that have name/email/skills)
-      const isResumeSchema = "name" in (fallback as any) || "email" in (fallback as any);
+      const isResumeSchema = fallback !== null && fallback !== undefined && ("name" in (fallback as any) || "email" in (fallback as any));
       const isEmpty = isResumeSchema && !(validated as any).name && !(validated as any).email && ((validated as any).skills?.length ?? 0) === 0;
       if (isEmpty) {
       } else {
         return validated;
       }
     } catch (e) {
+      console.warn("[AI Engine] Cache hit but failed to validate, falling back to fresh API call:", (e as Error)?.message);
     }
-  } else {
   }
 
   const start = Date.now();
@@ -268,9 +268,9 @@ export async function generateJSON<T>(
   } catch (error) {
     console.warn(`[AI Engine] Initial JSON generation/parsing failed:`, error);
     try {
-      const retryMessages: OpenRouterMessage[] = [
+        const retryMessages: OpenRouterMessage[] = [
         { role: "system", content: `${modifiedSys}\nIMPORTANT: Your previous output was invalid JSON. Ensure all keys and string values are double-quoted and all trailing commas are removed. Do not include markdown wraps or conversational prose.` },
-        { role: "user", content: `${userPrompt}\n\nStrict instruction: return valid JSON matching this schema: ${JSON.stringify(fallback)}` }
+        { role: "user", content: fallback != null ? `${userPrompt}\n\nStrict instruction: return valid JSON matching this schema: ${JSON.stringify(fallback)}` : userPrompt }
       ];
       const retryText = await callAIRobust(retryMessages, options);
       const repaired = tryRepairJSON(retryText);

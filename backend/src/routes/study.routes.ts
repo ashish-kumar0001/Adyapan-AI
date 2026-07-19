@@ -242,18 +242,23 @@ Rules:
 - title should be specific to the document content, not generic
 - Return ONLY valid JSON`;
 
-  const result = await generateJSON(
-    "You are an expert document analyst. Extract document structure and identify major topics. Return ONLY valid JSON.",
-    prompt,
-    { model: MODELS.BALANCED, maxTokens: 4096, responseFormat: { type: "json_object" } },
-    null
-  ) as {
-    title: string;
-    stats: { pages: number; words: number; topicsFound: number; readingTime: string; summaryLength: string };
-    insights: { mainSubject: string; difficultyLevel: string; estimatedStudyTime: string; importantChapters: string[]; repeatedTopics: string[] };
-    topics: TopicSummary[];
-  } | null;
-  return result;
+  try {
+    const result = await generateJSON(
+      "You are an expert document analyst. Extract document structure and identify major topics. Return ONLY valid JSON.",
+      prompt,
+      { model: MODELS.BALANCED, maxTokens: 4096, responseFormat: { type: "json_object" } },
+      null
+    ) as {
+      title: string;
+      stats: { pages: number; words: number; topicsFound: number; readingTime: string; summaryLength: string };
+      insights: { mainSubject: string; difficultyLevel: string; estimatedStudyTime: string; importantChapters: string[]; repeatedTopics: string[] };
+      topics: TopicSummary[];
+    } | null;
+    return result;
+  } catch (err) {
+    console.error("[Study Analyze] Phase 1 AI extraction failed, falling back to heuristic:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 /** Phase 2: Analyze a single topic in detail using a relevant document excerpt */
