@@ -521,8 +521,8 @@ export function ResumeUploadView({ setView }: ResumeUploadViewProps) {
               profile={selectedResume.candidateProfile}
               c={c}
               onBack={() => setScreen("dashboard")}
-              onCheckATS={() => setView("ats-checker")}
-              onImproveResume={() => setView("resume-builder")}
+              onCheckATS={() => { sessionStorage.setItem("pendingResumeUploadId", selectedResume.id); setView("ats-checker"); }}
+              onImproveResume={() => { sessionStorage.setItem("pendingResumeUploadId", selectedResume.id); setView("resume-improvements"); }}
               onCoverLetter={() => setView("cover-letter")}
               onLinkedIn={() => setView("linkedin-optimizer")}
               showToast={showToast}

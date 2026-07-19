@@ -409,6 +409,32 @@ export function AtsCheckerView({ setView }: Props) {
 
   useEffect(() => {
     api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
+    api.get("/resume-upload/list").then(r => {
+      if (r.data.success) {
+        const ups = (r.data.resumes || []).map((u: any) => ({
+          id: u.id,
+          title: u.fileName,
+          template: "Uploaded",
+          updatedAt: u.createdAt,
+          isUploaded: true,
+        }));
+        setResumes(prev => {
+          const existing = new Set(prev.map(r => r.id));
+          const merged = [...prev, ...ups.filter((u: any) => !existing.has(u.id))];
+          return merged;
+        });
+      }
+    }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem("pendingResumeUploadId");
+    if (pendingId) {
+      sessionStorage.removeItem("pendingResumeUploadId");
+      setSelId(pendingId);
+      // Small delay to let state settle, then auto-start analysis
+      const timer = setTimeout(() => startAnalysis(), 300);
+      return () => clearTimeout(timer);
+    }
   }, []);
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs]);
 

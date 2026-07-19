@@ -100,7 +100,12 @@ ${languages.filter(Boolean).join(", ")}
 }
 
 async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma?: any): Promise<string> {
-  if (resumeId) return resumeId;
+  if (resumeId) {
+    const existing = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+    if (existing) return resumeId;
+    const uploaded = await userPrisma.uploadedResume.findFirst({ where: { id: resumeId, userId } });
+    if (uploaded) return resumeId;
+  }
   const latestResume = await userPrisma.resume.findFirst({
     where: { userId },
     orderBy: { updatedAt: "desc" },
@@ -122,6 +127,47 @@ async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma
   return placeholder.id;
 }
 
+async function resolveResumeText(userPrisma: any, userId: string, resumeId: string): Promise<string> {
+  if (!resumeId) return "";
+  const builder = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+  if (builder) return serializeResumeToText(builder);
+  const uploaded = await userPrisma.uploadedResume.findFirst({
+    where: { id: resumeId, userId },
+    include: { candidateProfile: true },
+  });
+  if (!uploaded) return "";
+  const p = uploaded.candidateProfile;
+  if (p) {
+    const parts = [
+      `Candidate Name: ${p.name || "N/A"}`,
+      `Email: ${p.email || "N/A"}`,
+      `Phone: ${p.phone || "N/A"}`,
+      `Location: ${p.location || "N/A"}`,
+      `Summary: ${p.summary || ""}`,
+      ``,
+      `EDUCATION:`,
+      (p.education || []).map((e: any) => `• ${e.degree || ""} in ${e.fieldOfStudy || ""} from ${e.institution || ""} (${e.startDate || ""} - ${e.endDate || ""})`).join("\n"),
+      ``,
+      `WORK EXPERIENCE:`,
+      (p.experience || []).map((x: any) => `• ${x.role || ""} at ${x.company || ""} (${x.startDate || ""} - ${x.endDate || ""}): ${x.description || ""}`).join("\n"),
+      ``,
+      `PROJECTS:`,
+      (p.projects || []).map((pr: any) => `• ${pr.name || pr.title || "Project"} (${pr.techStack || ""}): ${pr.description || ""}`).join("\n"),
+      ``,
+      `TECHNICAL SKILLS:`,
+      (p.skills || []).join(", "),
+      ``,
+      `CERTIFICATIONS:`,
+      (p.certifications || []).map((c: any) => `• ${c.name || c.title || ""} from ${c.issuer || ""}`).join("\n"),
+      ``,
+      `ACHIEVEMENTS:`,
+      (p.achievements || []).filter(Boolean).join("\n"),
+    ];
+    return parts.join("\n").trim();
+  }
+  return uploaded.extractedText || "";
+}
+
 // ─── Endpoints ────────────────────────────────────────────────────────────────
 
 /**
@@ -141,11 +187,9 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
     if (req.file) {
       resumeText = await extractTextFromFile(req.file);
     } else if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (!resume) throw httpError(404, "Resume not found");
-      resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, userId, resumeId);
+      if (!resumeText) throw httpError(404, "Resume not found");
     } else {
-      // Try to find saved resume
       const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
         orderBy: { updatedAt: "desc" },
@@ -161,7 +205,6 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
       throw httpError(400, "Could not extract text from the resume.");
     }
 
-    // Deep ATS Analysis
     const analysis = await analyzeResumeDeep(resumeText, targetRole, jobDescription);
 
     const associatedResumeId = await getOrCreateResumeId(userId, resumeId, userPrisma);
@@ -224,9 +267,8 @@ export async function analyzeJDMatch(req: Request, res: Response, next: NextFunc
     if (req.file) {
       resumeText = await extractTextFromFile(req.file);
     } else if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (!resume) throw httpError(404, "Resume not found");
-      resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, userId, resumeId);
+      if (!resumeText) throw httpError(404, "Resume not found");
     } else {
       const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
@@ -260,9 +302,8 @@ export async function getATSSuggestions(req: Request, res: Response, next: NextF
     let analysis: any = null;
 
     if (req.body.resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: req.body.resumeId, userId } });
-      if (!resume) throw httpError(404, "Resume not found");
-      resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, userId, req.body.resumeId);
+      if (!resumeText) throw httpError(404, "Resume not found");
     } else {
       const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
@@ -324,10 +365,7 @@ export async function atsChatHandler(req: Request, res: Response, next: NextFunc
     const userPrisma = await getUserPrismaFromRequest(req);
     let text = resumeText || "";
     if (!text && req.body.resumeId) {
-      const resume = await userPrisma.resume.findFirst({
-        where: { id: req.body.resumeId, userId },
-      });
-      if (resume) text = serializeResumeToText(resume);
+      text = await resolveResumeText(userPrisma, userId, req.body.resumeId);
     }
 
     const result = await atsAIChat(text, analysis || {}, message);
@@ -406,9 +444,8 @@ export async function analyzeATSIntelligence(req: Request, res: Response, next: 
     if (req.file) {
       resumeText = await extractTextFromFile(req.file);
     } else if (resumeId) {
-      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
-      if (!resume) throw httpError(404, "Resume not found");
-      resumeText = serializeResumeToText(resume);
+      resumeText = await resolveResumeText(userPrisma, userId, resumeId);
+      if (!resumeText) throw httpError(404, "Resume not found");
     } else {
       const latestResume = await userPrisma.resume.findFirst({
         where: { userId },
@@ -447,14 +484,11 @@ export async function compareResumeVersions(req: Request, res: Response, next: N
 
     const userPrisma = await getUserPrismaFromRequest(req);
 
-    const resumeA = await userPrisma.resume.findFirst({ where: { id: resumeIdA, userId } });
-    if (!resumeA) throw httpError(404, "Resume A not found");
+    const textA = await resolveResumeText(userPrisma, userId, resumeIdA);
+    if (!textA) throw httpError(404, "Resume A not found");
 
-    const resumeB = await userPrisma.resume.findFirst({ where: { id: resumeIdB, userId } });
-    if (!resumeB) throw httpError(404, "Resume B not found");
-
-    const textA = serializeResumeToText(resumeA);
-    const textB = serializeResumeToText(resumeB);
+    const textB = await resolveResumeText(userPrisma, userId, resumeIdB);
+    if (!textB) throw httpError(404, "Resume B not found");
 
     const comparison = await compareResumes(textA, textB, targetRole || "Software Engineer");
 

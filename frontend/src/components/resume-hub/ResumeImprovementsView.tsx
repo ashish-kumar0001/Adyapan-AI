@@ -116,6 +116,30 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
 
   useEffect(() => {
     api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
+    api.get("/resume-upload/list").then(r => {
+      if (r.data.success) {
+        const ups = (r.data.resumes || []).map((u: any) => ({
+          id: u.id,
+          title: u.fileName,
+          template: "Uploaded",
+          updatedAt: u.createdAt,
+        }));
+        setResumes(prev => {
+          const existing = new Set(prev.map(r => r.id));
+          return [...prev, ...ups.filter((u: any) => !existing.has(u.id))];
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem("pendingResumeUploadId");
+    if (pendingId) {
+      sessionStorage.removeItem("pendingResumeUploadId");
+      setResumeId(pendingId);
+      const timer = setTimeout(() => generateImprovements(), 300);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const isDark = theme === "dark";

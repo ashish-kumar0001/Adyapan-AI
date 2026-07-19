@@ -51,7 +51,12 @@ ${languages.filter(Boolean).join(", ")}
 }
 
 async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma?: any): Promise<string> {
-  if (resumeId) return resumeId;
+  if (resumeId) {
+    const existing = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+    if (existing) return resumeId;
+    const uploaded = await userPrisma.uploadedResume.findFirst({ where: { id: resumeId, userId } });
+    if (uploaded) return resumeId;
+  }
   const latestResume = await userPrisma.resume.findFirst({
     where: { userId },
     orderBy: { updatedAt: "desc" },
@@ -73,6 +78,37 @@ async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma
   return placeholder.id;
 }
 
+async function resolveResumeForImprovements(userPrisma: any, userId: string, resumeId: string): Promise<{ resumeText: string; resumeData: any } | null> {
+  if (!resumeId) return null;
+  const builder = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+  if (builder) return { resumeText: serializeResumeToText(builder), resumeData: builder };
+  const uploaded = await userPrisma.uploadedResume.findFirst({
+    where: { id: resumeId, userId },
+    include: { candidateProfile: true },
+  });
+  if (!uploaded) return null;
+  const p = uploaded.candidateProfile;
+  if (p) {
+    const resumeData = {
+      personalInfo: { fullName: p.name, email: p.email, phone: p.phone, location: p.location, summary: p.summary },
+      education: p.education || [],
+      experience: p.experience || [],
+      projects: p.projects || [],
+      skills: p.skills || [],
+      certifications: p.certifications || [],
+      achievements: p.achievements || [],
+      languages: p.languages || [],
+      links: p.links || {},
+    };
+    const resumeText = serializeResumeToText(resumeData);
+    return { resumeText, resumeData };
+  }
+  if (uploaded.extractedText) {
+    return { resumeText: uploaded.extractedText, resumeData: { personalInfo: {}, education: [], experience: [], projects: [], skills: [], certifications: [] } };
+  }
+  return null;
+}
+
 // ─── Endpoints ────────────────────────────────────────────────────────────────
 
 /**
@@ -87,21 +123,31 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
 
     // Get resume
     let resume: any = null;
+    let resumeText = "";
+    let resumeData: any = null;
     if (resumeId) {
-      resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+      const resolved = await resolveResumeForImprovements(userPrisma, userId, resumeId);
+      if (resolved) {
+        resumeText = resolved.resumeText;
+        resumeData = resolved.resumeData;
+      }
     } else {
       resume = await userPrisma.resume.findFirst({ where: { userId }, orderBy: { updatedAt: "desc" } });
+      if (resume) {
+        resumeText = serializeResumeToText(resume);
+        resumeData = resume;
+      }
     }
-    if (!resume) throw httpError(404, "No resume found. Please upload or create a resume first.");
+    if (!resumeText) throw httpError(404, "No resume found. Please upload or create a resume first.");
 
     // Get latest ATS report if not provided
     let atsReport: any = null;
     try {
       if (atsReportId) {
         atsReport = await userPrisma.aTSReport.findFirst({ where: { id: atsReportId, userId } });
-      } else {
+      } else if (resume || resumeId) {
         atsReport = await userPrisma.aTSReport.findFirst({
-          where: { userId, resumeId: resume.id },
+          where: { userId, resumeId },
           orderBy: { createdAt: "desc" },
         });
       }
@@ -109,14 +155,13 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
       console.warn("[ResumeImprovement] Could not fetch ATS report:", e);
     }
 
-    const resumeText = serializeResumeToText(resume);
     if (!resumeText.trim()) throw httpError(400, "Resume content is empty.");
 
     const result = await generateResumeImprovements(
       resumeText,
-      resume,
+      resumeData,
       atsReport?.reportJson || atsReport,
-      targetRole || resume.targetCompany || "Software Engineer",
+      targetRole || "Software Engineer",
       targetIndustry,
       targetCompany
     );
@@ -149,7 +194,7 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
             resumeId: associatedResumeId,
             versionNumber: 1,
             changeSummary: "Original resume",
-            resumeData: JSON.parse(JSON.stringify(resume)),
+            resumeData: JSON.parse(JSON.stringify(resume || resumeData)),
             atsScoreBefore: atsReport?.score || null,
             atsScoreAfter: null,
           },
