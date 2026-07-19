@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { executeCode, runTestCases } from "../services/piston.service";
+import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
 const router = Router();
 router.use(requireAuth);
@@ -330,6 +331,184 @@ router.get("/leaderboard/top", async (_req, res) => {
     res.json({ leaderboard });
   } catch (error) {
     handleRouteError(res, error, "Challenges.leaderboard", "Failed to fetch leaderboard");
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AI-POWERED ENDPOINTS (must be before /:slug catch-all)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── POST /ai/hint ─ AI hint for a challenge ────────────────────────────────
+router.post("/ai/hint", async (req: any, res) => {
+  try {
+    const { challengeId, code, language } = req.body;
+    if (!challengeId) {
+      return res.status(400).json({ error: "challengeId is required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const challenge = await userPrisma.challenge.findUnique({ where: { id: challengeId } });
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    const fallback = { hint: "Try breaking the problem into smaller steps and think about the edge cases.", approach: "", complexity: "" };
+
+    const prompt = `You are a helpful coding mentor. Provide a hint for the following challenge WITHOUT giving away the full solution.
+
+Challenge:
+- Title: ${challenge.title}
+- Difficulty: ${challenge.difficulty}
+- Description: ${challenge.description || "No description"}
+- Topics: ${challenge.topics || "General"}
+${code ? `- User's current code (${language}):\n\`\`\`\n${code}\n\`\`\`` : ""}
+
+Provide a hint that guides the user toward the solution without spoiling it.
+
+Return a JSON object with:
+- hint: a brief, actionable hint (1-2 sentences)
+- approach: a high-level approach description (2-3 sentences describing the algorithm/technique without code)
+- complexity: expected time/space complexity of the optimal solution
+
+Return ONLY the JSON object, no other text.`;
+
+    const result = await generateJSON(
+      "You are a helpful coding mentor who provides hints without giving away solutions.",
+      prompt,
+      { model: MODELS.FAST, temperature: 0.4 },
+      fallback
+    );
+
+    const data = result && typeof result === "object" ? result : fallback;
+    res.json({ success: true, hint: (data as any).hint || "", approach: (data as any).approach || "", complexity: (data as any).complexity || "" });
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.aiHint", "Failed to generate hint");
+  }
+});
+
+// ─── POST /ai/review ─ AI code review after submission ──────────────────────
+router.post("/ai/review", async (req: any, res) => {
+  try {
+    const { challengeId, code, language, passed } = req.body;
+    if (!challengeId || !code || !language) {
+      return res.status(400).json({ error: "challengeId, code, and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const challenge = await userPrisma.challenge.findUnique({ where: { id: challengeId } });
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    const fallback = { review: "Good effort! Keep practicing.", suggestions: [] as string[], timeComplexity: "", spaceComplexity: "", improvedCode: "" };
+
+    const prompt = `You are an expert code reviewer. Review the following submission for a coding challenge.
+
+Challenge:
+- Title: ${challenge.title}
+- Difficulty: ${challenge.difficulty}
+- Description: ${challenge.description || "No description"}
+
+Submission:
+- Language: ${language}
+- Passed: ${passed ? "Yes" : "No"}
+\`\`\`${language}
+${code}
+\`\`\`
+
+Provide a thorough code review.
+
+Return a JSON object with:
+- review: overall assessment (2-3 sentences)
+- suggestions: array of 2-4 specific improvement suggestions
+- timeComplexity: time complexity analysis
+- spaceComplexity: space complexity analysis
+- improvedCode: an improved version of the code if applicable (empty string if already optimal)
+
+Return ONLY the JSON object, no other text.`;
+
+    const result = await generateJSON(
+      "You are an expert code reviewer who provides constructive, actionable feedback.",
+      prompt,
+      { model: MODELS.FAST, temperature: 0.4 },
+      fallback
+    );
+
+    const data = result && typeof result === "object" ? result : fallback;
+    res.json({
+      success: true,
+      review: (data as any).review || "",
+      suggestions: Array.isArray((data as any).suggestions) ? (data as any).suggestions : [],
+      timeComplexity: (data as any).timeComplexity || "",
+      spaceComplexity: (data as any).spaceComplexity || "",
+      improvedCode: (data as any).improvedCode || "",
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.aiReview", "Failed to generate code review");
+  }
+});
+
+// ─── POST /ai/recommend ─ AI challenge recommendations ─────────────────────
+router.post("/ai/recommend", async (req: any, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const userId = req.user?.userId || req.user?.id;
+    const { skills = [], difficulty, topics } = req.body;
+
+    const where: Record<string, any> = {};
+    if (difficulty && difficulty !== "All") where.difficulty = difficulty;
+
+    const challenges = await userPrisma.challenge.findMany({
+      where,
+      take: 50,
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (challenges.length === 0) {
+      return res.json({ success: true, recommendations: [] });
+    }
+
+    let solvedIds: string[] = [];
+    if (userId) {
+      const progress = await userPrisma.userQuestionProgress.findMany({
+        where: { userId, solved: true },
+        select: { questionId: true },
+      });
+      solvedIds = progress.map((p: any) => p.questionId);
+    }
+
+    const fallback = challenges.filter((c: any) => !solvedIds.includes(c.id)).slice(0, 5).map((c: any) => ({
+      challengeId: c.id,
+      score: 50,
+      reasons: ["Available challenge"],
+    }));
+
+    const prompt = `You are a coding challenge recommendation engine. Analyze the user's profile and recommend the best challenges.
+
+User Profile:
+- Skills: ${skills.join(", ") || "Not specified"}
+- Preferred Difficulty: ${difficulty || "Any"}
+- Preferred Topics: ${topics || "Any"}
+
+Available Challenges:
+${challenges.map((c: any) => `[${c.id}] ${c.title} | Difficulty: ${c.difficulty} | Topics: ${c.topics || "General"} | Points: ${c.points || 100}`).join("\n")}
+
+Already Solved: ${solvedIds.length > 0 ? solvedIds.join(", ") : "None"}
+
+Recommend the top 5 challenges sorted by relevance. Each object must have:
+- challengeId: the challenge ID
+- score: relevance score 0-100
+- reasons: array of 1-3 reason strings
+
+Return ONLY the JSON array, no other text.`;
+
+    const recommendations = await generateJSON(
+      "You are an expert coding challenge recommendation engine.",
+      prompt,
+      { model: MODELS.FAST, temperature: 0.3 },
+      fallback
+    );
+
+    const recArray = Array.isArray(recommendations) ? recommendations : [];
+    res.json({ success: true, recommendations: recArray });
+  } catch (error) {
+    handleRouteError(res, error, "Challenges.aiRecommend", "Failed to generate recommendations");
   }
 });
 

@@ -607,4 +607,126 @@ Return JSON matching:
   }
 });
 
+// ─── POST /ai/interview-prep ─ Interview preparation for internships ────────
+internshipRouter.post("/ai/interview-prep", requireAuth, async (req, res) => {
+  try {
+    const prisma = await getUserPrismaFromRequest(req);
+    const { internshipId } = req.body;
+
+    if (!internshipId || typeof internshipId !== "string") {
+      res.status(400).json({ success: false, error: "internshipId is required" });
+      return;
+    }
+
+    const internship = await prisma.internship.findUnique({
+      where: { id: internshipId },
+    });
+
+    if (!internship) {
+      res.status(404).json({ success: false, error: "Internship not found" });
+      return;
+    }
+
+    const fallback = {
+      questions: [] as { question: string; expectedAnswer: string; tips: string }[],
+      technicalTopics: [] as string[],
+      behavioralTopics: [] as string[],
+    };
+
+    const prompt = `You are an expert interview coach. Generate comprehensive interview preparation material for this internship.
+
+Internship Details:
+- Title: ${internship.title}
+- Company: ${internship.company}
+- Location: ${internship.location || "Not specified"}
+- Mode: ${internship.mode || "Not specified"}
+- Type: ${internship.internshipType || "Not specified"}
+- Duration: ${internship.duration || "Not specified"}
+- Skills Required: ${internship.skills || "Not specified"}
+- Description: ${internship.description || "Not available"}
+
+Return a JSON object with:
+- questions: array of 8-10 likely interview questions, each with:
+  - question: the interview question
+  - expectedAnswer: a concise model answer
+  - tips: advice for answering this question well
+- technicalTopics: array of 5-7 technical topics to review for this role
+- behavioralTopics: array of 3-5 behavioral question themes to prepare for
+
+Return ONLY the JSON object, no other text.`;
+
+    const result = await generateJSON(
+      "You are an expert interview coach and HR professional who prepares candidates for internship interviews.",
+      prompt,
+      { model: MODELS.FAST, temperature: 0.4 },
+      fallback
+    );
+
+    const data = result && typeof result === "object" ? result : fallback;
+
+    res.json({
+      success: true,
+      questions: Array.isArray((data as any).questions) ? (data as any).questions : [],
+      technicalTopics: Array.isArray((data as any).technicalTopics) ? (data as any).technicalTopics : [],
+      behavioralTopics: Array.isArray((data as any).behavioralTopics) ? (data as any).behavioralTopics : [],
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.interviewPrep", "Failed to generate interview prep");
+  }
+});
+
+// ─── POST /ai/salary-insights ─ Stipend/salary insights for internships ────
+internshipRouter.post("/ai/salary-insights", requireAuth, async (req, res) => {
+  try {
+    const { company, role, location, experience } = req.body;
+
+    if (!role || typeof role !== "string") {
+      res.status(400).json({ success: false, error: "role is required" });
+      return;
+    }
+
+    const fallback = {
+      estimatedRange: "Data not available",
+      factors: [] as string[],
+      negotiationTips: [] as string[],
+    };
+
+    const prompt = `You are a compensation analyst with expertise in the Indian and global internship market. Provide stipend/salary insights for the following internship role.
+
+Role: ${role}
+Company: ${company || "Not specified"}
+Location: ${location || "Not specified"}
+Experience Level: ${experience || "Not specified"}
+
+Provide realistic stipend insights based on market data. Consider factors like company size, industry, location cost of living, and demand for the role.
+
+Return a JSON object with:
+- estimatedRange: a string describing the estimated stipend range (e.g., "₹10,000 - ₹25,000 per month")
+- factors: array of 3-5 factors that influence the stipend for this role
+- negotiationTips: array of 3-5 practical negotiation tips specific to this internship
+
+Return ONLY the JSON object, no other text.`;
+
+    const result = await generateJSON(
+      "You are an expert compensation analyst with deep knowledge of internship stipends across industries and geographies.",
+      prompt,
+      { model: MODELS.FAST, temperature: 0.4 },
+      fallback
+    );
+
+    const data = result && typeof result === "object" ? result : fallback;
+
+    res.json({
+      success: true,
+      insights: {
+        estimatedRange: (data as any).estimatedRange || "Data not available",
+        factors: Array.isArray((data as any).factors) ? (data as any).factors : [],
+        negotiationTips: Array.isArray((data as any).negotiationTips) ? (data as any).negotiationTips : [],
+      },
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.salaryInsights", "Failed to generate salary insights");
+  }
+});
+
 export { internshipRouter };
