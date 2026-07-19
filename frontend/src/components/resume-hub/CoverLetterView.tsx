@@ -265,6 +265,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   // ── Loading ───────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // ── Chat ──────────────────────────────────────────────────────────────────
   const [chatOpen, setChatOpen] = useState(false);
@@ -515,6 +516,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   const startGeneration = useCallback(async () => {
     setLoading(true);
     setLoadingStep(0);
+    setGenerationError(null);
     setScreen("generating");
     const stepInterval = setInterval(() => setLoadingStep((prev) => Math.min(prev + 1, GENERATING_STEPS.length - 1)), 1500);
     try {
@@ -543,10 +545,16 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
         setScreen("editor");
         loadHistory();
         autoScore();
+      } else {
+        const errMsg = res.data?.message || res.data?.error || "Generation returned no data. Please try again.";
+        setGenerationError(errMsg);
+        setScreen("configure");
       }
-    } catch (err) {
+    } catch (err: any) {
       clearInterval(stepInterval);
+      const errMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Something went wrong. Please try again.";
       console.error(err);
+      setGenerationError(errMsg);
       setScreen("configure");
     } finally {
       setLoading(false);
@@ -1024,6 +1032,17 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
         </motion.div>
 
         {/* Generate Button */}
+        {generationError && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-2 p-3 rounded-xl text-xs font-semibold"
+            style={{ background: c.redBg, color: c.red, border: `1px solid ${c.red}33` }}>
+            <X size={14} className="shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <span>{generationError}</span>
+            </div>
+            <button onClick={() => setGenerationError(null)} className="shrink-0"><X size={12} /></button>
+          </motion.div>
+        )}
         <motion.div variants={fadeUp} custom={4} initial="hidden" animate="visible">
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startGeneration}
             disabled={!companyName || !role}
@@ -1068,6 +1087,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             </motion.div>
           ))}
         </div>
+        <p className="text-[10px] font-semibold" style={{ color: c.textMuted }}>
+          This may take up to a minute as AI analyzes your resume and job description...
+        </p>
       </motion.div>
     </div>
   );
