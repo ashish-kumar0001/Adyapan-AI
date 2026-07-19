@@ -18,7 +18,29 @@ export function createPrismaClient(databaseUrl: string): any {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
           const start = Date.now();
-          const result = await query(args);
+          let result;
+          try {
+            result = await query(args);
+          } catch (err: any) {
+            // P2021: "The table does not exist"
+            if (err?.code === "P2021" || err?.message?.includes("does not exist")) {
+              console.warn(`[dynamicPrisma] Table ${model} does not exist in user database. Triggering automatic sync push...`);
+              try {
+                const { execSync } = require("child_process");
+                execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+                  env: { ...process.env, USER_DATABASE_URL: databaseUrl },
+                  stdio: "ignore"
+                });
+                console.log(`[dynamicPrisma] Database sync completed. Retrying query for ${model}.${operation}...`);
+                result = await query(args);
+              } catch (migrateErr: any) {
+                console.error(`[dynamicPrisma] Automatic database sync/retry failed:`, migrateErr.message || migrateErr);
+                throw err;
+              }
+            } else {
+              throw err;
+            }
+          }
           const duration = Date.now() - start;
           try {
             const { PerformanceMonitor } = require("../utils/monitoring");
