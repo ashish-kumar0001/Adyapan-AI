@@ -2149,7 +2149,7 @@ function UserDashboardContent() {
 
         <HubErrorBoundary>
         {activeView === "profile" ? (
-          <HubErrorBoundary><ProfileView onViewDashboard={handleViewDashboard} /></HubErrorBoundary>
+          <HubErrorBoundary><ProfileView /></HubErrorBoundary>
         ) : activeView === "community-profile" ? (
           <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
         ) : activeView === "settings" ? (

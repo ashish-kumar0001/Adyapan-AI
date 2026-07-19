@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/PremiumComponents";
 import { getDiceBearUrl } from "@/lib/avatar";
 import { useTheme } from "@/hooks/useTheme";
+import { api } from "@/services/api";
 
 // ─── Animation Variants ──────────────────────────────────────────────────
 const fadeUp = {
@@ -77,15 +78,15 @@ export function ManageAccountView() {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Profile
-  const [fullName, setFullName] = useState("Ashish Kumar");
-  const [username, setUsername] = useState("ashishk");
-  const [email, setEmail] = useState("ashish@adyapan.ai");
-  const [phone, setPhone] = useState("+91 98765 43210");
-  const [college, setCollege] = useState("Indian Institute of Technology");
-  const [degree, setDegree] = useState("B.Tech");
-  const [branch, setBranch] = useState("Computer Science");
-  const [gradYear, setGradYear] = useState("2027");
-  const [bio, setBio] = useState("Passionate about AI, full-stack development, and building products that make a difference.");
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [college, setCollege] = useState("");
+  const [degree, setDegree] = useState("");
+  const [branch, setBranch] = useState("");
+  const [gradYear, setGradYear] = useState("");
+  const [bio, setBio] = useState("");
 
   // Appearance
   const [themeMode, setThemeMode] = useState<"dark" | "light" | "system">("dark");
@@ -154,15 +155,35 @@ export function ManageAccountView() {
   const [dataCollection, setDataCollection] = useState(true);
   const [personalizedAI, setPersonalizedAI] = useState(true);
 
-  // Load from localStorage
+  // Load profile from API
   useEffect(() => {
-    const stored = (key: string) => localStorage.getItem(`adyapan-${key}`);
-    const sName = stored("full-name");
-    const sEmail = stored("email");
-    const sPhone = stored("phone");
-    if (sName) setFullName(sName);
-    if (sEmail) setEmail(sEmail);
-    if (sPhone) setPhone(sPhone);
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get("/profile/me");
+        const p = res.data.profile;
+        if (p) {
+          if (p.user?.name) setFullName(p.user.name);
+          if (p.user?.email) setEmail(p.user.email);
+          if (p.username) setUsername(p.username);
+          if (p.phone) setPhone(p.phone);
+          if (p.college) setCollege(p.college);
+          if (p.degree) setDegree(p.degree);
+          if (p.branch) setBranch(p.branch);
+          if (p.graduationYear) setGradYear(p.graduationYear);
+          if (p.aboutMe) setBio(p.aboutMe);
+        }
+      } catch {
+        // fallback: load from localStorage
+        const stored = (key: string) => localStorage.getItem(`adyapan-${key}`);
+        const sName = stored("full-name");
+        const sEmail = stored("email");
+        const sPhone = stored("phone");
+        if (sName) setFullName(sName);
+        if (sEmail) setEmail(sEmail);
+        if (sPhone) setPhone(sPhone);
+      }
+    };
+    fetchProfile();
   }, []);
 
   const markChanged = useCallback(() => setHasChanges(true), []);
