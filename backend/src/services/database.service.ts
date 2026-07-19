@@ -78,6 +78,10 @@ class DatabaseService {
       );
     }
 
+    const contentType = response.headers.get("content-type");
+    if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+      return {} as T;
+    }
     return response.json() as Promise<T>;
   }
 

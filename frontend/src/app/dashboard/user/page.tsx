@@ -212,10 +212,13 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "Mock Interviews", viewId: "interview-hub", category: "Interview Hub" },
   { label: "Research Paper AI", viewId: "research-hub", category: "Research Hub" },
   { label: "Plagiarism Checker", viewId: "research-plagiarism", category: "Research Hub" },
-  { label: "Internship Finder", viewId: "internship-hub", category: "Internship Hub" },
+  { label: "Browse Internships", viewId: "internship-hub", category: "Internship Hub" },
+  { label: "AI Internship Match", viewId: "internship-hub", category: "Internship Hub" },
   { label: "Internship Tracker", viewId: "internship-hub", category: "Internship Hub" },
-  { label: "Job Matching", viewId: "job-hub", category: "Job Hub" },
-  { label: "Resume vs JD Match", viewId: "job-hub", category: "Job Hub" },
+  { label: "Saved Internships", viewId: "internship-hub", category: "Internship Hub" },
+  { label: "Browse Jobs", viewId: "job-hub", category: "Job Hub" },
+  { label: "AI Job Match", viewId: "job-hub", category: "Job Hub" },
+  { label: "JD Compatibility", viewId: "job-hub", category: "Job Hub" },
   { label: "Job Referrals", viewId: "job-hub", category: "Job Hub" },
   { label: "Hiring Challenges", viewId: "job-hub", category: "Job Hub" },
   { label: "Aptitude Practice", viewId: "placement-hub", category: "Placement Hub" },
@@ -286,15 +289,20 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "internship", label: "Internship Hub", icon: <Briefcase size={18} />,
     submenu: [
-      { label: "Internship Finder", href: "#" }, { label: "Recommendations", href: "#" },
-      { label: "Internship Tracker", href: "#" },
+      { label: "Browse Internships", href: "#" },
+      { label: "AI Match", href: "#" },
+      { label: "Application Tracker", href: "#" },
+      { label: "Saved Internships", href: "#" },
     ],
   },
   {
     id: "job", label: "Job Hub", icon: <UserCircle size={18} />,
     submenu: [
-      { label: "Job Matching", href: "#" }, { label: "Resume vs JD Match", href: "#" },
-      { label: "Job Referrals", href: "#" }, { label: "Hiring Challenges", href: "#" },
+      { label: "Browse Jobs", href: "#" },
+      { label: "AI Job Match", href: "#" },
+      { label: "JD Analyzer", href: "#" },
+      { label: "Job Referrals", href: "#" },
+      { label: "Hiring Challenges", href: "#" },
     ],
   },
   {
@@ -484,11 +492,13 @@ export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, side
                       else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
                       else if (sub.label === "Research Paper AI") onViewTool("research-paper-ai");
                       else if (sub.label === "Plagiarism Checker") onViewTool("research-plagiarism");
-                      else if (sub.label === "Internship Finder") onViewTool("internship-finder");
-                      else if (sub.label === "Recommendations") onViewTool("internship-recommendations");
-                      else if (sub.label === "Internship Tracker") onViewTool("internship-tracker");
-                      else if (sub.label === "Job Matching") onViewTool("job-matching");
-                      else if (sub.label === "Resume vs JD Match") onViewTool("job-jd-match");
+                      else if (sub.label === "Browse Internships") onViewTool("internship-finder");
+                      else if (sub.label === "AI Match" && sub.href === "#") onViewTool("internship-recommendations");
+                      else if (sub.label === "Application Tracker") onViewTool("internship-tracker");
+                      else if (sub.label === "Saved Internships") onViewTool("internship-saved");
+                      else if (sub.label === "Browse Jobs") onViewTool("job-matching");
+                      else if (sub.label === "AI Job Match") onViewTool("job-jd-match");
+                      else if (sub.label === "JD Analyzer") onViewTool("job-jd-match");
                       else if (sub.label === "Job Referrals") onViewTool("job-referrals");
                       else if (sub.label === "Hiring Challenges") onViewTool("job-challenges");
                       else if (sub.label === "Aptitude Practice") onViewTool("placement-aptitude");

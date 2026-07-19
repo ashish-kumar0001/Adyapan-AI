@@ -25,8 +25,7 @@ export function useRequireAuth(requiredRole?: "USER" | "ADMIN") {
       try {
         const user = JSON.parse(raw) as { role?: string };
         if (user.role !== requiredRole) {
-          const dest = user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user";
-          router.replace(dest);
+          router.replace("/profile/user");
         }
       } catch {
         router.replace("/login");

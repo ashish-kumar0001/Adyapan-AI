@@ -1364,6 +1364,168 @@ model RoadmapMilestone {
   @@map("roadmap_milestones")
 }
 
+// ==================== INTERNSHIP HUB MODELS ====================
+
+model Internship {
+  id              String   @id @default(cuid())
+  externalId      String?  @unique @map("external_id")
+  source          String   @default("manual")
+  title           String
+  company         String
+  logoUrl         String?  @map("logo_url")
+  logoBg          String   @default("#f59e0b")
+  location        String
+  country         String   @default("India")
+  state           String?  @default("")
+  city            String?  @default("")
+  mode            String   @default("On-site")
+  category        String   @default("Technology")
+  duration        String   @default("3 Months")
+  stipend         String   @default("Unpaid")
+  stipendMin      Int?     @map("stipend_min")
+  stipendMax      Int?     @map("stipend_max")
+  isPaid          Boolean  @default(false) @map("is_paid")
+  workFromHome    Boolean  @default(false) @map("work_from_home")
+  internshipType  String   @default("Full-time") @map("internship_type")
+  skills          String[]
+  description     String
+  responsibilities String[]
+  requirements    String[]
+  benefits        String[]
+  eligibility     String[]
+  companyOverview String?  @map("company_overview")
+  applyUrl        String?  @map("apply_url")
+  website         String?  @default("")
+  deadline        String?  @default("")
+  postedDate      DateTime? @map("posted_date")
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  savedBy         InternshipSaved[]
+  applications    InternshipApplication[]
+
+  @@index([company])
+  @@index([location])
+  @@index([mode])
+  @@index([category])
+  @@index([skills])
+  @@index([postedDate])
+  @@index([createdAt])
+  @@map("internships")
+}
+
+model InternshipSaved {
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  internshipId  String      @map("internship_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  internship    Internship  @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([userId, internshipId])
+  @@map("internship_saved")
+}
+
+model InternshipApplication {
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  internshipId  String      @map("internship_id")
+  status        String      @default("applied")
+  notes         String?     @default("")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  internship    Internship  @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([internshipId])
+  @@unique([userId, internshipId])
+  @@map("internship_applications")
+}
+
+// ==================== ENHANCED JOB HUB MODELS ====================
+
+model JobListing {
+  id              String   @id @default(cuid())
+  externalId      String?  @unique @map("external_id")
+  source          String   @default("manual")
+  title           String
+  company         String
+  logoUrl         String?  @map("logo_url")
+  logoBg          String   @default("#f59e0b")
+  location        String
+  country         String   @default("India")
+  state           String?  @default("")
+  city            String?  @default("")
+  mode            String   @default("On-site")
+  employmentType  String   @default("Full-Time") @map("employment_type")
+  category        String   @default("Technology")
+  salary          String   @default("")
+  salaryMin       Int?     @map("salary_min")
+  salaryMax       Int?     @map("salary_max")
+  experience      String   @default("")
+  experienceMin   Int?     @map("experience_min")
+  experienceMax   Int?     @map("experience_max")
+  skills          String[]
+  description     String
+  responsibilities String[]
+  requirements    String[]
+  benefits        String[]
+  eligibility     String[]
+  companyOverview String?  @map("company_overview")
+  applyUrl        String?  @map("apply_url")
+  website         String?  @default("")
+  deadline        String?  @default("")
+  postedDate      DateTime? @map("posted_date")
+  isGovernment    Boolean  @default(false) @map("is_government")
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  savedBy         JobListingSaved[]
+  applications    JobListingApplication[]
+
+  @@index([company])
+  @@index([location])
+  @@index([mode])
+  @@index([employmentType])
+  @@index([category])
+  @@index([skills])
+  @@index([postedDate])
+  @@index([createdAt])
+  @@map("job_listings")
+}
+
+model JobListingSaved {
+  id          String     @id @default(cuid())
+  userId      String     @map("user_id")
+  jobListingId String   @map("job_listing_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  jobListing  JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([userId, jobListingId])
+  @@map("job_listing_saved")
+}
+
+model JobListingApplication {
+  id          String     @id @default(cuid())
+  userId      String     @map("user_id")
+  jobListingId String   @map("job_listing_id")
+  status      String     @default("applied")
+  notes       String?    @default("")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  jobListing  JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jobListingId])
+  @@unique([userId, jobListingId])
+  @@map("job_listing_applications")
+}
+
 model ResumeImprovement {
   id               String   @id @default(cuid())
   userId           String   @map("user_id")

@@ -1,1102 +1,2172 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Briefcase, Search, Filter, MapPin, Calendar, DollarSign, Send,
-  Sparkles, CheckCircle2, XCircle, Info, Heart, ArrowRight, Share2,
-  Trash2, Plus, Clock, MessageSquare, Award, ArrowLeft, ArrowRightLeft,
-  ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw
+  Briefcase, Search, Filter, MapPin, Building2, Globe, Clock, Tag, DollarSign,
+  GraduationCap, Sparkles, ExternalLink, Heart, Share2, Copy, Check, X, ChevronDown,
+  ChevronRight, Send, Loader2, AlertCircle, RefreshCw, ArrowUpDown, SlidersHorizontal,
+  Users, Target, Shield, Zap, MessageSquare, FileText, Award, BookOpen, Code2,
+  TrendingUp, Star, Bookmark, BookmarkCheck, Building, MapPinned, CalendarDays,
+  BarChart3, Brain, Mic, Lightbulb, ArrowRight, Paperclip, Bot, CircleDot,
+  GitBranch, Trophy, Flame, Eye, ThumbsUp, ArrowUpRight, Info, User, Layers,
+  CheckCircle2, AlertTriangle, Phone, Mail, Globe2, Link2, Download, Flag,
+  Activity, Hash, Percent, Ruler, NotebookPen, LayoutGrid, List, MoreHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import type { ResumeHubViewType } from "@/types/resume";
+import { useTheme } from "@/hooks/useTheme";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
-};
+// ═══════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
-};
-
-interface Job {
-  id: string;
-  role: string;
-  company: string;
-  logoBg: string;
-  location: string;
-  mode: string;
-  type: string;
-  salary: string;
-  experience: string;
-  skills: string[];
-  description: string;
-  responsibilities: string[];
-  eligibility: string[];
-  deadline: string;
-  website: string;
+interface JobHubProps {
+  setView?: (view: string) => void;
+  activeModule?: string;
+  theme?: string;
 }
 
-interface Referral {
+interface JobListing {
+  id: string;
+  title: string;
+  company: string;
+  logoUrl?: string;
+  logoBg?: string;
+  location: string;
+  mode: string;
+  employmentType: string;
+  salary?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  experience?: string;
+  experienceMin?: number;
+  experienceMax?: number;
+  skills: string[];
+  description?: string;
+  responsibilities?: string[];
+  requirements?: string[];
+  benefits?: string[];
+  postedDate: string;
+  isFeatured?: boolean;
+  isSaved?: boolean;
+  isGovernment?: boolean;
+  matchScore?: number;
+  applyUrl?: string;
+  category?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  companyId?: string;
+}
+
+interface JobStats {
+  total: number;
+  remote: number;
+  featured: number;
+  government?: number;
+}
+
+interface ReferralRequest {
   id: string;
   company: string;
   role: string;
-  notes?: string;
+  notes: string;
   status: string;
-  outreachMsg?: string;
+  outreachMessage?: string;
+  createdAt: string;
 }
 
 interface HiringChallenge {
   id: string;
   title: string;
+  company: string;
   category: string;
   difficulty: string;
   duration: string;
-  eligibility: string;
-  company: string;
-  isActive: boolean;
+  status: string;
+  description?: string;
+  participants?: number;
 }
 
-interface ChatMessage {
+interface AIChatMessage {
+  id: string;
   role: "user" | "assistant";
   content: string;
+  timestamp: string;
 }
 
-interface JobHubViewProps {
-  setView: (v: ResumeHubViewType) => void;
-  activeModule?: string;
-  theme?: string;
+interface JDAnalysis {
+  overallScore: number;
+  skillsMatch: { matched: string[]; missing: string[]; suggested: string[] };
+  experienceMatch: { score: number; details: string };
+  educationMatch: { score: number; details: string };
+  atsCompatibility: { score: number; details: string };
+  summary: string;
+  suggestions: string[];
 }
 
-export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }: JobHubViewProps) {
-  const isDark = theme === "dark";
-  const c = {
-    bg: isDark ? "#080710" : "#f0f4ff",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-    surfaceHover: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
-    border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-    text: isDark ? "#ffffff" : "#0f172a",
-    textSec: isDark ? "rgba(255,255,255,0.7)" : "#475569",
-    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#94a3b8",
-    primary: "#f59e0b",
-    primaryDark: "#d97706",
-    cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
-    inputBg: isDark ? "rgba(0,0,0,0.4)" : "#ffffff",
-    green: "#10b981",
-    red: "#ef4444",
+interface FilterState {
+  search: string;
+  company: string;
+  category: string;
+  location: string;
+  country: string;
+  state: string;
+  city: string;
+  mode: string;
+  employmentType: string;
+  experience: string;
+  salaryMin: string;
+  salaryMax: string;
+  skills: string;
+  isGovernment: boolean;
+  sortBy: string;
+  order: string;
+  postedDate: string;
+}
+
+type SortOption = { value: string; label: string };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TABS = [
+  { id: "browse", label: "Browse", icon: Briefcase, module: "job-matching" },
+  { id: "ai-match", label: "AI Match", icon: Sparkles, module: "job-jd-match" },
+  { id: "referrals", label: "Referrals", icon: Users, module: "job-referrals" },
+  { id: "challenges", label: "Challenges", icon: Trophy, module: "job-challenges" },
+] as const;
+
+const SORT_OPTIONS: SortOption[] = [
+  { value: "postedDate:desc", label: "Most Recent" },
+  { value: "salaryMax:desc", label: "Salary (High-Low)" },
+  { value: "experienceMin:asc", label: "Experience (Low-High)" },
+];
+
+const MODE_OPTIONS = ["Remote", "Hybrid", "On-site"];
+const EMPLOYMENT_TYPES = ["Full-Time", "Part-Time", "Contract", "Freelance", "Government"];
+const DIFFICULTY_LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"];
+const PAGE_LIMIT = 12;
+
+const AI_QUICK_ACTIONS = [
+  { id: "recommend", label: "Recommend jobs", icon: Target, prompt: "Recommend jobs based on my profile" },
+  { id: "interview-prep", label: "Interview prep", icon: Mic, prompt: "Help me prepare for interviews" },
+  { id: "salary-insights", label: "Salary insights", icon: DollarSign, prompt: "Give me salary insights" },
+  { id: "cover-letter", label: "Cover letter", icon: FileText, prompt: "Generate a cover letter" },
+  { id: "skill-gap", label: "Skill gap", icon: GitBranch, prompt: "Analyze my skill gap" },
+  { id: "career-chat", label: "Career chat", icon: MessageSquare, prompt: "Let's chat about my career" },
+] as const;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ANIMATION VARIANTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.04, duration: 0.35 } }),
+};
+
+const tabContent = {
+  hidden: { opacity: 0, x: 15 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: "easeOut" as const } },
+  exit: { opacity: 0, x: -15, transition: { duration: 0.2, ease: "easeIn" as const } },
+};
+
+const cardHover = {
+  rest: { y: 0, scale: 1 },
+  hover: { y: -4, scale: 1.01, transition: { type: "spring" as const, stiffness: 300, damping: 20 } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function timeAgo(date: string): string {
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks}w ago`;
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function getLogoInitials(name: string): string {
+  return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function getLogoColor(name: string): string {
+  const colors = ["#f59e0b", "#6366f1", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 80) return "#10b981";
+  if (score >= 60) return "#f59e0b";
+  if (score >= 40) return "#f97316";
+  return "#ef4444";
+}
+
+function getDifficultyColor(d: string): string {
+  const map: Record<string, string> = {
+    Beginner: "#10b981", Intermediate: "#f59e0b", Advanced: "#f97316", Expert: "#ef4444"
   };
+  return map[d] || "#64748b";
+}
 
-  // Tab State: "matching" | "jd-match" | "referrals" | "challenges"
-  const [tab, setTab] = useState<"matching" | "jd-match" | "referrals" | "challenges">("matching");
-
-  // Search & Filter State (Matching)
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locFilter, setLocFilter] = useState("All");
-  const [modeFilter, setModeFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
-
-  // Saved / Modals
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [savedJobs, setSavedJobs] = useState<string[]>([]);
-
-  // Jobs & Challenges (from API, initially empty)
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [challenges, setChallenges] = useState<HiringChallenge[]>([]);
-
-  // Resume vs JD Analyzer state
-  const [jdText, setJdText] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [matchReport, setMatchReport] = useState<{
-    overallScore: number; skillsMatch: number; experienceMatch: number;
-    educationMatch: number; atsCompatibility: number;
-    keywordsFound: string[]; keywordsMissing: string[]; keywordsSuggested: string[];
-    suggestions: string[];
-  } | null>(null);
-
-  // Referrals state
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [showReferralModal, setShowReferralModal] = useState(false);
-  const [refCompany, setRefCompany] = useState("Google");
-  const [refRole, setRefRole] = useState("AI Engineer");
-  const [refNotes, setRefNotes] = useState("");
-
-  // AI Assistant panel state
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: "Hello! I am your Adyapan AI Career Assistant. Ask me to find SDE jobs, audit your resume against a job description, or generate referral emails!" }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Sync tab with activeModule from props
-  useEffect(() => {
-    if (activeModule === "job-matching") setTab("matching");
-    else if (activeModule === "job-jd-match") setTab("jd-match");
-    else if (activeModule === "job-referrals") setTab("referrals");
-    else if (activeModule === "job-challenges") setTab("challenges");
-  }, [activeModule]);
-
-  // Load data from backend API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [jobsRes, savedRes, referralsRes, challengesRes] = await Promise.allSettled([
-          api.get("/job"),
-          api.get("/job/saved"),
-          api.get("/job/referrals"),
-          api.get("/job/challenges"),
-        ]);
-        if (jobsRes.status === "fulfilled" && jobsRes.value.data?.jobs) {
-          setJobs(jobsRes.value.data.jobs);
-        }
-        if (savedRes.status === "fulfilled" && savedRes.value.data?.savedIds) {
-          setSavedJobs(savedRes.value.data.savedIds);
-        }
-        if (referralsRes.status === "fulfilled" && referralsRes.value.data?.referrals) {
-          setReferrals(referralsRes.value.data.referrals);
-        }
-        if (challengesRes.status === "fulfilled" && challengesRes.value.data?.challenges) {
-          setChallenges(challengesRes.value.data.challenges);
-        }
-      } catch {
-        // Silent fail — UI will show empty states
-      }
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
-
-  const handleToggleSaveJob = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const wasSaved = savedJobs.includes(id);
-    // Optimistic update
-    setSavedJobs(prev => wasSaved ? prev.filter(x => x !== id) : [...prev, id]);
-    try {
-      const res = await api.post(`/job/saved/${id}`);
-      if (res.data?.saved === false && !wasSaved) {
-        setSavedJobs(prev => prev.filter(x => x !== id));
-      } else if (res.data?.saved === true && wasSaved) {
-        setSavedJobs(prev => [...prev, id]);
-      }
-    } catch {
-      // Revert on error
-      setSavedJobs(prev => wasSaved ? [...prev, id] : prev.filter(x => x !== id));
-      toast.error("Failed to save job. Please try again.");
-    }
+function getStatusColor(s: string): { bg: string; text: string } {
+  const map: Record<string, { bg: string; text: string }> = {
+    active: { bg: "rgba(16,185,129,0.1)", text: "#10b981" },
+    open: { bg: "rgba(16,185,129,0.1)", text: "#10b981" },
+    completed: { bg: "rgba(99,102,241,0.1)", text: "#6366f1" },
+    pending: { bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
+    closed: { bg: "rgba(100,116,139,0.1)", text: "#64748b" },
+    rejected: { bg: "rgba(239,68,68,0.1)", text: "#ef4444" },
+    accepted: { bg: "rgba(16,185,129,0.1)", text: "#10b981" },
+    in_progress: { bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
   };
+  return map[s.toLowerCase()] || { bg: "rgba(100,116,139,0.1)", text: "#64748b" };
+}
 
-  const handleRunJdAnalyzer = async () => {
-    if (!jdText.trim() || analyzing) return;
-    setAnalyzing(true);
-    setMatchReport(null);
+// ═══════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
 
-    try {
-      const res = await api.post("/job/jd-analyze", { jdText, resumeText: "" });
-      if (res.data?.success && res.data.report) {
-        setMatchReport(res.data.report);
-        toast.success("Analysis complete!");
-      } else {
-        toast.error("Analysis returned no results. Please try again.");
-      }
-    } catch (err) {
-      toast.error("JD Analyzer failed. Please try again later.");
-      console.error(err);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleRequestReferralSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!refCompany.trim() || !refRole.trim()) return;
-
-    try {
-      const res = await api.post("/job/referrals", {
-        company: refCompany.trim(),
-        role: refRole.trim(),
-        notes: refNotes.trim(),
-      });
-      if (res.data?.success && res.data.referral) {
-        setReferrals(prev => [res.data.referral, ...prev]);
-        toast.success("Referral request created with AI-generated outreach message!");
-      } else {
-        toast.error("Failed to create referral request.");
-      }
-    } catch {
-      toast.error("Failed to create referral request. Please try again.");
-    }
-
-    // Clear form
-    setRefCompany("Google");
-    setRefRole("AI Engineer");
-    setRefNotes("");
-    setShowReferralModal(false);
-  };
-
-  const handleAssistantSend = async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    const promptText = chatInput.trim();
-    setChatInput("");
-    const userMessage: ChatMessage = { role: "user", content: promptText };
-    const updatedMessages = [...chatMessages, userMessage];
-    setChatMessages(updatedMessages);
-    setChatLoading(true);
-
-    try {
-      const res = await api.post("/job/career-chat", {
-        messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
-      });
-      if (res.data?.success && res.data.response) {
-        setChatMessages(prev => [...prev, { role: "assistant", content: res.data.response }]);
-      } else {
-        setChatMessages(prev => [...prev, { role: "assistant", content: "I couldn't process that request. Please try again." }]);
-      }
-    } catch {
-      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, the career assistant is temporarily unavailable. Please try again later." }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch =
-      job.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesLoc = locFilter === "All" || job.location.toLowerCase().includes(locFilter.toLowerCase());
-    const matchesMode = modeFilter === "All" || job.mode === modeFilter;
-    const matchesType = typeFilter === "All" || job.type === typeFilter;
-
-    return matchesSearch && matchesLoc && matchesMode && matchesType;
-  });
-
+// ─── Logo Avatar ──────────────────────────────────────────────────────────
+function CompanyLogo({ company, logoUrl, size = 44 }: { company: string; logoUrl?: string; size?: number }) {
+  const c = useMemo(() => ({ primary: "#f59e0b" }), []);
+  if (logoUrl) {
+    return (
+      <div className="rounded-xl overflow-hidden shrink-0 border" style={{ width: size, height: size, borderColor: "rgba(255,255,255,0.06)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoUrl} alt={company} width={size} height={size} style={{ objectFit: "cover", display: "block" }} />
+      </div>
+    );
+  }
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-      <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
-      <div className="flex-1 flex flex-col gap-4">
+    <div className="rounded-xl shrink-0 flex items-center justify-center text-white font-black text-xs border"
+      style={{ width: size, height: size, background: getLogoColor(company), borderColor: "rgba(255,255,255,0.06)" }}>
+      {getLogoInitials(company)}
+    </div>
+  );
+}
 
-        {/* Compact Module Header */}
-        <div className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Job Workspace</p>
-            <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
-              {tab === "matching" && "Job Matching"}
-              {tab === "jd-match" && "Resume vs JD Match"}
-              {tab === "referrals" && "Job Referrals"}
-              {tab === "challenges" && "Hiring Challenges"}
-            </h2>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setAssistantOpen(!assistantOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
-          >
-            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-              <Sparkles size={12} className="animate-pulse" />
-            </motion.div> AI Assistant
-          </motion.button>
-        </div>
-
-        {/* ==================== 3. CONTENT AREA ==================== */}
-        <div className="flex-1 min-h-0">
-          <AnimatePresence mode="wait">
-
-            {/* TAB A: JOB MATCHING */}
-            {tab === "matching" && (
-              <motion.div
-                key="matching"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6 flex flex-col h-full"
-              >
-                {/* Search & Advanced Filters */}
-                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-4 rounded-xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                  <div className="flex gap-3">
-                    <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }}>
-                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                          <Search size={14} />
-                        </motion.div>
-                      </span>
-                      <input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by job title, company name, tech stack..."
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg py-2 pl-9 pr-4 text-xs"
-                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Filters Row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Location</label>
-                      <select
-                        value={locFilter}
-                        onChange={(e) => setLocFilter(e.target.value)}
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                      >
-                        <option value="All">All Locations</option>
-                        <option value="Menlo Park">Menlo Park</option>
-                        <option value="Bangalore">Bangalore</option>
-                        <option value="US">United States (US)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Work Mode</label>
-                      <select
-                        value={modeFilter}
-                        onChange={(e) => setModeFilter(e.target.value)}
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                      >
-                        <option value="All">All Modes</option>
-                        <option value="Remote">Remote</option>
-                        <option value="Hybrid">Hybrid</option>
-                        <option value="On-site">On-site</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Job Type</label>
-                      <select
-                        value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                      >
-                        <option value="All">All Types</option>
-                        <option value="Full-Time">Full-Time</option>
-                        <option value="Part-Time">Part-Time</option>
-                        <option value="Contract">Contract</option>
-                      </select>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Job Cards */}
-                {filteredJobs.length === 0 ? (
-                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
-                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
-                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>{jobs.length === 0 ? "No jobs available at this time." : "No jobs match your search parameters."}</span>
-                  </motion.div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredJobs.map((job, i) => {
-                      const isSaved = savedJobs.includes(job.id);
-                      return (
-                        <motion.div
-                          variants={fadeUp}
-                          initial="hidden"
-                          animate="visible"
-                          custom={i}
-                          whileHover={{ y: -4, scale: 1.01 }}
-                          key={job.id}
-                          onClick={() => setSelectedJob(job)}
-                          className="p-5 border rounded-xl hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group"
-                          style={{ background: c.cardBg, borderColor: c.border }}
-                        >
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex gap-3 items-center">
-                                <div
-                                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0"
-                                  style={{ background: job.logoBg }}
-                                >
-                                  {job.company[0]}
-                                </div>
-                                <div className="min-w-0">
-                                  <h4 className="font-extrabold text-sm truncate" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{job.role}</h4>
-                                  <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{job.company}</span>
-                                </div>
-                              </div>
-                              <motion.button
-                                whileHover={{ scale: 1.04 }}
-                                whileTap={{ scale: 0.96 }}
-                                onClick={(e) => handleToggleSaveJob(job.id, e)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 group-hover:bg-white/10"
-                              >
-                                <Heart size={14} className={isSaved ? "text-red-500 fill-current" : "text-gray-400"} />
-                              </motion.button>
-                            </div>
-
-                            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] font-semibold" style={{ color: c.textSec }}>
-                              <span className="flex items-center gap-1"><MapPin size={12} /> {job.location} ({job.mode})</span>
-                              <span className="flex items-center gap-1"><Calendar size={12} /> {job.type}</span>
-                              <span className="flex items-center gap-1"><DollarSign size={12} /> {job.salary}</span>
-                            </div>
-
-                            <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: c.textMuted }}>{job.description}</p>
-                          </div>
-
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {job.skills.slice(0, 3).map(s => (
-                              <motion.span
-                                key={s}
-                                whileHover={{ y: -2, scale: 1.005 }}
-                                className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border border-white/10"
-                                style={{ borderColor: c.border, color: c.textSec }}
-                              >
-                                {s}
-                              </motion.span>
-                            ))}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* TAB B: RESUME VS JD MATCH */}
-            {tab === "jd-match" && (
-              <motion.div
-                key="jd-match"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* Input paste field */}
-                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
-                  <h3 className="text-base font-extrabold flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                    <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                      <ArrowRightLeft size={16} className="text-amber-500" />
-                    </motion.div> Resume vs Job Description Matcher
-                  </h3>
-                  <textarea
-                    value={jdText}
-                    onChange={(e) => setJdText(e.target.value)}
-                    placeholder="Paste the target Job Description (JD) here..."
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-3 text-xs resize-none h-32"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={handleRunJdAnalyzer}
-                    disabled={!jdText.trim() || analyzing}
-                    className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    {analyzing ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Running AI Analysis...
-                      </>
-                    ) : (
-                      <>
-                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </motion.div> Run Compatibility Analyzer
-                      </>
-                    )}
-                  </motion.button>
-                </motion.div>
-
-                {/* Match Report Results */}
-                {matchReport && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="space-y-6"
-                  >
-                    {/* Score Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl text-center space-y-3 flex flex-col items-center justify-center" style={{ background: c.cardBg, borderColor: c.border }}>
-                        <div className="text-3xl font-extrabold text-amber-500">{matchReport.overallScore}%</div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Overall Compatibility</div>
-                      </motion.div>
-                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl md:col-span-2 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2">Metrics Analysis</h4>
-                        <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
-                          <div>
-                            <span className="text-[10px] block" style={{ color: c.textSec }}>Skills Match</span>
-                            <span className="text-sm font-extrabold" style={{ color: c.text }}>{matchReport.skillsMatch}%</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] block" style={{ color: c.textSec }}>Experience Match</span>
-                            <span className="text-sm font-extrabold" style={{ color: c.text }}>{matchReport.experienceMatch}%</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] block" style={{ color: c.textSec }}>Education Alignment</span>
-                            <span className="text-sm font-extrabold" style={{ color: c.text }}>{matchReport.educationMatch}%</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] block" style={{ color: c.textSec }}>ATS compatibility</span>
-                            <span className="text-sm font-extrabold" style={{ color: c.text }}>{matchReport.atsCompatibility}%</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
-
-                  {/* Keywords Analysis */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-500">
-                        <CheckCircle2 size={14} /> Keywords Found
-                      </h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchReport.keywordsFound.map((k: string) => (
-                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{k}</motion.span>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-red-500">
-                        <XCircle size={14} /> Missing Keywords
-                      </h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchReport.keywordsMissing.map((k: string) => (
-                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">{k}</motion.span>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-cyan-500">
-                        <Info size={14} /> Suggested Terms
-                      </h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchReport.keywordsSuggested.map((k: string) => (
-                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">{k}</motion.span>
-                        ))}
-                      </div>
-                    </motion.div>
-                  </div>
-
-                    {/* AI Optimization Suggestions */}
-                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                    <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
-                      <Sparkles size={14} /> Actionable Resume Edits
-                      </h4>
-                      <ul className="space-y-2">
-                        {matchReport.suggestions.map((s: string, idx: number) => (
-                          <motion.li
-                            key={idx}
-                            variants={fadeUp}
-                            initial="hidden"
-                            animate="visible"
-                            custom={idx}
-                            className="text-xs leading-relaxed flex items-start gap-2"
-                            style={{ color: c.textSec }}
-                          >
-                            <span className="text-amber-500">•</span>
-                            <span>{s}</span>
-                          </motion.li>
-                        ))}
-                      </ul>
-                      <div className="pt-4 flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setView("resume-hub")}
-                      className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
-                      style={{ borderColor: c.border, color: c.text }}
-                    >
-                      Optimize Resume
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setView("cover-letter")}
-                      className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
-                    >
-                      Draft Cover Letter
-                    </motion.button>
-                      </div>
-                  </motion.div>
-
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-
-            {/* TAB C: JOB REFERRALS */}
-            {tab === "referrals" && (
-              <motion.div
-                key="referrals"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* Referrals list */}
-                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-4 border rounded-xl flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] uppercase tracking-wider font-bold block" style={{ color: c.textMuted }}>Total Requests</span>
-                    <span className="text-base font-black" style={{ color: c.text }}>{referrals.length}</span>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setShowReferralModal(true)}
-                    className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5"
-                  >
-                  <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                    <PlusCircle size={14} />
-                  </motion.div> Request Referral
-                </motion.button>
-                </motion.div>
-
-                {/* Referral tracker grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {referrals.map((ref, i) => (
-                    <motion.div
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      custom={i}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      key={ref.id}
-                      className="p-5 border rounded-2xl space-y-4"
-                      style={{ background: c.cardBg, borderColor: c.border }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ref.role}</h4>
-                          <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{ref.company}</span>
-                        </div>
-                        <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          {ref.status}
-                        </motion.span>
-                      </div>
-
-                      {ref.outreachMsg && (
-                        <div className="space-y-1.5 pt-2 border-t" style={{ borderColor: c.border }}>
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-amber-500">Suggested Outreach Message:</span>
-                          <textarea
-                            readOnly
-                            value={ref.outreachMsg}
-                            onClick={(e) => {
-                              (e.currentTarget as HTMLTextAreaElement).select();
-                              navigator.clipboard.writeText(ref.outreachMsg || "");
-                            }}
-                            className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-[10px] resize-none h-24 select-all"
-                            style={{ background: c.inputBg, color: c.textMuted, borderColor: c.border }}
-                          />
-                          <span className="text-[8px]" style={{ color: c.textMuted }}>*Click inside textarea to select and copy all.</span>
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* TAB D: HIRING CHALLENGES */}
-            {tab === "challenges" && (
-              <motion.div
-                key="challenges"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* Available Contests */}
-                {challenges.length === 0 ? (
-                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
-                    <Award className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
-                    <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No hiring challenges available at this time.</span>
-                  </motion.div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {challenges.map((ch, i) => (
-                      <motion.div
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={i}
-                        whileHover={{ y: -4, scale: 1.01 }}
-                        key={ch.id}
-                        className="p-5 border rounded-2xl flex flex-col justify-between"
-                        style={{ background: c.cardBg, borderColor: c.border }}
-                      >
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
-                              {ch.category}
-                            </motion.span>
-                            {ch.isActive ? (
-                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                Active
-                              </motion.span>
-                            ) : (
-                              <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-500/10 text-gray-500 border border-gray-500/20">
-                                Inactive
-                              </motion.span>
-                            )}
-                          </div>
-                          <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ch.title}</h4>
-                          <span className="text-[10px] font-bold" style={{ color: c.textSec }}>Host: {ch.company}</span>
-                          <div className="text-[10px]" style={{ color: c.textMuted }}>
-                            Duration: {ch.duration} · Difficulty: {ch.difficulty}
-                          </div>
-                        </div>
-
-                        <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
-                          {ch.isActive ? (
-                            <motion.button
-                              whileHover={{ scale: 1.04 }}
-                              whileTap={{ scale: 0.96 }}
-                              onClick={() => {
-                                alert("🚀 Starting Challenge environment. All inputs and compilers are initialized.");
-                              }}
-                              className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
-                            >
-                              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                                <Play size={10} className="fill-current" />
-                              </motion.div> Participate Now
-                            </motion.button>
-                          ) : (
-                            <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
-                              <Check size={12} /> Inactive
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-          </AnimatePresence>
+// ─── Skeleton Card ────────────────────────────────────────────────────────
+function SkeletonCard({ c }: { c: Record<string, string> }) {
+  return (
+    <div className="rounded-2xl border p-5 space-y-4 animate-pulse" style={{ background: c.cardBg, borderColor: c.border }}>
+      <div className="flex items-start gap-3">
+        <div className="w-11 h-11 rounded-xl shrink-0" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="flex-1 space-y-2.5">
+          <div className="h-3.5 rounded" style={{ background: "rgba(255,255,255,0.05)", width: "70%" }} />
+          <div className="h-2.5 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "45%" }} />
         </div>
       </div>
+      <div className="space-y-2">
+        <div className="h-2.5 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "90%" }} />
+        <div className="h-2.5 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "75%" }} />
+      </div>
+      <div className="flex gap-2">
+        <div className="h-6 w-16 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-6 w-20 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+      </div>
+    </div>
+  );
+}
 
-      {/* ==================== 4. DETAIL MODAL DIALOG ==================== */}
-      <AnimatePresence>
-        {selectedJob && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedJob(null)}
-            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl border p-6 overflow-y-auto max-h-[85vh] space-y-4 shadow-2xl relative"
-              style={{ background: isDark ? "#0d1117" : "#ffffff", borderColor: c.border }}
-            >
-              {/* Header */}
-              <div className="flex gap-4 items-center">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-base shrink-0"
-                  style={{ background: selectedJob.logoBg }}
-                >
-                  {selectedJob.company[0]}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-extrabold text-base" style={{ fontFamily: "'Outfit', sans-serif" }}>{selectedJob.role}</h3>
-                  <span className="text-xs font-bold" style={{ color: c.textSec }}>{selectedJob.company} · {selectedJob.location}</span>
-                </div>
-              </div>
+// ─── Active Filter Chip ───────────────────────────────────────────────────
+function FilterChip({ label, onRemove, c }: { label: string; onRemove: () => void; c: Record<string, string> }) {
+  return (
+    <motion.span layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border cursor-pointer select-none transition-all hover:scale-[1.03]"
+      style={{ background: "rgba(245,158,11,0.06)", color: c.primary, borderColor: "rgba(245,158,11,0.18)" }}
+      onClick={onRemove}>
+      {label}
+      <X size={11} />
+    </motion.span>
+  );
+}
 
-              {/* Specs */}
-              <div className="grid grid-cols-3 gap-2 border-y py-3 text-center text-xs" style={{ borderColor: c.border }}>
-                <div>
-                  <span className="text-[9px] uppercase tracking-wider block" style={{ color: c.textMuted }}>Salary Range</span>
-                  <span className="font-bold">{selectedJob.salary}</span>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase tracking-wider block" style={{ color: c.textMuted }}>Experience Required</span>
-                  <span className="font-bold">{selectedJob.experience}</span>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase tracking-wider block" style={{ color: c.textMuted }}>Deadline</span>
-                  <span className="font-bold text-amber-500">{selectedJob.deadline}</span>
-                </div>
-              </div>
+// ─── Score Badge ──────────────────────────────────────────────────────────
+function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" | "md" | "lg" }) {
+  const color = getScoreColor(score);
+  const sz = size === "lg" ? 56 : size === "md" ? 40 : 32;
+  const fontSz = size === "lg" ? "text-sm" : size === "md" ? "text-[11px]" : "text-[9px]";
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: sz, height: sz }}>
+      <svg width={sz} height={sz} className="-rotate-90 absolute inset-0">
+        <circle cx={sz / 2} cy={sz / 2} r={sz / 2 - 3} fill="transparent" stroke="rgba(255,255,255,0.06)" strokeWidth={size === "lg" ? 4 : 3} />
+        <circle cx={sz / 2} cy={sz / 2} r={sz / 2 - 3} fill="transparent" stroke={color} strokeWidth={size === "lg" ? 4 : 3}
+          strokeDasharray={2 * Math.PI * (sz / 2 - 3)} strokeDashoffset={2 * Math.PI * (sz / 2 - 3) * (1 - score / 100)}
+          strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s ease" }} />
+      </svg>
+      <span className={`font-black ${fontSz}`} style={{ color }}>{score}</span>
+    </div>
+  );
+}
 
-              {/* Main Content */}
-              <div className="space-y-3">
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: c.text }}>Role Description</h4>
-                  <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>{selectedJob.description}</p>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: c.text }}>Responsibilities</h4>
-                  <ul className="list-disc list-inside text-xs leading-relaxed space-y-1" style={{ color: c.textSec }}>
-                    {selectedJob.responsibilities.map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: c.text }}>Required Skills</h4>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {selectedJob.skills.map(s => (
-                      <motion.span key={s} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border" style={{ borderColor: c.border, color: c.textSec }}>
-                        {s}
-                      </motion.span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-2 justify-end">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => handleToggleSaveJob(selectedJob.id)}
-                  className="py-2 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
-                  style={{ borderColor: c.border, color: c.text }}
-                >
-                  {savedJobs.includes(selectedJob.id) ? "Saved" : "Save Job"}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={async () => {
-                    if (!selectedJob) return;
-                    try {
-                      const res = await api.post(`/job/apply/${selectedJob.id}`);
-                      if (res.data?.status === "already_applied") {
-                        toast.info("You have already applied to this job.");
-                      } else {
-                        toast.success("Applied successfully! Card added to your application tracker.");
-                      }
-                    } catch {
-                      toast.error("Failed to apply. Please try again.");
-                    }
-                    setSelectedJob(null);
-                  }}
-                  className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
-                >
-                  Apply Now
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ==================== 5. REFERRAL REQUEST MODAL OVERLAY ==================== */}
-      <AnimatePresence>
-        {showReferralModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowReferralModal(false)}
-            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.form
-              onSubmit={handleRequestReferralSubmit}
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border p-6 space-y-4 shadow-2xl relative"
-              style={{ background: isDark ? "#0d1117" : "#ffffff", borderColor: c.border }}
-            >
-              <h3 className="font-extrabold text-sm font-sans" style={{ fontFamily: "'Outfit', sans-serif" }}>Request Employee Referral</h3>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Target Company</label>
-                <input
-                  required
-                  value={refCompany}
-                  onChange={(e) => setRefCompany(e.target.value)}
-                  placeholder="e.g. Google"
-                  className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                  style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Role Title</label>
-                <input
-                  required
-                  value={refRole}
-                  onChange={(e) => setRefRole(e.target.value)}
-                  placeholder="e.g. AI Engineer"
-                  className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                  style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Outreach details</label>
-                <textarea
-                  value={refNotes}
-                  onChange={(e) => setRefNotes(e.target.value)}
-                  placeholder="Any referral link or details..."
-                  className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-16"
-                  style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-2">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  type="button"
-                  onClick={() => setShowReferralModal(false)}
-                  className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
-                  style={{ borderColor: c.border }}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  type="submit"
-                  className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
-                >
-                  Request Referral
-                </motion.button>
-              </div>
-            </motion.form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ==================== 6. FLOATING CHAT SIDEBAR PANEL ==================== */}
-      <AnimatePresence>
-        {assistantOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
-            className="fixed top-[70px] right-0 bottom-0 z-[190] w-80 border-l flex flex-col shadow-2xl"
-            style={{ background: isDark ? "#0d1117" : "#ffffff", borderColor: c.border }}
-          >
-            {/* Header */}
-            <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
-              <div className="flex items-center gap-1.5">
-                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                  <Sparkles size={14} className="text-amber-500" />
-                </motion.div>
-                <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Career Assistant</span>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setAssistantOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
-              >
-                <XCircle size={14} />
-              </motion.button>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-              {chatMessages.map((msg, idx) => {
-                const isAI = msg.role === "assistant";
-                return (
-                  <motion.div
-                    key={idx}
-                    variants={fadeUp}
-                    initial="hidden"
-                    animate="visible"
-                    custom={idx}
-                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
-                  >
-                    <div
-                      className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
-                        isAI
-                          ? "bg-white/5 border border-white/10 rounded-tl-sm"
-                          : "bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-tr-sm"
-                      }`}
-                      style={{ borderColor: c.border }}
-                    >
-                      <p className="whitespace-pre-line">{msg.content}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-              {chatLoading && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.92, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.35 }}
-                  className="flex justify-start"
-                >
-                  <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
-                    <Clock size={12} className="text-amber-500 animate-spin" />
-                    <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
-                  </div>
-                </motion.div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Suggestions */}
-            <div className="p-3 border-t bg-white/[0.01] flex flex-col gap-1.5" style={{ borderColor: c.border }}>
-              <span className="text-[8px] uppercase tracking-wider font-extrabold" style={{ color: c.textMuted }}>Suggestions</span>
-              {[
-                "Find remote software engineering jobs",
-                "Compare my resume to SDE description",
-                "Help me request a referral"
-              ].map((s, i) => (
-                <motion.button
-                  variants={fadeUp}
-                  initial="hidden"
-                  animate="visible"
-                  custom={i}
-                  whileHover={{ y: -2, scale: 1.005 }}
-                  whileTap={{ scale: 0.96 }}
-                  key={s}
-                  onClick={() => { setChatInput(s); }}
-                  className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
-                  style={{ borderColor: c.border, color: c.textSec }}
-                >
-                  {s}
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Input form */}
-            <div className="p-3 border-t flex gap-1.5" style={{ borderColor: c.border }}>
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask career assistant..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAssistantSend();
-                }}
-                className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-              />
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={handleAssistantSend}
-                disabled={!chatInput.trim() || chatLoading}
-                className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
-              >
-                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
-                  <Send size={12} />
-                </motion.div>
-              </motion.button>
-            </div>
-
-          </motion.div>
-        )}
-      </AnimatePresence>
+// ─── Stat Card ────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon, c, delay = 0 }: {
+  label: string; value: number | string; icon: React.ReactNode; c: Record<string, string>; delay?: number;
+}) {
+  return (
+    <motion.div custom={delay} variants={fadeUp} initial="hidden" animate="visible"
+      whileHover={{ y: -3, scale: 1.01 }}
+      className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
+      <div className="space-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textMuted }}>{label}</span>
+        <span className="text-lg font-extrabold block" style={{ color: c.text }}>{value}</span>
+      </div>
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0"
+        style={{ color: c.primary }}>
+        {icon}
       </div>
     </motion.div>
   );
 }
 
+// ─── Job Card ─────────────────────────────────────────────────────────────
+function JobCard({ job, c, onOpen, onSave }: {
+  job: JobListing; c: Record<string, string>; onOpen: () => void; onSave: () => void;
+}) {
+  return (
+    <motion.div
+      variants={cardHover} initial="rest" whileHover="hover"
+      className="rounded-2xl border p-5 cursor-pointer group transition-all duration-200 relative overflow-hidden"
+      style={{ background: c.cardBg, borderColor: c.border }}
+      onClick={onOpen}>
+
+      {job.isFeatured && (
+        <div className="absolute top-0 right-0">
+          <div className="px-2.5 py-1 text-[8px] font-black uppercase tracking-wider rounded-bl-xl"
+            style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>
+            <Star size={8} className="inline mr-1" /> Featured
+          </div>
+        </div>
+      )}
+
+      {job.isGovernment && (
+        <div className="absolute top-0 left-0">
+          <div className="px-2.5 py-1 text-[8px] font-black uppercase tracking-wider rounded-br-xl"
+            style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>
+            <Shield size={8} className="inline mr-1" /> Govt
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-start gap-3 mb-3">
+        <CompanyLogo company={job.company} logoUrl={job.logoUrl} />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold truncate group-hover:text-amber-400 transition-colors" style={{ color: c.text }}>
+            {job.title}
+          </h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[11px] font-semibold truncate" style={{ color: c.textSec }}>{job.company}</span>
+            {job.matchScore != null && job.matchScore > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                {job.matchScore}% match
+              </span>
+            )}
+          </div>
+        </div>
+        <button onClick={e => { e.stopPropagation(); onSave(); }}
+          className="p-2 rounded-lg transition-all hover:scale-110 cursor-pointer bg-transparent border-none"
+          style={{ color: job.isSaved ? "#f59e0b" : c.textMuted }}>
+          {job.isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {job.mode && (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold border"
+            style={{ background: "rgba(99,102,241,0.06)", color: "#818cf8", borderColor: "rgba(99,102,241,0.12)" }}>
+            <Globe size={9} /> {job.mode}
+          </span>
+        )}
+        {job.employmentType && (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold border"
+            style={{ background: "rgba(16,185,129,0.06)", color: "#34d399", borderColor: "rgba(16,185,129,0.12)" }}>
+            <Briefcase size={9} /> {job.employmentType}
+          </span>
+        )}
+        {job.experience && (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold border"
+            style={{ background: "rgba(236,72,153,0.06)", color: "#f472b6", borderColor: "rgba(236,72,153,0.12)" }}>
+            <Clock size={9} /> {job.experience}
+          </span>
+        )}
+      </div>
+
+      <p className="text-[11px] leading-relaxed mb-3 line-clamp-2" style={{ color: c.textMuted }}>
+        {job.description || `Looking for a ${job.employmentType?.toLowerCase()} ${job.title} to join ${job.company}.`}
+      </p>
+
+      {job.skills?.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {job.skills.slice(0, 5).map((skill, i) => (
+            <span key={i} className="px-2 py-0.5 rounded text-[9px] font-bold border"
+              style={{ background: "rgba(255,255,255,0.02)", color: c.textMuted, borderColor: c.border }}>
+              {skill}
+            </span>
+          ))}
+          {job.skills.length > 5 && (
+            <span className="px-2 py-0.5 rounded text-[9px] font-bold" style={{ color: c.textMuted }}>
+              +{job.skills.length - 5}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: c.border }}>
+        <div className="flex items-center gap-3">
+          {job.location && (
+            <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: c.textMuted }}>
+              <MapPin size={10} /> {job.location}
+            </span>
+          )}
+          {job.salary && (
+            <span className="text-[10px] font-bold flex items-center gap-1" style={{ color: "#10b981" }}>
+              <DollarSign size={10} /> {job.salary}
+            </span>
+          )}
+        </div>
+        <span className="text-[9px] font-semibold" style={{ color: c.textMuted }}>
+          {timeAgo(job.postedDate)}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── AI Score Bar ─────────────────────────────────────────────────────────
+function ScoreBar({ label, score, c }: { label: string; score: number; c: Record<string, string> }) {
+  const color = getScoreColor(score);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>{label}</span>
+        <span className="text-xs font-black" style={{ color }}>{score}%</span>
+      </div>
+      <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+        <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }} transition={{ duration: 1, ease: "easeOut" }}
+          className="h-full rounded-full" style={{ background: color }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Typing Indicator ─────────────────────────────────────────────────────
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1 px-4 py-3">
+      {[0, 1, 2].map(i => (
+        <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-amber-500"
+          animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }} />
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+export function JobHubView({ setView, activeModule }: JobHubProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
+  const c = useMemo(() => ({
+    text: isDark ? "#ffffff" : "#0f172a",
+    textSec: isDark ? "rgba(255,255,255,0.75)" : "#334155",
+    textMuted: isDark ? "rgba(255,255,255,0.45)" : "#64748b",
+    cardBg: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)",
+    cardBgHover: isDark ? "rgba(15, 23, 42, 0.6)" : "rgba(255, 255, 255, 0.95)",
+    border: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)",
+    primary: "#f59e0b",
+    primaryGradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+    inputBg: isDark ? "rgba(0,0,0,0.2)" : "#f8fafc",
+  }), [isDark]);
+
+  // ── Tab state ──
+  const [activeTab, setActiveTab] = useState<"browse" | "ai-match" | "referrals" | "challenges">("browse");
+
+  // ── Browse state ──
+  const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [jobStats, setJobStats] = useState<JobStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    search: "", company: "", category: "", location: "", country: "", state: "",
+    city: "", mode: "", employmentType: "", experience: "", salaryMin: "",
+    salaryMax: "", skills: "", isGovernment: false, sortBy: "postedDate",
+    order: "desc", postedDate: "",
+  });
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
+  const [sortValue, setSortValue] = useState("postedDate:desc");
+  const [companies, setCompanies] = useState<string[]>([]);
+
+  // ── Job detail modal ──
+  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailData, setDetailData] = useState<JobListing | null>(null);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [skillGap, setSkillGap] = useState<{ matched: string[]; missing: string[] } | null>(null);
+  const [skillGapLoading, setSkillGapLoading] = useState(false);
+  const [similarJobs, setSimilarJobs] = useState<JobListing[]>([]);
+
+  // ── AI Match state ──
+  const [jdText, setJdText] = useState("");
+  const [jdAnalysis, setJdAnalysis] = useState<JDAnalysis | null>(null);
+  const [jdAnalyzing, setJdAnalyzing] = useState(false);
+  const [aiSkills, setAiSkills] = useState("");
+  const [aiExperience, setAiExperience] = useState("");
+  const [aiRecommendations, setAiRecommendations] = useState<JobListing[]>([]);
+  const [aiRecommendLoading, setAiRecommendLoading] = useState(false);
+  const [aiMatchSubTab, setAiMatchSubTab] = useState<"jd" | "recommend">("jd");
+
+  // ── Referrals state ──
+  const [referrals, setReferrals] = useState<ReferralRequest[]>([]);
+  const [referralsLoading, setReferralsLoading] = useState(false);
+  const [refCompany, setRefCompany] = useState("");
+  const [refRole, setRefRole] = useState("");
+  const [refNotes, setRefNotes] = useState("");
+  const [refCreating, setRefCreating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // ── Challenges state ──
+  const [challenges, setChallenges] = useState<HiringChallenge[]>([]);
+  const [challengesLoading, setChallengesLoading] = useState(false);
+
+  // ── AI Chat sidebar ──
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // ── Filter panel refs ──
+  const searchRef = useRef<HTMLInputElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // DERIVED
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const activeFilters = useMemo(() => {
+    const chips: { key: string; label: string }[] = [];
+    if (filters.search) chips.push({ key: "search", label: `Search: ${filters.search}` });
+    if (filters.company) chips.push({ key: "company", label: `Company: ${filters.company}` });
+    if (filters.category) chips.push({ key: "category", label: `Category: ${filters.category}` });
+    if (filters.location) chips.push({ key: "location", label: `Location: ${filters.location}` });
+    if (filters.country) chips.push({ key: "country", label: `Country: ${filters.country}` });
+    if (filters.state) chips.push({ key: "state", label: `State: ${filters.state}` });
+    if (filters.city) chips.push({ key: "city", label: `City: ${filters.city}` });
+    if (filters.mode) chips.push({ key: "mode", label: `Mode: ${filters.mode}` });
+    if (filters.employmentType) chips.push({ key: "employmentType", label: `Type: ${filters.employmentType}` });
+    if (filters.experience) chips.push({ key: "experience", label: `Experience: ${filters.experience}` });
+    if (filters.salaryMin) chips.push({ key: "salaryMin", label: `Min Salary: ${filters.salaryMin}` });
+    if (filters.salaryMax) chips.push({ key: "salaryMax", label: `Max Salary: ${filters.salaryMax}` });
+    if (filters.skills) chips.push({ key: "skills", label: `Skills: ${filters.skills}` });
+    if (filters.isGovernment) chips.push({ key: "isGovernment", label: "Government" });
+    if (filters.postedDate) chips.push({ key: "postedDate", label: `Posted: ${filters.postedDate}` });
+    return chips;
+  }, [filters]);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // API CALLS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const fetchJobs = useCallback(async (pageNum: number, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(pageNum));
+      params.set("limit", String(PAGE_LIMIT));
+      if (filters.search) params.set("search", filters.search);
+      if (filters.company) params.set("company", filters.company);
+      if (filters.category) params.set("category", filters.category);
+      if (filters.location) params.set("location", filters.location);
+      if (filters.country) params.set("country", filters.country);
+      if (filters.state) params.set("state", filters.state);
+      if (filters.city) params.set("city", filters.city);
+      if (filters.mode) params.set("mode", filters.mode);
+      if (filters.employmentType) params.set("employmentType", filters.employmentType);
+      if (filters.experience) params.set("experience", filters.experience);
+      if (filters.salaryMin) params.set("salaryMin", filters.salaryMin);
+      if (filters.salaryMax) params.set("salaryMax", filters.salaryMax);
+      if (filters.skills) params.set("skills", filters.skills);
+      if (filters.isGovernment) params.set("isGovernment", "true");
+      if (filters.postedDate) params.set("postedDate", filters.postedDate);
+
+      const [sortBy, order] = sortValue.split(":");
+      params.set("sortBy", sortBy);
+      params.set("order", order);
+
+      const res = await api.get(`/job-listing?${params.toString()}`);
+      const data = res.data;
+      const items: JobListing[] = data.jobs || data.listings || data.data || data.results || [];
+      const total = data.total || data.totalPages ? (data.totalPages || Math.ceil((data.total || 0) / PAGE_LIMIT)) : null;
+
+      if (append) {
+        setJobs(prev => [...prev, ...items]);
+      } else {
+        setJobs(items);
+      }
+      setHasMore(items.length === PAGE_LIMIT && (total === null || pageNum < total));
+    } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as Error)?.message || "Failed to load jobs";
+      console.error("[JobHub] Fetch error:", err);
+      if (!append) setError(msg);
+      else toast.error("Failed to load more jobs");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filters, sortValue]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await api.get("/job-listing/stats");
+      setJobStats(res.data.stats || res.data);
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  const fetchCompanies = useCallback(async () => {
+    try {
+      const res = await api.get("/job-listing/companies");
+      const data = res.data.companies || res.data.data || res.data || [];
+      setCompanies(Array.isArray(data) ? data.map((c: string | { name: string }) => typeof c === "string" ? c : c.name) : []);
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  const fetchSavedJobs = useCallback(async () => {
+    try {
+      const res = await api.get("/job-listing/user/saved");
+      const saved = res.data.saved || res.data.jobs || res.data.data || [];
+      setSavedJobs(new Set(saved.map((j: JobListing) => j.id)));
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  const toggleSaveJob = useCallback(async (jobId: string) => {
+    try {
+      await api.post(`/job-listing/saved/${jobId}`);
+      setSavedJobs(prev => {
+        const next = new Set(prev);
+        if (next.has(jobId)) { next.delete(jobId); toast.success("Job removed from saved"); }
+        else { next.add(jobId); toast.success("Job saved!"); }
+        return next;
+      });
+      if (detailData?.id === jobId) {
+        setDetailData(d => d ? { ...d, isSaved: !d.isSaved } : d);
+      }
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, isSaved: !j.isSaved } : j));
+    } catch {
+      toast.error("Failed to save job");
+    }
+  }, [detailData]);
+
+  const openJobDetail = useCallback(async (job: JobListing) => {
+    setSelectedJob(job);
+    setDetailLoading(true);
+    setAiSummary(null);
+    setSkillGap(null);
+    setSimilarJobs([]);
+    try {
+      const res = await api.get(`/job-listing/${job.id}`);
+      const data = res.data.job || res.data;
+      setDetailData({ ...data, isSaved: savedJobs.has(job.id) });
+    } catch {
+      setDetailData({ ...job, isSaved: savedJobs.has(job.id) });
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [savedJobs]);
+
+  const analyzeJD = useCallback(async () => {
+    if (!jdText.trim()) { toast.error("Please paste a job description"); return; }
+    setJdAnalyzing(true);
+    setJdAnalysis(null);
+    try {
+      const res = await api.post("/job/jd-analyze", { jdText: jdText.trim() });
+      setJdAnalysis(res.data.analysis || res.data);
+      toast.success("JD analysis complete!");
+    } catch {
+      toast.error("Failed to analyze JD. Please try again.");
+    } finally {
+      setJdAnalyzing(false);
+    }
+  }, [jdText]);
+
+  const fetchAIRecommendations = useCallback(async () => {
+    if (!aiSkills.trim()) { toast.error("Please enter your skills"); return; }
+    setAiRecommendLoading(true);
+    setAiRecommendations([]);
+    try {
+      const res = await api.post("/job-listing/ai/recommend", {
+        skills: aiSkills.split(",").map(s => s.trim()).filter(Boolean),
+        experience: aiExperience,
+      });
+      setAiRecommendations(res.data.recommendations || res.data.jobs || res.data.data || []);
+      toast.success("Recommendations generated!");
+    } catch {
+      toast.error("Failed to get recommendations");
+    } finally {
+      setAiRecommendLoading(false);
+    }
+  }, [aiSkills, aiExperience]);
+
+  const fetchReferrals = useCallback(async () => {
+    setReferralsLoading(true);
+    try {
+      const res = await api.get("/job/referrals");
+      setReferrals(res.data.referrals || res.data.data || res.data || []);
+    } catch {
+      toast.error("Failed to load referrals");
+    } finally {
+      setReferralsLoading(false);
+    }
+  }, []);
+
+  const createReferral = useCallback(async () => {
+    if (!refCompany.trim() || !refRole.trim()) { toast.error("Company and role are required"); return; }
+    setRefCreating(true);
+    try {
+      const res = await api.post("/job/referrals", {
+        company: refCompany.trim(), role: refRole.trim(), notes: refNotes.trim()
+      });
+      const newRef = res.data.referral || res.data;
+      setReferrals(prev => [newRef, ...prev]);
+      setRefCompany(""); setRefRole(""); setRefNotes("");
+      toast.success("Referral request created! Outreach message generated.");
+    } catch {
+      toast.error("Failed to create referral request");
+    } finally {
+      setRefCreating(false);
+    }
+  }, [refCompany, refRole, refNotes]);
+
+  const fetchChallenges = useCallback(async () => {
+    setChallengesLoading(true);
+    try {
+      const res = await api.get("/job/challenges");
+      setChallenges(res.data.challenges || res.data.data || res.data || []);
+    } catch {
+      toast.error("Failed to load challenges");
+    } finally {
+      setChallengesLoading(false);
+    }
+  }, []);
+
+  const applyToJob = useCallback(async (jobId: string) => {
+    try {
+      await api.post(`/job-listing/apply/${jobId}`);
+      toast.success("Application submitted!");
+    } catch {
+      toast.error("Failed to submit application");
+    }
+  }, []);
+
+  // ── AI Chat ──
+  const sendChatMessage = useCallback(async (message?: string) => {
+    const msg = (message || chatInput).trim();
+    if (!msg || chatLoading) return;
+
+    const userMsg: AIChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: msg,
+      timestamp: new Date().toISOString(),
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const res = await api.post("/job/career-chat", { message: msg, history: chatMessages.slice(-10) });
+      const assistantMsg: AIChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: "assistant",
+        content: res.data.reply || res.data.message || res.data.response || "I'll help you with that!",
+        timestamp: new Date().toISOString(),
+      };
+      setChatMessages(prev => [...prev, assistantMsg]);
+    } catch {
+      toast.error("Failed to get AI response");
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatInput, chatMessages, chatLoading]);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // EFFECTS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Resolve activeModule to tab
+  useEffect(() => {
+    if (!activeModule) return;
+    const tab = TABS.find(t => t.module === activeModule);
+    if (tab) setActiveTab(tab.id as typeof activeTab);
+  }, [activeModule]);
+
+  // Fetch initial data for browse
+  useEffect(() => {
+    if (activeTab === "browse") {
+      setPage(1);
+      fetchJobs(1, false);
+      fetchStats();
+      fetchCompanies();
+      fetchSavedJobs();
+    }
+  }, [activeTab, fetchJobs, fetchStats, fetchCompanies, fetchSavedJobs]);
+
+  // Fetch data for other tabs
+  useEffect(() => {
+    if (activeTab === "referrals") fetchReferrals();
+    if (activeTab === "challenges") fetchChallenges();
+  }, [activeTab, fetchReferrals, fetchChallenges]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+        setPage(prev => {
+          const next = prev + 1;
+          fetchJobs(next, true);
+          return next;
+        });
+      }
+    }, { threshold: 0.1 });
+    if (loadMoreRef.current) observerRef.current.observe(loadMoreRef.current);
+    return () => observerRef.current?.disconnect();
+  }, [hasMore, loadingMore, loading, fetchJobs]);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // FILTER HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const updateFilter = useCallback((key: keyof FilterState, value: string | boolean) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const applyFilters = useCallback(() => {
+    setPage(1);
+    fetchJobs(1, false);
+  }, [fetchJobs]);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      search: "", company: "", category: "", location: "", country: "", state: "",
+      city: "", mode: "", employmentType: "", experience: "", salaryMin: "",
+      salaryMax: "", skills: "", isGovernment: false, sortBy: "postedDate",
+      order: "desc", postedDate: "",
+    });
+    setPage(1);
+  }, []);
+
+  const removeFilter = useCallback((key: string) => {
+    setFilters(prev => ({ ...prev, [key]: key === "isGovernment" ? false : "" }));
+    setTimeout(() => {
+      setPage(1);
+      fetchJobs(1, false);
+    }, 0);
+  }, [fetchJobs]);
+
+  const handleSort = useCallback((val: string) => {
+    setSortValue(val);
+    const [sortBy, order] = val.split(":");
+    setFilters(prev => ({ ...prev, sortBy, order }));
+    setPage(1);
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // AI ACTIONS FROM DETAIL MODAL
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const fetchAISummary = useCallback(async (jobId: string) => {
+    setAiSummaryLoading(true);
+    setAiSummary(null);
+    try {
+      const res = await api.post("/job-listing/ai/summary", { jobId });
+      setAiSummary(res.data.summary || res.data.analysis || "No summary available.");
+    } catch {
+      toast.error("Failed to generate AI summary");
+    } finally {
+      setAiSummaryLoading(false);
+    }
+  }, []);
+
+  const fetchSkillGap = useCallback(async (jobId: string) => {
+    setSkillGapLoading(true);
+    setSkillGap(null);
+    try {
+      const res = await api.post("/job-listing/ai/skill-gap", { jobId });
+      const data = res.data.gap || res.data;
+      setSkillGap({ matched: data.matched || [], missing: data.missing || [] });
+    } catch {
+      toast.error("Failed to analyze skill gap");
+    } finally {
+      setSkillGapLoading(false);
+    }
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // COPY HELPER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const copyToClipboard = useCallback(async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      toast.success("Copied to clipboard!");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: BROWSE TAB
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderBrowse = () => (
+    <div className="space-y-6">
+      {/* Stats Row */}
+      {jobStats && (
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <StatCard label="Total Jobs" value={jobStats.total} icon={<Briefcase size={16} />} c={c} delay={0} />
+          <StatCard label="Remote Jobs" value={jobStats.remote} icon={<Globe size={16} />} c={c} delay={1} />
+          <StatCard label="Featured" value={jobStats.featured} icon={<Star size={16} />} c={c} delay={2} />
+        </motion.div>
+      )}
+
+      {/* Search Bar */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2">
+        <div className="flex-1 relative">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
+          <input ref={searchRef} value={filters.search} onChange={e => updateFilter("search", e.target.value)}
+            onKeyDown={e => e.key === "Enter" && applyFilters()}
+            placeholder="Search jobs, skills, companies..."
+            className="w-full pl-10 pr-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+            style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+            onFocus={e => e.currentTarget.style.borderColor = c.primary}
+            onBlur={e => e.currentTarget.style.borderColor = c.border} />
+        </div>
+        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+          style={{
+            background: filterOpen ? "rgba(245,158,11,0.08)" : c.inputBg,
+            borderColor: filterOpen ? "rgba(245,158,11,0.25)" : c.border,
+            color: filterOpen ? c.primary : c.textSec,
+          }}>
+          <SlidersHorizontal size={14} />
+          Filters {activeFilters.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-400">{activeFilters.length}</span>}
+        </motion.button>
+        <select value={sortValue} onChange={e => handleSort(e.target.value)}
+          className="px-3 py-3 rounded-xl text-xs font-bold border outline-none cursor-pointer"
+          style={{ background: c.inputBg, borderColor: c.border, color: c.textSec }}>
+          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </motion.div>
+
+      {/* Filter Panel */}
+      <AnimatePresence>
+        {filterOpen && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden">
+            <div className="rounded-2xl border p-5 space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Advanced Filters</h3>
+                <button onClick={clearFilters} className="text-[10px] font-bold cursor-pointer bg-transparent border-none"
+                  style={{ color: c.primary }}>Clear All</button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {/* Company */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Company</label>
+                  <select value={filters.company} onChange={e => updateFilter("company", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none cursor-pointer"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }}>
+                    <option value="">All Companies</option>
+                    {companies.map(comp => <option key={comp} value={comp}>{comp}</option>)}
+                  </select>
+                </div>
+                {/* Category */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Category</label>
+                  <input value={filters.category} onChange={e => updateFilter("category", e.target.value)}
+                    placeholder="e.g. Engineering"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Location */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Location</label>
+                  <input value={filters.location} onChange={e => updateFilter("location", e.target.value)}
+                    placeholder="e.g. Bangalore"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Country */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Country</label>
+                  <input value={filters.country} onChange={e => updateFilter("country", e.target.value)}
+                    placeholder="e.g. India"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* State */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>State</label>
+                  <input value={filters.state} onChange={e => updateFilter("state", e.target.value)}
+                    placeholder="e.g. Karnataka"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* City */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>City</label>
+                  <input value={filters.city} onChange={e => updateFilter("city", e.target.value)}
+                    placeholder="e.g. Mumbai"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Mode */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Mode</label>
+                  <select value={filters.mode} onChange={e => updateFilter("mode", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none cursor-pointer"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }}>
+                    <option value="">All Modes</option>
+                    {MODE_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                {/* Employment Type */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Employment Type</label>
+                  <select value={filters.employmentType} onChange={e => updateFilter("employmentType", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none cursor-pointer"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }}>
+                    <option value="">All Types</option>
+                    {EMPLOYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                {/* Experience */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Experience (years)</label>
+                  <input value={filters.experience} onChange={e => updateFilter("experience", e.target.value)}
+                    placeholder="e.g. 3"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Salary Min */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Min Salary</label>
+                  <input value={filters.salaryMin} onChange={e => updateFilter("salaryMin", e.target.value)}
+                    placeholder="e.g. 500000" type="number"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Salary Max */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Max Salary</label>
+                  <input value={filters.salaryMax} onChange={e => updateFilter("salaryMax", e.target.value)}
+                    placeholder="e.g. 2000000" type="number"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Skills */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Skills</label>
+                  <input value={filters.skills} onChange={e => updateFilter("skills", e.target.value)}
+                    placeholder="React, Python"
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }} />
+                </div>
+                {/* Posted Date */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Posted</label>
+                  <select value={filters.postedDate} onChange={e => updateFilter("postedDate", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-[11px] font-semibold border outline-none cursor-pointer"
+                    style={{ background: c.inputBg, borderColor: c.border, color: c.text }}>
+                    <option value="">Any time</option>
+                    <option value="1d">Last 24 hours</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                  </select>
+                </div>
+                {/* Government Toggle */}
+                <div className="space-y-1 flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border w-full transition-all"
+                    style={{
+                      background: filters.isGovernment ? "rgba(16,185,129,0.06)" : c.inputBg,
+                      borderColor: filters.isGovernment ? "rgba(16,185,129,0.25)" : c.border,
+                      color: c.text,
+                    }}>
+                    <input type="checkbox" checked={filters.isGovernment}
+                      onChange={e => updateFilter("isGovernment", e.target.checked)}
+                      className="sr-only" />
+                    <div className="w-4 h-4 rounded border flex items-center justify-center shrink-0"
+                      style={{
+                        background: filters.isGovernment ? "#10b981" : "transparent",
+                        borderColor: filters.isGovernment ? "#10b981" : c.border,
+                      }}>
+                      {filters.isGovernment && <Check size={10} color="#fff" strokeWidth={3} />}
+                    </div>
+                    <span className="text-[11px] font-bold flex items-center gap-1"><Shield size={10} /> Government</span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={applyFilters}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer"
+                  style={{ background: c.primaryGradient, color: "#000" }}>
+                  Apply Filters
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Active Filter Chips */}
+      <AnimatePresence>
+        {activeFilters.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex flex-wrap gap-2">
+            {activeFilters.map(f => (
+              <FilterChip key={f.key} label={f.label} onRemove={() => removeFilter(f.key)} c={c} />
+            ))}
+            <button onClick={clearFilters}
+              className="text-[10px] font-bold underline cursor-pointer bg-transparent border-none self-center"
+              style={{ color: c.primary }}>
+              Clear all
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Job Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} c={c} />)}
+        </div>
+      ) : error ? (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+          className="rounded-2xl border p-6 text-center" style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.15)" }}>
+          <AlertCircle size={24} className="mx-auto mb-3" style={{ color: "#ef4444" }} />
+          <p className="text-xs font-bold text-red-400 mb-1">Failed to load jobs</p>
+          <p className="text-[11px] mb-4" style={{ color: c.textMuted }}>{error}</p>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => { setPage(1); fetchJobs(1, false); }}
+            className="px-4 py-2 rounded-xl text-[11px] font-bold border-none cursor-pointer bg-red-500/10 text-red-400 hover:bg-red-500/20">
+            <RefreshCw size={12} className="inline mr-1.5" /> Retry
+          </motion.button>
+        </motion.div>
+      ) : jobs.length === 0 ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed"
+          style={{ borderColor: c.border }}>
+          <Briefcase size={40} className="mb-4 opacity-30" style={{ color: c.textMuted }} />
+          <h3 className="text-sm font-bold mb-1" style={{ color: c.text }}>No jobs found</h3>
+          <p className="text-[11px] mb-4" style={{ color: c.textMuted }}>Try adjusting your filters or search query</p>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={clearFilters}
+            className="px-4 py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer"
+            style={{ background: c.primaryGradient, color: "#000" }}>
+            Clear Filters
+          </motion.button>
+        </motion.div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>
+              {jobs.length} job{jobs.length !== 1 ? "s" : ""} found
+            </span>
+          </div>
+          <motion.div variants={staggerContainer} initial="hidden" animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {jobs.map(job => (
+              <JobCard key={job.id} job={job} c={c}
+                onOpen={() => openJobDetail(job)}
+                onSave={() => toggleSaveJob(job.id)} />
+            ))}
+          </motion.div>
+          {/* Infinite scroll trigger */}
+          <div ref={loadMoreRef} className="h-4" />
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 size={20} className="animate-spin" style={{ color: c.primary }} />
+            </div>
+          )}
+          {!hasMore && jobs.length > 0 && (
+            <p className="text-center text-[10px] font-bold py-4" style={{ color: c.textMuted }}>
+              All jobs loaded
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: AI MATCH TAB
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderAIMatch = () => (
+    <div className="space-y-6">
+      {/* Sub-tab switcher */}
+      <div className="flex gap-1 p-1 rounded-xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+        {[
+          { id: "jd" as const, label: "JD Compatibility Analyzer", icon: FileText },
+          { id: "recommend" as const, label: "AI Job Recommendations", icon: Target },
+        ].map(tab => {
+          const active = aiMatchSubTab === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setAiMatchSubTab(tab.id)}
+              className="flex-1 py-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none"
+              style={{
+                background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                color: active ? c.primary : c.textMuted,
+              }}>
+              <tab.icon size={14} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={aiMatchSubTab} variants={tabContent} initial="hidden" animate="visible" exit="exit">
+
+          {/* ── JD Analyzer ── */}
+          {aiMatchSubTab === "jd" && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border p-6 space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText size={16} style={{ color: c.primary }} />
+                  <h3 className="text-sm font-bold" style={{ color: c.text }}>JD Compatibility Analyzer</h3>
+                </div>
+                <p className="text-[11px]" style={{ color: c.textMuted }}>
+                  Paste a job description below and our AI will analyze compatibility, identify skill gaps, and suggest resume improvements.
+                </p>
+                <textarea value={jdText} onChange={e => setJdText(e.target.value)} rows={8}
+                  placeholder="Paste the full job description here...&#10;&#10;Include job title, requirements, responsibilities, and qualifications for best analysis."
+                  className="w-full px-4 py-3.5 rounded-xl text-xs font-semibold outline-none transition-all resize-y border"
+                  style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={analyzeJD} disabled={jdAnalyzing || !jdText.trim()}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: c.primaryGradient, color: "#000" }}>
+                  {jdAnalyzing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {jdAnalyzing ? "Analyzing..." : "Analyze Compatibility"}
+                </motion.button>
+              </div>
+
+              {/* Analysis Results */}
+              <AnimatePresence>
+                {jdAnalysis && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    {/* Overall Score */}
+                    <div className="rounded-2xl border p-6 text-center" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: c.textMuted }}>Overall Compatibility</p>
+                      <ScoreBadge score={jdAnalysis.overallScore} size="lg" />
+                      <p className="text-xs mt-3 max-w-md mx-auto leading-relaxed" style={{ color: c.textSec }}>{jdAnalysis.summary}</p>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    <div className="rounded-2xl border p-6 space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Score Breakdown</h3>
+                      <ScoreBar label="Skills Match" score={jdAnalysis.skillsMatch?.matched?.length ? Math.min(100, jdAnalysis.skillsMatch.matched.length * 15) : 0} c={c} />
+                      <ScoreBar label="Experience Match" score={jdAnalysis.experienceMatch?.score || 0} c={c} />
+                      <ScoreBar label="Education Match" score={jdAnalysis.educationMatch?.score || 0} c={c} />
+                      <ScoreBar label="ATS Compatibility" score={jdAnalysis.atsCompatibility?.score || 0} c={c} />
+                    </div>
+
+                    {/* Keywords Analysis */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="rounded-2xl border p-5 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#10b981" }}>
+                          <CheckCircle2 size={12} /> Found Keywords
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(jdAnalysis.skillsMatch?.matched || []).map((kw, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-bold" style={{ background: "rgba(16,185,129,0.08)", color: "#10b981" }}>
+                              {kw}
+                            </span>
+                          ))}
+                          {(!jdAnalysis.skillsMatch?.matched || jdAnalysis.skillsMatch.matched.length === 0) && (
+                            <span className="text-[10px] italic" style={{ color: c.textMuted }}>No keywords found</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-5 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#ef4444" }}>
+                          <AlertCircle size={12} /> Missing Keywords
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(jdAnalysis.skillsMatch?.missing || []).map((kw, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-5 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#f59e0b" }}>
+                          <Lightbulb size={12} /> Suggested Keywords
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(jdAnalysis.skillsMatch?.suggested || []).map((kw, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-bold" style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b" }}>
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Suggestions */}
+                    {jdAnalysis.suggestions?.length > 0 && (
+                      <div className="rounded-2xl border p-6 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: c.primary }}>
+                          <Target size={12} /> Resume Improvement Suggestions
+                        </h3>
+                        <ul className="space-y-2.5">
+                          {jdAnalysis.suggestions.map((s, i) => (
+                            <motion.li key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                              className="flex items-start gap-2.5 text-[11px] leading-relaxed" style={{ color: c.textSec }}>
+                              <ArrowRight size={12} className="shrink-0 mt-0.5" style={{ color: c.primary }} />
+                              {s}
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* ── AI Recommendations ── */}
+          {aiMatchSubTab === "recommend" && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border p-6 space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Target size={16} style={{ color: c.primary }} />
+                  <h3 className="text-sm font-bold" style={{ color: c.text }}>AI Job Recommendations</h3>
+                </div>
+                <p className="text-[11px]" style={{ color: c.textMuted }}>
+                  Enter your skills and experience level to get personalized, AI-ranked job recommendations.
+                </p>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>
+                      <Code2 size={10} className="inline mr-1" style={{ color: c.primary }} /> Your Skills
+                    </label>
+                    <input value={aiSkills} onChange={e => setAiSkills(e.target.value)}
+                      placeholder="e.g. React, Node.js, TypeScript, Python"
+                      className="w-full px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+                      style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+                      onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                      onBlur={e => e.currentTarget.style.borderColor = c.border} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>
+                      <Clock size={10} className="inline mr-1" style={{ color: c.primary }} /> Years of Experience
+                    </label>
+                    <input value={aiExperience} onChange={e => setAiExperience(e.target.value)}
+                      placeholder="e.g. 3" type="number"
+                      className="w-full px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+                      style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+                      onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                      onBlur={e => e.currentTarget.style.borderColor = c.border} />
+                  </div>
+                </div>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={fetchAIRecommendations} disabled={aiRecommendLoading || !aiSkills.trim()}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: c.primaryGradient, color: "#000" }}>
+                  {aiRecommendLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {aiRecommendLoading ? "Generating..." : "Get Recommendations"}
+                </motion.button>
+              </div>
+
+              {aiRecommendLoading && (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 size={24} className="animate-spin mb-3" style={{ color: c.primary }} />
+                  <p className="text-xs font-bold" style={{ color: c.textMuted }}>AI is finding the best matches...</p>
+                </div>
+              )}
+
+              {aiRecommendations.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>
+                    {aiRecommendations.length} personalized recommendation{aiRecommendations.length !== 1 ? "s" : ""}
+                  </p>
+                  <motion.div variants={staggerContainer} initial="hidden" animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {aiRecommendations.map(job => (
+                      <JobCard key={job.id} job={job} c={c}
+                        onOpen={() => openJobDetail(job)}
+                        onSave={() => toggleSaveJob(job.id)} />
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+
+              {!aiRecommendLoading && aiRecommendations.length === 0 && (
+                <div className="text-center py-12">
+                  <Brain size={36} className="mx-auto mb-3 opacity-30" style={{ color: c.textMuted }} />
+                  <p className="text-xs font-bold" style={{ color: c.textMuted }}>Enter your skills to get AI-powered job matches</p>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: REFERRALS TAB
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderReferrals = () => (
+    <div className="space-y-6">
+      {/* Create Referral */}
+      <div className="rounded-2xl border p-6 space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+        <div className="flex items-center gap-2 mb-1">
+          <Users size={16} style={{ color: c.primary }} />
+          <h3 className="text-sm font-bold" style={{ color: c.text }}>New Referral Request</h3>
+        </div>
+        <p className="text-[11px]" style={{ color: c.textMuted }}>
+          Request a referral and get an AI-generated outreach message to send to potential referrers.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>
+              <Building2 size={10} className="inline mr-1" style={{ color: c.primary }} /> Company
+            </label>
+            <input value={refCompany} onChange={e => setRefCompany(e.target.value)}
+              placeholder="e.g. Google"
+              className="w-full px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+              style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+              onFocus={e => e.currentTarget.style.borderColor = c.primary}
+              onBlur={e => e.currentTarget.style.borderColor = c.border} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>
+              <Briefcase size={10} className="inline mr-1" style={{ color: c.primary }} /> Role
+            </label>
+            <input value={refRole} onChange={e => setRefRole(e.target.value)}
+              placeholder="e.g. Software Engineer"
+              className="w-full px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+              style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+              onFocus={e => e.currentTarget.style.borderColor = c.primary}
+              onBlur={e => e.currentTarget.style.borderColor = c.border} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>
+            <FileText size={10} className="inline mr-1" style={{ color: c.primary }} /> Notes (optional)
+          </label>
+          <textarea value={refNotes} onChange={e => setRefNotes(e.target.value)} rows={3}
+            placeholder="Any additional context about why you want this referral..."
+            className="w-full px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all resize-y border"
+            style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+            onFocus={e => e.currentTarget.style.borderColor = c.primary}
+            onBlur={e => e.currentTarget.style.borderColor = c.border} />
+        </div>
+        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          onClick={createReferral} disabled={refCreating || !refCompany.trim() || !refRole.trim()}
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: c.primaryGradient, color: "#000" }}>
+          {refCreating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          {refCreating ? "Creating..." : "Create & Generate Outreach"}
+        </motion.button>
+      </div>
+
+      {/* Referral List */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>
+          Your Referral Requests
+        </h3>
+        {referralsLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border p-5 animate-pulse" style={{ background: c.cardBg, borderColor: c.border }}>
+                <div className="h-4 rounded mb-3" style={{ background: "rgba(255,255,255,0.04)", width: "40%" }} />
+                <div className="h-3 rounded mb-2" style={{ background: "rgba(255,255,255,0.03)", width: "70%" }} />
+                <div className="h-3 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "55%" }} />
+              </div>
+            ))}
+          </div>
+        ) : referrals.length === 0 ? (
+          <div className="text-center py-8 rounded-2xl border border-dashed" style={{ borderColor: c.border }}>
+            <Users size={30} className="mx-auto mb-3 opacity-30" style={{ color: c.textMuted }} />
+            <p className="text-xs font-bold" style={{ color: c.textMuted }}>No referral requests yet</p>
+          </div>
+        ) : (
+          <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
+            {referrals.map(ref => {
+              const st = getStatusColor(ref.status);
+              return (
+                <motion.div key={ref.id} variants={staggerItem} className="rounded-2xl border p-5 space-y-3"
+                  style={{ background: c.cardBg, borderColor: c.border }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold" style={{ color: c.text }}>{ref.role}</h4>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase"
+                          style={{ background: st.bg, color: st.text }}>{ref.status}</span>
+                      </div>
+                      <p className="text-[11px] mt-0.5" style={{ color: c.textSec }}>{ref.company}</p>
+                    </div>
+                    <span className="text-[9px] font-semibold" style={{ color: c.textMuted }}>{timeAgo(ref.createdAt)}</span>
+                  </div>
+                  {ref.notes && <p className="text-[11px]" style={{ color: c.textMuted }}>{ref.notes}</p>}
+                  {ref.outreachMessage && (
+                    <div className="rounded-xl p-4 border relative group" style={{ background: "rgba(245,158,11,0.03)", borderColor: "rgba(245,158,11,0.1)" }}>
+                      <p className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: c.primary }}>
+                        <Sparkles size={9} className="inline mr-1" /> AI Generated Outreach Message
+                      </p>
+                      <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: c.textSec }}>
+                        {ref.outreachMessage}
+                      </p>
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => copyToClipboard(ref.outreachMessage!, ref.id)}
+                        className="absolute top-3 right-3 px-2.5 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1 border-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: c.primaryGradient, color: "#000" }}>
+                        {copiedId === ref.id ? <Check size={10} /> : <Copy size={10} />}
+                        {copiedId === ref.id ? "Copied!" : "Copy"}
+                      </motion.button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: CHALLENGES TAB
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderChallenges = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Trophy size={16} style={{ color: c.primary }} />
+        <h3 className="text-sm font-bold" style={{ color: c.text }}>Hiring Challenges</h3>
+      </div>
+
+      {challengesLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border p-5 animate-pulse space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+              <div className="h-4 rounded" style={{ background: "rgba(255,255,255,0.04)", width: "60%" }} />
+              <div className="h-3 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "45%" }} />
+              <div className="h-3 rounded" style={{ background: "rgba(255,255,255,0.03)", width: "80%" }} />
+            </div>
+          ))}
+        </div>
+      ) : challenges.length === 0 ? (
+        <div className="text-center py-12 rounded-2xl border border-dashed" style={{ borderColor: c.border }}>
+          <Trophy size={36} className="mx-auto mb-3 opacity-30" style={{ color: c.textMuted }} />
+          <p className="text-xs font-bold" style={{ color: c.textMuted }}>No challenges available at the moment</p>
+        </div>
+      ) : (
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {challenges.map(ch => {
+            const diffColor = getDifficultyColor(ch.difficulty);
+            const chStatus = getStatusColor(ch.status);
+            const isActive = ch.status.toLowerCase() === "active" || ch.status.toLowerCase() === "open";
+            return (
+              <motion.div key={ch.id} variants={staggerItem}
+                variants={cardHover} initial="rest" whileHover="hover"
+                className="rounded-2xl border p-5 space-y-3 transition-all"
+                style={{ background: c.cardBg, borderColor: c.border }}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold" style={{ color: c.text }}>{ch.title}</h4>
+                    <p className="text-[11px] mt-0.5" style={{ color: c.textSec }}>{ch.company}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase shrink-0"
+                    style={{ background: chStatus.bg, color: chStatus.text }}>
+                    {ch.status}
+                  </span>
+                </div>
+                {ch.description && (
+                  <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: c.textMuted }}>{ch.description}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {ch.category && (
+                    <span className="px-2 py-1 rounded text-[9px] font-bold border flex items-center gap-1"
+                      style={{ background: "rgba(99,102,241,0.06)", color: "#818cf8", borderColor: "rgba(99,102,241,0.12)" }}>
+                      <Tag size={8} /> {ch.category}
+                    </span>
+                  )}
+                  {ch.difficulty && (
+                    <span className="px-2 py-1 rounded text-[9px] font-bold border flex items-center gap-1"
+                      style={{ background: `${diffColor}15`, color: diffColor, borderColor: `${diffColor}20` }}>
+                      <Flame size={8} /> {ch.difficulty}
+                    </span>
+                  )}
+                  {ch.duration && (
+                    <span className="px-2 py-1 rounded text-[9px] font-bold border flex items-center gap-1"
+                      style={{ background: "rgba(255,255,255,0.02)", color: c.textMuted, borderColor: c.border }}>
+                      <Clock size={8} /> {ch.duration}
+                    </span>
+                  )}
+                  {ch.participants != null && (
+                    <span className="px-2 py-1 rounded text-[9px] font-bold border flex items-center gap-1"
+                      style={{ background: "rgba(255,255,255,0.02)", color: c.textMuted, borderColor: c.border }}>
+                      <Users size={8} /> {ch.participants} joined
+                    </span>
+                  )}
+                </div>
+                {isActive && (
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => toast.success("Participation registered!")}
+                    className="w-full py-2.5 rounded-xl text-[11px] font-bold border-none cursor-pointer flex items-center justify-center gap-1.5"
+                    style={{ background: c.primaryGradient, color: "#000" }}>
+                    <Zap size={12} /> Participate
+                  </motion.button>
+                )}
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: JOB DETAIL MODAL
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderDetailModal = () => {
+    const job = detailData || selectedJob;
+    if (!job) return null;
+    return (
+      <AnimatePresence>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/65 backdrop-blur-[6px]"
+          onClick={() => { setSelectedJob(null); setDetailData(null); }}>
+          <motion.div initial={{ opacity: 0, scale: 0.96, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 15 }}
+            transition={{ type: "spring", damping: 25, stiffness: 280 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl border bg-[#0c0d16] border-white/8 shadow-2xl relative">
+            {/* Top accent */}
+            <div className="sticky top-0 z-10 h-[2px] bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500" />
+
+            {/* Close button */}
+            <button onClick={() => { setSelectedJob(null); setDetailData(null); }}
+              className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors border-none cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", color: "#fff" }}>
+              <X size={15} />
+            </button>
+
+            {detailLoading ? (
+              <div className="p-8 space-y-4">
+                <div className="h-6 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.04)", width: "50%" }} />
+                <div className="h-4 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.03)", width: "30%" }} />
+                <div className="space-y-2 mt-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="h-3 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.02)", width: `${70 + Math.random() * 25}%` }} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 space-y-6">
+                {/* Header */}
+                <div className="flex items-start gap-4">
+                  <CompanyLogo company={job.company} logoUrl={job.logoUrl} size={56} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-lg font-black tracking-tight" style={{ color: "#fff" }}>{job.title}</h2>
+                      {job.isFeatured && (
+                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>
+                          <Star size={8} className="inline mr-0.5" /> Featured
+                        </span>
+                      )}
+                      {job.isGovernment && (
+                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>
+                          <Shield size={8} className="inline mr-0.5" /> Government
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>{job.company}</p>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      {job.location && (
+                        <span className="text-[11px] flex items-center gap-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+                          <MapPin size={11} /> {job.location}
+                        </span>
+                      )}
+                      {job.mode && (
+                        <span className="text-[11px] flex items-center gap-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+                          <Globe size={11} /> {job.mode}
+                        </span>
+                      )}
+                      {job.employmentType && (
+                        <span className="text-[11px] flex items-center gap-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+                          <Briefcase size={11} /> {job.employmentType}
+                        </span>
+                      )}
+                      {job.experience && (
+                        <span className="text-[11px] flex items-center gap-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+                          <Clock size={11} /> {job.experience}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Salary + Posted */}
+                <div className="flex items-center gap-4">
+                  {job.salary && (
+                    <div className="px-4 py-2 rounded-xl border" style={{ background: "rgba(16,185,129,0.06)", borderColor: "rgba(16,185,129,0.12)" }}>
+                      <span className="text-sm font-black" style={{ color: "#10b981" }}>
+                        <DollarSign size={14} className="inline" /> {job.salary}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-[10px] font-semibold" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    Posted {timeAgo(job.postedDate)}
+                  </span>
+                </div>
+
+                {/* Description */}
+                {job.description && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Description</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>{job.description}</p>
+                  </div>
+                )}
+
+                {/* Responsibilities */}
+                {job.responsibilities && job.responsibilities.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Responsibilities</h3>
+                    <ul className="space-y-1.5">
+                      {job.responsibilities.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+                          <CheckCircle2 size={12} className="shrink-0 mt-0.5" style={{ color: "#10b981" }} />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Requirements */}
+                {job.requirements && job.requirements.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Requirements</h3>
+                    <ul className="space-y-1.5">
+                      {job.requirements.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+                          <ArrowRight size={12} className="shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Skills */}
+                {job.skills && job.skills.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Required Skills</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {job.skills.map((s, i) => (
+                        <span key={i} className="px-3 py-1.5 rounded-full text-[10px] font-bold border"
+                          style={{ background: "rgba(245,158,11,0.06)", color: "#f59e0b", borderColor: "rgba(245,158,11,0.15)" }}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Benefits */}
+                {job.benefits && job.benefits.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>Benefits</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {job.benefits.map((b, i) => (
+                        <div key={i} className="flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg border"
+                          style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" }}>
+                          <CheckCircle2 size={10} style={{ color: "#10b981" }} /> {b}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Summary Section */}
+                <div className="rounded-xl border p-5 space-y-3" style={{ background: "rgba(245,158,11,0.03)", borderColor: "rgba(245,158,11,0.1)" }}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#f59e0b" }}>
+                      <Sparkles size={12} /> AI Summary
+                    </h3>
+                    {!aiSummary && !aiSummaryLoading && (
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => fetchAISummary(job.id)}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer"
+                        style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                        Generate
+                      </motion.button>
+                    )}
+                  </div>
+                  {aiSummaryLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <Loader2 size={14} className="animate-spin" style={{ color: "#f59e0b" }} />
+                      <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>Generating AI summary...</span>
+                    </div>
+                  ) : aiSummary ? (
+                    <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>{aiSummary}</p>
+                  ) : (
+                    <p className="text-[11px] italic" style={{ color: "rgba(255,255,255,0.3)" }}>Click generate to get an AI-powered summary of this role.</p>
+                  )}
+                </div>
+
+                {/* Skill Gap Section */}
+                <div className="rounded-xl border p-5 space-y-3" style={{ background: "rgba(99,102,241,0.03)", borderColor: "rgba(99,102,241,0.1)" }}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#818cf8" }}>
+                      <GitBranch size={12} /> Skill Gap Analysis
+                    </h3>
+                    {!skillGap && !skillGapLoading && (
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => fetchSkillGap(job.id)}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer"
+                        style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8" }}>
+                        Analyze
+                      </motion.button>
+                    )}
+                  </div>
+                  {skillGapLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <Loader2 size={14} className="animate-spin" style={{ color: "#818cf8" }} />
+                      <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>Analyzing skill gap...</span>
+                    </div>
+                  ) : skillGap ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: "#10b981" }}>Skills You Have</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {skillGap.matched.map((s, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-bold" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                              <Check size={8} className="inline mr-0.5" />{s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: "#ef4444" }}>Skills to Learn</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {skillGap.missing.map((s, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                              <X size={8} className="inline mr-0.5" />{s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] italic" style={{ color: "rgba(255,255,255,0.3)" }}>Click analyze to compare your skills with this job.</p>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                  {job.applyUrl ? (
+                    <motion.a whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      href={job.applyUrl} target="_blank" rel="noopener noreferrer"
+                      onClick={() => applyToJob(job.id)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold border-none no-underline"
+                      style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", color: "#000" }}>
+                      <ExternalLink size={14} /> Apply Now
+                    </motion.a>
+                  ) : (
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => applyToJob(job.id)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold border-none cursor-pointer"
+                      style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", color: "#000" }}>
+                      <Send size={14} /> Apply
+                    </motion.button>
+                  )}
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={() => toggleSaveJob(job.id)}
+                    className="px-4 py-3 rounded-xl text-xs font-bold border cursor-pointer flex items-center gap-1.5"
+                    style={{
+                      background: job.isSaved ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.03)",
+                      borderColor: job.isSaved ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.06)",
+                      color: job.isSaved ? "#f59e0b" : "rgba(255,255,255,0.5)",
+                    }}>
+                    {job.isSaved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+                    {job.isSaved ? "Saved" : "Save"}
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (job.applyUrl) {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success("Job link copied!");
+                      }
+                    }}
+                    className="px-4 py-3 rounded-xl text-xs font-bold border cursor-pointer flex items-center gap-1.5"
+                    style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                    <Share2 size={14} /> Share
+                  </motion.button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: AI CHAT SIDEBAR
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const renderChatSidebar = () => (
+    <AnimatePresence>
+      {chatOpen && (
+        <>
+          {/* Backdrop on mobile */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9998] bg-black/50 lg:hidden" onClick={() => setChatOpen(false)} />
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            className="fixed right-0 top-0 bottom-0 z-[9999] w-full max-w-sm flex flex-col border-l"
+            style={{ background: isDark ? "#0c0d16" : "#fff", borderColor: c.border }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: c.border }}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                  <Bot size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold" style={{ color: c.text }}>AI Career Assistant</h3>
+                  <p className="text-[9px]" style={{ color: c.textMuted }}>Always here to help</p>
+                </div>
+              </div>
+              <button onClick={() => setChatOpen(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors border-none cursor-pointer"
+                style={{ background: "rgba(255,255,255,0.05)", color: c.textMuted }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Quick Actions */}
+            {chatMessages.length === 0 && (
+              <div className="px-5 py-4 border-b" style={{ borderColor: c.border }}>
+                <p className="text-[9px] font-bold uppercase tracking-wider mb-3" style={{ color: c.textMuted }}>Quick Actions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {AI_QUICK_ACTIONS.map(action => (
+                    <motion.button key={action.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => sendChatMessage(action.prompt)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[10px] font-bold border cursor-pointer text-left transition-all"
+                      style={{ background: c.inputBg, borderColor: c.border, color: c.textSec }}>
+                      <action.icon size={12} style={{ color: c.primary, flexShrink: 0 }} />
+                      {action.label}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {chatMessages.map(msg => (
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[11px] leading-relaxed ${
+                    msg.role === "user" ? "rounded-br-md" : "rounded-bl-md"
+                  }`}
+                    style={{
+                      background: msg.role === "user" ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.03)",
+                      color: c.text,
+                      border: `1px solid ${msg.role === "user" ? "rgba(245,158,11,0.15)" : c.border}`,
+                    }}>
+                    {msg.content}
+                  </div>
+                </motion.div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md border" style={{ background: "rgba(255,255,255,0.03)", borderColor: c.border }}>
+                    <TypingIndicator />
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-5 py-4 border-t shrink-0" style={{ borderColor: c.border }}>
+              <div className="flex gap-2">
+                <input value={chatInput} onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendChatMessage()}
+                  placeholder="Ask about careers, jobs, skills..."
+                  className="flex-1 px-4 py-3 rounded-xl text-xs font-semibold outline-none transition-all border"
+                  style={{ background: c.inputBg, borderColor: c.border, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = c.primary}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => sendChatMessage()} disabled={chatLoading || !chatInput.trim()}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center border-none cursor-pointer disabled:opacity-40"
+                  style={{ background: c.primaryGradient, color: "#000" }}>
+                  <Send size={14} />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAIN RENDER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto py-4 relative z-10">
+
+      {/* Background ambient blobs */}
+      <div className="absolute top-[-100px] left-[-100px] w-72 h-72 rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 rounded-full bg-violet-600/5 blur-[150px] pointer-events-none" />
+
+      {/* ── Header ── */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b"
+        style={{ borderColor: c.border }}>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: c.primary }}>
+              Career Engine
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.1em]">Active</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight" style={{ color: c.text, fontFamily: "var(--font-outfit)" }}>
+            Job Hub
+          </h1>
+          <p className="text-xs" style={{ color: c.textMuted }}>
+            Discover opportunities, leverage AI, and advance your career
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setChatOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+            style={{
+              background: chatOpen ? "rgba(245,158,11,0.08)" : c.cardBg,
+              borderColor: chatOpen ? "rgba(245,158,11,0.25)" : c.border,
+              color: chatOpen ? c.primary : c.textSec,
+            }}>
+            <Bot size={14} />
+            AI Assistant
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* ── Tab Navigation ── */}
+      <div className="flex gap-1 p-1 rounded-xl border overflow-x-auto" style={{ background: c.cardBg, borderColor: c.border }}>
+        {TABS.map(tab => {
+          const active = activeTab === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className="relative flex-1 min-w-[100px] py-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer border-none outline-none"
+              style={{ background: "transparent", color: active ? c.primary : c.textMuted }}>
+              {active && (
+                <motion.div layoutId="jobHubTabUnderline" className="absolute inset-0 rounded-lg"
+                  style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.12)" }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }} />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <tab.icon size={14} />
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab Content ── */}
+      <AnimatePresence mode="wait">
+        <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="visible" exit="exit">
+          {activeTab === "browse" && renderBrowse()}
+          {activeTab === "ai-match" && renderAIMatch()}
+          {activeTab === "referrals" && renderReferrals()}
+          {activeTab === "challenges" && renderChallenges()}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* ── Job Detail Modal ── */}
+      {selectedJob && renderDetailModal()}
+
+      {/* ── AI Chat Sidebar ── */}
+      {renderChatSidebar()}
+    </div>
+  );
+}
+
+export default JobHubView;

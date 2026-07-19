@@ -69,7 +69,7 @@ export default function LoginPage() {
         try {
           const user = JSON.parse(userStr) as PlatformUser;
           saveAuthSession(token, user, true);
-          router.replace(user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+          router.replace("/profile/user");
           return;
         } catch { return; }
       }
@@ -99,7 +99,7 @@ export default function LoginPage() {
     if (existingToken && existingUser) {
       try {
         const u = JSON.parse(existingUser) as { role?: string };
-        router.replace(u.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+        router.replace("/profile/user");
       } catch { /* ignore */ }
     }
 
@@ -131,7 +131,7 @@ export default function LoginPage() {
     try {
       const { data } = await api.post("/auth/login", { email: loginEmail, password: loginPassword, rememberMe });
       saveAuthSession(data.token, data.user, rememberMe);
-      router.push(data.user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+      router.push("/profile/user");
     } catch (err: unknown) {
       setLoginError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Invalid email or password.");
     } finally { setLoginLoading(false); }

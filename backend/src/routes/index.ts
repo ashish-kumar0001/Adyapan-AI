@@ -34,6 +34,8 @@ import { researchRouter } from "./research.routes";
 import { plagiarismRouter } from "./plagiarism.routes";
 import { resumeUploadRouter } from "./resume-upload.routes";
 import { jobRouter } from "./job.routes";
+import { internshipRouter } from "./internship.routes";
+import { jobListingRouter } from "./job-listing.routes";
 import { communityRouter } from "./community.routes";
 import { resumeImprovementRouter } from "./resume-improvement.routes";
 
@@ -82,6 +84,12 @@ apiRouter.use("/plagiarism", plagiarismRouter);
 
 // Job Hub Routes
 apiRouter.use("/job", jobRouter);
+
+// Internship Hub Routes
+apiRouter.use("/internship", internshipRouter);
+
+// Enhanced Job Listing Routes
+apiRouter.use("/job-listing", jobListingRouter);
 
 // Community Routes
 apiRouter.use("/community", communityRouter);
