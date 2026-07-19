@@ -1808,3 +1808,439 @@ What changed? Be specific but concise.`;
     return "Resume updated with AI-powered improvements.";
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COVER LETTER INTELLIGENCE ENGINE (Day 25)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const COVER_LETTER_INTELLIGENCE_SYSTEM = `You are a senior technical recruiter, hiring manager, ATS specialist, and professional career coach with 20+ years of experience at top tech companies. You analyze job descriptions with surgical precision and craft cover letters that feel personally written by the candidate for that specific company and role. Return ONLY valid JSON.`;
+
+export interface ParsedJobDescription {
+  companyName: string;
+  role: string;
+  responsibilities: string[];
+  requiredSkills: string[];
+  preferredSkills: string[];
+  experienceLevel: string;
+  keywords: string[];
+  techStack: string[];
+  softSkills: string[];
+  qualifications: string[];
+  salaryRange: string | null;
+  location: string | null;
+  employmentType: string | null;
+  summary: string;
+}
+
+export interface CompanyInsights {
+  summary: string;
+  values: string[];
+  cultureHighlights: string[];
+  mission: string;
+  toneRecommendation: string;
+  industryPosition: string;
+  keyProducts: string[];
+}
+
+export interface RoleMatchResult {
+  matchScore: number;
+  matchingSkills: string[];
+  missingSkills: string[];
+  partialMatchSkills: string[];
+  recommendedFocusAreas: string[];
+  experienceAlignment: string;
+  educationAlignment: string;
+  projectRelevance: string;
+  overallAssessment: string;
+  strengthsToHighlight: string[];
+  gapsToAddress: string[];
+}
+
+export interface HighlightItem {
+  paragraph: string;
+  source: string;
+  sourceType: "resume_summary" | "project" | "experience" | "skills" | "education" | "achievement" | "inferred";
+  confidence: number;
+}
+
+export interface CoverLetterScoreResult {
+  overallScore: number;
+  personalizationScore: number;
+  atsCompatibility: number;
+  professionalTone: number;
+  grammar: number;
+  roleAlignment: number;
+  impactScore: number;
+  improvements: string[];
+  strengths: string[];
+}
+
+/**
+ * 10. Parse Job Description — extract structured data
+ */
+export async function parseJobDescription(
+  jobDescriptionText: string
+): Promise<ParsedJobDescription> {
+  const prompt = `Analyze this job description with extreme precision and extract ALL structured information:
+
+JOB DESCRIPTION:
+"""
+${jobDescriptionText}
+"""
+
+Extract:
+1. Company name
+2. Exact job role/title
+3. Responsibilities (list each one)
+4. Required skills/technologies
+5. Preferred/nice-to-have skills
+6. Experience level required
+7. Important ATS keywords
+8. Tech stack mentioned
+9. Soft skills required
+10. Qualifications/education
+11. Salary range if mentioned
+12. Location
+13. Employment type
+14. A 1-2 sentence summary of the role
+
+Return as JSON matching this schema exactly.`;
+
+  const fallback: ParsedJobDescription = {
+    companyName: "", role: "", responsibilities: [], requiredSkills: [],
+    preferredSkills: [], experienceLevel: "", keywords: [], techStack: [],
+    softSkills: [], qualifications: [], salaryRange: null, location: null,
+    employmentType: null, summary: "",
+  };
+
+  return generateJSON<ParsedJobDescription>(
+    COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+    { model: MODELS.BALANCED, maxTokens: 8192, responseFormat: { type: "json_object" } },
+    fallback
+  );
+}
+
+/**
+ * 11. Generate Company Insights
+ */
+export async function generateCompanyInsights(
+  companyName: string,
+  jobDescription: string
+): Promise<CompanyInsights> {
+  const prompt = `Generate deep insights about this company based on the job description and your knowledge:
+
+COMPANY: ${companyName}
+JOB DESCRIPTION:
+"""
+${jobDescription}
+"""
+
+Provide:
+1. A 2-3 sentence company summary
+2. 4-6 likely company values (inferred from the JD and your knowledge)
+3. 3-4 culture highlights
+4. Mission statement (inferred)
+5. Recommended tone for a cover letter to this company
+6. Industry positioning
+7. Key products/services mentioned or known
+
+Return as JSON matching this schema exactly.`;
+
+  const fallback: CompanyInsights = {
+    summary: `${companyName} is a technology company focused on innovation and delivering value to its customers.`,
+    values: ["Innovation", "Excellence", "Collaboration", "Impact"],
+    cultureHighlights: ["Fast-paced environment", "Innovation-driven"],
+    mission: "To leverage technology to solve real-world problems and drive industry transformation.",
+    toneRecommendation: "Professional and enthusiastic",
+    industryPosition: "Technology sector",
+    keyProducts: [],
+  };
+
+  return generateJSON<CompanyInsights>(
+    COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+    { model: MODELS.BALANCED, maxTokens: 4096, responseFormat: { type: "json_object" } },
+    fallback
+  );
+}
+
+/**
+ * 12. Generate Role Match Analysis
+ */
+export async function generateRoleMatch(
+  resumeText: string,
+  parsedJD: ParsedJobDescription
+): Promise<RoleMatchResult> {
+  const prompt = `Perform a detailed role match analysis between this candidate's resume and the job requirements.
+
+CANDIDATE RESUME:
+"""
+${resumeText}
+"""
+
+JOB REQUIREMENTS:
+- Company: ${parsedJD.companyName}
+- Role: ${parsedJD.role}
+- Required Skills: ${parsedJD.requiredSkills.join(", ")}
+- Preferred Skills: ${parsedJD.preferredSkills.join(", ")}
+- Responsibilities: ${parsedJD.responsibilities.join("; ")}
+- Experience Level: ${parsedJD.experienceLevel}
+- Tech Stack: ${parsedJD.techStack.join(", ")}
+- Soft Skills: ${parsedJD.softSkills.join(", ")}
+- Qualifications: ${parsedJD.qualifications.join("; ")}
+
+Analyze:
+1. Overall match score (0-100)
+2. Which skills match exactly
+3. Which required skills are missing
+4. Which skills partially match
+5. Recommended focus areas for the cover letter
+6. How well the experience level aligns
+7. How well education aligns
+8. Which projects are most relevant
+9. Overall assessment (2-3 sentences)
+10. Top strengths to highlight in cover letter
+11. Gaps to address or acknowledge
+
+Return as JSON matching this schema exactly.`;
+
+  const fallback: RoleMatchResult = {
+    matchScore: 50, matchingSkills: [], missingSkills: [], partialMatchSkills: [],
+    recommendedFocusAreas: [], experienceAlignment: "", educationAlignment: "",
+    projectRelevance: "", overallAssessment: "", strengthsToHighlight: [], gapsToAddress: [],
+  };
+
+  return generateJSON<RoleMatchResult>(
+    COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+    { model: MODELS.BALANCED, maxTokens: 8192, responseFormat: { type: "json_object" } },
+    fallback
+  );
+}
+
+/**
+ * 13. Score Cover Letter Quality
+ */
+export async function scoreCoverLetter(
+  coverLetterContent: string,
+  resumeText: string,
+  parsedJD: ParsedJobDescription
+): Promise<CoverLetterScoreResult> {
+  const prompt = `Score this cover letter on multiple quality dimensions. Be extremely critical and precise.
+
+COVER LETTER:
+"""
+${coverLetterContent}
+"""
+
+RESUME:
+"""
+${resumeText.substring(0, 2000)}
+"""
+
+JOB:
+- Role: ${parsedJD.role}
+- Company: ${parsedJD.companyName}
+- Required Skills: ${parsedJD.requiredSkills.join(", ")}
+
+Score each dimension (0-100):
+1. Overall Quality
+2. Personalization (how specific to this candidate/company)
+3. ATS Compatibility (keyword usage, formatting)
+4. Professional Tone
+5. Grammar & Language Quality
+6. Role Alignment (match to job requirements)
+7. Impact Score (compelling, memorable)
+
+Also provide:
+- 3-5 improvement suggestions
+- 3-5 strengths
+
+Return as JSON matching this schema exactly.`;
+
+  const fallback: CoverLetterScoreResult = {
+    overallScore: 65, personalizationScore: 60, atsCompatibility: 70,
+    professionalTone: 75, grammar: 85, roleAlignment: 60, impactScore: 55,
+    improvements: [], strengths: [],
+  };
+
+  return generateJSON<CoverLetterScoreResult>(
+    COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+    { model: MODELS.BALANCED, maxTokens: 4096, responseFormat: { type: "json_object" } },
+    fallback
+  );
+}
+
+export interface EnhancedCoverLetterResult {
+  greeting: string;
+  introduction: string;
+  body: string;
+  closing: string;
+  highlights: HighlightItem[];
+}
+
+/**
+ * 14. Enhanced Cover Letter Generator v2 — with highlights and deeper personalization
+ */
+export async function generateCoverLetterV2(
+  resumeText: string,
+  companyName: string,
+  role: string,
+  jobDescription: string,
+  tone: string,
+  letterType: string,
+  length: string,
+  parsedJD: ParsedJobDescription | null,
+  companyInsights: CompanyInsights | null,
+  roleMatch: RoleMatchResult | null,
+  mode: string
+): Promise<EnhancedCoverLetterResult> {
+  const jdContext = parsedJD ? `
+PARSED JOB DATA:
+- Required Skills: ${parsedJD.requiredSkills.join(", ")}
+- Preferred Skills: ${parsedJD.preferredSkills.join(", ")}
+- Responsibilities: ${parsedJD.responsibilities.join("; ")}
+- Tech Stack: ${parsedJD.techStack.join(", ")}
+- Keywords: ${parsedJD.keywords.join(", ")}
+- Soft Skills: ${parsedJD.softSkills.join(", ")}` : "";
+
+  const companyContext = companyInsights ? `
+COMPANY INSIGHTS:
+- Summary: ${companyInsights.summary}
+- Values: ${companyInsights.values.join(", ")}
+- Culture: ${companyInsights.cultureHighlights.join("; ")}
+- Mission: ${companyInsights.mission}
+- Tone: ${companyInsights.toneRecommendation}` : "";
+
+  const matchContext = roleMatch ? `
+ROLE MATCH ANALYSIS:
+- Match Score: ${roleMatch.matchScore}%
+- Matching Skills: ${roleMatch.matchingSkills.join(", ")}
+- Missing Skills: ${roleMatch.missingSkills.join(", ")}
+- Strengths to Highlight: ${roleMatch.strengthsToHighlight.join("; ")}
+- Recommended Focus: ${roleMatch.recommendedFocusAreas.join("; ")}` : "";
+
+  const lengthGuide = length === "short" ? "Write a concise 200-250 word cover letter (3-4 paragraphs total)."
+    : length === "detailed" ? "Write a comprehensive 400-500 word cover letter (5-6 paragraphs, with detailed project/skill discussions)."
+    : "Write a standard 300-350 word cover letter (4-5 paragraphs).";
+
+  const modeInstructions: Record<string, string> = {
+    "Software Engineer": "Emphasize problem-solving skills, coding projects, system design understanding, and full-stack capabilities.",
+    "Backend Developer": "Focus on API design, database expertise, system architecture, scalability, and server-side technologies.",
+    "Frontend Developer": "Highlight UI/UX sensibility, responsive design, modern frameworks, performance optimization, and user-facing projects.",
+    "Full Stack Developer": "Balance frontend and backend skills, end-to-end project delivery, and versatility across the stack.",
+    "AI Engineer": "Emphasize machine learning projects, model training/deployment, data pipeline experience, and AI/ML frameworks.",
+    "ML Engineer": "Focus on ML model development, experimentation, MLOps, data engineering, and production ML systems.",
+    "Data Analyst": "Highlight analytical skills, data visualization, SQL/Python expertise, business insights generation, and reporting.",
+    "Data Scientist": "Focus on statistical analysis, ML modeling, research methodology, and data-driven decision making.",
+    "DevOps": "Emphasize CI/CD pipelines, cloud infrastructure, automation, monitoring, and deployment expertise.",
+    "QA Engineer": "Focus on testing methodologies, automation frameworks, quality assurance processes, and attention to detail.",
+    "Internship": "Show eagerness to learn, academic projects, relevant coursework, and potential to grow. Be humble but enthusiastic.",
+    "Fresh Graduate": "Emphasize academic achievements, projects, internships, certifications, and quick learning ability.",
+    "Career Switch": "Focus on transferable skills, how previous experience adds value, motivation for the switch, and relevant new skills acquired.",
+    "Custom": "Tailor the content based on the role requirements and candidate's strongest matches.",
+  };
+
+  const prompt = `Write a highly personalized, ATS-optimized cover letter for this candidate.
+
+CANDIDATE RESUME:
+"""
+${resumeText}
+"""
+${jdContext}
+${companyContext}
+${matchContext}
+
+TARGET COMPANY: ${companyName}
+TARGET ROLE: ${role}
+TONE: ${tone}
+LETTER TYPE: ${letterType}
+MODE: ${mode}
+LENGTH: ${lengthGuide}
+
+ROLE-SPECIFIC INSTRUCTIONS: ${modeInstructions[mode] || modeInstructions["Custom"]}
+
+CRITICAL RULES:
+- NEVER invent experience, achievements, companies, technologies, certifications, or metrics
+- Reference SPECIFIC projects, skills, and experiences from the resume
+- Address the company by name and reference their values/mission when available
+- Match specific skills from the resume to requirements from the job
+- Use quantified achievements when available in the resume
+- Avoid ALL generic phrases like "I am a hard worker", "I am passionate about technology", "I would be a great fit"
+- Each paragraph must contain at least one specific reference to the candidate's actual background
+- The opening must mention the specific role and demonstrate knowledge of the company
+- The body must connect 2-3 specific resume items to 2-3 specific job requirements
+- The closing must reference something specific about the company
+
+Return JSON with:
+{
+  "greeting": "Salutation",
+  "introduction": "Opening paragraph",
+  "body": "Body paragraph(s)",
+  "closing": "Closing paragraph",
+  "highlights": [
+    {
+      "paragraph": "introduction|body|closing",
+      "source": "What specific resume element this references",
+      "sourceType": "resume_summary|project|experience|skills|education|achievement|inferred",
+      "confidence": 0.95
+    }
+  ]
+}`;
+
+  const fallback: EnhancedCoverLetterResult = {
+    greeting: `Dear Hiring Manager,`,
+    introduction: `I am writing to express my interest in the ${role} position at ${companyName}.`,
+    body: `With my background and experience, I am well-positioned to contribute to your team.`,
+    closing: `Thank you for considering my application. I look forward to discussing how I can contribute to ${companyName}.`,
+    highlights: [],
+  };
+
+  return generateJSON<EnhancedCoverLetterResult>(
+    COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+    { model: MODELS.BALANCED, maxTokens: 8192, responseFormat: { type: "json_object" } },
+    fallback
+  );
+}
+
+/**
+ * 15. Generate Improvement Suggestions for existing cover letter
+ */
+export async function generateCoverLetterImprovements(
+  coverLetterContent: string,
+  resumeText: string,
+  parsedJD: ParsedJobDescription | null
+): Promise<string[]> {
+  const prompt = `Review this cover letter and suggest specific, actionable improvements.
+
+COVER LETTER:
+"""
+${coverLetterContent}
+"""
+
+RESUME:
+"""
+${resumeText.substring(0, 2000)}
+"""
+
+${parsedJD ? `JOB REQUIREMENTS: ${parsedJD.requiredSkills.join(", ")}` : ""}
+
+Provide 5-7 specific improvement suggestions. Each should be actionable and reference either the resume or job requirements. Do NOT give generic advice.
+
+Return as a JSON array of strings: ["suggestion1", "suggestion2", ...]`;
+
+  const fallback: string[] = [
+    "Add more quantified achievements from your resume",
+    "Reference specific company values or products",
+    "Strengthen the opening paragraph with a hook",
+  ];
+
+  try {
+    const result = await generateJSON<string[]>(
+      COVER_LETTER_INTELLIGENCE_SYSTEM, prompt,
+      { model: MODELS.FAST, maxTokens: 2048, responseFormat: { type: "json_object" } },
+      fallback
+    );
+    return Array.isArray(result) ? result : fallback;
+  } catch {
+    return fallback;
+  }
+}

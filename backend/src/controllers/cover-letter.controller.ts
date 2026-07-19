@@ -1,8 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { httpError } from "../utils/httpError";
 import {
-  generateCoverLetterText,
+  generateCoverLetterV2,
   generateCoverLetterChat,
+  parseJobDescription,
+  generateCompanyInsights,
+  generateRoleMatch,
+  scoreCoverLetter,
+  generateCoverLetterImprovements,
 } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
@@ -51,19 +56,14 @@ ${languages.filter(Boolean).join(", ")}
 }
 
 /**
- * 1. Generate Cover Letter from resume + job details
+ * 1. Generate Cover Letter (Enhanced v2)
  */
 export async function generateCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
     const {
-      resumeId,
-      companyName,
-      role,
-      jobDescription,
-      tone,
-      letterType,
+      resumeId, companyName, role, jobDescription, tone, letterType,
+      length, mode, parsedJD, companyInsights, roleMatch,
     } = req.body;
 
     if (!companyName) throw httpError(400, "Company name is required");
@@ -71,7 +71,6 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
 
     const userPrisma = await getUserPrismaFromRequest(req);
 
-    // Get resume data
     let resumeText = "";
     if (resumeId) {
       const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
@@ -80,14 +79,13 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
 
     const selectedTone = tone || "Professional";
     const selectedType = letterType || "Full-Time";
+    const selectedLength = length || "standard";
+    const selectedMode = mode || "Custom";
 
-    const result = await generateCoverLetterText(
-      resumeText,
-      companyName,
-      role,
-      jobDescription || "",
-      selectedTone,
-      selectedType
+    const result = await generateCoverLetterV2(
+      resumeText, companyName, role, jobDescription || "", selectedTone,
+      selectedType, selectedLength, parsedJD || null, companyInsights || null,
+      roleMatch || null, selectedMode
     );
 
     const content = [result.greeting, result.introduction, result.body, result.closing]
@@ -107,6 +105,9 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
         body: result.body,
         closing: result.closing,
         content,
+        letterName: `${role} at ${companyName}`,
+        parsedKeywords: parsedJD?.keywords || [],
+        highlightMap: result.highlights || [],
       },
     });
 
@@ -117,12 +118,107 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
 }
 
 /**
- * 2. AI Chat — refine existing cover letter
+ * 2. Parse Job Description
+ */
+export async function parseJDEndpoint(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { jobDescription } = req.body;
+    if (!jobDescription) throw httpError(400, "Job description text is required");
+
+    const parsed = await parseJobDescription(jobDescription);
+    res.json({ success: true, parsed });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 3. Company Insights
+ */
+export async function getCompanyInsights(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { companyName, jobDescription } = req.body;
+    if (!companyName) throw httpError(400, "Company name is required");
+
+    const insights = await generateCompanyInsights(companyName, jobDescription || "");
+    res.json({ success: true, insights });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 4. Role Match Analysis
+ */
+export async function getRoleMatch(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+    const { resumeId, parsedJD } = req.body;
+
+    if (!parsedJD) throw httpError(400, "Parsed job description is required");
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    let resumeText = "";
+    if (resumeId) {
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (resume) resumeText = serializeResumeToText(resume);
+    }
+
+    const match = await generateRoleMatch(resumeText, parsedJD);
+    res.json({ success: true, match });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 5. Score Cover Letter Quality
+ */
+export async function scoreCoverLetterEndpoint(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+    const { coverLetterId, resumeId, parsedJD } = req.body;
+
+    if (!coverLetterId) throw httpError(400, "coverLetterId is required");
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
+      where: { id: coverLetterId, userId },
+    });
+    if (!letter) throw httpError(404, "Cover letter not found");
+
+    let resumeText = "";
+    if (resumeId) {
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (resume) resumeText = serializeResumeToText(resume);
+    }
+
+    const defaultJD = { companyName: letter.companyName, role: letter.role, requiredSkills: [], preferredSkills: [], responsibilities: [], experienceLevel: "", keywords: [], techStack: [], softSkills: [], qualifications: [], salaryRange: null, location: null, employmentType: null, summary: "" };
+    const scores = await scoreCoverLetter(letter.content, resumeText, parsedJD || defaultJD);
+
+    const updated = await userPrisma.coverLetter.update({
+      where: { id: coverLetterId },
+      data: {
+        qualityScore: scores.overallScore,
+        personalizationScore: scores.personalizationScore,
+        atsScore: scores.atsCompatibility,
+        roleMatchScore: scores.roleAlignment,
+      },
+    });
+
+    res.json({ success: true, scores, coverLetter: updated });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 6. AI Chat — refine existing cover letter
  */
 export async function chatCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
     const { coverLetterId, message } = req.body;
     if (!message) throw httpError(400, "Message is required");
 
@@ -132,7 +228,6 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
     });
     if (!letter) throw httpError(404, "Cover letter not found");
 
-    // Fetch resume text for context
     let resumeText = "";
     if (letter.resumeId) {
       const resume = await userPrisma.resume.findFirst({ where: { id: letter.resumeId, userId } });
@@ -141,18 +236,14 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
 
     const result = await generateCoverLetterChat(
       resumeText,
-      {
-        greeting: letter.greeting || "",
-        introduction: letter.introduction || "",
-        body: letter.body || "",
-        closing: letter.closing || "",
-      },
+      { greeting: letter.greeting || "", introduction: letter.introduction || "", body: letter.body || "", closing: letter.closing || "" },
       message
     );
 
     const content = [result.greeting, result.introduction, result.body, result.closing]
       .filter(Boolean).join("\n\n");
 
+    const prevVersion = letter.versionNumber || 1;
     const updated = await userPrisma.coverLetter.update({
       where: { id: coverLetterId },
       data: {
@@ -161,6 +252,7 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
         body: result.body,
         closing: result.closing,
         content,
+        versionNumber: prevVersion + 1,
       },
     });
 
@@ -171,13 +263,12 @@ export async function chatCoverLetter(req: Request, res: Response, next: NextFun
 }
 
 /**
- * 3. Save/Update cover letter
+ * 7. Save/Update cover letter
  */
 export async function saveCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
-    const { coverLetterId, greeting, introduction, body, closing } = req.body;
+    const { coverLetterId, greeting, introduction, body, closing, letterName, isFavorite } = req.body;
     if (!coverLetterId) throw httpError(400, "coverLetterId is required");
 
     const userPrisma = await getUserPrismaFromRequest(req);
@@ -186,8 +277,7 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
     });
     if (!letter) throw httpError(404, "Cover letter not found");
 
-    const content = [greeting, introduction, body, closing]
-      .filter(Boolean).join("\n\n");
+    const content = [greeting, introduction, body, closing].filter(Boolean).join("\n\n");
 
     const updated = await userPrisma.coverLetter.update({
       where: { id: coverLetterId },
@@ -197,6 +287,8 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
         body: body ?? letter.body,
         closing: closing ?? letter.closing,
         content,
+        letterName: letterName ?? letter.letterName,
+        isFavorite: isFavorite ?? letter.isFavorite,
       },
     });
 
@@ -207,18 +299,48 @@ export async function saveCoverLetter(req: Request, res: Response, next: NextFun
 }
 
 /**
- * 4. List User Cover Letters
+ * 8. Get Improvement Suggestions
+ */
+export async function getImprovements(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+    const { coverLetterId, resumeId } = req.body;
+
+    if (!coverLetterId) throw httpError(400, "coverLetterId is required");
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
+      where: { id: coverLetterId, userId },
+    });
+    if (!letter) throw httpError(404, "Cover letter not found");
+
+    let resumeText = "";
+    if (resumeId) {
+      const resume = await userPrisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (resume) resumeText = serializeResumeToText(resume);
+    }
+
+    const improvements = await generateCoverLetterImprovements(
+      letter.content, resumeText, null
+    );
+
+    res.json({ success: true, improvements });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 9. List User Cover Letters
  */
 export async function listCoverLetters(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
     const userPrisma = await getUserPrismaFromRequest(req);
     const coverLetters = await userPrisma.coverLetter.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
-
     res.json({ success: true, coverLetters });
   } catch (error) {
     next(error);
@@ -226,21 +348,16 @@ export async function listCoverLetters(req: Request, res: Response, next: NextFu
 }
 
 /**
- * 5. Get Specific Cover Letter
+ * 10. Get Specific Cover Letter
  */
 export async function getCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
     const userPrisma = await getUserPrismaFromRequest(req);
     const coverLetter = await userPrisma.coverLetter.findFirst({
       where: { id: req.params.id as string, userId },
     });
-
-    if (!coverLetter) {
-      throw httpError(404, "Cover letter not found");
-    }
-
+    if (!coverLetter) throw httpError(404, "Cover letter not found");
     res.json({ success: true, coverLetter });
   } catch (error) {
     next(error);
@@ -248,25 +365,81 @@ export async function getCoverLetter(req: Request, res: Response, next: NextFunc
 }
 
 /**
- * 6. Delete Cover Letter
+ * 11. Delete Cover Letter
  */
 export async function deleteCoverLetter(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = requireUserId(req);
-
     const letterId = req.params.id as string;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
+      where: { id: letterId, userId },
+    });
+    if (!letter) throw httpError(404, "Cover letter not found");
+    await userPrisma.coverLetter.delete({ where: { id: letterId } });
+    res.json({ success: true, message: "Cover letter deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
 
+/**
+ * 12. Duplicate Cover Letter
+ */
+export async function duplicateCoverLetter(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+    const letterId = req.params.id as string;
     const userPrisma = await getUserPrismaFromRequest(req);
     const letter = await userPrisma.coverLetter.findFirst({
       where: { id: letterId, userId },
     });
     if (!letter) throw httpError(404, "Cover letter not found");
 
-    await userPrisma.coverLetter.delete({
-      where: { id: letterId },
+    const duplicate = await userPrisma.coverLetter.create({
+      data: {
+        userId,
+        companyName: letter.companyName,
+        role: letter.role,
+        content: letter.content,
+        resumeId: letter.resumeId,
+        jobDescription: letter.jobDescription,
+        tone: letter.tone,
+        letterType: letter.letterType,
+        greeting: letter.greeting,
+        introduction: letter.introduction,
+        body: letter.body,
+        closing: letter.closing,
+        letterName: `${letter.letterName || letter.role + " at " + letter.companyName} (Copy)`,
+        versionNumber: 1,
+      },
     });
 
-    res.json({ success: true, message: "Cover letter deleted successfully" });
+    res.status(201).json({ success: true, coverLetter: duplicate });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 13. Toggle Favorite
+ */
+export async function toggleFavorite(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = requireUserId(req);
+    const letterId = req.params.id as string;
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const letter = await userPrisma.coverLetter.findFirst({
+      where: { id: letterId, userId },
+    });
+    if (!letter) throw httpError(404, "Cover letter not found");
+
+    const updated = await userPrisma.coverLetter.update({
+      where: { id: letterId },
+      data: { isFavorite: !letter.isFavorite },
+    });
+
+    res.json({ success: true, coverLetter: updated });
   } catch (error) {
     next(error);
   }

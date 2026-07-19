@@ -77,23 +77,33 @@ model ResumeAnalysis {
 }
 
 model CoverLetter {
-  id             String   @id @default(cuid())
-  userId         String   @map("user_id")
-  companyName    String   @map("company_name")
-  role           String
-  content        String
-  createdAt      DateTime @default(now()) @map("created_at")
-  resumeId       String?  @map("resume_id")
-  jobDescription String?  @map("job_description")
-  tone           String   @default("Professional")
-  letterType     String   @default("Full-Time") @map("letter_type")
-  greeting       String?
-  introduction   String?
-  body           String?
-  closing        String?
-  pdfUrl         String?  @map("pdf_url")
-  docxUrl        String?  @map("docx_url")
-  resume         Resume?  @relation(fields: [resumeId], references: [id])
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  companyName     String    @map("company_name")
+  role            String
+  content         String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  resumeId        String?   @map("resume_id")
+  jobDescription  String?   @map("job_description")
+  tone            String    @default("Professional")
+  letterType      String    @default("Full-Time") @map("letter_type")
+  greeting        String?
+  introduction    String?
+  body            String?
+  closing         String?
+  pdfUrl          String?   @map("pdf_url")
+  docxUrl         String?   @map("docx_url")
+  qualityScore    Int?      @map("quality_score")
+  roleMatchScore  Int?      @map("role_match_score")
+  atsScore        Int?      @map("ats_score")
+  personalizationScore Int? @map("personalization_score")
+  versionNumber   Int       @default(1) @map("version_number")
+  isFavorite      Boolean   @default(false) @map("is_favorite")
+  letterName      String?   @map("letter_name")
+  parsedKeywords  String[]  @default([]) @map("parsed_keywords")
+  highlightMap    Json?     @map("highlight_map")
+  resume          Resume?   @relation(fields: [resumeId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
