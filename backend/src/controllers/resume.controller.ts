@@ -8,6 +8,8 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } fro
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 import { generateResumePdf, ResumeData } from "../services/resume-pdf.service";
+import type { JSONResume } from "../types/json-resume";
+import { jsonResumeToLegacy } from "../utils/resume-converter";
 
 const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null;
 
@@ -53,7 +55,7 @@ export async function createResume(req: Request, res: Response, next: NextFuncti
   try {
     const userId = requireUserId(req);
 
-    const { title, template, personalInfo, education, experience, projects, skills, certifications } = req.body;
+    const { title, template, resumeData } = req.body;
 
     if (!title) throw httpError(400, "Resume title is required");
 
@@ -63,12 +65,7 @@ export async function createResume(req: Request, res: Response, next: NextFuncti
         userId,
         title,
         template: template ?? "Modern",
-        personalInfo: personalInfo ?? {},
-        education: education ?? [],
-        experience: experience ?? [],
-        projects: projects ?? [],
-        skills: skills ?? [],
-        certifications: certifications ?? [],
+        resumeData: resumeData ?? { basics: {} },
       },
     });
 
@@ -123,19 +120,14 @@ export async function updateResume(req: Request, res: Response, next: NextFuncti
     const userPrisma = await getUserPrismaFromRequest(req);
     await getResumeForUser(resumeId, userId, userPrisma);
 
-    const { title, template, personalInfo, education, experience, projects, skills, certifications } = req.body;
+    const { title, template, resumeData } = req.body;
 
     const updated = await userPrisma.resume.update({
       where: { id: resumeId },
       data: {
         ...(title && { title }),
         ...(template && { template }),
-        ...(personalInfo !== undefined && { personalInfo }),
-        ...(education !== undefined && { education }),
-        ...(experience !== undefined && { experience }),
-        ...(projects !== undefined && { projects }),
-        ...(skills !== undefined && { skills }),
-        ...(certifications !== undefined && { certifications }),
+        ...(resumeData !== undefined && { resumeData }),
       },
     });
 
@@ -326,17 +318,20 @@ export async function exportResumePdf(req: Request, res: Response, next: NextFun
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
 
+    const jr = (resume.resumeData as unknown as JSONResume) ?? { basics: {} };
+    const legacy = jsonResumeToLegacy(jr);
+
     const resumeData: ResumeData = {
       title: resume.title,
-      template: (resume as any).template || "modern",
-      personalInfo: resume.personalInfo || {},
-      education: (resume.education as any[]) || [],
-      experience: (resume.experience as any[]) || [],
-      projects: (resume.projects as any[]) || [],
-      skills: (resume.skills as string[]) || [],
-      certifications: (resume.certifications as any[]) || [],
-      achievements: (resume.achievements as string[]) || [],
-      languages: (resume.languages as string[]) || [],
+      template: resume.template || "modern",
+      personalInfo: legacy.personalInfo ?? {},
+      education: legacy.education ?? [],
+      experience: legacy.experience ?? [],
+      projects: legacy.projects ?? [],
+      skills: legacy.skills ?? [],
+      certifications: legacy.certifications ?? [],
+      achievements: legacy.achievements ?? [],
+      languages: legacy.languages ?? [],
     };
 
     const pdfBuffer = await generateResumePdf(resumeData);
@@ -359,19 +354,22 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
 
-    const p = resume.personalInfo as any;
-    const edu = (resume.education as any[]) || [];
-    const exp = (resume.experience as any[]) || [];
-    const proj = (resume.projects as any[]) || [];
-    const skills = (resume.skills as string[]) || [];
-    const certs = (resume.certifications as any[]) || [];
-    const achievements = (resume.achievements as string[]) || [];
-    const languages = (resume.languages as string[]) || [];
+    const jr = (resume.resumeData as unknown as JSONResume) ?? { basics: {} };
+    const legacy = jsonResumeToLegacy(jr);
+
+    const p = legacy.personalInfo ?? {};
+    const edu = legacy.education ?? [];
+    const exp = legacy.experience ?? [];
+    const proj = legacy.projects ?? [];
+    const skills = legacy.skills ?? [];
+    const certs = legacy.certifications ?? [];
+    const achievements = legacy.achievements ?? [];
+    const languages = legacy.languages ?? [];
 
     const children: Paragraph[] = [];
 
     // Title Header
-    const fullName = p.fullName || p.name || "Candidate Name";
+    const fullName = String(p.fullName || p.name || "Candidate Name");
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,

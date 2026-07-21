@@ -12,17 +12,10 @@ model Resume {
   userId         String           @map("user_id")
   title          String
   template       String
-  personalInfo   Json             @map("personal_info")
-  education      Json
-  experience     Json
-  projects       Json
-  skills         Json
-  certifications Json
+  resumeData     Json             @map("resume_data")
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
-  achievements   Json?
   docxUrl        String?          @map("docx_url")
-  languages      Json?
   pdfUrl         String?          @map("pdf_url")
   targetCompany  String?          @map("target_company")
   atsReports         ATSReport[]

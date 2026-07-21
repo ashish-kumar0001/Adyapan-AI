@@ -14,6 +14,7 @@ import {
 } from "../lib/ai/gemini";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
+import { extractLegacyFromRecord } from "../utils/resume-converter";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function clampScore(val: any): number {
@@ -43,14 +44,16 @@ export async function generateFullLinkedInProfile(req: Request, res: Response, n
     if (resumeId) {
       const resume = await userPrisma.resume.findUnique({ where: { id: resumeId } });
       if (resume) {
+        const legacy = extractLegacyFromRecord(resume);
+        const p = legacy.personalInfo || {};
         resumeText = [
-          resume.personalInfo ? `Name: ${(resume.personalInfo as any)?.fullName || ""}` : "",
-          resume.summary || "",
-          resume.experience ? JSON.stringify(resume.experience) : "",
-          resume.projects ? JSON.stringify(resume.projects) : "",
-          resume.skills ? JSON.stringify(resume.skills) : "",
-          resume.education ? JSON.stringify(resume.education) : "",
-          resume.certifications ? JSON.stringify(resume.certifications) : "",
+          p.fullName ? `Name: ${p.fullName}` : "",
+          legacy.summary || "",
+          legacy.experience?.length ? JSON.stringify(legacy.experience) : "",
+          legacy.projects?.length ? JSON.stringify(legacy.projects) : "",
+          legacy.skills?.length ? JSON.stringify(legacy.skills) : "",
+          legacy.education?.length ? JSON.stringify(legacy.education) : "",
+          legacy.certifications?.length ? JSON.stringify(legacy.certifications) : "",
         ].filter(Boolean).join("\n");
         // Get ATS report for this builder resume
         atsReport = await userPrisma.aTSReport.findFirst({

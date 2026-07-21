@@ -12,6 +12,7 @@ import {
   Monitor, Trophy, RefreshCw, AlertCircle, Star, Target,
 } from "lucide-react";
 import type { ResumeHubViewType } from "@/types/resume";
+import { formStateToJSONResume, jsonResumeToFormState } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
 
 interface ResumeBuilderViewProps {
@@ -115,15 +116,30 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
           const res = await api.get(`/resume/${pendingId}`);
           if (res.data?.success && res.data?.resume) {
             const r = res.data.resume;
-            if (r.personalInfo) setPersonalInfo(r.personalInfo);
-            if (r.summary) setSummary(r.summary);
-            if (r.education?.length) setEducation(r.education);
-            if (r.experience?.length) setExperience(r.experience);
-            if (r.projects?.length) setProjects(r.projects);
-            if (r.skills?.length) setSkills(r.skills);
-            if (r.certifications?.length) setCertifications(r.certifications);
-            if (r.achievements?.length) setAchievements(r.achievements);
-            if (r.languages?.length) setLanguages(r.languages);
+            // Convert JSON Resume format to form state
+            if (r.resumeData) {
+              const form = jsonResumeToFormState(r.resumeData);
+              setPersonalInfo({ ...form.personalInfo, linkedin: "", github: "", portfolio: "" });
+              setSummary(form.summary);
+              if (form.education.length) setEducation(form.education);
+              if (form.experience.length) setExperience(form.experience);
+              if (form.projects.length) setProjects(form.projects);
+              if (form.skills.length) setSkills(form.skills);
+              if (form.certifications.length) setCertifications(form.certifications);
+              if (form.achievements.length) setAchievements(form.achievements);
+              if (form.languages.length) setLanguages(form.languages);
+            } else if (r.personalInfo) {
+              // Legacy format fallback
+              setPersonalInfo(r.personalInfo);
+              if (r.summary) setSummary(r.summary);
+              if (r.education?.length) setEducation(r.education);
+              if (r.experience?.length) setExperience(r.experience);
+              if (r.projects?.length) setProjects(r.projects);
+              if (r.skills?.length) setSkills(r.skills);
+              if (r.certifications?.length) setCertifications(r.certifications);
+              if (r.achievements?.length) setAchievements(r.achievements);
+              if (r.languages?.length) setLanguages(r.languages);
+            }
             setResumeId(pendingId);
             setScreen(4);
             showToast("Resume loaded with applied improvements!");
@@ -177,12 +193,22 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
     setGenStep(1);
     try { const r = await api.post("/resume/optimize-resume", { resumeJson: snapJSON, targetCompany: snap.company }); if (r.data.success && r.data.resume) { const d = r.data.resume; if (d.summary) setSummary(d.summary); if (d.experience) setExperience(d.experience || snap.experience); if (d.projects) setProjects(d.projects || snap.projects); if (d.skills) setSkills(d.skills || snap.skills); } } catch {}
     setGenStep(3);
-    try { const r = await api.post("/resume/create", { title: `My ${snap.profession} Resume`, template: snap.resumeStyle, ...snapJSON, targetCompany: snap.company }); if (r.data.success && r.data.resume) setResumeId(r.data.resume.id); } catch {}
+    try {
+      const jr = formStateToJSONResume(snapJSON);
+      const r = await api.post("/resume/create", { title: `My ${snap.profession} Resume`, template: snap.resumeStyle, resumeData: jr, targetCompany: snap.company });
+      if (r.data.success && r.data.resume) setResumeId(r.data.resume.id);
+    } catch {}
     setGenStep(4); setGenerating(false); setScreen(4);
   };
   const handleSaveDraft = async () => {
     setSaving(true);
-    try { const payload = { title: `My ${setup.profession} Resume`, template: setup.resumeStyle, ...resumeJSON, targetCompany: setup.company, careerLevel: setup.careerLevel }; if (resumeId) await api.put(`/resume/update/${resumeId}`, payload); else { const r = await api.post("/resume/create", payload); if (r.data?.success && r.data.resume) setResumeId(r.data.resume.id); } showToast("Draft saved!"); } catch { showToast("Save failed"); } finally { setSaving(false); }
+    try {
+      const jr = formStateToJSONResume(resumeJSON);
+      const payload = { title: `My ${setup.profession} Resume`, template: setup.resumeStyle, resumeData: jr, targetCompany: setup.company };
+      if (resumeId) await api.put(`/resume/update/${resumeId}`, payload);
+      else { const r = await api.post("/resume/create", payload); if (r.data?.success && r.data.resume) setResumeId(r.data.resume.id); }
+      showToast("Draft saved!");
+    } catch { showToast("Save failed"); } finally { setSaving(false); }
   };
   const handleExport = async (type: "pdf" | "docx") => {
     if (!resumeId) await handleSaveDraft();

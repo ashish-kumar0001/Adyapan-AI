@@ -3,6 +3,7 @@ import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 import { generateCareerRoadmap } from "../lib/ai/career-ai";
 import { httpError } from "../utils/httpError";
+import { extractLegacyFromRecord } from "../utils/resume-converter";
 
 export async function generateRoadmap(req: Request, res: Response, next: NextFunction) {
   try {
@@ -112,17 +113,20 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         skillsScore: r.skillsScore,
         educationScore: r.educationScore,
       })),
-      resumeData: resumes.length > 0 ? {
-        hasResume: true,
-        personalInfo: resumes[0].personalInfo,
-        skills: resumes[0].skills,
-        experience: resumes[0].experience,
-        projects: resumes[0].projects,
-        education: resumes[0].education,
-        certifications: resumes[0].certifications,
-        achievements: resumes[0].achievements,
-        languages: resumes[0].languages,
-      } : { hasResume: false },
+      resumeData: resumes.length > 0 ? (() => {
+        const legacy = extractLegacyFromRecord(resumes[0]);
+        return {
+          hasResume: true,
+          personalInfo: legacy.personalInfo,
+          skills: legacy.skills,
+          experience: legacy.experience,
+          projects: legacy.projects,
+          education: legacy.education,
+          certifications: legacy.certifications,
+          achievements: legacy.achievements,
+          languages: legacy.languages,
+        };
+      })() : { hasResume: false },
       linkedinData: linkedinReports.length > 0 ? {
         score: avgLinkedinScore,
         headline: linkedinReports[0].headline,

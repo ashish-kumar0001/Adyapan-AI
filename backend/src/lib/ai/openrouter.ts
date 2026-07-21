@@ -116,77 +116,96 @@ export async function callAIRobust(
 
   const errors: string[] = [];
 
+  const MAX_RETRIES = 2;
+
   for (const provider of providers) {
-    try {
-      const body: Record<string, unknown> = {
-        model: provider.model,
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 4096,
-      };
+    let lastError: string = "";
 
-      if (options.responseFormat?.type === "json_object") {
-        body.response_format = { type: "json_object" };
-      }
-
-      const controller = new AbortController();
-      const fetchTimeoutMs = (options.maxTokens ?? 4096) > 4096 ? 120000 : 60000;
-      const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
-
-      let res: Response;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        res = await fetch(provider.url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${provider.key}`,
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-      } catch (fetchErr) {
+        if (attempt > 0) {
+          const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+          console.log(`[AI Engine] Retrying ${provider.name} (attempt ${attempt + 1}/${MAX_RETRIES + 1}) after ${delayMs}ms...`);
+          await new Promise(r => setTimeout(r, delayMs));
+        }
+
+        const body: Record<string, unknown> = {
+          model: provider.model,
+          messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 4096,
+        };
+
+        if (options.responseFormat?.type === "json_object") {
+          body.response_format = { type: "json_object" };
+        }
+
+        const controller = new AbortController();
+        const fetchTimeoutMs = (options.maxTokens ?? 4096) > 4096 ? 120000 : 60000;
+        const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
+
+        let res: Response;
+        try {
+          res = await fetch(provider.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${provider.key}`,
+            },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+        } catch (fetchErr) {
+          clearTimeout(timeoutId);
+          throw fetchErr;
+        }
         clearTimeout(timeoutId);
-        throw fetchErr;
-      }
-      clearTimeout(timeoutId);
 
-      const rawText = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        console.error(`[AI Engine] ${provider.name} returned non-JSON (${rawText.length} chars): ${rawText.substring(0, 300)}`);
-        throw new Error(`${provider.name} returned non-JSON response.`);
-      }
+        const rawText = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          console.error(`[AI Engine] ${provider.name} returned non-JSON (${rawText.length} chars): ${rawText.substring(0, 300)}`);
+          throw new Error(`${provider.name} returned non-JSON response.`);
+        }
 
-      if (!res.ok || data.error) {
-        const errMsg = data.error?.message ?? res.statusText;
-        const isRateLimit = res.status === 429;
-        console.error(`[AI Engine] ${provider.name} error (HTTP ${res.status}):`, JSON.stringify(data).substring(0, 500));
-        throw new Error(`${provider.name} error: ${errMsg}`);
-      }
+        if (!res.ok || data.error) {
+          const errMsg = data.error?.message ?? res.statusText;
+          const isRateLimit = res.status === 429;
+          const isServerError = res.status >= 500;
+          console.error(`[AI Engine] ${provider.name} error (HTTP ${res.status}):`, JSON.stringify(data).substring(0, 500));
+          if (isRateLimit || isServerError) {
+            throw new Error(`${provider.name} error: ${errMsg}`);
+          }
+          throw new Error(`${provider.name} error: ${errMsg}`);
+        }
 
-      const content = data.choices?.[0]?.message?.content;
-      if (!content || content.trim().length === 0) {
-        console.error(`[AI Engine] ${provider.name} empty content. Full response keys: ${Object.keys(data)}, choices: ${JSON.stringify(data.choices).substring(0, 500)}`);
-        throw new Error(`${provider.name} returned empty completion.`);
-      }
+        const content = data.choices?.[0]?.message?.content;
+        if (!content || content.trim().length === 0) {
+          console.error(`[AI Engine] ${provider.name} empty content. Full response keys: ${Object.keys(data)}, choices: ${JSON.stringify(data.choices).substring(0, 500)}`);
+          throw new Error(`${provider.name} returned empty completion.`);
+        }
 
-      console.log(`[AI Engine] Success with ${provider.name}`);
-      return content;
-    } catch (e: any) {
-      const msg = e.message || String(e);
-      const isAbort = e?.name === "AbortError" || msg.includes("abort") || msg.includes("This operation was aborted");
-      if (isAbort) {
-        console.warn(`[AI Engine] ${provider.name} request timed out, trying next...`);
-        errors.push(`${provider.name}: Request timed out`);
-      } else {
-        console.warn(`[AI Engine] ${provider.name} failed: ${msg} — trying next...`);
-        errors.push(`${provider.name}: ${msg}`);
+        console.log(`[AI Engine] Success with ${provider.name}`);
+        return content;
+      } catch (e: any) {
+        const msg = e.message || String(e);
+        const isAbort = e?.name === "AbortError" || msg.includes("abort") || msg.includes("This operation was aborted");
+        const isTransient = isAbort || msg.includes("429") || msg.includes("500") || msg.includes("502") || msg.includes("503") || msg.includes("rate") || msg.includes("overloaded") || msg.includes("unavailable");
+        lastError = isAbort ? `${provider.name}: Request timed out` : `${provider.name}: ${msg}`;
+
+        if (isTransient && attempt < MAX_RETRIES) {
+          console.warn(`[AI Engine] ${provider.name} transient error (attempt ${attempt + 1}): ${msg}`);
+          continue;
+        }
+
+        console.warn(`[AI Engine] ${provider.name} failed: ${msg} — trying next provider...`);
+        break;
       }
-      // No retry per-model — just move to the next model/provider in the chain
-      continue;
     }
+
+    errors.push(lastError);
   }
 
   throw new Error(`All AI providers/models failed. Tried ${providers.length} options: ${errors.join(" | ")}`);
