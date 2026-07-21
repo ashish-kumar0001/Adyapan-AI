@@ -133,6 +133,10 @@ export async function generateCoverLetter(req: Request, res: Response, next: Nex
     let resumeText = "";
     if (resumeId) {
       resumeText = await resolveResumeText(userPrisma, resumeId, userId);
+      console.log(`[CoverLetter] Resumed resumeId=${resumeId}, text length=${resumeText.length}`);
+      if (!resumeText) {
+        console.warn(`[CoverLetter] resumeId ${resumeId} provided but resolved to empty text`);
+      }
     }
 
     const selectedTone = tone || "Professional";

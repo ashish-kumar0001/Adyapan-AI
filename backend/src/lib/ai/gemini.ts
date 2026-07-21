@@ -2487,7 +2487,13 @@ ROLE MATCH ANALYSIS:
     "Custom": "Tailor the content based on the role requirements and candidate's strongest matches.",
   };
 
-  const prompt = `Write a highly personalized, ATS-optimized cover letter for this candidate.
+  const resumeWarning = !resumeText || resumeText.trim().length < 50 
+    ? "\n⚠️ NOTE: No resume data was provided. Generate a generic but professional cover letter. Make it clear to the user they should provide a resume for a personalized letter.\n"
+    : "";
+
+  const prompt = `The CANDIDATE RESUME section below contains the candidate's ACTUAL resume data. You MUST use specific details from it — project names, company names, technologies used, achievements, skills — in every paragraph of the cover letter. DO NOT write generic content. Every sentence in the cover letter should trace back to a specific element in the resume.
+
+Write a highly personalized, ATS-optimized cover letter for this candidate.
 
 CANDIDATE RESUME:
 """
@@ -2517,7 +2523,7 @@ CRITICAL RULES:
 - The opening must mention the specific role and demonstrate knowledge of the company
 - The body must connect 2-3 specific resume items to 2-3 specific job requirements
 - The closing must reference something specific about the company
-
+${resumeWarning}
 Return JSON with:
 {
   "greeting": "Salutation",

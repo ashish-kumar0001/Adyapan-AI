@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
 import { generateCareerRoadmap } from "../lib/ai/career-ai";
+import { httpError } from "../utils/httpError";
 
 export async function generateRoadmap(req: Request, res: Response, next: NextFunction) {
   try {
@@ -9,20 +10,46 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
     const userPrisma = await getUserPrismaFromRequest(req);
     const { targetRole, timeline } = req.body;
 
-    // Gather all user data for AI
-    const profile = await userPrisma.profile.findUnique({ where: { userId } });
-    const resumes = await userPrisma.resume.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 });
-    const atsReports = await userPrisma.aTSReport.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 });
-    const linkedinReports = await userPrisma.linkedInReport.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3 });
-    const studySessions = await userPrisma.studySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 });
-    const dsaProgress = await userPrisma.dSAProgress.findUnique({ where: { userId } });
-    const weakTopics = await userPrisma.weakTopic.findMany({ where: { userId } });
-    const codingSessions = await userPrisma.codingSession.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 });
-    const quizes = await userPrisma.quizAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 });
-    const learningAnalytics = await userPrisma.learningAnalytics.findUnique({ where: { userId } });
-    const progressTracking = await userPrisma.progressTracking.findUnique({ where: { userId } });
-    const coverLetters = await userPrisma.coverLetter.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 });
-    const submissions = await userPrisma.submission.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 30 });
+    // Gather all user data for AI — each query is isolated so a single
+    // missing model in the tenant DB doesn't crash the entire request.
+    let profile: any = null;
+    try { profile = await userPrisma.profile.findUnique({ where: { userId } }); } catch (e) { console.warn("[Career] profile query failed:", (e as Error)?.message); }
+
+    let resumes: any[] = [];
+    try { resumes = await userPrisma.resume.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }); } catch (e) { console.warn("[Career] resumes query failed:", (e as Error)?.message); }
+
+    let atsReports: any[] = [];
+    try { atsReports = await userPrisma.aTSReport.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }); } catch (e) { console.warn("[Career] atsReports query failed:", (e as Error)?.message); }
+
+    let linkedinReports: any[] = [];
+    try { linkedinReports = await userPrisma.linkedInReport.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3 }); } catch (e) { console.warn("[Career] linkedinReports query failed:", (e as Error)?.message); }
+
+    let studySessions: any[] = [];
+    try { studySessions = await userPrisma.studySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }); } catch (e) { console.warn("[Career] studySessions query failed:", (e as Error)?.message); }
+
+    let dsaProgress: any = null;
+    try { dsaProgress = await userPrisma.dSAProgress.findUnique({ where: { userId } }); } catch (e) { console.warn("[Career] dsaProgress query failed:", (e as Error)?.message); }
+
+    let weakTopics: any[] = [];
+    try { weakTopics = await userPrisma.weakTopic.findMany({ where: { userId } }); } catch (e) { console.warn("[Career] weakTopics query failed:", (e as Error)?.message); }
+
+    let codingSessions: any[] = [];
+    try { codingSessions = await userPrisma.codingSession.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }); } catch (e) { console.warn("[Career] codingSessions query failed:", (e as Error)?.message); }
+
+    let quizes: any[] = [];
+    try { quizes = await userPrisma.quizAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }); } catch (e) { console.warn("[Career] quizes query failed:", (e as Error)?.message); }
+
+    let learningAnalytics: any = null;
+    try { learningAnalytics = await userPrisma.learningAnalytics.findUnique({ where: { userId } }); } catch (e) { console.warn("[Career] learningAnalytics query failed:", (e as Error)?.message); }
+
+    let progressTracking: any = null;
+    try { progressTracking = await userPrisma.progressTracking.findUnique({ where: { userId } }); } catch (e) { console.warn("[Career] progressTracking query failed:", (e as Error)?.message); }
+
+    let coverLetters: any[] = [];
+    try { coverLetters = await userPrisma.coverLetter.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }); } catch (e) { console.warn("[Career] coverLetters query failed:", (e as Error)?.message); }
+
+    let submissions: any[] = [];
+    try { submissions = await userPrisma.submission.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 30 }); } catch (e) { console.warn("[Career] submissions query failed:", (e as Error)?.message); }
 
     const avgAtsScore = atsReports.length
       ? Math.round(atsReports.reduce((s: number, r: any) => s + (r.score || 0), 0) / atsReports.length)
@@ -83,47 +110,77 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
       coverLettersCount: coverLetters.length,
     };
 
-    const roadmapData = await generateCareerRoadmap(profileData);
+    let roadmapData: any;
+    try {
+      roadmapData = await generateCareerRoadmap(profileData);
+    } catch (aiErr) {
+      console.error("[Career] generateCareerRoadmap AI call failed:", (aiErr as Error)?.message);
+      const fallback = {
+        readinessScores: { overall: 0, technical: 0, resume: 0, interview: 0, placement: 0, recruiter: 0 },
+        roadmap: { phases: [] },
+        weeklyPlan: { tasks: [] },
+        gapAnalysis: {},
+        skillMap: {},
+        projectRecommendations: [],
+        certRecommendations: [],
+        marketInsights: {},
+        coachFeedback: "",
+        milestones: [],
+      };
+      res.json({ success: true, roadmap: null, roadmapData: fallback });
+      return;
+    }
 
     // Save to database
-    const roadmap = await userPrisma.careerRoadmap.create({
-      data: {
-        userId,
-        targetRole: profileData.targetRole,
-        timeline: profileData.timeline,
-        readinessScore: roadmapData.readinessScores.overall,
-        technicalScore: roadmapData.readinessScores.technical,
-        resumeScore: roadmapData.readinessScores.resume,
-        interviewScore: roadmapData.readinessScores.interview,
-        placementScore: roadmapData.readinessScores.placement,
-        recruiterScore: roadmapData.readinessScores.recruiter,
-        roadmapJson: roadmapData.roadmap as any,
-        weeklyPlanJson: roadmapData.weeklyPlan as any,
-        gapAnalysisJson: roadmapData.gapAnalysis as any,
-        skillMapJson: roadmapData.skillMap as any,
-        projectRecsJson: roadmapData.projectRecommendations as any,
-        certRecsJson: roadmapData.certRecommendations as any,
-        marketInsightsJson: roadmapData.marketInsights as any,
-        coachFeedbackJson: roadmapData.coachFeedback as any,
-        milestonesJson: roadmapData.milestones as any,
-      },
-    });
+    let roadmap: any;
+    try {
+      roadmap = await userPrisma.careerRoadmap.create({
+        data: {
+          userId,
+          targetRole: profileData.targetRole,
+          timeline: profileData.timeline,
+          readinessScore: roadmapData.readinessScores.overall,
+          technicalScore: roadmapData.readinessScores.technical,
+          resumeScore: roadmapData.readinessScores.resume,
+          interviewScore: roadmapData.readinessScores.interview,
+          placementScore: roadmapData.readinessScores.placement,
+          recruiterScore: roadmapData.readinessScores.recruiter,
+          roadmapJson: roadmapData.roadmap as any,
+          weeklyPlanJson: roadmapData.weeklyPlan as any,
+          gapAnalysisJson: roadmapData.gapAnalysis as any,
+          skillMapJson: roadmapData.skillMap as any,
+          projectRecsJson: roadmapData.projectRecommendations as any,
+          certRecsJson: roadmapData.certRecommendations as any,
+          marketInsightsJson: roadmapData.marketInsights as any,
+          coachFeedbackJson: roadmapData.coachFeedback as any,
+          milestonesJson: roadmapData.milestones as any,
+        },
+      });
+    } catch (dbErr) {
+      console.error("[Career] careerRoadmap.create failed:", (dbErr as Error)?.message);
+      res.status(503).json({ success: false, error: "Failed to persist roadmap. Please try again later." });
+      return;
+    }
 
     // Create task records
     if (roadmapData.weeklyPlan?.tasks?.length) {
-      await userPrisma.careerTask.createMany({
-        data: roadmapData.weeklyPlan.tasks.map((t: any) => ({
-          roadmapId: roadmap.id,
-          userId,
-          title: t.title,
-          description: t.description || "",
-          category: t.category || "learning",
-          priority: t.priority || "Medium",
-          status: t.status || "not_started",
-          estimatedHours: t.estimatedHours || 1,
-          impactScore: t.impactScore || 50,
-        })),
-      });
+      try {
+        await userPrisma.careerTask.createMany({
+          data: roadmapData.weeklyPlan.tasks.map((t: any) => ({
+            roadmapId: roadmap.id,
+            userId,
+            title: t.title,
+            description: t.description || "",
+            category: t.category || "learning",
+            priority: t.priority || "Medium",
+            status: t.status || "not_started",
+            estimatedHours: t.estimatedHours || 1,
+            impactScore: t.impactScore || 50,
+          })),
+        });
+      } catch (taskErr) {
+        console.error("[Career] careerTask.createMany failed:", (taskErr as Error)?.message);
+      }
     }
 
     res.json({ success: true, roadmap, roadmapData });
