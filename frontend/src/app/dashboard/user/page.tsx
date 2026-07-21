@@ -246,7 +246,7 @@ const SEARCH_INDEX: SearchEntry[] = [
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
 export const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/dashboard/user" },
-  { id: "career-dashboard", label: "Career Dashboard", icon: <Target size={18} /> },
+  { id: "career-dashboard", label: "Career Dashboard", icon: <Target size={18} />, href: "/dashboard/career" },
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
@@ -275,6 +275,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
+      { label: "Career Dashboard", href: "/dashboard/career" },
       { label: "Upload Resume", href: "#" }, { label: "Resume Builder", href: "#" },
       { label: "ATS Score Checker", href: "#" }, { label: "Resume Improvements", href: "#" },
       { label: "Cover Letter Generator", href: "#" },

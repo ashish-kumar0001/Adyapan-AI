@@ -406,6 +406,57 @@ export const MODELS = {
   EMBEDDING: "nvidia/nemotron-3-embed-1b",      // RAG/Search embeddings
 } as const;
 
+//Centralized Multi-LLM Orchestration Layer
+export const ORCHESTRATED_MODELS = {
+  career_coaching: "nvidia/llama-3.3-70b-instruct",
+  career_insights: "nvidia/llama-3.3-70b-instruct",
+  roadmap_reasoning: "nvidia/llama-3.3-70b-instruct",
+  technical_readiness: "deepseek-ai/deepseek-r1",
+  coding_analysis: "deepseek-ai/deepseek-r1",
+  project_evaluation: "deepseek-ai/deepseek-r1",
+  document_understanding: "moonshotai/kimi-k2",
+  resume_context: "moonshotai/kimi-k2",
+  job_descriptions: "moonshotai/kimi-k2",
+  fast_summaries: "mistralai/mistral-large-2-instruct",
+  ui_responses: "mistralai/mistral-large-2-instruct",
+  quick_recommendations: "mistralai/mistral-large-2-instruct",
+  general_assistant: "z-ai/glm-5.1",
+  fallback: "z-ai/glm-5.1"
+} as const;
+
+export type OrchestratedTaskType = keyof typeof ORCHESTRATED_MODELS;
+
+export async function callOrchestratedAI(
+  taskType: OrchestratedTaskType,
+  messages: OpenRouterMessage[],
+  options?: Omit<OpenRouterOptions, "model">
+): Promise<string> {
+  const model = ORCHESTRATED_MODELS[taskType] || ORCHESTRATED_MODELS.fallback;
+  return callAIRobust(messages, { ...options, model });
+}
+
+export async function generateOrchestratedText(
+  taskType: OrchestratedTaskType,
+  systemPrompt: string,
+  userPrompt: string,
+  options?: Omit<OpenRouterOptions, "model">
+): Promise<string> {
+  const model = ORCHESTRATED_MODELS[taskType] || ORCHESTRATED_MODELS.fallback;
+  return generateText(systemPrompt, userPrompt, { ...options, model });
+}
+
+export async function generateOrchestratedJSON<T>(
+  taskType: OrchestratedTaskType,
+  systemPrompt: string,
+  userPrompt: string,
+  options: Omit<OpenRouterOptions, "model">,
+  fallback: T
+): Promise<T> {
+  const model = ORCHESTRATED_MODELS[taskType] || ORCHESTRATED_MODELS.fallback;
+  return generateJSON(systemPrompt, userPrompt, { ...options, model }, fallback);
+}
+
+
 // Available models for Ady Chat
 export const CHAT_MODELS = [
   { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", cheap: true },

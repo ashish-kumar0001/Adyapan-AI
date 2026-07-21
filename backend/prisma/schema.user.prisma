@@ -1691,4 +1691,20 @@ model MockTestResult {
   @@index([createdAt])
   @@map("mock_test_results")
 }
+
+model CareerDashboardSnapshot {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  overallReadiness  Int      @map("overall_readiness")
+  codingScore       Int      @map("coding_score")
+  learningScore     Int      @map("learning_score")
+  resumeScore       Int      @map("resume_score")
+  atsScore          Int      @map("ats_score")
+  linkedinScore     Int      @map("linkedin_score")
+  dashboardJson     Json     @map("dashboard_json")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("career_dashboard_snapshots")
+}
+
 
