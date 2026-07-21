@@ -1650,7 +1650,45 @@ model CareerTask {
   @@map("career_tasks")
 }
 
+// ============================================================================
+// PLACEMENT HUB MODELS
+// ============================================================================
 
+model PlacementSession {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  category       String
+  topic          String
+  questions      Json
+  answers        Json
+  score          Int      @default(0)
+  totalQuestions Int      @map("total_questions")
+  startedAt      DateTime @default(now()) @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("placement_sessions")
+}
 
+model MockTestResult {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  testId         String   @map("test_id")
+  company        String
+  answers        Json
+  sections       Json
+  score          Int      @default(0)
+  totalQuestions Int      @map("total_questions")
+  durationMs     Int      @default(0) @map("duration_ms")
+  completedAt    DateTime @default(now()) @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([company])
+  @@index([createdAt])
+  @@map("mock_test_results")
+}
 

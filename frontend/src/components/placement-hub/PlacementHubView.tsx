@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Calendar, DollarSign, Send, Sparkles, CheckCircle2,
@@ -9,6 +9,7 @@ import {
   AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw,
   HelpCircle, ShieldAlert, Award as BadgeIcon, Lightbulb, BookOpen, Target, Flame
 } from "lucide-react";
+import { api } from "@/services/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -42,9 +43,9 @@ interface PracticeSession {
 interface MockTest {
   id: string;
   name: string;
-  company: string;
+  company?: string;
   durationMs: number;
-  totalQuestions: number;
+  totalQuestions?: number;
   sections: { name: string; questions: Question[] }[];
 }
 
@@ -142,6 +143,40 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   // Timer reference for mock test
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Mock tests list from backend
+  const [mockTestsList, setMockTestsList] = useState<any[]>([]);
+  const [mockTestsLoading, setMockTestsLoading] = useState(false);
+
+  // Readiness report from backend
+  const [readinessReport, setReadinessReport] = useState<any>(null);
+  const [readinessLoading, setReadinessLoading] = useState(false);
+
+  // Fetch mock tests when switching to mocks tab
+  useEffect(() => {
+    if (tab === "mocks" && mockTestsList.length === 0) {
+      setMockTestsLoading(true);
+      api.get("/placement/mock/list")
+        .then(({ data }) => {
+          if (data.success && data.tests) setMockTestsList(data.tests);
+        })
+        .catch(() => {})
+        .finally(() => setMockTestsLoading(false));
+    }
+  }, [tab]);
+
+  // Fetch readiness report when switching to readiness tab
+  useEffect(() => {
+    if (tab === "readiness" && !readinessReport) {
+      setReadinessLoading(true);
+      api.get("/placement/readiness")
+        .then(({ data }) => {
+          if (data.success && data.report) setReadinessReport(data.report);
+        })
+        .catch(() => {})
+        .finally(() => setReadinessLoading(false));
+    }
+  }, [tab]);
+
   // Sync tab with activeModule from props
   useEffect(() => {
     if (activeModule === "placement-aptitude") setTab("aptitude");
@@ -188,6 +223,17 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
 
     setCompletedMocksCount(prev => prev + 1);
     setAvgAccuracy(prev => Math.round((prev + finalPercent) / 2));
+
+    // Submit mock test results to backend
+    api.post("/placement/mock/submit", {
+      testId: activeTest.id,
+      score: finalPercent,
+      correct: correctCount,
+      total: totalQuestions,
+      sections: sectionScores,
+      answers: testAnswers,
+    }).catch(() => {});
+
     setActiveTest(null);
   };
 
@@ -213,8 +259,31 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  const handleStartPractice = (topicName: string, category: "aptitude" | "reasoning" | "mcqs") => {
-    alert("⚠️ Practice questions are not available yet. Please check back later.");
+  const handleStartPractice = async (topicName: string, category: "aptitude" | "reasoning" | "mcqs") => {
+    try {
+      const { data } = await api.post("/placement/practice/start", {
+        topic: topicName,
+        category,
+        count: 10,
+      });
+
+      if (data.success && data.questions?.length > 0) {
+        setPracticeSession({
+          topic: topicName,
+          questions: data.questions,
+          currentIdx: 0,
+          selectedOptionIdx: null,
+          submitted: false,
+          score: 0,
+          history: [],
+        });
+      } else {
+        alert("Failed to generate questions. Please try again.");
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || "Failed to start practice.";
+      alert(`Error: ${msg}`);
+    }
   };
 
   const handlePracticeSubmit = () => {
@@ -234,7 +303,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
     });
   };
 
-  const handlePracticeNext = () => {
+  const handlePracticeNext = async () => {
     if (!practiceSession) return;
     const nextIdx = practiceSession.currentIdx + 1;
     if (nextIdx < practiceSession.questions.length) {
@@ -249,7 +318,16 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
       });
       setShowTrick(false);
     } else {
-      // Finished practice
+      // Practice finished — submit to backend
+      try {
+        await api.post("/placement/practice/submit", {
+          topic: practiceSession.topic,
+          category: tab === "aptitude" ? "aptitude" : tab === "reasoning" ? "reasoning" : "mcqs",
+          questions: practiceSession.questions,
+          answers: practiceSession.history.map(h => ({ questionIdx: h.questionIdx, selectedIdx: h.selectedIdx })),
+          score: practiceSession.score,
+        });
+      } catch {}
       alert(`🎉 Practice Completed! Your Score: ${practiceSession.score}/${practiceSession.questions.length}`);
       setPracticeSession(null);
     }
@@ -274,11 +352,21 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
     setChatLoading(true);
 
     try {
-      // Attempt real API call - currently unavailable
-      throw new Error("Placement Coach API is not available. Please check your network connection or try again later.");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
-      setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ **Service Unavailable**: ${message}` }]);
+      const { data } = await api.post("/placement/coach/chat", {
+        messages: [...chatMessages, { role: "user", content: promptText }].map(m => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
+
+      if (data.success && data.reply) {
+        setChatMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      } else {
+        setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't generate a response. Please try again." }]);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || "Service unavailable.";
+      setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ **Error**: ${msg}` }]);
     } finally {
       setChatLoading(false);
     }
@@ -577,24 +665,63 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                   </motion.div>
                 )}
 
-                {/* No mock tests available */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-10 border rounded-2xl text-center"
-                  style={{ background: c.cardBg, borderColor: c.border }}
-                >
+                {mockTestsLoading ? (
+                  <div className="p-10 border rounded-2xl text-center" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <Clock size={20} className="text-amber-500 animate-spin mx-auto mb-2" />
+                    <p className="text-xs font-bold" style={{ color: c.textMuted }}>Loading mock tests...</p>
+                  </div>
+                ) : mockTestsList.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-amber-500">Available Mock Tests</h4>
+                    {mockTestsList.map((test: any, idx: number) => (
+                      <motion.div
+                        key={test.id || idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="p-5 border rounded-2xl hover:bg-white/5 transition-colors cursor-pointer"
+                        style={{ background: c.cardBg, borderColor: c.border }}
+                        onClick={() => handleStartMockTest({
+                          id: test.id,
+                          name: test.name,
+                          durationMs: test.durationMs || 30 * 60 * 1000,
+                          sections: test.sections || [{ name: "General", questions: [] }],
+                        })}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-extrabold" style={{ color: c.text }}>{test.name}</p>
+                            <p className="text-xs mt-1" style={{ color: c.textSec }}>{test.description || `${test.totalQuestions || 0} questions • ${Math.round((test.durationMs || 1800000) / 60000)} min`}</p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-500 text-[10px] font-bold uppercase">
+                              {test.difficulty || "Medium"}
+                            </span>
+                            <ArrowRight size={14} className="text-amber-500" />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-10 border rounded-2xl text-center"
+                    style={{ background: c.cardBg, borderColor: c.border }}
                   >
-                    <FileText size={24} className="text-amber-500/60" />
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                      className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
+                    >
+                      <FileText size={24} className="text-amber-500/60" />
+                    </motion.div>
+                    <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No mock tests available yet</p>
+                    <p className="text-xs" style={{ color: c.textMuted }}>Use the AI Coach to generate a custom mock test, or check back later.</p>
                   </motion.div>
-                  <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No tests available</p>
-                  <p className="text-xs" style={{ color: c.textMuted }}>Check back later or contact your administrator.</p>
-                </motion.div>
+                )}
               </motion.div>
             )}
 
@@ -688,19 +815,84 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="p-10 border rounded-2xl text-center"
-                style={{ background: c.cardBg, borderColor: c.border }}
+                className="space-y-6"
               >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
-                >
-                  <Target size={24} className="text-amber-500/60" />
-                </motion.div>
-                <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No readiness data yet</p>
-                <p className="text-xs" style={{ color: c.textMuted }}>Complete mock tests and practice sessions to generate your readiness analysis.</p>
+                {readinessLoading ? (
+                  <div className="p-10 border rounded-2xl text-center" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <Clock size={20} className="text-amber-500 animate-spin mx-auto mb-2" />
+                    <p className="text-xs font-bold" style={{ color: c.textMuted }}>Generating your readiness report...</p>
+                  </div>
+                ) : readinessReport ? (
+                  <>
+                    {/* Overall Score */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-8 border rounded-2xl text-center"
+                      style={{ background: c.cardBg, borderColor: c.border }}
+                    >
+                      <div className="w-24 h-24 mx-auto mb-4 rounded-full border-4 border-amber-500 flex items-center justify-center">
+                        <span className="text-3xl font-black text-amber-500">{readinessReport.overall || 0}%</span>
+                      </div>
+                      <h3 className="text-sm font-extrabold" style={{ color: c.text }}>Overall Readiness</h3>
+                      <p className="text-xs mt-1" style={{ color: c.textSec }}>{readinessReport.summary || "Keep practicing to improve your score!"}</p>
+                    </motion.div>
+
+                    {/* Category Breakdown */}
+                    {readinessReport.categories && (
+                      <div className="p-6 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-500">Category Breakdown</h4>
+                        {Object.entries(readinessReport.categories).map(([cat, score]: [string, any]) => (
+                          <div key={cat} className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="font-bold capitalize" style={{ color: c.text }}>{cat}</span>
+                              <span className="font-black text-amber-500">{score}%</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${score}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="h-full rounded-full bg-amber-500"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {readinessReport.recommendations && readinessReport.recommendations.length > 0 && (
+                      <div className="p-6 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-500">Recommendations</h4>
+                        {readinessReport.recommendations.map((rec: string, idx: number) => (
+                          <div key={idx} className="flex items-start gap-2 text-xs leading-relaxed" style={{ color: c.textSec }}>
+                            <Lightbulb size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                            <span>{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-10 border rounded-2xl text-center"
+                    style={{ background: c.cardBg, borderColor: c.border }}
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                      className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center"
+                    >
+                      <Target size={24} className="text-amber-500/60" />
+                    </motion.div>
+                    <p className="text-sm font-extrabold mb-1" style={{ color: c.text }}>No readiness data yet</p>
+                    <p className="text-xs" style={{ color: c.textMuted }}>Complete mock tests and practice sessions to generate your readiness analysis.</p>
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
