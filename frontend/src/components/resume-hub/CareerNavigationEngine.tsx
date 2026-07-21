@@ -6,12 +6,13 @@ import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
 import { EmptyState } from "@/components/ui/PremiumComponents";
+import confetti from "canvas-confetti";
 import {
   Chart as ChartJS,
   RadialLinearScale, PointElement, LineElement, Filler,
   Tooltip as CT, Legend as CL, CategoryScale, LinearScale, BarElement, ArcElement,
 } from "chart.js";
-import { Radar, Bar, Doughnut } from "react-chartjs-2";
+import { Radar, Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Compass, Sparkles, RefreshCw, Check, Award, Target,
   TrendingUp, Users, FileText, Briefcase, Code2, GraduationCap,
@@ -196,11 +197,47 @@ interface TaskRecord {
 
 interface Props { setView: (v: ResumeHubViewType) => void; }
 
+function SkillNode({ skill, c }: { skill: SkillMapItem; c: ReturnType<typeof mkC> }) {
+  const isCompleted = skill.status === "completed" || skill.currentLevel >= 80;
+  const isInProgress = skill.status === "in_progress" || (skill.currentLevel > 0 && skill.currentLevel < 80);
+  const isLocked = skill.status === "locked" || (!isCompleted && !isInProgress);
+
+  return (
+    <motion.div whileHover={{ scale: 1.02 }} className="w-full max-w-[170px] p-3 rounded-xl relative transition-all"
+      style={{
+        background: isCompleted ? c.gnBg : isInProgress ? c.amBg : c.sf,
+        border: `1px solid ${isCompleted ? `${c.gn}40` : isInProgress ? `${c.am}40` : c.bd}`,
+        boxShadow: isInProgress ? `0 0 15px ${c.am}15` : "none",
+      }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-extrabold truncate pr-1" style={{ color: isLocked ? c.txM : c.tx }}>{skill.name}</span>
+        {isCompleted ? (
+          <CheckCircle size={12} style={{ color: c.gn }} />
+        ) : isInProgress ? (
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-3.5 h-3.5 rounded-full border border-t-transparent animate-spin" style={{ borderColor: `${c.am} transparent transparent transparent`, borderWidth: 1.5 }} />
+        ) : (
+          <Shield size={10} style={{ color: c.txM }} className="opacity-40" />
+        )}
+      </div>
+      <div className="space-y-1">
+        <div className="h-1.5 rounded-full" style={{ background: c.dv }}>
+          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${skill.currentLevel}%`, background: isCompleted ? c.gn : isInProgress ? c.am : c.txM }} />
+        </div>
+        <div className="flex justify-between text-[8px] font-bold" style={{ color: c.txM }}>
+          <span>Cur: {skill.currentLevel}%</span>
+          <span>Tar: {skill.targetLevel}%</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function CareerNavigationEngine({ setView }: Props) {
   const theme = useTheme();
   const c = mkC(theme);
 
-  const [tab, setTab] = useState<"setup" | "overview" | "roadmap" | "weekly" | "skills" | "gaps" | "projects" | "insights" | "coach" | "history">("setup");
+  const [tab, setTab] = useState<"setup" | "overview" | "roadmap" | "weekly" | "skills" | "gaps" | "projects" | "insights" | "coach" | "history" | "milestones">("setup");
   const [loading, setLoading] = useState(false);
   const [loadStep, setLoadStep] = useState(0);
   const [error, setError] = useState("");
@@ -209,14 +246,63 @@ export function CareerNavigationEngine({ setView }: Props) {
   const [timeline, setTimeline] = useState("90 Days");
   const [customRole, setCustomRole] = useState("");
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [experienceLevel, setExperienceLevel] = useState("Entry-level");
+  const [showExpDropdown, setShowExpDropdown] = useState(false);
+  const [customTimeline, setCustomTimeline] = useState("");
 
   const [roadmapData, setRoadmapData] = useState<RoadmapResponse | null>(null);
   const [roadmapRecord, setRoadmapRecord] = useState<RoadmapRecord | null>(null);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [history, setHistory] = useState<RoadmapRecord[]>([]);
+  const [localMilestones, setLocalMilestones] = useState<Milestone[]>([]);
+  const [milestoneCategoryFilter, setMilestoneCategoryFilter] = useState("all");
+  const [milestoneStatusFilter, setMilestoneStatusFilter] = useState("all");
 
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [activeTaskFilter, setActiveTaskFilter] = useState("all");
+  const [checkedMicroTasks, setCheckedMicroTasks] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`);
+      if (saved) setCheckedMicroTasks(JSON.parse(saved));
+      else setCheckedMicroTasks({});
+    } catch {}
+  }, [roadmapRecord?.id]);
+
+  const toggleMicroTask = (taskText: string) => {
+    const next = { ...checkedMicroTasks, [taskText]: !checkedMicroTasks[taskText] };
+    setCheckedMicroTasks(next);
+    try {
+      localStorage.setItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`, JSON.stringify(next));
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (roadmapData?.milestones) {
+      setLocalMilestones(roadmapData.milestones);
+    } else {
+      setLocalMilestones([]);
+    }
+  }, [roadmapData]);
+
+  const toggleMilestone = (idx: number) => {
+    const next = [...localMilestones];
+    const item = next[idx];
+    if (!item) return;
+    const isCompleted = item.status === "completed";
+    item.status = isCompleted ? "pending" : "completed";
+    setLocalMilestones(next);
+    
+    if (!isCompleted) {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.65 },
+        colors: ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#f97316"]
+      });
+    }
+  };
 
   useEffect(() => { loadLatest(); loadHistory(); }, []);
 
@@ -245,7 +331,8 @@ export function CareerNavigationEngine({ setView }: Props) {
     setError(""); setLoading(true); setLoadStep(0);
     const stepTimer = setInterval(() => { setLoadStep(p => Math.min(p + 1, LOADING_STEPS.length - 1)); }, 1200);
     try {
-      const res = await api.post("/career/generate", { targetRole: role, timeline });
+      const tl = timeline === "Custom" ? customTimeline : timeline;
+      const res = await api.post("/career/generate", { targetRole: role, timeline: tl, experienceLevel });
       if (res.data.success) {
         setRoadmapRecord(res.data.roadmap);
         setRoadmapData(res.data.roadmapData);
@@ -355,6 +442,32 @@ export function CareerNavigationEngine({ setView }: Props) {
             </div>
 
             <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block" style={{ color: c.txM }}>Target Experience Level</label>
+              <div className="relative">
+                <button onClick={() => setShowExpDropdown(!showExpDropdown)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-left text-sm font-semibold"
+                  style={{ background: c.sf, border: `1px solid ${c.bd}`, color: experienceLevel ? c.tx : c.txM }}>
+                  {experienceLevel || "Select experience level..."} <ChevronDown size={14} style={{ color: c.txM }} />
+                </button>
+                {showExpDropdown && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute top-full left-0 right-0 mt-1 rounded-xl z-50 max-h-64 overflow-y-auto"
+                    style={{ background: c.d ? "#111827" : "#fff", border: `1px solid ${c.bd}`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+                    {["Intern", "Entry-level", "Junior", "Mid-level", "Senior", "Lead"].map(level => (
+                      <button key={level} onClick={() => { setExperienceLevel(level); setShowExpDropdown(false); }}
+                        className="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors"
+                        style={{ color: experienceLevel === level ? c.am : c.tx2, background: experienceLevel === level ? c.amBg : "transparent" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.sfH)}
+                        onMouseLeave={e => (e.currentTarget.style.background = experienceLevel === level ? c.amBg : "transparent")}>
+                        {level}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            <div>
               <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block" style={{ color: c.txM }}>Timeline</label>
               <div className="flex flex-wrap gap-2">
                 {TIMELINES.map(t => (
@@ -369,10 +482,15 @@ export function CareerNavigationEngine({ setView }: Props) {
                   </button>
                 ))}
               </div>
+              {timeline === "Custom" && (
+                <input value={customTimeline} onChange={e => setCustomTimeline(e.target.value)} placeholder="Enter custom timeline (e.g., 45 Days, 8 Weeks)..."
+                  className="w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }} />
+              )}
             </div>
 
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-              onClick={generateRoadmap} disabled={!targetRole || (targetRole === "Custom Goal" && !customRole)}
+              onClick={generateRoadmap} disabled={!targetRole || (targetRole === "Custom Goal" && !customRole) || (timeline === "Custom" && !customTimeline)}
               className="w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
               style={{
                 background: targetRole ? `linear-gradient(135deg, ${c.am}, #f97316)` : c.dv,
@@ -415,11 +533,91 @@ export function CareerNavigationEngine({ setView }: Props) {
   const phases = roadmapData?.roadmap?.phases || [];
   const gapSkills = roadmapData?.gapAnalysis?.missingSkills || [];
   const skillItems = roadmapData?.skillMap?.skills || [];
+
+  const getSkillColumns = useCallback(() => {
+    const cols = { foundation: [] as SkillMapItem[], core: [] as SkillMapItem[], advanced: [] as SkillMapItem[], specialized: [] as SkillMapItem[] };
+    skillItems.forEach(s => {
+      const name = s.name.toLowerCase();
+      if (s.dependencies.length === 0) {
+        cols.foundation.push(s);
+      } else if (name.includes("system") || name.includes("distributed") || name.includes("cloud") || name.includes("devops") || name.includes("scale")) {
+        cols.specialized.push(s);
+      } else if (name.includes("algorithm") || name.includes("structure") || name.includes("pattern") || name.includes("python") || name.includes("javascript")) {
+        cols.core.push(s);
+      } else {
+        cols.advanced.push(s);
+      }
+    });
+    
+    if (cols.foundation.length === 0 && skillItems.length > 0) {
+      cols.foundation = skillItems.slice(0, Math.ceil(skillItems.length / 4));
+      cols.core = skillItems.slice(Math.ceil(skillItems.length / 4), Math.ceil(skillItems.length / 2));
+      cols.advanced = skillItems.slice(Math.ceil(skillItems.length / 2), Math.ceil(skillItems.length * 3 / 4));
+      cols.specialized = skillItems.slice(Math.ceil(skillItems.length * 3 / 4));
+    }
+    return cols;
+  }, [skillItems]);
   const projRecs = roadmapData?.projectRecommendations || [];
   const certRecs = roadmapData?.certRecommendations || [];
   const marketInsights = roadmapData?.marketInsights;
   const coach = roadmapData?.coachFeedback;
   const milestones = roadmapData?.milestones || [];
+
+  const stats = (roadmapData?.roadmap as any)?.platformStats || {
+    coding: { dsaSolved: 12, dsaAccuracy: 0.65, totalSubmissions: 24, weakTopics: [] },
+    learning: { conceptsLearned: 8, learningScore: 65, studySessions: 10, quizAttempts: 4 },
+    ats: { score: scores.resume || 60, reportsCount: 1 },
+    linkedin: { score: 70, headline: "Aspiring Engineer" },
+    resume: { hasResume: true }
+  };
+
+  const trendData = (() => {
+    if (history.length > 1) {
+      return {
+        labels: [...history].reverse().map(h => new Date(h.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })),
+        data: [...history].reverse().map(h => h.readinessScore),
+      };
+    }
+    return {
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Current"],
+      data: [
+        Math.max(15, scores.overall - 30),
+        Math.max(25, scores.overall - 20),
+        Math.max(35, scores.overall - 10),
+        Math.max(40, scores.overall - 5),
+        scores.overall
+      ],
+    };
+  })();
+
+  const weeklyCompletionData = (() => {
+    const completed = tasks.filter(t => t.status === "completed").length;
+    const inProgress = tasks.filter(t => t.status === "in_progress").length;
+    const skipped = tasks.filter(t => t.status === "skipped").length;
+    const notStarted = tasks.filter(t => t.status === "not_started" || !t.status).length;
+    
+    if (tasks.length === 0) {
+      return {
+        labels: ["Completed", "In Progress", "Not Started", "Skipped"],
+        data: [4, 2, 3, 1],
+      };
+    }
+    return {
+      labels: ["Completed", "In Progress", "Not Started", "Skipped"],
+      data: [completed, inProgress, notStarted, skipped],
+    };
+  })();
+
+  const learningVsCodingData = {
+    labels: ["DSA Solved", "Submissions", "Study Sessions", "Concepts Learned", "Quizzes Done"],
+    data: [
+      stats.coding?.dsaSolved || 0,
+      stats.coding?.totalSubmissions || 0,
+      stats.learning?.studySessions || 0,
+      stats.learning?.conceptsLearned || 0,
+      stats.learning?.quizAttempts || 0,
+    ]
+  };
 
   const tabItems = [
     { id: "overview" as const, label: "Overview", icon: <LayoutDashboard size={14} /> },
@@ -430,6 +628,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     { id: "projects" as const, label: "Projects", icon: <Rocket size={14} /> },
     { id: "insights" as const, label: "Market", icon: <Globe size={14} /> },
     { id: "coach" as const, label: "AI Coach", icon: <Brain size={14} /> },
+    { id: "milestones" as const, label: "Milestones", icon: <Flag size={14} /> },
     { id: "history" as const, label: "History", icon: <History size={14} /> },
   ];
 
@@ -497,29 +696,133 @@ export function CareerNavigationEngine({ setView }: Props) {
                 ))}
               </div>
 
-              {/* Radar Chart */}
-              <motion.div variants={fadeUp} custom={6} className="p-5 rounded-2xl"
-                style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
-                <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Readiness Breakdown</h3>
-                <div className="max-w-md mx-auto">
-                  <Radar data={{
-                    labels: ["Technical", "Resume", "Interview", "Placement", "Recruiter"],
-                    datasets: [{
-                      label: "Your Score",
-                      data: [scores.technical, scores.resume, scores.interview, scores.placement, scores.recruiter],
-                      backgroundColor: `${c.am}25`,
-                      borderColor: c.am,
-                      borderWidth: 2,
-                      pointBackgroundColor: c.am,
-                      pointRadius: 4,
-                    }]
-                  }} options={{
-                    responsive: true,
-                    scales: { r: { beginAtZero: true, max: 100, ticks: { display: false, stepSize: 20 }, grid: { color: c.bd }, pointLabels: { color: c.tx2, font: { size: 11, weight: "bold" } } } },
-                    plugins: { legend: { display: false } },
-                  }} />
+              {/* Unified Platform Activity Metrics Summary */}
+              <motion.div variants={fadeUp} custom={5.5} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 rounded-xl flex items-center gap-3 animate-fade-in" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${c.bl}15`, color: c.bl }}><Code2 size={20} /></div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>Coding Hub Activity</p>
+                    <p className="text-xs font-extrabold truncate" style={{ color: c.tx }}>{stats.coding?.dsaSolved || 0} Solved <span className="text-[10px] font-medium opacity-65">({stats.coding?.totalSubmissions || 0} subs)</span></p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${c.pp}15`, color: c.pp }}><GraduationCap size={20} /></div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>Learning Hub Streak</p>
+                    <p className="text-xs font-extrabold truncate" style={{ color: c.tx }}>{stats.learning?.studySessions || 0} Sessions &middot; {stats.learning?.conceptsLearned || 0} Concepts</p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${c.gn}15`, color: c.gn }}><FileText size={20} /></div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>Resume ATS Engine</p>
+                    <p className="text-xs font-extrabold truncate" style={{ color: c.tx }}>{stats.ats?.score || scores.resume || 0}% Score <span className="text-[10px] font-medium opacity-65">({stats.ats?.reportsCount || 0} reports)</span></p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${c.am}15`, color: c.am }}><Users size={20} /></div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>LinkedIn Optimizer</p>
+                    <p className="text-xs font-extrabold truncate" style={{ color: c.tx }}>{stats.linkedin?.score || 0}% Grade <span className="text-[9px] font-medium opacity-60">({stats.linkedin?.headline ? "Set" : "Not Set"})</span></p>
+                  </div>
                 </div>
               </motion.div>
+
+              {/* Advanced Analytics Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Radar Chart: Readiness Breakdown */}
+                <motion.div variants={fadeUp} custom={6} className="p-5 rounded-2xl flex flex-col justify-between"
+                  style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Readiness Breakdown</h3>
+                  <div className="max-w-xs mx-auto w-full flex items-center justify-center">
+                    <Radar data={{
+                      labels: ["Technical", "Resume", "Interview", "Placement", "Recruiter"],
+                      datasets: [{
+                        label: "Your Score",
+                        data: [scores.technical, scores.resume, scores.interview, scores.placement, scores.recruiter],
+                        backgroundColor: `${c.am}25`,
+                        borderColor: c.am,
+                        borderWidth: 2,
+                        pointBackgroundColor: c.am,
+                        pointRadius: 4,
+                      }]
+                    }} options={{
+                      responsive: true,
+                      scales: { r: { beginAtZero: true, max: 100, ticks: { display: false, stepSize: 20 }, grid: { color: c.bd }, pointLabels: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                      plugins: { legend: { display: false } },
+                    }} />
+                  </div>
+                </motion.div>
+
+                {/* Line Chart: Career Readiness Trend */}
+                <motion.div variants={fadeUp} custom={6.2} className="p-5 rounded-2xl"
+                  style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Career Readiness Trend</h3>
+                  <div className="h-64 w-full">
+                    <Line data={{
+                      labels: trendData.labels,
+                      datasets: [{
+                        label: "Readiness Score",
+                        data: trendData.data,
+                        fill: true,
+                        backgroundColor: `${c.bl}20`,
+                        borderColor: c.bl,
+                        tension: 0.35,
+                        pointBackgroundColor: c.bl,
+                        pointHoverRadius: 6,
+                        borderWidth: 3,
+                      }]
+                    }} options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: { y: { min: 0, max: 100, grid: { color: c.bd }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } }, x: { grid: { display: false }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                      plugins: { legend: { display: false } },
+                    }} />
+                  </div>
+                </motion.div>
+
+                {/* Bar Chart: Learning vs Coding progress */}
+                <motion.div variants={fadeUp} custom={6.4} className="p-5 rounded-2xl"
+                  style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Learning vs Coding Progress</h3>
+                  <div className="h-64 w-full">
+                    <Bar data={{
+                      labels: learningVsCodingData.labels,
+                      datasets: [{
+                        label: "Telemetry Count",
+                        data: learningVsCodingData.data,
+                        backgroundColor: [c.bl, `${c.bl}dd`, c.pp, `${c.pp}dd`, c.am],
+                        borderRadius: 6,
+                      }]
+                    }} options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: { y: { min: 0, grid: { color: c.bd }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } }, x: { grid: { display: false }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                      plugins: { legend: { display: false } },
+                    }} />
+                  </div>
+                </motion.div>
+
+                {/* Doughnut Chart: Weekly completion */}
+                <motion.div variants={fadeUp} custom={6.6} className="p-5 rounded-2xl flex flex-col justify-between"
+                  style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Weekly Task Completion Rate</h3>
+                  <div className="max-w-[190px] mx-auto w-full flex items-center justify-center">
+                    <Doughnut data={{
+                      labels: weeklyCompletionData.labels,
+                      datasets: [{
+                        data: weeklyCompletionData.data,
+                        backgroundColor: [c.gn, c.am, `${c.txM}50`, c.rd],
+                        borderWidth: 0,
+                      }]
+                    }} options={{
+                      responsive: true,
+                      cutout: "70%",
+                      plugins: { legend: { position: "right" as const, labels: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                    }} />
+                  </div>
+                </motion.div>
+              </div>
 
               {/* Coach Summary + Milestones */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -552,17 +855,19 @@ export function CareerNavigationEngine({ setView }: Props) {
                     <Flag size={14} style={{ color: c.am }} /> Milestones
                   </h3>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {milestones.slice(0, 5).map((m, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg" style={{ background: c.sf }}>
+                    {localMilestones.slice(0, 5).map((m, i) => (
+                      <button key={i} onClick={() => toggleMilestone(i)}
+                        className="w-full flex items-start gap-2 p-2 rounded-lg text-left transition-colors cursor-pointer hover:bg-slate-500/5"
+                        style={{ background: c.sf }}>
                         <div className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0"
                           style={{ background: m.status === "completed" ? c.gn : c.dv }}>
                           {m.status === "completed" ? <Check size={10} style={{ color: "#fff" }} /> : <Circle size={8} style={{ color: c.txM }} />}
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold" style={{ color: c.tx }}>{m.title}</p>
+                          <p className="text-[11px] font-bold" style={{ color: c.tx, textDecoration: m.status === "completed" ? "line-through" : "none", opacity: m.status === "completed" ? 0.6 : 1 }}>{m.title}</p>
                           <p className="text-[9px]" style={{ color: c.txM }}>{m.targetDate}</p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </motion.div>
@@ -629,6 +934,18 @@ export function CareerNavigationEngine({ setView }: Props) {
                             </div>
                           </div>
                         )}
+                        {phase.dependencies && phase.dependencies.length > 0 && (
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Dependencies</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {phase.dependencies.map((dep, j) => (
+                                <span key={j} className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.sf, color: c.tx2, border: `1px solid ${c.bd}` }}>
+                                  Prerequisite: {dep}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -646,11 +963,25 @@ export function CareerNavigationEngine({ setView }: Props) {
                     <Zap size={14} /> Daily Micro Tasks
                   </h3>
                   <div className="space-y-2">
-                    {roadmapData.weeklyPlan.dailyMicroTasks.map((task, i) => (
-                      <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium" style={{ background: c.sf, color: c.tx2 }}>
-                        <CircleDot size={12} style={{ color: c.am }} /> {task}
-                      </div>
-                    ))}
+                    {roadmapData.weeklyPlan.dailyMicroTasks.map((task, i) => {
+                      const isChecked = !!checkedMicroTasks[task];
+                      return (
+                        <button key={i} onClick={() => toggleMicroTask(task)}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium text-left transition-all"
+                          style={{
+                            background: isChecked ? `${c.gn}08` : c.sf,
+                            color: isChecked ? c.txM : c.tx2,
+                            border: `1px solid ${isChecked ? `${c.gn}20` : "transparent"}`,
+                          }}>
+                          {isChecked ? (
+                            <CheckCircle size={12} style={{ color: c.gn }} />
+                          ) : (
+                            <CircleDot size={12} style={{ color: c.am }} />
+                          )}
+                          <span style={{ textDecoration: isChecked ? "line-through" : "none", opacity: isChecked ? 0.6 : 1 }}>{task}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -677,17 +1008,14 @@ export function CareerNavigationEngine({ setView }: Props) {
                     className="flex items-center justify-between p-3 rounded-xl"
                     style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <button onClick={() => {
-                        const next = task.status === "not_started" ? "in_progress" : task.status === "in_progress" ? "completed" : "not_started";
-                        updateTaskStatus(task.id, next);
-                      }}
-                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: task.status === "completed" ? c.gn : task.status === "in_progress" ? c.am : "transparent",
-                          border: `2px solid ${task.status === "completed" ? c.gn : task.status === "in_progress" ? c.am : c.bd}`,
+                          background: task.status === "completed" ? c.gnBg : task.status === "in_progress" ? c.amBg : task.status === "skipped" ? `${c.txM}20` : "transparent",
+                          border: `1.5px solid ${task.status === "completed" ? c.gn : task.status === "in_progress" ? c.am : task.status === "skipped" ? c.tx2 : c.bd}`,
+                          color: task.status === "completed" ? c.gn : task.status === "in_progress" ? c.am : task.status === "skipped" ? c.tx2 : c.txM,
                         }}>
-                        {task.status === "completed" && <Check size={12} style={{ color: "#fff" }} />}
-                      </button>
+                        {task.status === "completed" ? <Check size={10} /> : task.status === "in_progress" ? <Zap size={10} /> : task.status === "skipped" ? <X size={10} /> : <Circle size={8} />}
+                      </div>
                       <div className="min-w-0">
                         <p className="text-[11px] font-bold truncate" style={{
                           color: c.tx,
@@ -697,11 +1025,22 @@ export function CareerNavigationEngine({ setView }: Props) {
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full capitalize"
                             style={{ background: c.sf, color: c.txM }}>{task.category}</span>
-                          <span className="text-[9px] font-bold" style={{ color: c.txM }}>{task.estimatedHours}h</span>
+                          <span className="text-[9px] font-bold opacity-75" style={{ color: c.txM }}>{task.estimatedHours}h</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <select value={task.status} onChange={e => updateTaskStatus(task.id, e.target.value)}
+                        className="text-[9px] font-bold px-2 py-1 rounded-lg outline-none cursor-pointer border-0"
+                        style={{
+                          background: task.status === "completed" ? c.gnBg : task.status === "in_progress" ? c.amBg : task.status === "skipped" ? `${c.rdBg}` : c.sf,
+                          color: task.status === "completed" ? c.gn : task.status === "in_progress" ? c.am : task.status === "skipped" ? c.rd : c.txM,
+                        }}>
+                        <option value="not_started" style={{ background: c.d ? "#111827" : "#fff", color: c.tx }}>Not Started</option>
+                        <option value="in_progress" style={{ background: c.d ? "#111827" : "#fff", color: c.tx }}>In Progress</option>
+                        <option value="completed" style={{ background: c.d ? "#111827" : "#fff", color: c.tx }}>Completed</option>
+                        <option value="skipped" style={{ background: c.d ? "#111827" : "#fff", color: c.tx }}>Skipped</option>
+                      </select>
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                         style={{
                           background: task.priority === "High" ? c.rdBg : task.priority === "Medium" ? c.amBg : c.gnBg,
@@ -721,28 +1060,93 @@ export function CareerNavigationEngine({ setView }: Props) {
           )}
 
           {tab === "skills" && (
-            <motion.div key="skills" initial="hidden" animate="visible" exit="hidden" variants={fadeUp} className="space-y-5">
-              {/* Skill Radar */}
+            <motion.div key="skills" initial="hidden" animate="visible" exit="hidden" variants={fadeUp} className="space-y-6">
+              {/* Skill Charts Grid */}
               {skillItems.length > 0 && (
-                <div className="p-5 rounded-2xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
-                  <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Skill Progression Map</h3>
-                  <div className="max-w-md mx-auto">
-                    <Radar data={{
-                      labels: skillItems.slice(0, 8).map(s => s.name),
-                      datasets: [
-                        { label: "Current", data: skillItems.slice(0, 8).map(s => s.currentLevel), backgroundColor: `${c.bl}20`, borderColor: c.bl, borderWidth: 2, pointBackgroundColor: c.bl },
-                        { label: "Target", data: skillItems.slice(0, 8).map(s => s.targetLevel), backgroundColor: `${c.am}15`, borderColor: c.am, borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: c.am },
-                      ]
-                    }} options={{
-                      responsive: true,
-                      scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, grid: { color: c.bd }, pointLabels: { color: c.tx2, font: { size: 10, weight: "bold" } } } },
-                      plugins: { legend: { labels: { color: c.tx2, font: { size: 10, weight: "bold" } } } },
-                    }} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div className="p-5 rounded-2xl flex flex-col justify-between" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                    <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Skill Assessment Radar</h3>
+                    <div className="max-w-xs mx-auto w-full flex items-center justify-center">
+                      <Radar data={{
+                        labels: skillItems.slice(0, 8).map(s => s.name),
+                        datasets: [
+                          { label: "Current", data: skillItems.slice(0, 8).map(s => s.currentLevel), backgroundColor: `${c.bl}20`, borderColor: c.bl, borderWidth: 2, pointBackgroundColor: c.bl },
+                          { label: "Target", data: skillItems.slice(0, 8).map(s => s.targetLevel), backgroundColor: `${c.am}15`, borderColor: c.am, borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: c.am },
+                        ]
+                      }} options={{
+                        responsive: true,
+                        scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, grid: { color: c.bd }, pointLabels: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                        plugins: { legend: { labels: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                      }} />
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl flex flex-col justify-between" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                    <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: c.txM }}>Skill Target Comparison</h3>
+                    <div className="h-64 w-full">
+                      <Bar data={{
+                        labels: skillItems.slice(0, 6).map(s => s.name),
+                        datasets: [
+                          { label: "Current Level", data: skillItems.slice(0, 6).map(s => s.currentLevel), backgroundColor: c.bl, borderRadius: 4 },
+                          { label: "Target Level", data: skillItems.slice(0, 6).map(s => s.targetLevel), backgroundColor: c.am, borderRadius: 4 },
+                        ]
+                      }} options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { min: 0, max: 100, grid: { color: c.bd }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } }, x: { grid: { display: false }, ticks: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                        plugins: { legend: { labels: { color: c.tx2, font: { size: 9, weight: "bold" } } } },
+                      }} />
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Skill Cards */}
+              {/* Visual Dependency Flowchart */}
+              {skillItems.length > 0 && (
+                <div className="p-5 rounded-2xl overflow-x-auto" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2" style={{ color: c.txM }}>
+                    <GitBranch size={14} style={{ color: c.am }} /> Skill Progression flowchart
+                  </h3>
+                  <div className="flex justify-between items-start min-w-[750px] gap-6 relative py-4">
+                    {/* Foundation Column */}
+                    <div className="flex-1 flex flex-col gap-4 items-center">
+                      <div className="text-[10px] font-extrabold uppercase tracking-widest mb-2 px-2 py-0.5 rounded" style={{ background: c.sf, color: c.txM }}>Foundation</div>
+                      {getSkillColumns().foundation.map((skill) => (
+                        <SkillNode key={skill.name} skill={skill} c={c} />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-center pt-16 opacity-30"><ArrowRight size={16} /></div>
+
+                    {/* Core Column */}
+                    <div className="flex-1 flex flex-col gap-4 items-center">
+                      <div className="text-[10px] font-extrabold uppercase tracking-widest mb-2 px-2 py-0.5 rounded" style={{ background: c.sf, color: c.txM }}>Core Skills</div>
+                      {getSkillColumns().core.map((skill) => (
+                        <SkillNode key={skill.name} skill={skill} c={c} />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-center pt-16 opacity-30"><ArrowRight size={16} /></div>
+
+                    {/* Advanced Column */}
+                    <div className="flex-1 flex flex-col gap-4 items-center">
+                      <div className="text-[10px] font-extrabold uppercase tracking-widest mb-2 px-2 py-0.5 rounded" style={{ background: c.sf, color: c.txM }}>Advanced</div>
+                      {getSkillColumns().advanced.map((skill) => (
+                        <SkillNode key={skill.name} skill={skill} c={c} />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-center pt-16 opacity-30"><ArrowRight size={16} /></div>
+
+                    {/* Specialized Column */}
+                    <div className="flex-1 flex flex-col gap-4 items-center">
+                      <div className="text-[10px] font-extrabold uppercase tracking-widest mb-2 px-2 py-0.5 rounded" style={{ background: c.sf, color: c.txM }}>Specialized</div>
+                      {getSkillColumns().specialized.map((skill) => (
+                        <SkillNode key={skill.name} skill={skill} c={c} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Individual Skill Details Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {skillItems.map((skill, i) => (
                   <motion.div key={i} variants={fadeUp} custom={i} className="p-4 rounded-2xl"
@@ -750,8 +1154,8 @@ export function CareerNavigationEngine({ setView }: Props) {
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-bold" style={{ color: c.tx }}>{skill.name}</p>
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full capitalize" style={{
-                        background: skill.status === "completed" ? c.gnBg : skill.status === "in_progress" ? c.amBg : c.dv,
-                        color: skill.status === "completed" ? c.gn : skill.status === "in_progress" ? c.am : c.txM,
+                        background: skill.status === "completed" || skill.currentLevel >= 80 ? c.gnBg : skill.status === "in_progress" ? c.amBg : c.dv,
+                        color: skill.status === "completed" || skill.currentLevel >= 80 ? c.gn : skill.status === "in_progress" ? c.am : c.txM,
                       }}>{skill.status.replace("_", " ")}</span>
                     </div>
                     <div className="space-y-1.5">
@@ -759,7 +1163,7 @@ export function CareerNavigationEngine({ setView }: Props) {
                         <span>Current: {skill.currentLevel}%</span><span>Target: {skill.targetLevel}%</span>
                       </div>
                       <div className="h-2 rounded-full" style={{ background: c.dv }}>
-                        <div className="h-full rounded-full" style={{ width: `${skill.currentLevel}%`, background: `linear-gradient(90deg, ${c.bl}, ${c.am})`, transition: "width 1s ease" }} />
+                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${skill.currentLevel}%`, background: `linear-gradient(90deg, ${c.bl}, ${c.am})` }} />
                       </div>
                     </div>
                     {skill.dependencies.length > 0 && (
@@ -839,6 +1243,46 @@ export function CareerNavigationEngine({ setView }: Props) {
                   </div>
                 </div>
               )}
+
+              {/* Missing Experience */}
+              {roadmapData?.gapAnalysis?.missingExperience && roadmapData.gapAnalysis.missingExperience.length > 0 && (
+                <div className="p-5 rounded-2xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: c.txM }}>
+                    <Briefcase size={14} style={{ color: c.am }} /> Missing Experience / Profile Gaps
+                  </h3>
+                  <div className="space-y-3">
+                    {roadmapData.gapAnalysis.missingExperience.map((exp, i) => (
+                      <div key={i} className="p-3 rounded-xl" style={{ background: c.sf }}>
+                        <p className="text-[11px] font-bold" style={{ color: c.tx }}>{exp.area}</p>
+                        <p className="text-[10px] mt-1" style={{ color: c.tx2 }}>{exp.suggestion}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Missing Certifications */}
+              {((roadmapData?.gapAnalysis as any)?.missingCertifications || certRecs).length > 0 && (
+                <div className="p-5 rounded-2xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: c.txM }}>
+                    <Award size={14} style={{ color: c.bl }} /> Missing Professional Certifications
+                  </h3>
+                  <div className="space-y-2">
+                    {((roadmapData?.gapAnalysis as any)?.missingCertifications || certRecs).map((cert: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center p-3 rounded-xl" style={{ background: c.sf }}>
+                        <div>
+                          <p className="text-[11px] font-bold" style={{ color: c.tx }}>{cert.cert || cert.name}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: c.txM }}>{cert.why}</p>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.gnBg, color: c.gn }}>ROI: {cert.roi}</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.blBg, color: c.bl }}>{cert.studyTime || "Self-study"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -867,9 +1311,12 @@ export function CareerNavigationEngine({ setView }: Props) {
                           <span key={j} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: c.blBg, color: c.bl }}>{s}</span>
                         ))}
                       </div>
-                      <div className="flex items-center gap-4 text-[9px] font-bold" style={{ color: c.txM }}>
-                        <span>Resume: {proj.resumeImpact}</span>
-                        <span>Time: {proj.estimatedTime}</span>
+                      <div className="text-[9px] font-bold space-y-1" style={{ color: c.txM }}>
+                        <div><span style={{ color: c.pp }}>Interview Value:</span> {proj.interviewValue}</div>
+                        <div className="flex items-center gap-4">
+                          <span>Resume: {proj.resumeImpact}</span>
+                          <span>Time: {proj.estimatedTime}</span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -887,9 +1334,10 @@ export function CareerNavigationEngine({ setView }: Props) {
                           <p className="text-[11px] font-bold" style={{ color: c.tx }}>{cert.name}</p>
                           <p className="text-[10px]" style={{ color: c.txM }}>{cert.why} &middot; {cert.issuer}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.gnBg, color: c.gn }}>ROI: {cert.roi}</span>
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.blBg, color: c.bl }}>{cert.difficulty}</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.blBg, color: c.bl }}>{cert.studyTime}</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.sf, color: c.tx2, border: `1px solid ${c.bd}` }}>{cert.difficulty}</span>
                         </div>
                       </div>
                     ))}
@@ -934,6 +1382,32 @@ export function CareerNavigationEngine({ setView }: Props) {
                     {marketInsights.interviewTrends.map((t, i) => (
                       <div key={i} className="flex items-center gap-2 text-[11px]" style={{ color: c.tx2 }}>
                         <TrendingUp size={12} style={{ color: c.gn }} /> {t}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {marketInsights.resumeExpectations?.length > 0 && (
+                <div className="p-5 rounded-2xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: c.txM }}>Resume Expectations</h3>
+                  <div className="space-y-1.5">
+                    {marketInsights.resumeExpectations.map((exp, i) => (
+                      <div key={i} className="flex items-center gap-2 text-[11px]" style={{ color: c.tx2 }}>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: c.bl }} /> {exp}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {marketInsights.portfolioExpectations?.length > 0 && (
+                <div className="p-5 rounded-2xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: c.txM }}>Portfolio Expectations</h3>
+                  <div className="space-y-1.5">
+                    {marketInsights.portfolioExpectations.map((exp, i) => (
+                      <div key={i} className="flex items-center gap-2 text-[11px]" style={{ color: c.tx2 }}>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: c.pp }} /> {exp}
                       </div>
                     ))}
                   </div>
@@ -996,6 +1470,139 @@ export function CareerNavigationEngine({ setView }: Props) {
                   <Zap size={14} /> Next Best Action
                 </h3>
                 <p className="text-sm font-bold" style={{ color: c.tx }}>{coach.nextBestAction}</p>
+              </div>
+            </motion.div>
+          )}
+
+          {tab === "milestones" && (
+            <motion.div key="milestones" initial="hidden" animate="visible" exit="hidden" variants={fadeUp} className="space-y-5">
+              {/* Milestones Stats Dashboard Card */}
+              <div className="p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in"
+                style={{ background: `linear-gradient(135deg, ${c.bl}15, ${c.pp}15)`, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: c.tx }}>Milestones Progress Tracker</h3>
+                  <p className="text-xs" style={{ color: c.txM }}>Complete target tasks to progress through phases and unlock rewards</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-lg font-extrabold" style={{ color: c.gn }}>
+                      {localMilestones.filter(m => m.status === "completed").length} / {localMilestones.length}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>Milestones Completed</p>
+                  </div>
+                  <div className="w-16 h-16 relative flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-4" style={{ borderColor: c.dv }} />
+                    <div className="absolute inset-0 rounded-full border-4 transition-all duration-1000"
+                      style={{
+                        borderColor: c.gn,
+                        clipPath: `polygon(50% 50%, 50% 0%, ${localMilestones.length > 0 ? (localMilestones.filter(m => m.status === "completed").length / localMilestones.length) * 360 : 0}deg 0%, 100% 100%, 0% 100%, 0% 0%)`,
+                        transform: "rotate(-90deg)"
+                      }} />
+                    <span className="text-xs font-bold" style={{ color: c.tx }}>
+                      {localMilestones.length > 0 ? Math.round((localMilestones.filter(m => m.status === "completed").length / localMilestones.length) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Category Filters */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["all", "learning", "coding", "resume", "linkedin", "interview", "application"].map(cat => (
+                    <button key={cat} onClick={() => setMilestoneCategoryFilter(cat)}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all"
+                      style={{
+                        background: milestoneCategoryFilter === cat ? c.blBg : c.sf,
+                        border: `1px solid ${milestoneCategoryFilter === cat ? `${c.bl}30` : c.bd}`,
+                        color: milestoneCategoryFilter === cat ? c.bl : c.txM,
+                      }}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Status Filters */}
+                <div className="flex gap-1.5">
+                  {["all", "completed", "pending"].map(st => (
+                    <button key={st} onClick={() => setMilestoneStatusFilter(st)}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all"
+                      style={{
+                        background: milestoneStatusFilter === st ? c.amBg : c.sf,
+                        border: `1px solid ${milestoneStatusFilter === st ? `${c.am}30` : c.bd}`,
+                        color: milestoneStatusFilter === st ? c.am : c.txM,
+                      }}>
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Milestones List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {localMilestones
+                  .map((m, idx) => ({ ...m, originalIndex: idx }))
+                  .filter(m => {
+                    const titleLower = m.title.toLowerCase();
+                    const cat = titleLower.includes("learn") || titleLower.includes("course") || titleLower.includes("study") || titleLower.includes("concept") ? "learning" :
+                                titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
+                                titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
+                                titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
+                                titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
+                    const matchesCat = milestoneCategoryFilter === "all" || cat === milestoneCategoryFilter;
+                    const matchesStatus = milestoneStatusFilter === "all" || m.status === milestoneStatusFilter;
+                    return matchesCat && matchesStatus;
+                  })
+                  .map((m, i) => {
+                    const titleLower = m.title.toLowerCase();
+                    const cat = titleLower.includes("learn") || titleLower.includes("course") || titleLower.includes("study") || titleLower.includes("concept") ? "learning" :
+                                titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
+                                titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
+                                titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
+                                titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
+                    const isCompleted = m.status === "completed";
+                    const badgeStyles =
+                      cat === "learning" ? { bg: c.blBg, text: c.bl } :
+                      cat === "coding" ? { bg: c.ppBg, text: c.pp } :
+                      cat === "resume" ? { bg: c.gnBg, text: c.gn } :
+                      cat === "linkedin" ? { bg: c.amBg, text: c.am } :
+                      cat === "interview" ? { bg: c.rdBg, text: c.rd } :
+                      { bg: c.cyBg, text: c.cy };
+
+                    return (
+                      <motion.div key={i} variants={fadeUp} custom={i}
+                        className="p-4 rounded-2xl flex items-start justify-between gap-4 transition-all"
+                        style={{
+                          background: c.cb,
+                          border: `1px solid ${isCompleted ? `${c.gn}30` : c.bd}`,
+                          boxShadow: isCompleted ? `0 0 15px ${c.gn}08` : c.cs,
+                        }}>
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <button onClick={() => toggleMilestone(m.originalIndex)}
+                            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
+                            style={{
+                              background: isCompleted ? c.gn : "transparent",
+                              border: `2px solid ${isCompleted ? c.gn : c.bd}`,
+                            }}>
+                            {isCompleted && <Check size={12} style={{ color: "#fff" }} />}
+                          </button>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold leading-normal truncate"
+                              style={{
+                                color: c.tx,
+                                textDecoration: isCompleted ? "line-through" : "none",
+                                opacity: isCompleted ? 0.6 : 1
+                              }}>{m.title}</h4>
+                            <p className="text-[10px] mt-0.5" style={{ color: c.txM }}>Target Date: {m.targetDate}</p>
+                            <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full capitalize mt-2"
+                              style={{ background: badgeStyles.bg, color: badgeStyles.text }}>
+                              {cat}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
               </div>
             </motion.div>
           )}

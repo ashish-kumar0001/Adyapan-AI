@@ -8,7 +8,7 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
   try {
     const userId = requireUserId(req);
     const userPrisma = await getUserPrismaFromRequest(req);
-    const { targetRole, timeline } = req.body;
+    const { targetRole, timeline, experienceLevel } = req.body;
 
     // Gather all user data for AI — each query is isolated so a single
     // missing model in the tenant DB doesn't crash the entire request.
@@ -79,6 +79,7 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         linkedin: profile?.linkedin || "",
       },
       targetRole: targetRole || profile?.targetRole || "Software Engineer",
+      experienceLevel: experienceLevel || "Entry-level",
       timeline: timeline || "90 Days",
       codingAnalytics: {
         dsaSolved: dsaProgress?.solved || 0,
@@ -176,7 +177,24 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
           interviewScore: roadmapData.readinessScores.interview,
           placementScore: roadmapData.readinessScores.placement,
           recruiterScore: roadmapData.readinessScores.recruiter,
-          roadmapJson: roadmapData.roadmap as any,
+          roadmapJson: {
+            ...(roadmapData.roadmap || {}),
+            platformStats: {
+              coding: profileData.codingAnalytics,
+              learning: profileData.learningAnalytics,
+              ats: {
+                score: avgAtsScore,
+                reportsCount: profileData.atsReports.length,
+              },
+              linkedin: {
+                score: avgLinkedinScore,
+                headline: profileData.linkedinData?.headline || "",
+              },
+              resume: {
+                hasResume: profileData.resumeData?.hasResume || false,
+              }
+            }
+          } as any,
           weeklyPlanJson: roadmapData.weeklyPlan as any,
           gapAnalysisJson: roadmapData.gapAnalysis as any,
           skillMapJson: roadmapData.skillMap as any,

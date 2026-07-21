@@ -101,6 +101,7 @@ apiRouter.use("/resume-improvements", resumeImprovementRouter);
 
 // Career Navigation Engine Routes
 apiRouter.use("/career", careerRouter);
+apiRouter.use("/career-roadmap", careerRouter);
 
 // Placement Hub Routes
 apiRouter.use("/placement", placementRouter);

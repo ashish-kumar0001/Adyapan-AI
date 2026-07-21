@@ -152,6 +152,7 @@ export async function generateCareerRoadmap(profileData: any): Promise<CareerRoa
   const prompt = `Generate a comprehensive, ROLE-SPECIFIC career roadmap. Every recommendation must be tailored to the user's target role.
 
 TARGET ROLE: ${profileData.targetRole || "Software Engineer"}
+EXPERIENCE LEVEL: ${profileData.experienceLevel || "Entry-level"}
 TIMELINE: ${profileData.timeline || "90 Days"}
 
 === USER PROFILE ===
