@@ -7,13 +7,26 @@ import {
   updateTask,
   deleteRoadmap,
 } from "../controllers/career.controller";
+import {
+  getCareerDashboard,
+  getCareerInsights,
+  getCareerRecommendations,
+  getCareerReadiness,
+  refreshCareerDashboard,
+} from "../controllers/career-dashboard.controller";
 import { requireAuth } from "../middleware/auth";
 
 export const careerRouter = Router();
 
+careerRouter.get("/dashboard", requireAuth, getCareerDashboard);
+careerRouter.post("/dashboard/refresh", requireAuth, refreshCareerDashboard);
+careerRouter.get("/insights", requireAuth, getCareerInsights);
+careerRouter.get("/recommendations", requireAuth, getCareerRecommendations);
+careerRouter.get("/readiness", requireAuth, getCareerReadiness);
 careerRouter.post("/generate", requireAuth, generateRoadmap);
 careerRouter.get("/latest", requireAuth, getLatestRoadmap);
 careerRouter.get("/history", requireAuth, listRoadmaps);
 careerRouter.post("/update-task", requireAuth, updateTask);
 careerRouter.get("/:id", requireAuth, getRoadmapById);
 careerRouter.delete("/:id", requireAuth, deleteRoadmap);
+
