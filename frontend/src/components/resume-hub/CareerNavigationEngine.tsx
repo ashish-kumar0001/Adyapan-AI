@@ -83,8 +83,21 @@ const mkC = (t: string) => {
   };
 };
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }) };
-const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }) };
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
+};
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.88 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
+};
+const slideIn = {
+  hidden: { opacity: 0, x: -30 },
+  visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.05, duration: 0.35 } }),
+  exit: { opacity: 0, x: 30, transition: { duration: 0.2 } },
+};
 
 function ScoreRing({ score, size = 120, stroke = 10, color, label, c }: {
   score: number; size?: number; stroke?: number; color: string; label: string; c: ReturnType<typeof mkC>;
@@ -278,7 +291,7 @@ export function CareerNavigationEngine({ setView }: Props) {
 
   if (loading) {
     return (
-      <div style={{ background: c.bg, minHeight: "100vh", padding: "2rem" }}>
+      <div style={{ background: c.bg, padding: "2rem", position: "relative", zIndex: 0 }}>
         <StepLoader steps={LOADING_STEPS} currentStep={loadStep} c={c} />
       </div>
     );
@@ -286,7 +299,7 @@ export function CareerNavigationEngine({ setView }: Props) {
 
   if (tab === "setup") {
     return (
-      <div style={{ background: c.bg, minHeight: "100vh", padding: "1.5rem" }}>
+      <div style={{ background: c.bg, padding: "1.5rem", position: "relative", zIndex: 0 }}>
         <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: c.amBg }}>
@@ -421,7 +434,7 @@ export function CareerNavigationEngine({ setView }: Props) {
   ];
 
   return (
-    <div style={{ background: c.bg, minHeight: "100vh" }}>
+    <div style={{ background: c.bg, position: "relative", zIndex: 0 }}>
       {/* Header */}
       <div className="px-4 md:px-6 pt-5 pb-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
         style={{ borderBottom: `1px solid ${c.bd}` }}>

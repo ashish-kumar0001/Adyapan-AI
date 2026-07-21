@@ -51,6 +51,12 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
     let submissions: any[] = [];
     try { submissions = await userPrisma.submission.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 30 }); } catch (e) { console.warn("[Career] submissions query failed:", (e as Error)?.message); }
 
+    let resumeAnalyses: any[] = [];
+    try { resumeAnalyses = await userPrisma.resumeAnalysis.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3 }); } catch (e) { console.warn("[Career] resumeAnalyses query failed:", (e as Error)?.message); }
+
+    let resumeImprovements: any[] = [];
+    try { resumeImprovements = await userPrisma.resumeImprovement.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }); } catch (e) { console.warn("[Career] resumeImprovements query failed:", (e as Error)?.message); }
+
     const avgAtsScore = atsReports.length
       ? Math.round(atsReports.reduce((s: number, r: any) => s + (r.score || 0), 0) / atsReports.length)
       : 0;
@@ -93,14 +99,28 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         quizAttempts: quizes.length,
         avgQuizScore: quizes.length > 0 ? Math.round(quizes.reduce((s: number, q: any) => s + (q.accuracy || 0) * 100, 0) / quizes.length) : 0,
       },
-      atsReports: atsReports.map((r: any) => ({ score: r.score, keywords: r.missingKeywords })),
+      atsReports: atsReports.map((r: any) => ({
+        score: r.score,
+        keywords: r.missingKeywords,
+        recommendations: r.recommendations,
+        overallScore: r.overallScore,
+        formattingScore: r.formattingScore,
+        keywordScore: r.keywordScore,
+        experienceScore: r.experienceScore,
+        projectScore: r.projectScore,
+        skillsScore: r.skillsScore,
+        educationScore: r.educationScore,
+      })),
       resumeData: resumes.length > 0 ? {
         hasResume: true,
+        personalInfo: resumes[0].personalInfo,
         skills: resumes[0].skills,
         experience: resumes[0].experience,
         projects: resumes[0].projects,
         education: resumes[0].education,
         certifications: resumes[0].certifications,
+        achievements: resumes[0].achievements,
+        languages: resumes[0].languages,
       } : { hasResume: false },
       linkedinData: linkedinReports.length > 0 ? {
         score: avgLinkedinScore,
@@ -108,6 +128,17 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         skills: linkedinReports[0].skills,
       } : { score: 0, headline: "", skills: [] },
       coverLettersCount: coverLetters.length,
+      resumeAnalyses: resumeAnalyses.map((r: any) => ({
+        strengths: r.strengths,
+        weaknesses: r.weaknesses,
+        recommendations: r.recommendations,
+      })),
+      resumeImprovements: resumeImprovements.map((r: any) => ({
+        section: r.section,
+        originalText: r.originalText?.substring(0, 200),
+        improvedText: r.improvedText?.substring(0, 200),
+        status: r.status,
+      })),
     };
 
     let roadmapData: any;
