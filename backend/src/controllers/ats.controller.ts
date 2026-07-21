@@ -205,7 +205,13 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
       throw httpError(400, "Could not extract text from the resume.");
     }
 
-    const analysis = await analyzeResumeDeep(resumeText, targetRole, jobDescription);
+    let analysis;
+    try {
+      analysis = await analyzeResumeDeep(resumeText, targetRole, jobDescription);
+    } catch (aiErr: any) {
+      console.error("[ATS] AI analysis failed:", aiErr?.message || aiErr);
+      throw httpError(503, "AI analysis service is temporarily unavailable. Please try again in a moment.");
+    }
 
     const associatedResumeId = await getOrCreateResumeId(userId, resumeId, userPrisma);
 
@@ -320,11 +326,22 @@ export async function getATSSuggestions(req: Request, res: Response, next: NextF
 
     // If we don't have analysis yet, do a quick one
     if (!analysis) {
-      const atsResult = await analyzeResumeATS(resumeText, targetRole || "Software Engineer");
-      analysis = atsResult;
+      try {
+        const atsResult = await analyzeResumeATS(resumeText, targetRole || "Software Engineer");
+        analysis = atsResult;
+      } catch (aiErr: any) {
+        console.error("[ATS] AI analysis failed:", aiErr?.message || aiErr);
+        throw httpError(503, "AI analysis service is temporarily unavailable. Please try again in a moment.");
+      }
     }
 
-    const suggestions = await generateATSSuggestions(resumeText, analysis, targetRole || "Software Engineer");
+    let suggestions;
+    try {
+      suggestions = await generateATSSuggestions(resumeText, analysis, targetRole || "Software Engineer");
+    } catch (aiErr: any) {
+      console.error("[ATS] AI suggestions generation failed:", aiErr?.message || aiErr);
+      throw httpError(503, "AI analysis service is temporarily unavailable. Please try again in a moment.");
+    }
 
     res.json({ success: true, suggestions });
   } catch (error) {
@@ -462,7 +479,13 @@ export async function analyzeATSIntelligence(req: Request, res: Response, next: 
       throw httpError(400, "Could not extract text from the resume.");
     }
 
-    const intelligence = await analyzeResumeIntelligence(resumeText, targetRole, jobDescription);
+    let intelligence;
+    try {
+      intelligence = await analyzeResumeIntelligence(resumeText, targetRole, jobDescription);
+    } catch (aiErr: any) {
+      console.error("[ATS] AI intelligence analysis failed:", aiErr?.message || aiErr);
+      throw httpError(503, "AI analysis service is temporarily unavailable. Please try again in a moment.");
+    }
 
     res.json({ success: true, intelligence });
   } catch (error) {

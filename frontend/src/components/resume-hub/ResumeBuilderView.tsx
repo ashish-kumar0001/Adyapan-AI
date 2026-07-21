@@ -105,6 +105,36 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
   const accumulatedTextRef = useRef("");
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
+  // Load resume from sessionStorage when navigated from ResumeImprovements (Apply button)
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem("pendingResumeId");
+    if (pendingId) {
+      sessionStorage.removeItem("pendingResumeId");
+      (async () => {
+        try {
+          const res = await api.get(`/resume/${pendingId}`);
+          if (res.data?.success && res.data?.resume) {
+            const r = res.data.resume;
+            if (r.personalInfo) setPersonalInfo(r.personalInfo);
+            if (r.summary) setSummary(r.summary);
+            if (r.education?.length) setEducation(r.education);
+            if (r.experience?.length) setExperience(r.experience);
+            if (r.projects?.length) setProjects(r.projects);
+            if (r.skills?.length) setSkills(r.skills);
+            if (r.certifications?.length) setCertifications(r.certifications);
+            if (r.achievements?.length) setAchievements(r.achievements);
+            if (r.languages?.length) setLanguages(r.languages);
+            setResumeId(pendingId);
+            setScreen(4);
+            showToast("Resume loaded with applied improvements!");
+          }
+        } catch {
+          console.warn("[ResumeBuilder] Failed to load pending resume:", pendingId);
+        }
+      })();
+    }
+  }, []);
+
   const showToast = useCallback((msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2500); }, []);
   const resumeJSON = { personalInfo, summary, education, experience, projects, skills, certifications, achievements, languages };
 

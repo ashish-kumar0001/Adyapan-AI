@@ -225,6 +225,10 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
       });
       setAppliedImprovements(prev => new Set([...prev, index]));
       showToast(`Applied: ${improvement.sectionTitle}`);
+      setTimeout(() => {
+        sessionStorage.setItem("pendingResumeId", resumeId || "");
+        setView("resume-builder");
+      }, 1200);
     } catch {
       showToast("Failed to apply improvement");
     }
@@ -250,6 +254,10 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
       });
       setAppliedImprovements(new Set(result.improvements.map((_, i) => i)));
       showToast(`Applied ${improvements.length} improvements!`);
+      setTimeout(() => {
+        sessionStorage.setItem("pendingResumeId", resumeId || "");
+        setView("resume-builder");
+      }, 1200);
     } catch {
       showToast("Failed to apply all improvements");
     }
@@ -264,6 +272,10 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
         improvedContent: keyword,
       });
       showToast(`Added keyword: ${keyword}`);
+      setTimeout(() => {
+        sessionStorage.setItem("pendingResumeId", resumeId || "");
+        setView("resume-builder");
+      }, 1200);
     } catch {
       showToast("Failed to add keyword");
     }
