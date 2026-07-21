@@ -265,6 +265,43 @@ export function CareerNavigationEngine({ setView }: Props) {
   const [activeTaskFilter, setActiveTaskFilter] = useState("all");
   const [checkedMicroTasks, setCheckedMicroTasks] = useState<Record<string, boolean>>({});
 
+  const scores = roadmapData?.readinessScores || { overall: 0, technical: 0, resume: 0, interview: 0, placement: 0, recruiter: 0 };
+  const phases = roadmapData?.roadmap?.phases || [];
+  const gapSkills = roadmapData?.gapAnalysis?.missingSkills || [];
+  const skillItems = roadmapData?.skillMap?.skills || [];
+
+  const getSkillColumns = useCallback(() => {
+    const cols = { foundation: [] as SkillMapItem[], core: [] as SkillMapItem[], advanced: [] as SkillMapItem[], specialized: [] as SkillMapItem[] };
+    skillItems.forEach(s => {
+      if (!s) return;
+      const name = (s.name || "").toLowerCase();
+      const deps = s.dependencies || [];
+      if (deps.length === 0) {
+        cols.foundation.push(s);
+      } else if (name.includes("system") || name.includes("distributed") || name.includes("cloud") || name.includes("devops") || name.includes("scale")) {
+        cols.specialized.push(s);
+      } else if (name.includes("algorithm") || name.includes("structure") || name.includes("pattern") || name.includes("python") || name.includes("javascript")) {
+        cols.core.push(s);
+      } else {
+        cols.advanced.push(s);
+      }
+    });
+    
+    if (cols.foundation.length === 0 && skillItems.length > 0) {
+      cols.foundation = skillItems.slice(0, Math.ceil(skillItems.length / 4));
+      cols.core = skillItems.slice(Math.ceil(skillItems.length / 4), Math.ceil(skillItems.length / 2));
+      cols.advanced = skillItems.slice(Math.ceil(skillItems.length / 2), Math.ceil(skillItems.length * 3 / 4));
+      cols.specialized = skillItems.slice(Math.ceil(skillItems.length * 3 / 4));
+    }
+    return cols;
+  }, [skillItems]);
+
+  const projRecs = roadmapData?.projectRecommendations || [];
+  const certRecs = roadmapData?.certRecommendations || [];
+  const marketInsights = roadmapData?.marketInsights;
+  const coach = roadmapData?.coachFeedback;
+  const milestones = roadmapData?.milestones || [];
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`);
@@ -532,41 +569,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     );
   }
 
-  const scores = roadmapData?.readinessScores || { overall: 0, technical: 0, resume: 0, interview: 0, placement: 0, recruiter: 0 };
-  const phases = roadmapData?.roadmap?.phases || [];
-  const gapSkills = roadmapData?.gapAnalysis?.missingSkills || [];
-  const skillItems = roadmapData?.skillMap?.skills || [];
 
-  const getSkillColumns = useCallback(() => {
-    const cols = { foundation: [] as SkillMapItem[], core: [] as SkillMapItem[], advanced: [] as SkillMapItem[], specialized: [] as SkillMapItem[] };
-    skillItems.forEach(s => {
-      if (!s) return;
-      const name = (s.name || "").toLowerCase();
-      const deps = s.dependencies || [];
-      if (deps.length === 0) {
-        cols.foundation.push(s);
-      } else if (name.includes("system") || name.includes("distributed") || name.includes("cloud") || name.includes("devops") || name.includes("scale")) {
-        cols.specialized.push(s);
-      } else if (name.includes("algorithm") || name.includes("structure") || name.includes("pattern") || name.includes("python") || name.includes("javascript")) {
-        cols.core.push(s);
-      } else {
-        cols.advanced.push(s);
-      }
-    });
-    
-    if (cols.foundation.length === 0 && skillItems.length > 0) {
-      cols.foundation = skillItems.slice(0, Math.ceil(skillItems.length / 4));
-      cols.core = skillItems.slice(Math.ceil(skillItems.length / 4), Math.ceil(skillItems.length / 2));
-      cols.advanced = skillItems.slice(Math.ceil(skillItems.length / 2), Math.ceil(skillItems.length * 3 / 4));
-      cols.specialized = skillItems.slice(Math.ceil(skillItems.length * 3 / 4));
-    }
-    return cols;
-  }, [skillItems]);
-  const projRecs = roadmapData?.projectRecommendations || [];
-  const certRecs = roadmapData?.certRecommendations || [];
-  const marketInsights = roadmapData?.marketInsights;
-  const coach = roadmapData?.coachFeedback;
-  const milestones = roadmapData?.milestones || [];
 
   const stats = (roadmapData?.roadmap as any)?.platformStats || {
     coding: { dsaSolved: 12, dsaAccuracy: 0.65, totalSubmissions: 24, weakTopics: [] },
