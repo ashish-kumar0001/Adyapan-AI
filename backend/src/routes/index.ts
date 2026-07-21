@@ -38,6 +38,7 @@ import { internshipRouter } from "./internship.routes";
 import { jobListingRouter } from "./job-listing.routes";
 import { communityRouter } from "./community.routes";
 import { resumeImprovementRouter } from "./resume-improvement.routes";
+import { careerRouter } from "./career.routes";
 
 export const apiRouter = Router();
 
@@ -96,6 +97,9 @@ apiRouter.use("/community", communityRouter);
 
 // Resume Improvement Engine Routes
 apiRouter.use("/resume-improvements", resumeImprovementRouter);
+
+// Career Navigation Engine Routes
+apiRouter.use("/career", careerRouter);
 
 
 

@@ -250,6 +250,7 @@ export function LinkedInView({ setView }: Props) {
   const [selectedHeadline, setSelectedHeadline] = useState("");
   const [selectedAbout, setSelectedAbout] = useState("");
   const [sectionLoading, setSectionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Expanded items
   const [expandedRec, setExpandedRec] = useState<number | null>(null);
@@ -290,6 +291,7 @@ export function LinkedInView({ setView }: Props) {
   const handleGenerate = async () => {
     setLoading(true);
     setLoadStep(0);
+    setError(null);
     let step = 0;
     loadStepRef.current = setInterval(() => {
       step++;
@@ -308,9 +310,13 @@ export function LinkedInView({ setView }: Props) {
         setHeadlineVariants(res.data.profile.headlineVariants || []);
         setAboutVariants(res.data.profile.aboutVariants || []);
         loadHistory();
+      } else {
+        setError(res.data.error || "Failed to generate profile. Please try again.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || "Failed to generate LinkedIn profile. Please check your resume and try again.";
+      console.error("[LinkedIn] Generation error:", msg);
+      setError(msg);
     } finally {
       clearInterval(loadStepRef.current);
       setLoadStep(LOADING_STEPS.length - 1);
@@ -575,6 +581,24 @@ export function LinkedInView({ setView }: Props) {
                 </motion.div>
               }
             />
+
+            {/* Error Banner */}
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  className="w-full max-w-md p-3 rounded-xl flex items-center justify-between gap-2"
+                  style={{ background: c.rdBg, border: `1px solid ${c.rd}30` }}>
+                  <div className="flex items-center gap-2 text-[10px]" style={{ color: c.rd }}>
+                    <AlertTriangle size={14} />
+                    <span className="font-semibold">{error}</span>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} onClick={() => setError(null)} style={{ color: c.rd }}>
+                    <X size={12} />
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Config Card */}
             <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}

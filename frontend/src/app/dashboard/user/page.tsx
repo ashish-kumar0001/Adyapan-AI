@@ -67,6 +67,9 @@ const ResumeUploadView = dynamic(() => import("@/components/resume-hub/ResumeUpl
 const ResumeImprovementsView = dynamic(() => import("@/components/resume-hub/ResumeImprovementsView").then(m => m.ResumeImprovementsView), {
   loading: () => <DashboardWidgetSkeleton title="Resume Improvements" />
 });
+const CareerNavigationEngine = dynamic(() => import("@/components/resume-hub/CareerNavigationEngine").then(m => m.CareerNavigationEngine), {
+  loading: () => <DashboardWidgetSkeleton title="Career Navigation" />
+});
 const AdyChatView = dynamic(() => import("@/components/ady-chat/AdyChatView").then(m => m.AdyChatView), {
   loading: () => <DashboardWidgetSkeleton title="Ady Chat" />
 });
@@ -207,6 +210,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "ATS Score Checker", viewId: "ats-checker", category: "Resume Hub" },
   { label: "Cover Letter Generator", viewId: "cover-letter", category: "Resume Hub" },
   { label: "LinkedIn Optimizer", viewId: "linkedin-optimizer", category: "Resume Hub" },
+  { label: "Career Roadmap", viewId: "career-roadmap", category: "Resume Hub" },
   { label: "AI HR Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "AI Technical Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "Mock Interviews", viewId: "interview-hub", category: "Interview Hub" },
@@ -270,6 +274,7 @@ export const sidebarItems: SidebarItem[] = [
       { label: "ATS Score Checker", href: "#" }, { label: "Resume Improvements", href: "#" },
       { label: "Cover Letter Generator", href: "#" },
       { label: "LinkedIn Optimizer", href: "#" },
+      { label: "Career Roadmap", href: "/dashboard/resume/career-roadmap" },
     ],
   },
   {
@@ -474,6 +479,7 @@ export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, side
                       else if (sub.label === "Resume Improvements") onViewTool("resume-improvements");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
+                      else if (sub.label === "Career Roadmap") onViewTool("career-roadmap");
                       else if (sub.label === "Study Assistant") onViewTool("study-assistant");
                       else if (sub.label === "Notes Generator") onViewTool("notes-generator");
                       else if (sub.label === "Quiz Generator") onViewTool("quiz-generator");
@@ -2168,6 +2174,8 @@ function UserDashboardContent() {
           <HubErrorBoundary><CoverLetterView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "linkedin-optimizer" ? (
           <HubErrorBoundary><LinkedInView setView={setActiveView} /></HubErrorBoundary>
+        ) : activeView === "career-roadmap" ? (
+          <HubErrorBoundary><CareerNavigationEngine setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "study-assistant" ? (
           <HubErrorBoundary><StudyAssistantView onViewLesson={(data) => { setLessonResult(data); setActiveView("lesson-view"); }} /></HubErrorBoundary>
         ) : activeView === "lesson-view" && lessonResult ? (

@@ -1595,7 +1595,60 @@ model ResumeVersion {
   @@map("resume_versions")
 }
 
+// ==================== CAREER NAVIGATION ENGINE ====================
 
+model CareerRoadmap {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  targetRole        String   @map("target_role")
+  timeline          String   @default("90 Days")
+  readinessScore    Int      @default(0) @map("readiness_score")
+  technicalScore    Int      @default(0) @map("technical_score")
+  resumeScore       Int      @default(0) @map("resume_score")
+  interviewScore    Int      @default(0) @map("interview_score")
+  placementScore    Int      @default(0) @map("placement_score")
+  recruiterScore    Int      @default(0) @map("recruiter_score")
+  roadmapJson       Json     @map("roadmap_json")
+  weeklyPlanJson    Json     @map("weekly_plan_json")
+  gapAnalysisJson   Json     @map("gap_analysis_json")
+  skillMapJson      Json     @map("skill_map_json")
+  projectRecsJson   Json     @map("project_recs_json")
+  certRecsJson      Json     @map("cert_recs_json")
+  marketInsightsJson Json    @map("market_insights_json")
+  coachFeedbackJson Json     @map("coach_feedback_json")
+  milestonesJson    Json     @map("milestones_json")
+  versionNumber     Int      @default(1) @map("version_number")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tasks             CareerTask[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("career_roadmaps")
+}
+
+model CareerTask {
+  id              String        @id @default(cuid())
+  roadmapId       String        @map("roadmap_id")
+  userId          String        @map("user_id")
+  title           String
+  description     String        @default("")
+  category        String        @default("learning") // learning, coding, resume, interview, project, certification
+  priority        String        @default("Medium")
+  status          String        @default("not_started") // not_started, in_progress, completed, skipped
+  estimatedHours  Float         @default(1) @map("estimated_hours")
+  impactScore     Int           @default(50) @map("impact_score")
+  dueDate         DateTime?     @map("due_date")
+  completedAt     DateTime?     @map("completed_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  roadmap         CareerRoadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  @@index([roadmapId])
+  @@index([userId])
+  @@index([status])
+  @@map("career_tasks")
+}
 
 
 
