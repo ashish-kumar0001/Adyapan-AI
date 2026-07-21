@@ -13,6 +13,7 @@ import {
 import type { ResumeHubViewType } from "@/types/resume";
 import { useConfirm } from "@/components/ui/ConfirmModal";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
 import { mkColors as centralizedMkColors } from "@/utils/themeColors";
 import { fadeUp, scaleIn, pageTransition, buttonHover } from "@/utils/animations";
 import {

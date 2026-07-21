@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
 import { mkColors } from "@/utils/themeColors";
 import { fadeUp, scaleIn, slideRight, buttonHover } from "@/utils/animations";
 import { EmptyState } from "@/components/ui/PremiumComponents";

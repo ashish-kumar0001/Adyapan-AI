@@ -17,6 +17,8 @@ import {
   Circle,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
+import { ATS_ROLES, ATS_ROLE_ICONS } from "@/config/resume-config";
 import { mkColors } from "@/utils/themeColors";
 import { fadeUp, fadeIn, scaleIn, buttonHover } from "@/utils/animations";
 import { EmptyState } from "@/components/ui/PremiumComponents";
