@@ -11,7 +11,10 @@ import {
 
 const CareerNavigationEngine = dynamic(
   () => import("@/components/resume-hub/CareerNavigationEngine").then(m => m.CareerNavigationEngine),
-  { loading: () => <div className="w-full min-h-[400px] flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" /></div> }
+  {
+    ssr: false,
+    loading: () => <div className="w-full min-h-[400px] flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" /></div>
+  }
 );
 
 export default function CareerRoadmapPage() {
