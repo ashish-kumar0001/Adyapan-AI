@@ -152,6 +152,9 @@ const ResearchHubView = dynamic(() => import("@/components/research-hub/Research
 const PlagiarismCheckerView = dynamic(() => import("@/components/research-hub/PlagiarismCheckerView").then(m => m.PlagiarismCheckerView), {
   loading: () => <DashboardWidgetSkeleton title="Plagiarism Checker" />
 });
+const CareerDashboardView = dynamic(() => import("@/components/career-hub/CareerDashboardView").then(m => m.CareerDashboardView), {
+  loading: () => <DashboardWidgetSkeleton title="Career Dashboard" />
+});
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -184,6 +187,7 @@ export interface SidebarItem {
 interface SearchEntry { label: string; viewId: string; category: string; }
 const SEARCH_INDEX: SearchEntry[] = [
   { label: "Dashboard", viewId: "dashboard", category: "General" },
+  { label: "Career Dashboard", viewId: "career-dashboard", category: "General" },
   { label: "Profile", viewId: "profile", category: "General" },
   { label: "Community Profile", viewId: "community-profile", category: "General" },
   { label: "Settings", viewId: "settings", category: "General" },
@@ -242,6 +246,7 @@ const SEARCH_INDEX: SearchEntry[] = [
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
 export const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/dashboard/user" },
+  { id: "career-dashboard", label: "Career Dashboard", icon: <Target size={18} /> },
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
@@ -425,7 +430,8 @@ export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, side
                   router.push(item.href);
                   setSidebarOpen(false);
                 } else {
-                  toggleItem(item.id);
+                  onViewTool(item.id);
+                  setSidebarOpen(false);
                 }
               }}
               style={{
@@ -2156,6 +2162,8 @@ function UserDashboardContent() {
         <HubErrorBoundary>
         {activeView === "profile" ? (
           <HubErrorBoundary><ProfileView /></HubErrorBoundary>
+        ) : activeView === "career-dashboard" ? (
+          <HubErrorBoundary><CareerDashboardView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "community-profile" ? (
           <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
         ) : activeView === "settings" ? (
