@@ -4,10 +4,10 @@ import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDesc
 import { groqGenerateResumeSummary, groqEnhanceProjectDescription, groqEnhanceExperienceDescription, groqOptimizeResumeContent, groqResumeAIChat } from "../lib/ai/groq";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
-import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
+import { generateResumePdf, ResumeData } from "../services/resume-pdf.service";
 
 const genAI = env.geminiApiKey ? new GoogleGenerativeAI(env.geminiApiKey) : null;
 
@@ -317,7 +317,7 @@ Only include fields that actually changed. Omit unchanged fields.`;
 }
 
 /**
- * 8. Export Resume as PDF
+ * 8. Export Resume as PDF (Puppeteer-based with professional templates)
  */
 export async function exportResumePdf(req: Request, res: Response, next: NextFunction) {
   try {
@@ -326,120 +326,24 @@ export async function exportResumePdf(req: Request, res: Response, next: NextFun
     const userPrisma = await getUserPrismaFromRequest(req);
     const resume = await getResumeForUser(req.body.resumeId, userId, userPrisma);
 
-    const p = resume.personalInfo as any;
-    const edu = (resume.education as any[]) || [];
-    const exp = (resume.experience as any[]) || [];
-    const proj = (resume.projects as any[]) || [];
-    const skills = (resume.skills as string[]) || [];
-    const certs = (resume.certifications as any[]) || [];
+    const resumeData: ResumeData = {
+      title: resume.title,
+      template: (resume as any).template || "modern",
+      personalInfo: resume.personalInfo || {},
+      education: (resume.education as any[]) || [],
+      experience: (resume.experience as any[]) || [],
+      projects: (resume.projects as any[]) || [],
+      skills: (resume.skills as string[]) || [],
+      certifications: (resume.certifications as any[]) || [],
+      achievements: (resume.achievements as string[]) || [],
+      languages: (resume.languages as string[]) || [],
+    };
 
-    const doc = new PDFDocument({ margin: 50 });
+    const pdfBuffer = await generateResumePdf(resumeData);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${resume.title.replace(/\s+/g, "_")}.pdf"`);
-
-    doc.pipe(res);
-
-    // Title / Header
-    const fullName = p.fullName || p.name || "Candidate Name";
-    doc.fontSize(22).font("Helvetica-Bold").text(fullName, { align: "center" });
-    
-    // Sub-header (contact info)
-    const contacts = [];
-    if (p.email) contacts.push(p.email);
-    if (p.phone) contacts.push(p.phone);
-    if (p.location) contacts.push(p.location);
-    if (p.website || p.portfolio) contacts.push(p.website || p.portfolio);
-    
-    doc.fontSize(10).font("Helvetica").text(contacts.join("  |  "), { align: "center" });
-    doc.moveDown(1.5);
-
-    // Draw Line helper
-    const drawLine = () => {
-      doc.moveTo(50, doc.y).lineTo(562, doc.y).strokeColor("#dddddd").stroke();
-      doc.moveDown(0.8);
-    };
-
-    // Summary
-    if (p.summary) {
-      doc.fontSize(12).font("Helvetica-Bold").text("PROFESSIONAL SUMMARY");
-      drawLine();
-      doc.fontSize(10).font("Helvetica").text(p.summary, { align: "justify" });
-      doc.moveDown(1.5);
-    }
-
-    // Experience
-    if (exp.length > 0) {
-      doc.fontSize(12).font("Helvetica-Bold").text("WORK EXPERIENCE");
-      drawLine();
-      exp.forEach((item) => {
-        doc.fontSize(10).font("Helvetica-Bold").text(`${item.role} - ${item.company}`, { continued: true });
-        const dateStr = item.startDate && item.endDate ? ` (${item.startDate} - ${item.endDate})` : "";
-        doc.font("Helvetica-Oblique").text(dateStr, { align: "right" });
-        
-        if (item.description) {
-          doc.fontSize(9.5).font("Helvetica").text(item.description, { align: "left" });
-        }
-        doc.moveDown(0.8);
-      });
-      doc.moveDown(0.7);
-    }
-
-    // Projects
-    if (proj.length > 0) {
-      doc.fontSize(12).font("Helvetica-Bold").text("PROJECTS");
-      drawLine();
-      proj.forEach((item) => {
-        doc.fontSize(10).font("Helvetica-Bold").text(item.name || item.title);
-        if (item.techStack) {
-          doc.fontSize(9).font("Helvetica-Oblique").text(`Technologies: ${item.techStack}`);
-        }
-        if (item.description) {
-          doc.fontSize(9.5).font("Helvetica").text(item.description);
-        }
-        doc.moveDown(0.8);
-      });
-      doc.moveDown(0.7);
-    }
-
-    // Education
-    if (edu.length > 0) {
-      doc.fontSize(12).font("Helvetica-Bold").text("EDUCATION");
-      drawLine();
-      edu.forEach((item) => {
-        doc.fontSize(10).font("Helvetica-Bold").text(`${item.degree} in ${item.fieldOfStudy || item.branch}`, { continued: true });
-        const dateStr = item.startDate && item.endDate ? ` (${item.startDate} - ${item.endDate})` : "";
-        doc.font("Helvetica").text(dateStr, { align: "right" });
-        doc.fontSize(9.5).text(`${item.institution || item.school || item.college}`);
-        if (item.grade || item.gpa) {
-          doc.fontSize(9).text(`Grade / GPA: ${item.grade || item.gpa}`);
-        }
-        doc.moveDown(0.8);
-      });
-      doc.moveDown(0.7);
-    }
-
-    // Skills
-    if (skills.length > 0) {
-      doc.fontSize(12).font("Helvetica-Bold").text("TECHNICAL SKILLS");
-      drawLine();
-      doc.fontSize(10).font("Helvetica").text(skills.join(", "));
-      doc.moveDown(1.5);
-    }
-
-    // Certifications
-    if (certs.length > 0) {
-      doc.fontSize(12).font("Helvetica-Bold").text("CERTIFICATIONS");
-      drawLine();
-      certs.forEach((c) => {
-        const title = c.name || c.title || "Certification";
-        const issuerStr = c.issuer ? ` - ${c.issuer}` : "";
-        const dateStr = c.date ? ` (${c.date})` : "";
-        doc.fontSize(10).font("Helvetica").text(`• ${title}${issuerStr}${dateStr}`);
-      });
-    }
-
-    doc.end();
+    res.send(pdfBuffer);
   } catch (error) {
     next(error);
   }
@@ -461,6 +365,8 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
     const proj = (resume.projects as any[]) || [];
     const skills = (resume.skills as string[]) || [];
     const certs = (resume.certifications as any[]) || [];
+    const achievements = (resume.achievements as string[]) || [];
+    const languages = (resume.languages as string[]) || [];
 
     const children: Paragraph[] = [];
 
@@ -479,7 +385,7 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
       })
     );
 
-    // Contact info
+    // Contact info (including social links)
     const contacts = [];
     if (p.email) contacts.push(p.email);
     if (p.phone) contacts.push(p.phone);
@@ -495,6 +401,26 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
         ],
       })
     );
+
+    // Social links
+    const socialLinks = [];
+    if (p.linkedin) socialLinks.push(`LinkedIn: ${p.linkedin}`);
+    if (p.github) socialLinks.push(`GitHub: ${p.github}`);
+    if (p.portfolio || p.website) socialLinks.push(`Portfolio: ${p.portfolio || p.website}`);
+    if (socialLinks.length > 0) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text: socialLinks.join("  |  "),
+              size: 18,
+              color: "2563eb",
+            }),
+          ],
+        })
+      );
+    }
     children.push(new Paragraph({ text: "" })); // blank spacer
 
     // Section Header Helper
@@ -672,6 +598,40 @@ export async function exportResumeDocx(req: Request, res: Response, next: NextFu
           })
         );
       });
+    }
+
+    // Achievements
+    if (achievements.length > 0) {
+      addSectionHeader("ACHIEVEMENTS");
+      achievements.forEach((a) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `• ${a}`,
+                size: 20,
+              }),
+            ],
+          })
+        );
+      });
+      children.push(new Paragraph({ text: "" }));
+    }
+
+    // Languages
+    if (languages.length > 0) {
+      addSectionHeader("LANGUAGES");
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: languages.join(", "),
+              size: 20,
+            }),
+          ],
+        })
+      );
+      children.push(new Paragraph({ text: "" }));
     }
 
     const doc = new Document({
