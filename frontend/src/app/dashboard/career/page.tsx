@@ -93,7 +93,7 @@ export default function CareerDashboardPage() {
         onPremium={handlePremium}
         onViewSettings={() => handleViewTool("settings")}
       />
-      <DashboardSidebar activeView="career-dashboard" onViewDashboard={handleViewDashboard} onViewTool={handleViewTool} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <DashboardSidebar activeView="resume" onViewDashboard={handleViewDashboard} onViewTool={handleViewTool} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <main className="dash-main relative z-10 font-sans p-6 md:p-8">
         <CareerDashboardView setView={handleViewTool} />
       </main>

@@ -246,7 +246,6 @@ const SEARCH_INDEX: SearchEntry[] = [
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
 export const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/dashboard/user" },
-  { id: "career-dashboard", label: "Career Dashboard", icon: <Target size={18} />, href: "/dashboard/career" },
   {
     id: "learning", label: "Learning Hub", icon: <GraduationCap size={18} />,
     submenu: [
