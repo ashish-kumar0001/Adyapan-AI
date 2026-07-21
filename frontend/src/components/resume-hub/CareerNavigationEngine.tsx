@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
-import { useConfig } from "@/hooks/useConfig";
+import { mkColors } from "@/utils/themeColors";
+import { fadeUp, scaleIn, slideRight, buttonHover } from "@/utils/animations";
 import { EmptyState } from "@/components/ui/PremiumComponents";
 import confetti from "canvas-confetti";
 import {
@@ -44,53 +45,22 @@ const LOADING_STEPS = [
 ];
 
 const mkC = (t: string) => {
-  const d = t === "dark";
+  const base = mkColors(t);
   return {
-    d,
-    tx: d ? "#e5e7eb" : "#0f172a",
-    tx2: d ? "#9ca3af" : "#475569",
-    txM: d ? "#6b7280" : "#94a3b8",
-    bg: d
-      ? "linear-gradient(135deg, #0a0e1a 0%, #0d1520 30%, #111827 60%, #0a0e1a 100%)"
-      : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
-    sf: d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
-    sfH: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
-    bd: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-    bdH: d ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
-    cb: d
-      ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
-      : "rgba(255,255,255,0.85)",
-    cs: d
-      ? "0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)"
-      : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
-    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.06)",
-    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.06)",
-    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.06)",
-    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.12)" : "rgba(139,92,246,0.06)",
-    cy: "#06b6d4", cyBg: d ? "rgba(6,182,212,0.12)" : "rgba(6,182,212,0.06)",
-    dv: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
-    glass: d ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
-    glassBd: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-    inputBg: d ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    ...base,
+    tx: base.text, tx2: base.textSec, txM: base.textMuted,
+    sf: base.surface, sfH: base.surfaceHover,
+    bd: base.border, bdH: base.borderHover,
+    cb: base.cardBg, cs: base.shadow, dv: base.divider,
+    am: base.amber, amBg: base.amberBg,
+    gn: base.green, gnBg: base.greenBg,
+    rd: base.red, rdBg: base.redBg,
+    bl: base.blue, blBg: base.blueBg,
+    pp: base.purple, ppBg: base.purpleBg,
+    cy: base.cyan, cyBg: base.cyanBg,
   };
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
-  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
-};
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.88 },
-  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
-};
-const slideIn = {
-  hidden: { opacity: 0, x: -30 },
-  visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.05, duration: 0.35 } }),
-  exit: { opacity: 0, x: 30, transition: { duration: 0.2 } },
-};
 
 function ScoreRing({ score, size = 120, stroke = 10, color, label, c }: {
   score: number; size?: number; stroke?: number; color: string; label: string; c: ReturnType<typeof mkC>;
@@ -280,7 +250,7 @@ export function CareerNavigationEngine({ setView }: Props) {
         cols.advanced.push(s);
       }
     });
-    
+
     if (cols.foundation.length === 0 && skillItems.length > 0) {
       cols.foundation = skillItems.slice(0, Math.ceil(skillItems.length / 4));
       cols.core = skillItems.slice(Math.ceil(skillItems.length / 4), Math.ceil(skillItems.length / 2));
@@ -301,7 +271,7 @@ export function CareerNavigationEngine({ setView }: Props) {
       const saved = localStorage.getItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`);
       if (saved) setCheckedMicroTasks(JSON.parse(saved));
       else setCheckedMicroTasks({});
-    } catch {}
+    } catch { }
   }, [roadmapRecord?.id]);
 
   const toggleMicroTask = (taskText: string) => {
@@ -309,7 +279,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     setCheckedMicroTasks(next);
     try {
       localStorage.setItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`, JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -317,7 +287,7 @@ export function CareerNavigationEngine({ setView }: Props) {
       const saved = localStorage.getItem(`adyapan-objectives-${roadmapRecord?.id || "default"}`);
       if (saved) setCheckedObjectives(JSON.parse(saved));
       else setCheckedObjectives({});
-    } catch {}
+    } catch { }
   }, [roadmapRecord?.id]);
 
   const toggleObjective = (phaseIndex: number, objText: string) => {
@@ -327,7 +297,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     setCheckedObjectives(next);
     try {
       localStorage.setItem(`adyapan-objectives-${roadmapRecord?.id || "default"}`, JSON.stringify(next));
-    } catch {}
+    } catch { }
 
     const phase = phases[phaseIndex];
     if (phase && !wasChecked) {
@@ -361,7 +331,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     const isCompleted = item.status === "completed";
     item.status = isCompleted ? "pending" : "completed";
     setLocalMilestones(next);
-    
+
     if (!isCompleted) {
       confetti({
         particleCount: 150,
@@ -383,14 +353,14 @@ export function CareerNavigationEngine({ setView }: Props) {
         setTasks(res.data.tasks || []);
         setTab("overview");
       }
-    } catch {}
+    } catch { }
   };
 
   const loadHistory = async () => {
     try {
       const res = await api.get("/career/history");
       if (res.data.success) setHistory(res.data.roadmaps || []);
-    } catch {}
+    } catch { }
   };
 
   const generateRoadmap = async () => {
@@ -423,11 +393,11 @@ export function CareerNavigationEngine({ setView }: Props) {
       if (res.data.success) {
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
       }
-    } catch {}
+    } catch { }
   };
 
   const deleteRoadmapAction = async (id: string) => {
-    try { await api.delete(`/career/${id}`); loadHistory(); } catch {}
+    try { await api.delete(`/career/${id}`); loadHistory(); } catch { }
   };
 
   const loadFromHistory = async (id: string) => {
@@ -439,7 +409,7 @@ export function CareerNavigationEngine({ setView }: Props) {
         setTasks(res.data.tasks || []);
         setTab("overview");
       }
-    } catch {}
+    } catch { }
   };
 
   const filteredTasks = tasks.filter(t => activeTaskFilter === "all" || t.category === activeTaskFilter || t.status === activeTaskFilter);
@@ -631,7 +601,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     const inProgress = tasks.filter(t => t.status === "in_progress").length;
     const skipped = tasks.filter(t => t.status === "skipped").length;
     const notStarted = tasks.filter(t => t.status === "not_started" || !t.status).length;
-    
+
     if (tasks.length === 0) {
       return {
         labels: ["Completed", "In Progress", "Not Started", "Skipped"],
@@ -986,21 +956,21 @@ export function CareerNavigationEngine({ setView }: Props) {
                               </div>
                             </div>
                           )}
-                        {phase.dependencies && phase.dependencies.length > 0 && (
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Dependencies</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {phase.dependencies.map((dep, j) => (
-                                <span key={j} className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.sf, color: c.tx2, border: `1px solid ${c.bd}` }}>
-                                  Prerequisite: {dep}
-                                </span>
-                              ))}
+                          {phase.dependencies && phase.dependencies.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Dependencies</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {phase.dependencies.map((dep, j) => (
+                                  <span key={j} className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.sf, color: c.tx2, border: `1px solid ${c.bd}` }}>
+                                    Prerequisite: {dep}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 );
               })}
@@ -1598,10 +1568,10 @@ export function CareerNavigationEngine({ setView }: Props) {
                   .filter(m => {
                     const titleLower = m.title.toLowerCase();
                     const cat = titleLower.includes("learn") || titleLower.includes("course") || titleLower.includes("study") || titleLower.includes("concept") ? "learning" :
-                                titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
-                                titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
-                                titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
-                                titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
+                      titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
+                        titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
+                          titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
+                            titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
                     const matchesCat = milestoneCategoryFilter === "all" || cat === milestoneCategoryFilter;
                     const matchesStatus = milestoneStatusFilter === "all" || m.status === milestoneStatusFilter;
                     return matchesCat && matchesStatus;
@@ -1609,18 +1579,18 @@ export function CareerNavigationEngine({ setView }: Props) {
                   .map((m, i) => {
                     const titleLower = m.title.toLowerCase();
                     const cat = titleLower.includes("learn") || titleLower.includes("course") || titleLower.includes("study") || titleLower.includes("concept") ? "learning" :
-                                titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
-                                titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
-                                titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
-                                titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
+                      titleLower.includes("code") || titleLower.includes("dsa") || titleLower.includes("leet") || titleLower.includes("solve") ? "coding" :
+                        titleLower.includes("resume") || titleLower.includes("ats") ? "resume" :
+                          titleLower.includes("linkedin") || titleLower.includes("profile") ? "linkedin" :
+                            titleLower.includes("interview") || titleLower.includes("mock") || titleLower.includes("behavior") ? "interview" : "application";
                     const isCompleted = m.status === "completed";
                     const badgeStyles =
                       cat === "learning" ? { bg: c.blBg, text: c.bl } :
-                      cat === "coding" ? { bg: c.ppBg, text: c.pp } :
-                      cat === "resume" ? { bg: c.gnBg, text: c.gn } :
-                      cat === "linkedin" ? { bg: c.amBg, text: c.am } :
-                      cat === "interview" ? { bg: c.rdBg, text: c.rd } :
-                      { bg: c.cyBg, text: c.cy };
+                        cat === "coding" ? { bg: c.ppBg, text: c.pp } :
+                          cat === "resume" ? { bg: c.gnBg, text: c.gn } :
+                            cat === "linkedin" ? { bg: c.amBg, text: c.am } :
+                              cat === "interview" ? { bg: c.rdBg, text: c.rd } :
+                                { bg: c.cyBg, text: c.cy };
 
                     return (
                       <motion.div key={i} variants={fadeUp} custom={i}

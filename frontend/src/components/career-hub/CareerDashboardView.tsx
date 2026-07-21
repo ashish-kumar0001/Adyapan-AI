@@ -25,6 +25,7 @@ import {
   CheckCircle, MapPin, Send,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ScoreRing, MiniScoreRing } from "@/components/ui/ScoreRing";
 
 interface CareerDashboardData {
   scores: {
@@ -184,49 +185,7 @@ function CountUp({ target, duration = 1500, suffix = "" }: { target: number; dur
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-function ScoreRing({ score, size = 120, strokeWidth = 8, color = "#f59e0b", label, delay = 0 }: {
-  score: number; size?: number; strokeWidth?: number; color?: string; label: string; delay?: number;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-
-  const scoreColor = score >= 70 ? "#10b981" : score >= 40 ? "#f59e0b" : "#f43f5e";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay, duration: 0.5, type: "spring" }}
-      className="flex flex-col items-center gap-2"
-    >
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth}
-          />
-          <motion.circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke={color || scoreColor} strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset: offset }}
-            transition={{ delay: delay + 0.3, duration: 1.2, ease: "easeOut" }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-extrabold text-white" style={{ textShadow: "0 0 20px rgba(245,158,11,0.3)" }}>
-            <CountUp target={score} />
-          </span>
-          <span className="text-[9px] font-bold text-white/50 uppercase tracking-wider">/100</span>
-        </div>
-      </div>
-      <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider text-center">{label}</span>
-    </motion.div>
-  );
-}
+// ScoreRing is now imported from @/components/ui/ScoreRing
 
 function MetricCard({ icon: Icon, label, value, trend, trendValue, color, delay = 0 }: {
   icon: any; label: string; value: string | number; trend?: "up" | "down" | "neutral";

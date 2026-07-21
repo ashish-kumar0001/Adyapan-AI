@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import { api } from "@/services/api";
+import { useTheme } from "@/hooks/useTheme";
+import { mkColors } from "@/utils/themeColors";
+import { fadeUp, scaleIn, buttonHover } from "@/utils/animations";
+import { EmptyState } from "@/components/ui/PremiumComponents";
 import {
   Sparkles, FileText, Target, Zap, CheckCircle2, ArrowRight,
   RotateCcw, ChevronDown, ChevronUp, Eye, EyeOff, Copy, Check,
@@ -83,7 +88,8 @@ const LOAD_STEPS = [
 ];
 
 export function ResumeImprovementsView({ setView }: { setView: (v: string) => void }) {
-  const [theme, setTheme] = useState("dark");
+  const theme = useTheme();
+  const c = mkColors(theme);
   const [loading, setLoading] = useState(false);
   const [loadStep, setLoadStep] = useState(0);
   const [result, setResult] = useState<ImprovementResult | null>(null);
@@ -103,16 +109,6 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
   const [comparisonData, setComparisonData] = useState<any>(null);
   const [resumes, setResumes] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-
-  useEffect(() => {
-    const t = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
 
   useEffect(() => {
     Promise.allSettled([
@@ -146,20 +142,21 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
     }
   }, []);
 
-  const isDark = theme === "dark";
-  const bg = isDark ? "#070913" : "#f8fafc";
-  const cardBg = isDark ? "rgba(255,255,255,0.03)" : "#ffffff";
-  const cardBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
-  const textPrimary = isDark ? "#f3f4f6" : "#0f172a";
-  const textSecondary = isDark ? "#9ca3af" : "#64748b";
-  const textMuted = isDark ? "#6b7280" : "#94a3b8";
-  const amber = "#f59e0b";
-  const green = "#22c55e";
-  const rose = "#f43f5e";
-  const cyan = "#06b6d4";
-  const purple = "#a855f7";
-  const inputBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
-  const inputBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
+  // Theme colors now come from centralized mkColors via `c`
+  const isDark = c.d;
+  const bg = c.d ? "#070913" : "#f8fafc";
+  const cardBg = c.cardBg;
+  const cardBorder = c.border;
+  const textPrimary = c.text;
+  const textSecondary = c.textSec;
+  const textMuted = c.textMuted;
+  const amber = c.amber;
+  const green = c.green;
+  const rose = c.rose;
+  const cyan = c.cyan;
+  const purple = c.purple;
+  const inputBg = c.inputBg;
+  const inputBorder = c.border;
 
   // Animate loading steps
   useEffect(() => {
@@ -201,6 +198,9 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
       if (res.data?.result) {
         setResult(res.data.result);
         showToast("Improvements generated successfully!");
+        try {
+          confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 }, colors: ["#f59e0b", "#ea580c", "#10b981"] });
+        } catch { /* confetti blocked */ }
       } else {
         console.error("[ResumeImprovements] No result in response:", res.data);
         showToast("No improvements returned. Please try again.");
@@ -1306,11 +1306,11 @@ function EmptyStateCard({ text }: { text: string }) {
   return (
     <div style={{
       textAlign: "center", padding: "3rem 2rem",
-      background: "rgba(255,255,255,0.02)", borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.05)",
+      background: "rgba(255,255,255,0.02)", borderRadius: 16,
+      border: "1px dashed rgba(255,255,255,0.08)",
     }}>
       <CheckCircle2 size={36} color="#22c55e" style={{ marginBottom: "0.75rem" }} />
-      <p style={{ fontSize: "0.88rem", color: "#9ca3af" }}>{text}</p>
+      <p style={{ fontSize: "0.88rem", color: "#9ca3af", maxWidth: 320, margin: "0 auto" }}>{text}</p>
     </div>
   );
 }
@@ -1321,17 +1321,16 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     return () => clearTimeout(t);
   }, [onClose]);
   return (
-    <div style={{
-      position: "fixed", bottom: 24, right: 24, zIndex: 9999,
-      background: "rgba(245,158,11,0.15)",
-      backdropFilter: "blur(16px)",
-      color: "#f59e0b",
-      border: "1px solid rgba(245,158,11,0.35)",
-      padding: "12px 22px", borderRadius: 14,
-      boxShadow: "0 8px 32px rgba(245,158,11,0.2)",
-      fontSize: "0.88rem", fontWeight: 600,
-      animation: "fadeInUp 0.3s ease",
-    }}>
+    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold"
+      style={{
+        background: "rgba(245,158,11,0.15)",
+        backdropFilter: "blur(16px)",
+        color: "#f59e0b",
+        border: "1px solid rgba(245,158,11,0.35)",
+        boxShadow: "0 8px 32px rgba(245,158,11,0.2)",
+        animation: "slideUpFade 0.3s ease",
+      }}>
+      <Sparkles size={14} />
       {message}
     </div>
   );
