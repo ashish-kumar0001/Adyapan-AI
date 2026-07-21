@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
+import { mkColors } from "@/utils/themeColors";
+import { fadeUp, scaleIn, slideRight, buttonHover } from "@/utils/animations";
 import { EmptyState } from "@/components/ui/PremiumComponents";
 import confetti from "canvas-confetti";
 import {
@@ -52,53 +54,22 @@ const LOADING_STEPS = [
 ];
 
 const mkC = (t: string) => {
-  const d = t === "dark";
+  const base = mkColors(t);
   return {
-    d,
-    tx: d ? "#e5e7eb" : "#0f172a",
-    tx2: d ? "#9ca3af" : "#475569",
-    txM: d ? "#6b7280" : "#94a3b8",
-    bg: d
-      ? "linear-gradient(135deg, #0a0e1a 0%, #0d1520 30%, #111827 60%, #0a0e1a 100%)"
-      : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
-    sf: d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
-    sfH: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
-    bd: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-    bdH: d ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
-    cb: d
-      ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
-      : "rgba(255,255,255,0.85)",
-    cs: d
-      ? "0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)"
-      : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
-    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.06)",
-    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.06)",
-    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.06)",
-    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.12)" : "rgba(139,92,246,0.06)",
-    cy: "#06b6d4", cyBg: d ? "rgba(6,182,212,0.12)" : "rgba(6,182,212,0.06)",
-    dv: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
-    glass: d ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
-    glassBd: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-    inputBg: d ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    ...base,
+    tx: base.text, tx2: base.textSec, txM: base.textMuted,
+    sf: base.surface, sfH: base.surfaceHover,
+    bd: base.border, bdH: base.borderHover,
+    cb: base.cardBg, cs: base.shadow, dv: base.divider,
+    am: base.amber, amBg: base.amberBg,
+    gn: base.green, gnBg: base.greenBg,
+    rd: base.red, rdBg: base.redBg,
+    bl: base.blue, blBg: base.blueBg,
+    pp: base.purple, ppBg: base.purpleBg,
+    cy: base.cyan, cyBg: base.cyanBg,
   };
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
-  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
-};
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.88 },
-  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
-};
-const slideIn = {
-  hidden: { opacity: 0, x: -30 },
-  visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.05, duration: 0.35 } }),
-  exit: { opacity: 0, x: 30, transition: { duration: 0.2 } },
-};
 
 function ScoreRing({ score, size = 120, stroke = 10, color, label, c }: {
   score: number; size?: number; stroke?: number; color: string; label: string; c: ReturnType<typeof mkC>;

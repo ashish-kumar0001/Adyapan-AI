@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import CountUp from "react-countup";
+import confetti from "canvas-confetti";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
@@ -15,6 +17,8 @@ import {
   Circle,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { mkColors } from "@/utils/themeColors";
+import { fadeUp, fadeIn, scaleIn, buttonHover } from "@/utils/animations";
 import { EmptyState } from "@/components/ui/PremiumComponents";
 import {
   Chart as ChartJS,
@@ -119,40 +123,35 @@ interface Props { setView: (v: ResumeHubViewType) => void; }
 // THEME
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// mkColors is now imported from centralized themeColors.ts
+// Wrapper adds backward-compatible shorthand aliases for the AtsCheckerView
 const mkC = (t: string) => {
-  const d = t === "dark";
+  const base = mkColors(t);
   return {
-    d,
-    tx: d ? "#e5e7eb" : "#0f172a",
-    tx2: d ? "#9ca3af" : "#475569",
-    txM: d ? "#6b7280" : "#94a3b8",
-    bg: d
-      ? "linear-gradient(135deg, #0a0e1a 0%, #0d1520 30%, #111827 60%, #0a0e1a 100%)"
-      : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
-    sf: d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
-    sfH: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
-    bd: d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-    bdH: d ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
-    cb: d
-      ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)"
-      : "rgba(255,255,255,0.85)",
-    cs: d
-      ? "0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)"
-      : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
-    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.06)",
-    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.06)",
-    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.06)",
-    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.12)" : "rgba(139,92,246,0.06)",
-    dv: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
-    chat: d ? "#0a0e14" : "#f8fafc",
-    glass: d ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
-    glassBd: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-    selectBg: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.02)",
-    selectOpt: d ? "#1a2035" : "#ffffff",
-    orb1: d ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.04)",
-    orb2: d ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.03)",
-    orb3: d ? "rgba(59,130,246,0.05)" : "rgba(59,130,246,0.03)",
+    ...base,
+    tx: base.text,
+    tx2: base.textSec,
+    txM: base.textMuted,
+    sf: base.surface,
+    sfH: base.surfaceHover,
+    bd: base.border,
+    bdH: base.borderHover,
+    cb: base.cardBg,
+    cs: base.shadow,
+    dv: base.divider,
+    am: base.amber,
+    amBg: base.amberBg,
+    gn: base.green,
+    gnBg: base.greenBg,
+    rd: base.red,
+    rdBg: base.redBg,
+    bl: base.blue,
+    blBg: base.blueBg,
+    pp: base.purple,
+    ppBg: base.purpleBg,
+    chat: base.d ? "#0a0e14" : "#f8fafc",
+    selectBg: base.surface,
+    selectOpt: base.d ? "#1a2035" : "#ffffff",
   };
 };
 
@@ -160,17 +159,7 @@ const mkC = (t: string) => {
 // MICRO-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function CountUp({ end, dur = 1.5, suf = "" }: { end: number; dur?: number; suf?: string }) {
-  const mv = useMotionValue(0);
-  const rd = useTransform(mv, v => Math.round(v));
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    const c = animate(mv, end, { duration: dur, ease: "easeOut" });
-    const u = rd.on("change", n => setV(n));
-    return () => { c.stop(); u(); };
-  }, [end, dur, mv, rd]);
-  return <>{v}{suf}</>;
-}
+// CountUp is now imported from react-countup at the top of the file
 
 function Dots() {
   return (
@@ -341,10 +330,11 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
 // ANIMATION VARIANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Animation variants now imported from @/utils/animations
 const AP = {
   page: { init: { opacity: 0, y: 24 }, in: { opacity: 1, y: 0 }, out: { opacity: 0, y: -24 } },
-  card: { init: { opacity: 0, y: 16, scale: 0.97 }, in: { opacity: 1, y: 0, scale: 1 } },
-  fade: { init: { opacity: 0 }, in: { opacity: 1 } },
+  card: { init: fadeUp.hidden, in: fadeUp.visible },
+  fade: { init: fadeIn.hidden, in: fadeIn.visible },
   stagger: { in: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } } },
   spring: { type: "spring" as const, stiffness: 260, damping: 20 },
 };
@@ -444,9 +434,10 @@ export function AtsCheckerView({ setView }: Props) {
   const sc = (s: number) => s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444";
   const scBg = (s: number) => s >= 80 ? "rgba(16,185,129,0.1)" : s >= 60 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)";
   const scLb = (s: number) => s >= 90 ? "Excellent" : s >= 80 ? "Very Good" : s >= 65 ? "Good" : s >= 50 ? "Fair" : "Poor";
-  const hov = { y: -3, scale: 1.008 };
-  const btnH = { scale: 1.04 };
-  const btnT = { scale: 0.96 };
+  // Micro-interaction presets
+  const hov = buttonHover.whileHover;
+  const btnH = buttonHover.whileHover;
+  const btnT = buttonHover.whileTap;
 
   // ── Chart config ───────────────────────────────────────────────────────────
   const radarData = analysis ? {
@@ -559,10 +550,14 @@ export function AtsCheckerView({ setView }: Props) {
       await new Promise(r => setTimeout(r, 600));
       setScreen("dashboard");
       if (aR.status === "fulfilled") genSuggestions(aR.value.data.analysis);
+      try {
+        confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 }, colors: ["#f59e0b", "#ea580c", "#10b981"] });
+      } catch { /* confetti blocked */ }
     } catch (err) {
       clearInterval(iv);
       setScreen("home");
-      alert(`Failed to analyze. ${err instanceof Error ? err.message : "Try again."}`);
+      // User-friendly error instead of alert
+      console.error("ATS Analysis failed:", err);
     } finally { setLoading(false); }
   };
 
@@ -618,7 +613,7 @@ export function AtsCheckerView({ setView }: Props) {
       transition={{ duration: 0.35 }}
       whileHover={hov}
       className={`rounded-2xl ${className}`}
-      style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs, ...style }}
+      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.shadow, ...style }}
       {...motionProps}
     >{children}</motion.div>
   );

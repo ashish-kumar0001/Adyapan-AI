@@ -13,6 +13,8 @@ import {
 import type { ResumeHubViewType } from "@/types/resume";
 import { useConfirm } from "@/components/ui/ConfirmModal";
 import { useTheme } from "@/hooks/useTheme";
+import { mkColors as centralizedMkColors } from "@/utils/themeColors";
+import { fadeUp, scaleIn, pageTransition, buttonHover } from "@/utils/animations";
 import {
   Chart as ChartJS,
   RadialLinearScale, PointElement, LineElement, Filler,
@@ -175,22 +177,13 @@ const GENERATING_STEPS = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const mkColors = (theme: string) => {
-  const isDark = theme === "dark";
+  const base = centralizedMkColors(theme);
   return {
-    isDark,
-    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#828fa3" : "#5f6368",
-    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-    borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
-    cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
-    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
-    red: "#ef4444", redBg: isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.08)",
-    blue: "#3b82f6", blueBg: isDark ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.08)",
-    purple: "#8b5cf6", purpleBg: isDark ? "rgba(139,92,246,0.1)" : "rgba(139,92,246,0.08)",
-    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
-    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    ...base,
+    redBg: base.d ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.08)",
+    blueBg: base.d ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.06)",
+    purpleBg: base.d ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)",
+    borderLight: base.d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
   };
 };
 
@@ -198,8 +191,7 @@ const mkColors = (theme: string) => {
 // ANIMATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }) };
-const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }) };
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENT
