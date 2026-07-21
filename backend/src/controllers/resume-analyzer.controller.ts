@@ -3,17 +3,19 @@ import { getUserPrismaFromRequest } from "../utils/prisma";
 import { httpError } from "../utils/httpError";
 import { analyzeResumeSWOT, analyzeJobMatch } from "../lib/ai/gemini";
 import { requireUserId } from "../utils/request";
+import { extractLegacyFromRecord } from "../utils/resume-converter";
 
 /**
  * Serializes a structured draft resume to a single plain-text string
  */
 function serializeResumeToText(resume: any): string {
-  const p = resume.personalInfo || {};
-  const edu = (resume.education as any[]) || [];
-  const exp = (resume.experience as any[]) || [];
-  const proj = (resume.projects as any[]) || [];
-  const skills = (resume.skills as string[]) || [];
-  const certs = (resume.certifications as any[]) || [];
+  const legacy = extractLegacyFromRecord(resume);
+  const p = legacy.personalInfo || {};
+  const edu = legacy.education || [];
+  const exp = legacy.experience || [];
+  const proj = legacy.projects || [];
+  const skills = legacy.skills || [];
+  const certs = legacy.certifications || [];
 
   return `
 Candidate Name: ${p.fullName || p.name || "N/A"}

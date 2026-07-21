@@ -7,18 +7,20 @@ import {
   applyResumeImprovement,
   generateVersionSummary,
 } from "../lib/ai/gemini";
+import { extractLegacyFromRecord, legacyToJSONResume } from "../utils/resume-converter";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function serializeResumeToText(resume: any): string {
-  const p = resume.personalInfo || {};
-  const edu = (resume.education as any[]) || [];
-  const exp = (resume.experience as any[]) || [];
-  const proj = (resume.projects as any[]) || [];
-  const skills = (resume.skills as string[]) || [];
-  const certs = (resume.certifications as any[]) || [];
-  const achievements = (resume.achievements as string[]) || [];
-  const languages = (resume.languages as string[]) || [];
+  const legacy = extractLegacyFromRecord(resume);
+  const p = legacy.personalInfo || {};
+  const edu = legacy.education || [];
+  const exp = legacy.experience || [];
+  const proj = legacy.projects || [];
+  const skills = legacy.skills || [];
+  const certs = legacy.certifications || [];
+  const achievements = legacy.achievements || [];
+  const languages = legacy.languages || [];
 
   return `
 Candidate Name: ${p.fullName || p.name || "N/A"}
@@ -67,12 +69,7 @@ async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma
       userId,
       title: `Imported Resume (${new Date().toLocaleDateString()})`,
       template: "Modern",
-      personalInfo: {},
-      education: [],
-      experience: [],
-      projects: [],
-      skills: [],
-      certifications: [],
+      resumeData: { basics: {} },
     },
   });
   return placeholder.id;
@@ -237,18 +234,12 @@ export async function applySingleImprovement(req: Request, res: Response, next: 
     // Apply the improvement
     const updatedData = await applyResumeImprovement(resume, section, currentContent || "", improvedContent);
 
-    // Update resume in DB
+    // Update resume in DB (convert legacy → JSON Resume)
+    const jrUpdate = legacyToJSONResume(updatedData);
     await userPrisma.resume.update({
       where: { id: resume.id },
       data: {
-        personalInfo: updatedData.personalInfo,
-        education: updatedData.education,
-        experience: updatedData.experience,
-        projects: updatedData.projects,
-        skills: updatedData.skills,
-        certifications: updatedData.certifications,
-        achievements: updatedData.achievements,
-        languages: updatedData.languages,
+        resumeData: jrUpdate,
       },
     });
 
@@ -320,18 +311,12 @@ export async function applyAllImprovements(req: Request, res: Response, next: Ne
       );
     }
 
-    // Update resume in DB
+    // Update resume in DB (convert legacy → JSON Resume)
+    const jrUpdate = legacyToJSONResume(updatedData);
     await userPrisma.resume.update({
       where: { id: resume.id },
       data: {
-        personalInfo: updatedData.personalInfo,
-        education: updatedData.education,
-        experience: updatedData.experience,
-        projects: updatedData.projects,
-        skills: updatedData.skills,
-        certifications: updatedData.certifications,
-        achievements: updatedData.achievements,
-        languages: updatedData.languages,
+        resumeData: jrUpdate,
       },
     });
 
@@ -436,19 +421,22 @@ export async function restoreVersion(req: Request, res: Response, next: NextFunc
     });
     if (!version) throw httpError(404, "Version not found");
 
-    // Restore resume data
+    // Restore resume data (version stores legacy format, convert to JSON Resume)
     const resumeData = version.resumeData as any;
+    const jrRestore = legacyToJSONResume({
+      personalInfo: resumeData.personalInfo || {},
+      education: resumeData.education || [],
+      experience: resumeData.experience || [],
+      projects: resumeData.projects || [],
+      skills: resumeData.skills || [],
+      certifications: resumeData.certifications || [],
+      achievements: resumeData.achievements || [],
+      languages: resumeData.languages || [],
+    });
     await userPrisma.resume.update({
       where: { id: version.resumeId },
       data: {
-        personalInfo: resumeData.personalInfo || {},
-        education: resumeData.education || [],
-        experience: resumeData.experience || [],
-        projects: resumeData.projects || [],
-        skills: resumeData.skills || [],
-        certifications: resumeData.certifications || [],
-        achievements: resumeData.achievements || [],
-        languages: resumeData.languages || [],
+        resumeData: jrRestore,
       },
     });
 

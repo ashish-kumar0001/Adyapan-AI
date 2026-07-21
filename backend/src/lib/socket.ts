@@ -397,12 +397,15 @@ Keep responses concise for short durations and detailed for longer durations.`;
 
         socket.emit("lesson:complete", { data });
       } catch (error: any) {
+        const msg = (error?.message || String(error)).toLowerCase();
         console.error("Lesson generation error:", error?.message || error);
         let errMsg = "Failed to generate lesson. Please try again.";
-        if (error?.message?.includes("all providers") || error?.message?.includes("All AI providers")) {
+        if (msg.includes("all ai providers") || msg.includes("all providers") || msg.includes("no ai providers")) {
           errMsg = "All AI providers are currently unavailable. Please try again later.";
-        } else if (error?.message?.includes("timeout") || error?.message?.includes("abort")) {
+        } else if (msg.includes("timeout") || msg.includes("abort")) {
           errMsg = "Lesson generation timed out. Please try a shorter topic or different level.";
+        } else if (msg.includes("rate") || msg.includes("429")) {
+          errMsg = "Rate limited by AI providers. Please wait a moment and try again.";
         }
         socket.emit("lesson:error", { error: errMsg });
       }

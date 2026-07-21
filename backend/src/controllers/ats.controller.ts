@@ -13,6 +13,7 @@ import {
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
 import { requireUserId } from "../utils/request";
+import { extractLegacyFromRecord } from "../utils/resume-converter";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,14 +58,15 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
 }
 
 function serializeResumeToText(resume: any): string {
-  const p = resume.personalInfo || {};
-  const edu = (resume.education as any[]) || [];
-  const exp = (resume.experience as any[]) || [];
-  const proj = (resume.projects as any[]) || [];
-  const skills = (resume.skills as string[]) || [];
-  const certs = (resume.certifications as any[]) || [];
-  const achievements = (resume.achievements as string[]) || [];
-  const languages = (resume.languages as string[]) || [];
+  const legacy = extractLegacyFromRecord(resume);
+  const p = legacy.personalInfo || {};
+  const edu = legacy.education || [];
+  const exp = legacy.experience || [];
+  const proj = legacy.projects || [];
+  const skills = legacy.skills || [];
+  const certs = legacy.certifications || [];
+  const achievements = legacy.achievements || [];
+  const languages = legacy.languages || [];
 
   return `
 Candidate Name: ${p.fullName || p.name || "N/A"}
@@ -116,12 +118,7 @@ async function getOrCreateResumeId(userId: string, resumeId?: string, userPrisma
       userId,
       title: `Imported Resume (${new Date().toLocaleDateString()})`,
       template: "Modern",
-      personalInfo: {},
-      education: [],
-      experience: [],
-      projects: [],
-      skills: [],
-      certifications: [],
+      resumeData: { basics: {} },
     },
   });
   return placeholder.id;
