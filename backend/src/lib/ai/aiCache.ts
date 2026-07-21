@@ -14,7 +14,7 @@ interface CacheEntry {
   response: string;
 }
 
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days TTL
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours TTL (reduced from 7 days to avoid stale personalized data)
 
 function getCacheKey(systemPrompt: string, userPrompt: string, options: any): string {
   const data = JSON.stringify({ systemPrompt, userPrompt, options });

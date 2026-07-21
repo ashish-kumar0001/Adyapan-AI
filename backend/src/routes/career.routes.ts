@@ -14,6 +14,6 @@ export const careerRouter = Router();
 careerRouter.post("/generate", requireAuth, generateRoadmap);
 careerRouter.get("/latest", requireAuth, getLatestRoadmap);
 careerRouter.get("/history", requireAuth, listRoadmaps);
+careerRouter.post("/update-task", requireAuth, updateTask);
 careerRouter.get("/:id", requireAuth, getRoadmapById);
 careerRouter.delete("/:id", requireAuth, deleteRoadmap);
-careerRouter.post("/update-task", requireAuth, updateTask);

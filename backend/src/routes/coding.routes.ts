@@ -1799,9 +1799,39 @@ router.post("/roadmap/update", async (req: any, res) => {
   try {
     const userId = req.user.userId;
     const userPrisma = await getUserPrismaFromRequest(req);
-    const roadmap = await CodingRoadmapService.getRoadmap(userId, userPrisma);
+    const { milestoneId, status, completionPercentage } = req.body;
 
-    res.json({ success: true, roadmap });
+    if (!milestoneId) {
+      return res.status(400).json({ error: "milestoneId is required" });
+    }
+
+    const validStatuses = ["pending", "in_progress", "completed"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+    }
+
+    const milestone = await userPrisma.roadmapMilestone.findFirst({ where: { id: milestoneId, roadmap: { userId } } });
+    if (!milestone) {
+      return res.status(404).json({ error: "Milestone not found" });
+    }
+
+    const updated = await userPrisma.roadmapMilestone.update({
+      where: { id: milestoneId },
+      data: {
+        ...(status && { status }),
+        ...(typeof completionPercentage === "number" && { completionPercentage }),
+      },
+    });
+
+    const allMilestones = await userPrisma.roadmapMilestone.findMany({ where: { roadmapId: milestone.roadmapId } });
+    const avgCompletion = Math.round(allMilestones.reduce((s: number, m: any) => s + (m.completionPercentage || 0), 0) / allMilestones.length);
+
+    await userPrisma.codingRoadmap.update({
+      where: { id: milestone.roadmapId },
+      data: { completionPercentage: avgCompletion },
+    });
+
+    res.json({ success: true, milestone: updated, roadmapCompletion: avgCompletion });
   } catch (error) {
     handleRouteError(res, error, "Coding.roadmap.update", "Failed to update roadmap");
   }

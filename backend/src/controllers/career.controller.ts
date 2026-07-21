@@ -36,8 +36,8 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
     let codingSessions: any[] = [];
     try { codingSessions = await userPrisma.codingSession.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }); } catch (e) { console.warn("[Career] codingSessions query failed:", (e as Error)?.message); }
 
-    let quizes: any[] = [];
-    try { quizes = await userPrisma.quizAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }); } catch (e) { console.warn("[Career] quizes query failed:", (e as Error)?.message); }
+    let quizzes: any[] = [];
+    try { quizzes = await userPrisma.quizAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }); } catch (e) { console.warn("[Career] quizzes query failed:", (e as Error)?.message); }
 
     let learningAnalytics: any = null;
     try { learningAnalytics = await userPrisma.learningAnalytics.findUnique({ where: { userId } }); } catch (e) { console.warn("[Career] learningAnalytics query failed:", (e as Error)?.message); }
@@ -97,8 +97,8 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         currentStreak: learningAnalytics?.currentStreak || 0,
         documentsCount: learningAnalytics?.documentsCount || 0,
         overallProgress: progressTracking?.overallProgress || 0,
-        quizAttempts: quizes.length,
-        avgQuizScore: quizes.length > 0 ? Math.round(quizes.reduce((s: number, q: any) => s + (q.accuracy || 0) * 100, 0) / quizes.length) : 0,
+        quizAttempts: quizzes.length,
+        avgQuizScore: quizzes.length > 0 ? Math.round(quizzes.reduce((s: number, q: any) => s + (q.accuracy || 0) * 100, 0) / quizzes.length) : 0,
       },
       atsReports: atsReports.map((r: any) => ({
         score: r.score,
@@ -159,18 +159,22 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         coachFeedback: "",
         milestones: [],
       };
-      res.json({ success: true, roadmap: null, roadmapData: fallback });
+      res.status(503).json({ success: false, roadmap: null, roadmapData: fallback, error: "AI generation failed. Using fallback data." });
       return;
     }
 
     // Save to database
     let roadmap: any;
     try {
+      // Check for existing roadmaps with same target role to increment version
+      const existingCount = await userPrisma.careerRoadmap.count({ where: { userId, targetRole: profileData.targetRole } });
+
       roadmap = await userPrisma.careerRoadmap.create({
         data: {
           userId,
           targetRole: profileData.targetRole,
           timeline: profileData.timeline,
+          versionNumber: existingCount + 1,
           readinessScore: roadmapData.readinessScores.overall,
           technicalScore: roadmapData.readinessScores.technical,
           resumeScore: roadmapData.readinessScores.resume,
@@ -229,6 +233,8 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
         });
       } catch (taskErr) {
         console.error("[Career] careerTask.createMany failed:", (taskErr as Error)?.message);
+        res.status(503).json({ success: false, roadmap, roadmapData, error: "Roadmap saved but tasks failed to create. Please regenerate." });
+        return;
       }
     }
 
@@ -370,17 +376,23 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
       },
     });
 
-    // Update roadmap completion percentage
+    // Update roadmap completion — blend AI readiness score with task completion
     const allTasks = await userPrisma.careerTask.findMany({ where: { roadmapId: task.roadmapId } });
     const completed = allTasks.filter(t => t.status === "completed").length;
-    const completionPct = Math.round((completed / allTasks.length) * 100);
+    const taskCompletionPct = allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : 0;
+
+    // Read current roadmap to get original AI score
+    const roadmap = await userPrisma.careerRoadmap.findUnique({ where: { id: task.roadmapId } });
+    const aiScore = roadmap?.readinessScore || 0;
+    // Blend: 60% AI score + 40% task completion
+    const blendedScore = Math.min(100, Math.round(aiScore * 0.6 + taskCompletionPct * 0.4));
 
     await userPrisma.careerRoadmap.update({
       where: { id: task.roadmapId },
-      data: { readinessScore: Math.min(100, completionPct) },
+      data: { readinessScore: blendedScore },
     });
 
-    res.json({ success: true, task: updated, completionPercentage: completionPct });
+    res.json({ success: true, task: updated, taskCompletionPercentage: taskCompletionPct, blendedScore });
   } catch (error) {
     next(error);
   }
