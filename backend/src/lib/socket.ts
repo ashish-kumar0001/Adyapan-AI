@@ -17,6 +17,7 @@ import { StreakService } from "../services/streak.service";
 import { analyzeProctoringEvent, generateViolationReport } from "./ai/proctoring";
 import { logProctoringEvent } from "../services/interview-session.service";
 import { generateInterviewQuestion } from "./ai/gemini";
+import { callAIRobust } from "./ai/openrouter";
 
 let io: Server;
 
@@ -294,21 +295,17 @@ export function initSocketServer(server: HttpServer) {
       }
     });
 
-    // Lesson generation using direct Gemini streaming API
+    // Lesson generation — Gemini streaming with multi-provider fallback (callAIRobust)
     socket.on("lesson:generate", async ({ topic, duration, level }: { topic: string; duration: string; level: string }) => {
-      try {
-        socket.emit("lesson:progress", { step: 0, status: "Analyzing Topic Semantics" });
+      const progressMessages = [
+        "Analyzing Topic Semantics",
+        "Building Custom Learning Path",
+        "Creating Real-World Analogies",
+        "Generating Comprehension Checkpoint Quiz",
+        "Finalizing Visual Revision Sheet",
+      ];
 
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.7,
-            maxOutputTokens: 8192,
-          },
-        });
-
-        const prompt = `You are an expert academic tutor. Teach the topic: "${topic}" at "${level}" level, duration: "${duration}".
+      const lessonPrompt = `You are an expert academic tutor. Teach the topic: "${topic}" at "${level}" level, duration: "${duration}".
 
 Return a JSON object with this exact structure (no markdown, no \`\`\`):
 {
@@ -340,43 +337,80 @@ If level is "intermediate", "interview", or "revision":
 Always include: learning_goal, estimated_completion_time, lesson_structure as array of section names.
 Keep responses concise for short durations and detailed for longer durations.`;
 
-        const result = await model.generateContentStream(prompt);
-        let fullResponse = "";
-        let charCount = 0;
-        const progressMilestones = [100, 500, 1500, 3000];
-        let milestoneIdx = 0;
-        const progressMessages = [
-          "Building Custom Learning Path",
-          "Creating Real-World Analogies",
-          "Generating Comprehension Checkpoint Quiz",
-          "Finalizing Visual Revision Sheet",
-        ];
+      try {
+        socket.emit("lesson:progress", { step: 0, status: progressMessages[0] });
 
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          fullResponse += chunkText;
-          charCount += chunkText.length;
+        // Try Gemini streaming first for the progress UX
+        if (env.geminiApiKey) {
+          try {
+            const model = genAI.getGenerativeModel({
+              model: "gemini-2.5-flash",
+              generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.7,
+                maxOutputTokens: 16384,
+              },
+            });
 
-          while (milestoneIdx < progressMilestones.length && charCount >= progressMilestones[milestoneIdx]) {
-            socket.emit("lesson:progress", { step: milestoneIdx + 1, status: progressMessages[milestoneIdx] });
-            milestoneIdx++;
+            const result = await model.generateContentStream(lessonPrompt);
+            let fullResponse = "";
+            let charCount = 0;
+            const progressMilestones = [100, 500, 1500, 3000];
+            let milestoneIdx = 0;
+
+            for await (const chunk of result.stream) {
+              const chunkText = chunk.text();
+              fullResponse += chunkText;
+              charCount += chunkText.length;
+
+              while (milestoneIdx < progressMilestones.length && charCount >= progressMilestones[milestoneIdx]) {
+                socket.emit("lesson:progress", { step: milestoneIdx + 1, status: progressMessages[milestoneIdx + 1] });
+                milestoneIdx++;
+              }
+            }
+
+            const cleaned = fullResponse
+              .replace(/^```json\s*/i, "")
+              .replace(/```\s*$/, "")
+              .trim();
+            const data = JSON.parse(cleaned);
+
+            if (milestoneIdx < progressMessages.length) {
+              socket.emit("lesson:progress", { step: progressMessages.length, status: progressMessages[progressMessages.length - 1] });
+            }
+
+            socket.emit("lesson:complete", { data });
+            return; // Gemini streaming succeeded
+          } catch (geminiError: any) {
+            console.warn("[Lesson] Gemini streaming failed, falling back to multi-provider chain:", geminiError?.message || geminiError);
+            socket.emit("lesson:progress", { step: 2, status: "Gemini unavailable, switching providers..." });
           }
         }
 
-        const cleaned = fullResponse
+        // Fallback: use callAIRobust (Gemini → Groq → NVIDIA → OpenRouter)
+        socket.emit("lesson:progress", { step: 1, status: progressMessages[1] });
+
+        const rawResponse = await callAIRobust(
+          [{ role: "user", content: lessonPrompt }],
+          { model: "gemini-2.5-flash", temperature: 0.7, maxTokens: 16384, responseFormat: { type: "json_object" } }
+        );
+
+        socket.emit("lesson:progress", { step: 3, status: progressMessages[3] });
+
+        const cleaned = rawResponse
           .replace(/^```json\s*/i, "")
           .replace(/```\s*$/, "")
           .trim();
         const data = JSON.parse(cleaned);
 
-        if (milestoneIdx < progressMessages.length) {
-          socket.emit("lesson:progress", { step: progressMessages.length, status: "Finalizing Visual Revision Sheet" });
-        }
-
+        socket.emit("lesson:progress", { step: 4, status: progressMessages[4] });
         socket.emit("lesson:complete", { data });
-      } catch (error) {
-        console.error("Lesson generation error:", error);
-        socket.emit("lesson:error", { error: "Failed to generate lesson. Please try again." });
+      } catch (error: any) {
+        console.error("Lesson generation error:", error?.message || error);
+        const errMsg = error?.message?.includes("all providers")
+          ? "All AI providers are currently unavailable. Please try again later."
+          : "Failed to generate lesson. Please try again.";
+        socket.emit("lesson:error", { error: errMsg });
       }
     });
 

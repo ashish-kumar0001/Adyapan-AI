@@ -40,7 +40,7 @@ const NVIDIA_NIM_MODELS = [
 ];
 
 // Sequential fallback completion engine: Gemini (multiple models) → Groq (multiple models) → OpenRouter
-async function callAIRobust(
+export async function callAIRobust(
   messages: OpenRouterMessage[],
   options: OpenRouterOptions
 ): Promise<string> {
