@@ -137,7 +137,11 @@ export async function callAIRobust(
         };
 
         if (options.responseFormat?.type === "json_object") {
-          body.response_format = { type: "json_object" };
+          // Only Gemini and OpenRouter support response_format; NVIDIA NIM and Groq do not
+          const supportsResponseFormat = provider.name.includes("Gemini") || provider.name.includes("OpenRouter");
+          if (supportsResponseFormat) {
+            body.response_format = { type: "json_object" };
+          }
         }
 
         const controller = new AbortController();

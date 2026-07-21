@@ -88,7 +88,7 @@ export function initSocketServer(server: HttpServer) {
       socket.join(sessionId);
     });
 
-    // Real-time Study Assistant Streaming (uses actual Gemini API)
+    // Real-time Study Assistant Streaming (Gemini direct for streaming, fallback to callAIRobust)
     socket.on("study:message", async ({ sessionId, query, context }: { sessionId: string; query: string; context: string }) => {
       try {
         const userId = await resolveUserId({});
@@ -98,7 +98,6 @@ export function initSocketServer(server: HttpServer) {
         }
 
         const userPrisma = await getUserPrisma(userId);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `
           You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
           Context from uploaded documents:
@@ -111,13 +110,42 @@ export function initSocketServer(server: HttpServer) {
           Answer clearly using markdown. If the query asks to explain a concept or formula, break it down simply.
         `;
 
-        const result = await model.generateContentStream(prompt);
         let fullResponse = "";
 
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          fullResponse += chunkText;
-          io.to(sessionId).emit("study:chunk", { text: chunkText });
+        // Try streaming via Gemini SDK first
+        if (env.geminiApiKey) {
+          try {
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const result = await model.generateContentStream(prompt);
+            for await (const chunk of result.stream) {
+              const chunkText = chunk.text();
+              fullResponse += chunkText;
+              io.to(sessionId).emit("study:chunk", { text: chunkText });
+            }
+          } catch (geminiErr) {
+            console.warn("[Study Assistant] Gemini streaming failed, falling back to callAIRobust:", geminiErr);
+            fullResponse = "";
+            // Fallback: non-streaming via callAIRobust (all providers)
+            fullResponse = await callAIRobust(
+              [
+                { role: "system", content: "You are an expert academic tutor. Answer clearly using markdown." },
+                { role: "user", content: prompt },
+              ],
+              { model: "gemini-2.5-flash", temperature: 0.7 }
+            );
+            // Send the full response as a single chunk
+            io.to(sessionId).emit("study:chunk", { text: fullResponse });
+          }
+        } else {
+          // No Gemini key configured — use callAIRobust directly
+          fullResponse = await callAIRobust(
+            [
+              { role: "system", content: "You are an expert academic tutor. Answer clearly using markdown." },
+              { role: "user", content: prompt },
+            ],
+            { model: "gemini-2.5-flash", temperature: 0.7 }
+          );
+          io.to(sessionId).emit("study:chunk", { text: fullResponse });
         }
 
         const session = await userPrisma.studySession.findUnique({

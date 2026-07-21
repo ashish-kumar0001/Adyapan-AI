@@ -11,6 +11,7 @@ import { AIReviewService } from "../services/ai-review.service";
 import { ComplexityService } from "../services/complexity.service";
 import { CodingRoadmapService } from "../services/coding-roadmap.service";
 import { requireUserId } from "../utils/request";
+import { generateText, MODELS } from "../lib/ai/openrouter";
 
 
 
@@ -1177,7 +1178,6 @@ Topic: ${question.topic}
 Difficulty: ${question.difficulty}`;
     }
 
-    const { generateText, MODELS } = require("../lib/ai/openrouter");
     const explanation = await generateText(systemPrompt, userPrompt, { model: MODELS.CODE, temperature: 0.6 });
 
     res.json({ success: true, explanation });
