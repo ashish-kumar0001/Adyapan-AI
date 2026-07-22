@@ -175,7 +175,7 @@ const LANG_MAP: Record<CodingLanguage, string> = {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export default function TechnicalInterviewView() {
+export default function TechnicalInterviewView({ theme: propTheme }: { theme?: string } = {}) {
   const [theme, setTheme] = useState("dark");
   const [screen, setScreen] = useState<ViewScreen>("landing");
   const [config, setConfig] = useState<TechnicalConfig | null>(null);
@@ -863,7 +863,7 @@ function ActiveInterview({
       setMessages(prev => [...prev, aiMsg]);
       setCurrentQuestion(data.nextQuestion);
       setQuestionNumber(data.questionNumber || questionNumber + 1);
-      if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
+      if (data.totalQuestions && setTotalQuestions) setTotalQuestions(data.totalQuestions);
 
       // Auto-open coding if it's a coding challenge
       if (data.nextQuestion?.isCodingChallenge && data.nextQuestion?.codingProblem) {
