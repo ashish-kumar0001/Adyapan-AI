@@ -589,16 +589,43 @@ export function DashboardTopNav({
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dbSearchResults, setDbSearchResults] = useState<SearchEntry[]>([]);
+  const [dbSearching, setDbSearching] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const searchResults = searchQuery.trim().length >= 2
+  const navResults = searchQuery.trim().length >= 2
     ? SEARCH_INDEX.filter((entry) =>
         entry.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
         entry.category.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 8)
     : [];
+
+  const searchResults = [...navResults, ...dbSearchResults].slice(0, 15);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setDbSearchResults([]);
+      setDbSearching(false);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      return;
+    }
+    setDbSearching(true);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      api.get(`/search?q=${encodeURIComponent(q)}`)
+        .then((res) => {
+          const items: SearchEntry[] = res.data?.data || [];
+          setDbSearchResults(items);
+        })
+        .catch(() => setDbSearchResults([]))
+        .finally(() => setDbSearching(false));
+    }, 350);
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+  }, [searchQuery]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -705,18 +732,6 @@ export function DashboardTopNav({
               boxSizing: "border-box",
             }}
           />
-          {!searchFocused && (
-            <span style={{
-              position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-              fontSize: "0.6rem", fontWeight: 600, color: "var(--text-muted)",
-              background: isDarkTheme ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-              border: `1px solid ${navBorder}`, borderRadius: 4,
-              padding: "1px 5px", lineHeight: "16px",
-              pointerEvents: "none" as const,
-            }}>
-              ⌘K
-            </span>
-          )}
           {searchOpen && searchResults.length > 0 && (
             <div style={{
               position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%", minWidth: 260,
@@ -749,7 +764,7 @@ export function DashboardTopNav({
               })()}
             </div>
           )}
-          {searchOpen && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
+          {searchOpen && searchQuery.trim().length >= 2 && searchResults.length === 0 && !dbSearching && (
             <div style={{
               position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%",
               background: dropdownBg, border: `1px solid ${navBorder}`,
@@ -758,6 +773,17 @@ export function DashboardTopNav({
               fontSize: "0.8rem", color: "var(--text-muted)",
             }}>
               No results found
+            </div>
+          )}
+          {searchOpen && searchQuery.trim().length >= 2 && searchResults.length === 0 && dbSearching && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%",
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 10, padding: "1rem", zIndex: 200,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35)", textAlign: "center",
+              fontSize: "0.8rem", color: "var(--text-muted)",
+            }}>
+              Searching your data...
             </div>
           )}
         </motion.div>

@@ -40,6 +40,7 @@ import { communityRouter } from "./community.routes";
 import { resumeImprovementRouter } from "./resume-improvement.routes";
 import { careerRouter } from "./career.routes";
 import { configRouter } from "./config.routes";
+import { searchRouter } from "./search.routes";
 import { placementRouter } from "./placement.routes";
 import { engineRouter } from "./engine.routes";
 
@@ -113,6 +114,9 @@ apiRouter.use("/placement", placementRouter);
 
 // Platform Configuration Routes
 apiRouter.use("/config", configRouter);
+
+// Global Search Route
+apiRouter.use("/search", searchRouter);
 
 
 
