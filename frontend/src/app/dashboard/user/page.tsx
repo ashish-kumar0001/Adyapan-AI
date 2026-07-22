@@ -116,6 +116,9 @@ const GithubPortfolioView = dynamic(() => import("@/components/coding-hub/Github
 const InterviewHubView = dynamic(() => import("@/components/interview-hub/InterviewHubView").then(m => m.InterviewHubView), {
   loading: () => <DashboardWidgetSkeleton title="Interview Hub" />
 });
+const EngineView = dynamic(() => import("@/components/interview-hub/engine/EngineView").then(m => m.default), {
+  loading: () => <DashboardWidgetSkeleton title="Interview Engine" />
+});
 const InternshipHubView = dynamic(() => import("@/components/internship-hub/InternshipHubView").then(m => m.InternshipHubView), {
   loading: () => <DashboardWidgetSkeleton title="Internship Finder" />
 });
@@ -218,6 +221,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "AI HR Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "AI Technical Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "Mock Interviews", viewId: "interview-hub", category: "Interview Hub" },
+  { label: "Interview Engine", viewId: "interview-engine", category: "Interview Hub" },
   { label: "Research Paper AI", viewId: "research-hub", category: "Research Hub" },
   { label: "Plagiarism Checker", viewId: "research-plagiarism", category: "Research Hub" },
   { label: "Browse Internships", viewId: "internship-hub", category: "Internship Hub" },
@@ -285,6 +289,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "interview", label: "Interview Hub", icon: <Mic size={18} />,
     submenu: [
+      { label: "Interview Engine", href: "/dashboard/interview/engine" },
       { label: "AI HR Interview", href: "#" }, { label: "AI Technical Interview", href: "#" },
       { label: "Mock Interviews", href: "#" },
     ],
@@ -499,6 +504,7 @@ export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, side
                       else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
                       else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
                       else if (sub.label === "AI Chat Assistant") onViewTool("ady-chat");
+                      else if (sub.label === "Interview Engine") onViewTool("interview-engine");
                       else if (sub.label === "AI HR Interview") onViewTool("interview-hr");
                       else if (sub.label === "AI Technical Interview") onViewTool("interview-technical");
                       else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
@@ -2212,6 +2218,8 @@ function UserDashboardContent() {
           <HubErrorBoundary><CodingChallengesView /></HubErrorBoundary>
         ) : activeView === "ady-chat" ? (
           <HubErrorBoundary><AdyChatView setView={setActiveView} /></HubErrorBoundary>
+        ) : activeView === "interview-engine" ? (
+          <HubErrorBoundary><EngineView theme={theme} /></HubErrorBoundary>
         ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
           <HubErrorBoundary><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" || activeView === "internship-saved" ? (
