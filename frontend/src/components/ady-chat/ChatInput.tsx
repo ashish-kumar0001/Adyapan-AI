@@ -219,26 +219,26 @@ export function ChatInput({
           className="w-7.5 h-7.5 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
             background: canSend
-              ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+              ? "linear-gradient(135deg, #f59e0b, #d97706)"
               : isDark
               ? "rgba(255,255,255,0.06)"
               : "rgba(0,0,0,0.06)",
-            boxShadow: canSend ? "0 0 16px rgba(59,130,246,0.4)" : "none",
+            boxShadow: canSend ? "0 0 16px rgba(245,158,11,0.4)" : "none",
             cursor: canSend ? "pointer" : "not-allowed",
           }}
           animate={
             canSend
               ? {
                   boxShadow: [
-                    "0 0 10px rgba(59,130,246,0.3)",
-                    "0 0 18px rgba(59,130,246,0.6)",
-                    "0 0 10px rgba(59,130,246,0.3)",
+                    "0 0 10px rgba(245,158,11,0.3)",
+                    "0 0 18px rgba(245,158,11,0.6)",
+                    "0 0 10px rgba(245,158,11,0.3)",
                   ],
                 }
               : {}
           }
           transition={canSend ? { duration: 2, repeat: Infinity } : {}}
-          whileHover={canSend ? { scale: 1.08, boxShadow: "0 0 24px rgba(59,130,246,0.7)" } : {}}
+          whileHover={canSend ? { scale: 1.08, boxShadow: "0 0 24px rgba(245,158,11,0.7)" } : {}}
           whileTap={canSend ? { scale: 0.93 } : {}}
         >
           {loading ? (

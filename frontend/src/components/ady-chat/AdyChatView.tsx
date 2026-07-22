@@ -297,7 +297,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   // We use relative positioning so we NEVER overlap the dashboard nav or sidebar.
   return (
     <div
-      className="relative flex overflow-hidden w-full h-full"
+      className="relative flex overflow-hidden w-full h-[calc(100vh-80px)] min-h-[550px]"
       style={{
         background: isDark ? "#070715" : "#f0f4ff",
       }}
@@ -379,7 +379,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                     onSuggestionClick={handleSuggestionClick}
                   />
                 </div>
-                <div className="pb-5 pt-2">
+                <div className="pb-4 pt-2 shrink-0 z-20">
                   <ChatInput
                     input={input}
                     isDark={isDark}
@@ -422,11 +422,11 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                   onEditUserMessage={setInput}
                 />
                 <div
-                  className="pb-5 pt-2 flex-shrink-0"
+                  className="pb-4 pt-2 shrink-0 z-20"
                   style={{
                     background: isDark
-                      ? "linear-gradient(to top, rgba(7,7,21,0.95) 0%, transparent 100%)"
-                      : "linear-gradient(to top, rgba(240,244,255,0.95) 0%, transparent 100%)",
+                      ? "linear-gradient(to top, rgba(7,7,21,0.98) 75%, transparent 100%)"
+                      : "linear-gradient(to top, rgba(240,244,255,0.98) 75%, transparent 100%)",
                   }}
                 >
                   <ChatInput
