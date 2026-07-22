@@ -185,12 +185,12 @@ export function PaperEditorWorkspace({
             {templateId} Layout Format • {isTwoCol ? "2 Columns" : "Single Column"}
           </div>
           <h1 className={`font-extrabold text-slate-900 mb-2 leading-tight ${templateId === "Thesis" ? "text-3xl font-serif" : "text-2xl"}`}>
-            {paper?.title}
+            {paper?.title || "Untitled Paper"}
           </h1>
           <div className="text-xs text-slate-600 font-bold">
-            {paper?.authors?.join(", ") || "Dr. Alex Rivera, Ashish Kumar"}
+            {paper?.authors?.join(", ") || "Author Name(s)"}
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">Department of Computer Science & Engineering</div>
+          <div className="text-[11px] text-slate-500 font-medium">Academic Department / Institution</div>
         </div>
 
         {/* Abstract Block */}
@@ -201,16 +201,16 @@ export function PaperEditorWorkspace({
           "bg-slate-50 border border-slate-200 border-l-4 border-amber-500 text-slate-700 italic"
         }`}>
           <div className="font-bold not-italic text-slate-900 uppercase tracking-wider mb-1">Abstract</div>
-          <div>{paper?.abstract}</div>
+          <div>{paper?.abstract || "Abstract summary will appear here."}</div>
           <div className="mt-2 not-italic text-[11px] font-semibold text-slate-600">
-            Keywords— {paper?.keywords?.join(", ") || "Research, Artificial Intelligence, Scientific Method"}
+            Keywords— {paper?.keywords?.join(", ") || "Research, Keywords"}
           </div>
         </div>
 
         {/* ACM Taxonomy Callout */}
         {templateId === "ACM" && (
           <div className="mb-6 p-3 bg-slate-100 rounded text-[11px] font-sans text-slate-700 border border-slate-200">
-            <span className="font-bold text-sky-800">CCS Concepts:</span> • Computing methodologies → Artificial intelligence; • Computer systems organization → Architectures.
+            <span className="font-bold text-sky-800">CCS Concepts:</span> • Computing methodologies → Artificial intelligence.
           </div>
         )}
 
@@ -238,16 +238,17 @@ export function PaperEditorWorkspace({
             <h2 className="text-sm font-extrabold uppercase pb-1 border-b border-slate-300 text-slate-900">
               References
             </h2>
-            <ol className="text-[11px] text-slate-700 space-y-1 list-decimal pl-4">
-              {(paper?.references || [
-                { title: "Multi-Agent Deep Reinforcement Learning at Scale", authors: ["Smith, J."], year: 2024 },
-                { title: "Quantum Computing Foundations for Machine Learning", authors: ["Johnson, A."], year: 2023 }
-              ]).map((r: any, idx: number) => (
-                <li key={idx}>
-                  [{idx + 1}] {r.authors?.join(", ") || "Author"}. "{r.title}." <em>{r.journal || "IEEE Transactions"}</em>, {r.year}.
-                </li>
-              ))}
-            </ol>
+            {paper?.references && paper.references.length > 0 ? (
+              <ol className="text-[11px] text-slate-700 space-y-1 list-decimal pl-4">
+                {paper.references.map((r: any, idx: number) => (
+                  <li key={idx}>
+                    [{idx + 1}] {r.authors?.join(", ") || "Author"}. "{r.title}." <em>{r.journal || "Publication"}</em>, {r.year}.
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="text-[11px] text-slate-500 italic">No reference citations attached yet.</div>
+            )}
           </div>
         </div>
       </div>

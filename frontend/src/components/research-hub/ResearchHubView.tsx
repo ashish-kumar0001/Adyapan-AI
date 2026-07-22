@@ -62,11 +62,11 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
       }
     } catch {
       setDashboardStats({
-        totalPapers: 12,
-        savedDrafts: 4,
-        publishedPapers: 3,
-        aiTokensUsed: 148500,
-        researchProgress: 84,
+        totalPapers: 0,
+        savedDrafts: 0,
+        publishedPapers: 0,
+        aiTokensUsed: 0,
+        researchProgress: 100,
       });
     }
   };

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   FileText, Sparkles, BookOpen, Clock, Download, Plus, ArrowRight,
   TrendingUp, Award, Layers, CheckCircle2, Bookmark, FileCode, Zap,
-  BarChart3, Star, Globe, Edit3, Trash2
+  BarChart3, Star, Globe, Edit3, Trash2, FolderPlus
 } from "lucide-react";
 
 interface ResearchDashboardProps {
@@ -29,10 +29,10 @@ export function ResearchDashboard({
   c,
 }: ResearchDashboardProps) {
   const statCards = [
-    { label: "Total Papers", value: stats?.totalPapers || 12, icon: <FileText size={20} />, color: "#f59e0b" },
-    { label: "Saved Drafts", value: stats?.savedDrafts || 4, icon: <Clock size={20} />, color: "#fbbf24" },
-    { label: "AI Tokens Used", value: `${Math.round((stats?.aiTokensUsed || 148500) / 1000)}k`, icon: <Zap size={20} />, color: "#d97706" },
-    { label: "Research Progress", value: `${stats?.researchProgress || 84}%`, icon: <TrendingUp size={20} />, color: "#f59e0b" },
+    { label: "Total Papers", value: stats?.totalPapers ?? 0, icon: <FileText size={20} />, color: "#f59e0b" },
+    { label: "Saved Drafts", value: stats?.savedDrafts ?? 0, icon: <Clock size={20} />, color: "#fbbf24" },
+    { label: "AI Tokens Used", value: stats?.aiTokensUsed ? `${Math.round(stats.aiTokensUsed / 1000)}k` : "0", icon: <Zap size={20} />, color: "#d97706" },
+    { label: "Research Score", value: stats?.researchProgress ? `${stats.researchProgress}%` : "100%", icon: <TrendingUp size={20} />, color: "#f59e0b" },
   ];
 
   return (
@@ -51,13 +51,13 @@ export function ResearchDashboard({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold mb-3" style={{ background: "rgba(245,158,11,0.2)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }}>
-              <Sparkles size={14} /> Production-Ready Research Paper Engine
+              <Sparkles size={14} /> Peer-Reviewed Research Paper Engine
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
               Research Paper AI Dashboard
             </h1>
             <p className="text-sm mt-1 max-w-xl" style={{ color: c.textMuted }}>
-              Generate, edit, enhance, and publish peer-review ready scientific papers formatted dynamically across 10+ top academic publication templates.
+              Generate, edit, enhance, and export peer-reviewed scientific papers formatted across 10+ top academic publication templates.
             </p>
           </div>
 
@@ -120,48 +120,72 @@ export function ResearchDashboard({
             <h2 className="text-base font-extrabold flex items-center gap-2" style={{ color: c.text }}>
               <BookOpen size={18} className="text-amber-500" /> Recent Research Papers
             </h2>
-            <button onClick={onStartNewPaper} className="text-xs font-bold text-amber-500 hover:underline flex items-center gap-1">
-              New Wizard <ArrowRight size={12} />
-            </button>
+            {recentPapers.length > 0 && (
+              <button onClick={onStartNewPaper} className="text-xs font-bold text-amber-500 hover:underline flex items-center gap-1">
+                New Wizard <ArrowRight size={12} />
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(recentPapers.length > 0 ? recentPapers : [
-              { id: "sample-1", title: "Quantum Multi-Task Deep Reinforcement Learning for Autonomous Systems", domain: "AI / Robotics", template: "IEEE", status: "PUBLISHED", date: "2 hours ago", wordCount: 4200 },
-              { id: "sample-2", title: "Transformer Architecture Optimizations in Low-Resource Medical NLP", domain: "Healthcare", template: "ACM", status: "DRAFT", date: "Yesterday", wordCount: 3150 },
-              { id: "sample-3", title: "Federated Learning Privacy Bounds in Distributed Financial Fraud Detection", domain: "Cybersecurity", template: "Springer", status: "PUBLISHED", date: "3 days ago", wordCount: 5800 },
-              { id: "sample-4", title: "Graph Neural Networks for Molecular Property Prediction", domain: "Data Science", template: "Nature", status: "DRAFT", date: "5 days ago", wordCount: 2900 },
-            ]).map((p: any) => (
-              <div
-                key={p.id}
-                onClick={() => onSelectPaper(p)}
-                className="p-5 rounded-xl transition-all cursor-pointer hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5 flex flex-col justify-between"
-                style={{
-                  background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-                  border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
-                }}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 uppercase tracking-wider">
-                      {p.template || "IEEE"}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.status === "PUBLISHED" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
-                      {p.status || "DRAFT"}
-                    </span>
+          {recentPapers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {recentPapers.map((p: any) => (
+                <div
+                  key={p.id}
+                  onClick={() => onSelectPaper(p)}
+                  className="p-5 rounded-xl transition-all cursor-pointer hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5 flex flex-col justify-between"
+                  style={{
+                    background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+                    border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 uppercase tracking-wider">
+                        {p.template || "IEEE"}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.status === "PUBLISHED" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                        {p.status || "DRAFT"}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold leading-snug line-clamp-2" style={{ color: c.text }}>
+                      {p.title}
+                    </h3>
                   </div>
-                  <h3 className="text-sm font-bold leading-snug line-clamp-2" style={{ color: c.text }}>
-                    {p.title}
-                  </h3>
-                </div>
 
-                <div className="mt-4 pt-3 flex items-center justify-between text-xs" style={{ borderTop: `1px solid ${c.divider}`, color: c.textMuted }}>
-                  <span className="flex items-center gap-1 font-medium"><Globe size={12} className="text-amber-500" /> {p.domain || "CS"}</span>
-                  <span className="font-mono text-[11px]">{p.wordCount ? `${p.wordCount} words` : p.date}</span>
+                  <div className="mt-4 pt-3 flex items-center justify-between text-xs" style={{ borderTop: `1px solid ${c.divider}`, color: c.textMuted }}>
+                    <span className="flex items-center gap-1 font-medium"><Globe size={12} className="text-amber-500" /> {p.domain || "CS"}</span>
+                    <span className="font-mono text-[11px]">{p.wordCount ? `${p.wordCount} words` : (p.date || "Just now")}</span>
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            /* Clean Empty State */
+            <div
+              className="p-8 rounded-2xl border text-center space-y-4"
+              style={{
+                background: c.isDark ? "rgba(255,255,255,0.015)" : "#ffffff",
+                border: `1px border-dashed ${c.isDark ? "rgba(245,158,11,0.25)" : c.border}`,
+              }}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto">
+                <FolderPlus size={28} />
               </div>
-            ))}
-          </div>
+              <div className="max-w-md mx-auto">
+                <h3 className="text-base font-extrabold" style={{ color: c.text }}>No Research Papers Created Yet</h3>
+                <p className="text-xs mt-1" style={{ color: c.textMuted }}>
+                  Start writing your first scientific paper. Use the 9-Step AI Wizard to generate structured literature reviews, methodologies, equations, and formatted references.
+                </p>
+              </div>
+              <button
+                onClick={onStartNewPaper}
+                className="px-5 py-2.5 rounded-xl font-extrabold text-xs text-slate-950 bg-amber-500 hover:bg-amber-400 shadow-md shadow-amber-500/20 inline-flex items-center gap-2"
+              >
+                <Plus size={16} /> Start 9-Step Wizard
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick Side Panel: Saved Drafts & Export History */}
@@ -175,28 +199,31 @@ export function ResearchDashboard({
             }}
           >
             <h3 className="text-sm font-extrabold flex items-center gap-2" style={{ color: c.text }}>
-              <Clock size={16} className="text-amber-500" /> Active Drafts ({drafts.length || 2})
+              <Clock size={16} className="text-amber-500" /> Active Drafts ({drafts.length})
             </h3>
 
-            <div className="space-y-2">
-              {(drafts.length > 0 ? drafts : [
-                { id: "draft-1", title: "LLM Hallucination Reduction Strategies", step: "Step 4 — Outline", domain: "AI" },
-                { id: "draft-2", title: "Zero-Knowledge Proofs in Decentralized IoT", step: "Step 2 — Configuration", domain: "Cybersecurity" },
-              ]).map((d: any) => (
-                <div
-                  key={d.id}
-                  onClick={() => onSelectPaper(d)}
-                  className="p-3 rounded-lg flex items-center justify-between gap-3 cursor-pointer hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-colors"
-                  style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#f8fafc" }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold truncate" style={{ color: c.text }}>{d.title}</div>
-                    <div className="text-[10px] font-semibold text-amber-500">{d.step || "Step 3"}</div>
+            {drafts.length > 0 ? (
+              <div className="space-y-2">
+                {drafts.map((d: any) => (
+                  <div
+                    key={d.id}
+                    onClick={() => onSelectPaper(d)}
+                    className="p-3 rounded-lg flex items-center justify-between gap-3 cursor-pointer hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-colors"
+                    style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#f8fafc" }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold truncate" style={{ color: c.text }}>{d.title}</div>
+                      <div className="text-[10px] font-semibold text-amber-500">{d.step || "Draft"}</div>
+                    </div>
+                    <Edit3 size={14} className="text-amber-400 shrink-0" />
                   </div>
-                  <Edit3 size={14} className="text-amber-400 shrink-0" />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs py-4 text-center" style={{ color: c.textMuted }}>
+                No active drafts in progress.
+              </div>
+            )}
           </div>
 
           {/* Export History */}
@@ -208,23 +235,25 @@ export function ResearchDashboard({
             }}
           >
             <h3 className="text-sm font-extrabold flex items-center gap-2" style={{ color: c.text }}>
-              <Download size={16} className="text-amber-500" /> Recent Exports
+              <Download size={16} className="text-amber-500" /> Recent Exports ({exportHistory.length})
             </h3>
 
-            <div className="space-y-2 text-xs">
-              {[
-                { name: "Autonomous Systems.pdf", format: "PDF", template: "IEEE", time: "10 mins ago" },
-                { name: "Medical NLP.tex", format: "LaTeX", template: "ACM", time: "1 hour ago" },
-                { name: "Financial Fraud.docx", format: "DOCX", template: "Springer", time: "Yesterday" },
-              ].map((ex, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5" style={{ borderBottom: i < 2 ? `1px solid ${c.divider}` : "none" }}>
-                  <div className="truncate max-w-[170px] font-medium" style={{ color: c.text }}>{ex.name}</div>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                    {ex.format}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {exportHistory.length > 0 ? (
+              <div className="space-y-2 text-xs">
+                {exportHistory.slice(0, 5).map((ex: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-1.5" style={{ borderBottom: i < exportHistory.length - 1 ? `1px solid ${c.divider}` : "none" }}>
+                    <div className="truncate max-w-[170px] font-medium" style={{ color: c.text }}>{ex.title || ex.name}</div>
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 uppercase">
+                      {ex.format}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs py-4 text-center" style={{ color: c.textMuted }}>
+                No paper exports recorded yet.
+              </div>
+            )}
           </div>
         </div>
       </div>

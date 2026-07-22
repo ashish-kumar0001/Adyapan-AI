@@ -21,9 +21,9 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Step 1: Research Details
-  const [title, setTitle] = useState("Autonomous Multi-Agent AI Systems in Distributed Cloud Edge Infrastructure");
+  const [title, setTitle] = useState("");
   const [domain, setDomain] = useState("AI / Machine Learning");
-  const [keywords, setKeywords] = useState("Multi-Agent Systems, Reinforcement Learning, Edge Computing, Fault Tolerance");
+  const [keywords, setKeywords] = useState("");
   const [researchType, setResearchType] = useState("Experimental");
   const [publicationType, setPublicationType] = useState("Conference Paper");
   const [language, setLanguage] = useState("English (Academic US)");
@@ -31,8 +31,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
   const [difficultyLevel, setDifficultyLevel] = useState("Advanced Scientific");
 
   // Step 2: Paper Configuration
-  const [authors, setAuthors] = useState("Dr. Alex Rivera, Ashish Kumar");
-  const [institution, setInstitution] = useState("Adyapan AI Research Lab & Institute of Science");
+  const [authors, setAuthors] = useState("");
+  const [institution, setInstitution] = useState("");
   const [abstractLength, setAbstractLength] = useState("Standard (250 words)");
   const [citationStyle, setCitationStyle] = useState("IEEE");
   const [template, setTemplate] = useState("IEEE");
@@ -43,7 +43,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
   const [referenceCount, setReferenceCount] = useState(15);
 
   // Step 3: Literature Review
-  const [searchQuery, setSearchQuery] = useState("Multi-Agent Reinforcement Learning Edge Computing");
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchedSources, setSearchedSources] = useState<any[]>([]);
   const [searchingSources, setSearchingSources] = useState(false);
   const [uploadedPDFs, setUploadedPDFs] = useState<any[]>([]);
@@ -212,6 +212,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                   type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
+                  placeholder="e.g. Deep Reinforcement Learning for Autonomous Drone Swarms"
                   className="w-full p-3 rounded-xl text-sm outline-none font-semibold"
                   style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
                 />
@@ -251,6 +252,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                   type="text"
                   value={keywords}
                   onChange={e => setKeywords(e.target.value)}
+                  placeholder="e.g. Machine Learning, Neural Networks, Computer Vision"
                   className="w-full p-3 rounded-xl text-xs outline-none"
                   style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
                 />
@@ -281,6 +283,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                   type="text"
                   value={authors}
                   onChange={e => setAuthors(e.target.value)}
+                  placeholder="e.g. Jane Doe, John Smith"
                   className="w-full p-3 rounded-xl text-xs outline-none"
                   style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
                 />
@@ -292,6 +295,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                   type="text"
                   value={institution}
                   onChange={e => setInstitution(e.target.value)}
+                  placeholder="e.g. Stanford University & Adyapan AI"
                   className="w-full p-3 rounded-xl text-xs outline-none"
                   style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
                 />
