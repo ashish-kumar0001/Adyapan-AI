@@ -127,14 +127,14 @@ export default function EngineReport({
   const isDark = theme === "dark";
   const c = useMemo(
     () => ({
-      bg: isDark ? "#080710" : "#f0f4ff",
-      surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-      border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-      borderLight: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)",
+      bg: isDark ? "#080710" : "#f8fafc",
+      surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
+      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
+      border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
+      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#cbd5e1",
       text: isDark ? "#ffffff" : "#0f172a",
-      textSec: isDark ? "rgba(255,255,255,0.65)" : "#475569",
-      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#94a3b8",
+      textSec: isDark ? "rgba(255,255,255,0.65)" : "#334155",
+      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#64748b",
       amber: "#f59e0b",
       green: "#10b981",
       red: "#ef4444",
@@ -142,7 +142,7 @@ export default function EngineReport({
       cyan: "#06b6d4",
       blue: "#3b82f6",
       cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
-      inputBg: isDark ? "rgba(0,0,0,0.3)" : "#f8fafc",
+      inputBg: isDark ? "rgba(0,0,0,0.3)" : "#ffffff",
     }),
     [isDark]
   );

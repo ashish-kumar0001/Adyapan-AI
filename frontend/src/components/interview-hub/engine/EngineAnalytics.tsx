@@ -136,14 +136,14 @@ export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnal
   const isDark = theme === "dark";
 
   const c = {
-    bg: isDark ? "#080710" : "#f0f4ff",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-    border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-    borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    bg: isDark ? "#080710" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
+    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
+    border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
+    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#cbd5e1",
     text: isDark ? "#ffffff" : "#0f172a",
-    textSec: isDark ? "rgba(255,255,255,0.7)" : "#475569",
-    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#94a3b8",
+    textSec: isDark ? "rgba(255,255,255,0.7)" : "#334155",
+    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#64748b",
     primary: "#f59e0b",
     primaryDark: "#d97706",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
