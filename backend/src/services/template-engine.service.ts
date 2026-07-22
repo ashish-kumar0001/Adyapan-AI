@@ -44,7 +44,9 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
     .filter(s => s.id !== "references")
     .map(s => {
       const body = formatMarkdownContent(s.content);
-      return `<section class="paper-section"><h2>${s.title}</h2>${body}</section>`;
+      const isChapter = templateId === "Thesis";
+      const titleText = isChapter ? `CHAPTER ${s.title}` : s.title;
+      return `<section class="paper-section"><h2>${titleText}</h2>${body}</section>`;
     })
     .join("\n");
 
@@ -57,6 +59,33 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
     })
     .join("\n");
 
+  // Template-specific style variations
+  let headerBanner = "";
+  let sectionHeaderStyle = "border-bottom: 1px solid #cbd5e1; font-weight: 800; text-transform: uppercase;";
+  let abstractStyle = "background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #f59e0b;";
+
+  if (templateId === "ACM") {
+    headerBanner = `<div style="background:#0284c7;color:#fff;font-family:sans-serif;font-size:8pt;font-weight:700;padding:4px 8px;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">ACM Transactions on Computer Systems • Primary Article</div>`;
+    sectionHeaderStyle = "color:#0284c7; font-weight:700; border-bottom:2px solid #0284c7; text-transform:none;";
+    abstractStyle = "background:#f0f9ff; border:1px solid #bae6fd; border-left:4px solid #0284c7;";
+  } else if (templateId === "Nature") {
+    headerBanner = `<div style="font-family:Georgia,serif;font-size:14pt;font-weight:800;color:#991b1b;border-bottom:2px solid #991b1b;padding-bottom:4px;margin-bottom:16px;">NATURE RESEARCH ARTICLE</div>`;
+    sectionHeaderStyle = "color:#991b1b; font-weight:800; font-family:Georgia,serif; text-transform:none; border:none;";
+    abstractStyle = "background:#fff5f5; border-left:4px solid #991b1b; font-weight:600;";
+  } else if (templateId === "IEEE-Journal") {
+    headerBanner = `<div style="font-size:8pt;font-family:serif;text-align:center;border-bottom:1px solid #000;padding-bottom:4px;margin-bottom:16px;color:#475569;font-weight:700;">IEEE TRANSACTIONS ON COMPUTATIONAL SCIENCE, VOL. 42, NO. 8</div>`;
+  } else if (templateId === "Elsevier") {
+    headerBanner = `<div style="background:#ea580c;color:#fff;font-size:8pt;font-weight:700;padding:4px 8px;margin-bottom:12px;text-transform:uppercase;">Elsevier ScienceDirect Publication</div>`;
+    sectionHeaderStyle = "color:#c2410c; border-bottom:1px solid #fdba74;";
+    abstractStyle = "background:#fff7ed; border-left:4px solid #ea580c;";
+  } else if (templateId === "Thesis") {
+    headerBanner = `<div style="font-size:10pt;font-weight:700;text-align:center;margin-bottom:20px;letter-spacing:0.1em;color:#334155;">A DISSERTATION SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENTS</div>`;
+    sectionHeaderStyle = "font-size:14pt; text-align:center; border-bottom:2px solid #0f172a; margin-top:28px;";
+  } else if (templateId === "TechReport") {
+    headerBanner = `<div style="background:#0f172a;color:#f8fafc;padding:8px 12px;font-size:9pt;font-weight:700;border-radius:4px;margin-bottom:16px;">TECHNICAL REPORT TR-2026-CS-084 • ADYAPAN AI LABS</div>`;
+    sectionHeaderStyle = "color:#0f172a; border-left:4px solid #38bdf8; padding-left:8px; border-bottom:none;";
+  }
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -67,7 +96,7 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
   body {
     font-family: ${meta.fontFamily};
     font-size: ${meta.fontSize};
-    line-height: 1.5;
+    line-height: ${templateId === "Thesis" ? "1.6" : "1.5"};
     color: #111827;
     margin: 0;
     padding: 20px;
@@ -105,15 +134,13 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
     margin-bottom: 12px;
   }
   .abstract-box {
-    background: ${meta.category === "Journal" ? "transparent" : "#f9fafb"};
-    border: ${meta.category === "Journal" ? "none" : "1px solid #e5e7eb"};
-    border-left: ${meta.category === "Journal" ? "3px solid #2563eb" : "1px solid #e5e7eb"};
+    ${abstractStyle}
     padding: 12px 16px;
     margin: 0 auto 20px auto;
     font-size: 9.5pt;
     font-style: italic;
     border-radius: 6px;
-    max-width: 92%;
+    max-width: 96%;
   }
   .abstract-title {
     font-weight: 800;
@@ -143,14 +170,10 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
   }
   h2 {
     font-size: 11pt;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid #cbd5e1;
     padding-bottom: 4px;
     margin-top: 16px;
     margin-bottom: 8px;
-    color: #0f172a;
+    ${sectionHeaderStyle}
   }
   h3 {
     font-size: 10pt;
@@ -193,6 +216,7 @@ export function renderPaperHTMLByTemplate(paper: GeneratedPaper, templateId: str
 </style>
 </head>
 <body>
+  ${headerBanner}
   <div class="paper-header">
     <div class="paper-meta-badge">${escapeHtml(meta.name)} • ${escapeHtml(paper.metadata?.citationStyle || "IEEE")} Style</div>
     <h1 class="paper-title">${escapeHtml(paper.title)}</h1>

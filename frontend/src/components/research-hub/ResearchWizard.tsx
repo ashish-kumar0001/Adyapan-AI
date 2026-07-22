@@ -575,8 +575,14 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
               </button>
             </div>
 
-            <button onClick={() => onFinish(generatedPaper)} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs">
-              Open in Split-Screen Workspace Editor
+            <button
+              onClick={() => onFinish({
+                ...(generatedPaper || {}),
+                metadata: { ...(generatedPaper?.metadata || {}), template }
+              })}
+              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-slate-950 text-xs shadow-lg shadow-amber-500/20"
+            >
+              Open in Split-Screen Workspace Editor ({template} Template)
             </button>
           </div>
         )}

@@ -6,7 +6,7 @@ import {
   FileText, Sparkles, Layers, Download, Save, Eye, Edit3,
   CheckCircle2, RefreshCw, MessageSquare, Send, X, ChevronRight,
   ChevronDown, ArrowLeft, Wand2, ShieldCheck, AlignLeft, Maximize2,
-  FileCode, FileDown, Plus, Trash2, Sliders, Code2, Play
+  FileCode, FileDown, Plus, Trash2, Sliders, Code2, Play, BookOpen
 } from "lucide-react";
 import { api } from "@/services/api";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ export function PaperEditorWorkspace({
   const [generatingVisual, setGeneratingVisual] = useState(false);
 
   const currentSection = paper?.sections?.find((s: any) => s.id === activeSectionId) || paper?.sections?.[0];
+  const templateId = paper?.metadata?.template || "IEEE";
 
   const updateSectionContent = (newContent: string) => {
     if (!currentSection) return;
@@ -94,7 +95,7 @@ export function PaperEditorWorkspace({
   const handleExport = async (format: "pdf" | "docx" | "latex" | "markdown") => {
     setExportingFormat(format);
     try {
-      const res = await api.post(`/research/export/${format}`, { paper, template: paper?.metadata?.template || "IEEE" }, { responseType: "blob" });
+      const res = await api.post(`/research/export/${format}`, { paper, template: templateId }, { responseType: "blob" });
       const blob = new Blob([res.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -133,6 +134,126 @@ export function PaperEditorWorkspace({
     }
   };
 
+  // Render template-specific layout components for Academic Preview
+  const renderTemplatePreview = () => {
+    const isTwoCol = ["IEEE", "IEEE-Journal", "ACM", "Elsevier", "Survey"].includes(templateId);
+
+    return (
+      <div className="max-w-5xl mx-auto p-8 rounded-xl bg-white text-slate-900 shadow-2xl border border-slate-200">
+        {/* Template Distinct Top Banner Header */}
+        {templateId === "ACM" && (
+          <div className="bg-sky-700 text-white font-sans text-[11px] font-bold px-3 py-1.5 rounded mb-4 uppercase tracking-widest flex justify-between">
+            <span>ACM Transactions on Computer Systems</span>
+            <span>Primary Article</span>
+          </div>
+        )}
+
+        {templateId === "Nature" && (
+          <div className="font-serif text-lg font-black text-red-800 border-b-2 border-red-800 pb-1 mb-4 uppercase tracking-wider">
+            NATURE RESEARCH ARTICLE
+          </div>
+        )}
+
+        {templateId === "IEEE-Journal" && (
+          <div className="font-serif text-[10px] font-bold text-center border-b border-slate-300 pb-1.5 mb-4 text-slate-500 uppercase tracking-widest">
+            IEEE TRANSACTIONS ON COMPUTATIONAL SCIENCE, VOL. 42, NO. 8
+          </div>
+        )}
+
+        {templateId === "Elsevier" && (
+          <div className="bg-amber-600 text-white font-sans text-[11px] font-bold px-3 py-1 mb-4 uppercase tracking-widest">
+            Elsevier ScienceDirect Publication
+          </div>
+        )}
+
+        {templateId === "Thesis" && (
+          <div className="text-[11px] font-bold text-center text-slate-500 tracking-widest uppercase mb-4">
+            A DISSERTATION SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENTS FOR THE DEGREE OF DOCTOR OF PHILOSOPHY
+          </div>
+        )}
+
+        {templateId === "TechReport" && (
+          <div className="bg-slate-900 text-slate-100 font-sans text-[11px] font-bold p-3 rounded mb-4 flex justify-between">
+            <span>TECHNICAL REPORT TR-2026-CS-084</span>
+            <span>ADYAPAN AI RESEARCH LABS</span>
+          </div>
+        )}
+
+        {/* Paper Title & Author Header */}
+        <div className="text-center pb-6 border-b border-slate-200 mb-6">
+          <div className="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase bg-slate-100 text-slate-600 rounded mb-2 border border-slate-200">
+            {templateId} Layout Format • {isTwoCol ? "2 Columns" : "Single Column"}
+          </div>
+          <h1 className={`font-extrabold text-slate-900 mb-2 leading-tight ${templateId === "Thesis" ? "text-3xl font-serif" : "text-2xl"}`}>
+            {paper?.title}
+          </h1>
+          <div className="text-xs text-slate-600 font-bold">
+            {paper?.authors?.join(", ") || "Dr. Alex Rivera, Ashish Kumar"}
+          </div>
+          <div className="text-[11px] text-slate-500 font-medium">Department of Computer Science & Engineering</div>
+        </div>
+
+        {/* Abstract Block */}
+        <div className={`mb-6 p-4 rounded text-xs leading-relaxed ${
+          templateId === "ACM" ? "bg-sky-50 border-l-4 border-sky-600 text-slate-800" :
+          templateId === "Nature" ? "bg-red-50 border-l-4 border-red-800 text-slate-900 font-serif text-sm" :
+          templateId === "Elsevier" ? "bg-amber-50 border-l-4 border-amber-600 text-slate-800" :
+          "bg-slate-50 border border-slate-200 border-l-4 border-amber-500 text-slate-700 italic"
+        }`}>
+          <div className="font-bold not-italic text-slate-900 uppercase tracking-wider mb-1">Abstract</div>
+          <div>{paper?.abstract}</div>
+          <div className="mt-2 not-italic text-[11px] font-semibold text-slate-600">
+            Keywords— {paper?.keywords?.join(", ") || "Research, Artificial Intelligence, Scientific Method"}
+          </div>
+        </div>
+
+        {/* ACM Taxonomy Callout */}
+        {templateId === "ACM" && (
+          <div className="mb-6 p-3 bg-slate-100 rounded text-[11px] font-sans text-slate-700 border border-slate-200">
+            <span className="font-bold text-sky-800">CCS Concepts:</span> • Computing methodologies → Artificial intelligence; • Computer systems organization → Architectures.
+          </div>
+        )}
+
+        {/* Paper Sections Grid (2 Columns vs 1 Column) */}
+        <div className={isTwoCol ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "space-y-6"}>
+          {(paper?.sections || []).filter((s: any) => s.id !== "references").map((s: any) => (
+            <div key={s.id} className="space-y-2">
+              <h2 className={`text-sm font-extrabold uppercase pb-1 border-b ${
+                templateId === "ACM" ? "text-sky-800 border-sky-600 font-sans" :
+                templateId === "Nature" ? "text-red-900 border-none font-serif text-base capitalize" :
+                templateId === "Thesis" ? "text-slate-900 border-b-2 border-slate-900 text-base text-center" :
+                templateId === "TechReport" ? "text-slate-900 border-l-4 border-sky-500 pl-2 border-b-0" :
+                "text-slate-900 border-slate-300"
+              }`}>
+                {templateId === "Thesis" ? `CHAPTER: ${s.title}` : s.title}
+              </h2>
+              <p className="text-xs text-slate-800 text-justify leading-relaxed whitespace-pre-wrap">
+                {s.content}
+              </p>
+            </div>
+          ))}
+
+          {/* References Section */}
+          <div className="space-y-2 pt-4">
+            <h2 className="text-sm font-extrabold uppercase pb-1 border-b border-slate-300 text-slate-900">
+              References
+            </h2>
+            <ol className="text-[11px] text-slate-700 space-y-1 list-decimal pl-4">
+              {(paper?.references || [
+                { title: "Multi-Agent Deep Reinforcement Learning at Scale", authors: ["Smith, J."], year: 2024 },
+                { title: "Quantum Computing Foundations for Machine Learning", authors: ["Johnson, A."], year: 2023 }
+              ]).map((r: any, idx: number) => (
+                <li key={idx}>
+                  [{idx + 1}] {r.authors?.join(", ") || "Author"}. "{r.title}." <em>{r.journal || "IEEE Transactions"}</em>, {r.year}.
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] rounded-2xl overflow-hidden border shadow-xl" style={{ background: c.bg, borderColor: c.isDark ? "rgba(245,158,11,0.2)" : c.border }}>
       {/* Top Action Bar */}
@@ -144,7 +265,7 @@ export function PaperEditorWorkspace({
           <div className="min-w-0">
             <h1 className="text-sm font-bold truncate" style={{ color: c.text }}>{paper?.title || "Research Paper Workspace"}</h1>
             <div className="flex items-center gap-2 text-[11px]" style={{ color: c.textMuted }}>
-              <span className="font-extrabold text-amber-400 uppercase tracking-wider">{paper?.metadata?.template || "IEEE"}</span>
+              <span className="font-extrabold text-amber-400 uppercase tracking-wider">{templateId}</span>
               <span>•</span>
               <span>{paper?.metadata?.wordCount || 3400} words</span>
               <span>•</span>
@@ -155,7 +276,7 @@ export function PaperEditorWorkspace({
 
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={onOpenTemplates} className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/25 hover:bg-amber-500/25">
-            <Layers size={14} /> Change Template
+            <Layers size={14} /> Change Template ({templateId})
           </button>
 
           <div className="h-4 w-[1px] bg-white/10" />
@@ -214,7 +335,7 @@ export function PaperEditorWorkspace({
                 Section Editor
               </button>
               <button onClick={() => setActiveTab("preview")} className={`px-3 py-1 rounded-md font-extrabold ${activeTab === "preview" ? "bg-amber-500 text-slate-950" : "text-gray-400 hover:text-white"}`}>
-                Academic Preview
+                Academic Preview ({templateId})
               </button>
               <button onClick={() => setActiveTab("visuals")} className={`px-3 py-1 rounded-md font-extrabold ${activeTab === "visuals" ? "bg-amber-500 text-slate-950" : "text-gray-400 hover:text-white"}`}>
                 Visual Content Studio
@@ -253,29 +374,7 @@ export function PaperEditorWorkspace({
               </div>
             )}
 
-            {activeTab === "preview" && (
-              <div className="max-w-4xl mx-auto p-8 rounded-xl bg-white text-slate-900 font-serif text-sm leading-relaxed shadow-xl border border-slate-200">
-                <div className="text-center pb-6 border-b border-slate-300">
-                  <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">{paper?.metadata?.template || "IEEE"} Template</div>
-                  <h1 className="text-2xl font-extrabold text-slate-900 mb-2">{paper?.title}</h1>
-                  <div className="text-xs text-slate-600 font-semibold">{paper?.authors?.join(", ") || "Author(s)"}</div>
-                </div>
-
-                <div className="my-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded text-xs italic text-slate-700">
-                  <div className="font-bold not-italic text-slate-900 uppercase tracking-wider mb-1">Abstract</div>
-                  {paper?.abstract}
-                </div>
-
-                <div className="space-y-6">
-                  {(paper?.sections || []).map((s: any) => (
-                    <div key={s.id}>
-                      <h2 className="text-base font-extrabold uppercase text-slate-900 border-b border-slate-200 pb-1 mb-2">{s.title}</h2>
-                      <p className="whitespace-pre-wrap text-slate-800 text-justify leading-relaxed">{s.content}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeTab === "preview" && renderTemplatePreview()}
 
             {activeTab === "visuals" && (
               <div className="max-w-4xl mx-auto space-y-6">
