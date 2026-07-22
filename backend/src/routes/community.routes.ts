@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { getUserPrismaFromRequest } from "../utils/prisma";
+import { prisma } from "../config/prisma";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
@@ -10,11 +10,10 @@ router.use(requireAuth);
 // Get follow stats for a user
 router.get("/stats/:userId", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { userId } = req.params;
-    const followers = await userPrisma.communityFollow.count({ where: { followingId: userId } });
-    const following = await userPrisma.communityFollow.count({ where: { followerId: userId } });
-    const isFollowing = await userPrisma.communityFollow.findUnique({
+    const followers = await prisma.communityFollow.count({ where: { followingId: userId } });
+    const following = await prisma.communityFollow.count({ where: { followerId: userId } });
+    const isFollowing = await prisma.communityFollow.findUnique({
       where: { followerId_followingId: { followerId: req.user.id, followingId: userId } },
     });
     res.json({ success: true, followers, following, isFollowing: !!isFollowing });
@@ -26,17 +25,16 @@ router.get("/stats/:userId", async (req: any, res) => {
 // Toggle follow
 router.post("/follow/:userId", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { userId } = req.params;
     if (userId === req.user.id) return res.status(400).json({ error: "Cannot follow yourself" });
-    const existing = await userPrisma.communityFollow.findUnique({
+    const existing = await prisma.communityFollow.findUnique({
       where: { followerId_followingId: { followerId: req.user.id, followingId: userId } },
     });
     if (existing) {
-      await userPrisma.communityFollow.delete({ where: { id: existing.id } });
+      await prisma.communityFollow.delete({ where: { id: existing.id } });
       res.json({ success: true, isFollowing: false });
     } else {
-      await userPrisma.communityFollow.create({
+      await prisma.communityFollow.create({
         data: { followerId: req.user.id, followingId: userId },
       });
       res.json({ success: true, isFollowing: true });
@@ -49,10 +47,9 @@ router.post("/follow/:userId", async (req: any, res) => {
 // Send message
 router.post("/messages", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { receiverId, content } = req.body;
     if (!receiverId || !content) return res.status(400).json({ error: "Receiver and content required" });
-    const message = await userPrisma.communityMessage.create({
+    const message = await prisma.communityMessage.create({
       data: { senderId: req.user.id, receiverId, content },
     });
     res.json({ success: true, message });
@@ -64,8 +61,7 @@ router.post("/messages", async (req: any, res) => {
 // Get conversations
 router.get("/messages", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    const messages = await userPrisma.communityMessage.findMany({
+    const messages = await prisma.communityMessage.findMany({
       where: { OR: [{ senderId: req.user.id }, { receiverId: req.user.id }] },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -79,8 +75,7 @@ router.get("/messages", async (req: any, res) => {
 // Mark messages as read
 router.put("/messages/read/:senderId", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    await userPrisma.communityMessage.updateMany({
+    await prisma.communityMessage.updateMany({
       where: { senderId: req.params.senderId, receiverId: req.user.id, read: false },
       data: { read: true },
     });
@@ -93,8 +88,7 @@ router.put("/messages/read/:senderId", async (req: any, res) => {
 // Get activity feed
 router.get("/activity", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    const activities = await userPrisma.communityActivity.findMany({
+    const activities = await prisma.communityActivity.findMany({
       where: { userId: req.user.id },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -108,8 +102,7 @@ router.get("/activity", async (req: any, res) => {
 // Get achievements
 router.get("/achievements", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    const achievements = await userPrisma.communityAchievement.findMany({
+    const achievements = await prisma.communityAchievement.findMany({
       where: { userId: req.user.id },
       orderBy: { unlockedAt: "desc" },
     });
@@ -122,8 +115,7 @@ router.get("/achievements", async (req: any, res) => {
 // Get projects
 router.get("/projects", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    const projects = await userPrisma.communityProject.findMany({
+    const projects = await prisma.communityProject.findMany({
       where: { userId: req.user.id },
       orderBy: { createdAt: "desc" },
     });
@@ -136,10 +128,9 @@ router.get("/projects", async (req: any, res) => {
 // Create project
 router.post("/projects", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { title, description, techStack, url } = req.body;
     if (!title || !description) return res.status(400).json({ error: "Title and description required" });
-    const project = await userPrisma.communityProject.create({
+    const project = await prisma.communityProject.create({
       data: {
         userId: req.user.id,
         title,
@@ -157,8 +148,7 @@ router.post("/projects", async (req: any, res) => {
 // AI Recommendations
 router.get("/recommendations", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
-    const profile = await userPrisma.profile.findUnique({ where: { userId: req.user.id } });
+    const profile = await prisma.profile.findUnique({ where: { userId: req.user.id } });
     const skills = (profile?.skills as string[]) || [];
     
     const result = await generateJSON(
@@ -189,7 +179,6 @@ Return JSON matching:
 // List community users (with search)
 router.get("/users", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { q, page = "1", limit = "20" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const where: any = {};
@@ -201,14 +190,14 @@ router.get("/users", async (req: any, res) => {
       ];
     }
     const [profiles, total] = await Promise.all([
-      userPrisma.profile.findMany({
+      prisma.profile.findMany({
         where,
         include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } },
         orderBy: { createdAt: "desc" },
         skip,
         take: Number(limit),
       }),
-      userPrisma.profile.count({ where }),
+      prisma.profile.count({ where }),
     ]);
     res.json({ success: true, users: profiles, total });
   } catch (error) {
@@ -219,20 +208,19 @@ router.get("/users", async (req: any, res) => {
 // Get another user's public profile
 router.get("/users/:userId", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { userId } = req.params;
-    const profile = await userPrisma.profile.findUnique({
+    const profile = await prisma.profile.findUnique({
       where: { userId },
       include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } },
     });
     if (!profile) return res.status(404).json({ error: "Profile not found" });
     const [followers, following, isFollowing, projects, activities, achievements] = await Promise.all([
-      userPrisma.communityFollow.count({ where: { followingId: userId } }),
-      userPrisma.communityFollow.count({ where: { followerId: userId } }),
-      userPrisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.user.id, followingId: userId } } }).then(Boolean),
-      userPrisma.communityProject.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
-      userPrisma.communityActivity.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
-      userPrisma.communityAchievement.findMany({ where: { userId }, orderBy: { unlockedAt: "desc" } }),
+      prisma.communityFollow.count({ where: { followingId: userId } }),
+      prisma.communityFollow.count({ where: { followerId: userId } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.user.id, followingId: userId } } }).then(Boolean),
+      prisma.communityProject.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
+      prisma.communityActivity.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
+      prisma.communityAchievement.findMany({ where: { userId }, orderBy: { unlockedAt: "desc" } }),
     ]);
     res.json({ success: true, profile, followers, following, isFollowing, projects, activities, achievements });
   } catch (error) {
@@ -243,9 +231,8 @@ router.get("/users/:userId", async (req: any, res) => {
 // Get conversations list
 router.get("/conversations", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const userId = req.user.id;
-    const rawMessages = await userPrisma.communityMessage.findMany({
+    const rawMessages = await prisma.communityMessage.findMany({
       where: { OR: [{ senderId: userId }, { receiverId: userId }] },
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -261,7 +248,7 @@ router.get("/conversations", async (req: any, res) => {
       }
     }
     const otherIds = [...convMap.keys()];
-    const otherProfiles = await userPrisma.profile.findMany({
+    const otherProfiles = await prisma.profile.findMany({
       where: { userId: { in: otherIds } },
       select: { userId: true, user: { select: { id: true, name: true } } },
     });
@@ -282,9 +269,8 @@ router.get("/conversations", async (req: any, res) => {
 // Get messages with a specific user
 router.get("/messages/:userId", async (req: any, res) => {
   try {
-    const userPrisma = await getUserPrismaFromRequest(req);
     const { userId } = req.params;
-    const messages = await userPrisma.communityMessage.findMany({
+    const messages = await prisma.communityMessage.findMany({
       where: {
         OR: [
           { senderId: req.user.id, receiverId: userId },
@@ -294,7 +280,7 @@ router.get("/messages/:userId", async (req: any, res) => {
       orderBy: { createdAt: "asc" },
       take: 100,
     });
-    await userPrisma.communityMessage.updateMany({
+    await prisma.communityMessage.updateMany({
       where: { senderId: userId, receiverId: req.user.id, read: false },
       data: { read: true },
     });

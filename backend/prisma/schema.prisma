@@ -305,5 +305,71 @@ model AIResearchLog {
   @@map("ai_research_logs")
 }
 
+model CommunityFollow {
+  id          String   @id @default(cuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([followerId])
+  @@index([followingId])
+  @@unique([followerId, followingId])
+  @@map("community_follows")
+}
+
+model CommunityMessage {
+  id         String   @id @default(cuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("community_messages")
+}
+
+model CommunityActivity {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  detail    String   @default("")
+  xp        Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("community_activities")
+}
+
+model CommunityAchievement {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  description String
+  icon        String   @default("trophy")
+  xp          Int      @default(0)
+  unlockedAt  DateTime @default(now()) @map("unlocked_at")
+
+  @@index([userId])
+  @@map("community_achievements")
+}
+
+model CommunityProject {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  description String
+  techStack   String[]
+  url         String?
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("community_projects")
+}
+
 
 
