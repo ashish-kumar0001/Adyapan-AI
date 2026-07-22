@@ -592,3 +592,60 @@ Output JSON:
     }
   );
 }
+
+// ============================================================================
+// AI: TEXT ENHANCEMENT TOOLS
+// ============================================================================
+
+export async function enhanceResearchText(
+  text: string,
+  mode: "grammar" | "academic_tone" | "plagiarism_reduction" | "expand" | "shorten" | "humanize" | "rewrite"
+): Promise<{ enhancedText: string; mode: string }> {
+  if (!text || text.trim().length === 0) {
+    return { enhancedText: text, mode };
+  }
+
+  let promptGoal = "";
+  switch (mode) {
+    case "grammar":
+      promptGoal = "Fix all grammar, spelling, punctuation, and typographical errors while preserving original academic meaning.";
+      break;
+    case "academic_tone":
+      promptGoal = "Elevate to formal, objective, high-impact scientific academic prose. Use precise domain terminology and scholarly language.";
+      break;
+    case "plagiarism_reduction":
+      promptGoal = "Paraphrase thoroughly with fresh sentence structures, varied vocabulary, and original phrasing to minimize similarity index while preserving exact technical concepts.";
+      break;
+    case "expand":
+      promptGoal = "Expand significantly by adding deeper technical explanations, contextual analysis, methodological nuances, and illustrative examples.";
+      break;
+    case "shorten":
+      promptGoal = "Concise and condense drastically while preserving core research contributions, methodology, and key quantitative findings.";
+      break;
+    case "humanize":
+      promptGoal = "Rewrite to sound naturally authored by an experienced human academic researcher, eliminating repetitive AI patterns and formulaic transitions.";
+      break;
+    default:
+      promptGoal = "Rewrite for maximum clarity, logical flow, and academic impact.";
+      break;
+  }
+
+  const prompt = `You are a Senior Peer Reviewer and Science Editor for IEEE/Nature.
+Task: ${promptGoal}
+
+Original Text:
+"""
+${text}
+"""
+
+Return ONLY the refined text without meta commentary.`;
+
+  try {
+    const enhancedText = await generateText(SECTION_SYSTEM, prompt, { model: MODELS.POWERFUL });
+    return { enhancedText, mode };
+  } catch (err: any) {
+    console.warn("[EnhanceResearchText] Failed, returning original text:", err.message);
+    return { enhancedText: text, mode };
+  }
+}
+

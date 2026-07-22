@@ -221,4 +221,89 @@ model CareerDashboardSnapshot {
   @@map("career_dashboard_snapshots")
 }
 
+model ResearchPaper {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  title         String
+  domain        String   @default("General Science")
+  abstract      String   @db.Text
+  keywords      String[] @default([])
+  contentJson   Json     @map("content_json")
+  status        String   @default("DRAFT")
+  template      String   @default("IEEE")
+  citationStyle String   @default("IEEE") @map("citation_style")
+  wordCount     Int      @default(0) @map("word_count")
+  pageCount     Int      @default(1) @map("page_count")
+  readingTime   Int      @default(1) @map("reading_time")
+  isFavorite    Boolean  @default(false) @map("is_favorite")
+  authors       Json     @default("[]")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("research_papers")
+}
+
+model PaperDraft {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  domain      String   @default("Computer Science")
+  currentStep Int      @default(1) @map("current_step")
+  configJson  Json     @map("config_json")
+  contentJson Json     @map("content_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([updatedAt])
+  @@map("paper_drafts")
+}
+
+model PaperExport {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  paperId     String?  @map("paper_id")
+  title       String
+  format      String   // pdf, docx, latex, markdown
+  template    String   @default("IEEE")
+  downloadUrl String?  @map("download_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("paper_exports")
+}
+
+model PaperUpload {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  filename      String
+  fileSize      Int      @map("file_size")
+  parsedText    String   @db.Text @map("parsed_text")
+  extractedMeta Json     @map("extracted_meta")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("paper_uploads")
+}
+
+model AIResearchLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  paperId    String?  @map("paper_id")
+  action     String   // generate_paper, generate_section, enhance, diagram, etc.
+  tokensUsed Int      @default(0) @map("tokens_used")
+  durationMs Int      @default(0) @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_research_logs")
+}
+
+
 

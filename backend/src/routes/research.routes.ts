@@ -1,52 +1,71 @@
 import { Router } from "express";
+import multer from "multer";
 import { requireAuth } from "../middleware/auth";
 import {
+  getDashboardStats,
+  listPapers,
+  listDrafts,
+  listTemplates,
+  getExportHistory,
   suggestTopics,
   fetchSources,
   generatePaperSSE,
   generatePaperSync,
   generateSectionHandler,
+  saveDraftHandler,
+  enhanceTextHandler,
+  generateVisualHandler,
+  uploadPDFHandler,
   chatWithAI,
   getPaper,
   exportPdf,
   exportDocx,
   exportLatex,
+  exportMarkdown,
   exportBibtex,
   checkPlagiarism,
   rephraseText,
 } from "../controllers/research.controller";
 
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+
 export const researchRouter = Router();
 
 researchRouter.use(requireAuth);
 
-// Topic suggestions
-researchRouter.post("/suggest-topics", suggestTopics);
+// Dashboard & Listings
+researchRouter.get("/dashboard", getDashboardStats);
+researchRouter.get("/papers", listPapers);
+researchRouter.get("/drafts", listDrafts);
+researchRouter.get("/templates", listTemplates);
+researchRouter.get("/export-history", getExportHistory);
 
-// Source fetching
+// Topics & Literature Search
+researchRouter.post("/suggest-topics", suggestTopics);
 researchRouter.post("/fetch-sources", fetchSources);
 
-// Paper generation (SSE streaming with real-time progress)
+// Paper & Section Generation
 researchRouter.post("/generate-paper", generatePaperSSE);
-
-// Paper generation (non-streaming fallback)
 researchRouter.post("/generate-paper-sync", generatePaperSync);
-
-// Individual section generation
 researchRouter.post("/generate-section", generateSectionHandler);
+researchRouter.post("/draft/save", saveDraftHandler);
 
-// AI chat
+// AI Tools & Visual Content
+researchRouter.post("/enhance", enhanceTextHandler);
+researchRouter.post("/generate-visual", generateVisualHandler);
+researchRouter.post("/upload-pdf", upload.single("file"), uploadPDFHandler);
 researchRouter.post("/chat", chatWithAI);
 
 // Retrieve stored paper
 researchRouter.get("/paper/:id", getPaper);
 
-// Export endpoints
+// Exports
 researchRouter.post("/export/pdf", exportPdf);
 researchRouter.post("/export/docx", exportDocx);
 researchRouter.post("/export/latex", exportLatex);
+researchRouter.post("/export/markdown", exportMarkdown);
 researchRouter.post("/export/bibtex", exportBibtex);
 
-// Legacy plagiarism + rephrase
+// Legacy
 researchRouter.post("/check-plagiarism", checkPlagiarism);
 researchRouter.post("/rephrase", rephraseText);
