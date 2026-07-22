@@ -187,20 +187,24 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
   const [currentQuestion, setCurrentQuestion] = useState<TechnicalQuestionData | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(saved);
-  }, []);
+    if (propTheme) {
+      setTheme(propTheme);
+    } else {
+      const saved = localStorage.getItem("adyapan-theme") || "dark";
+      setTheme(saved);
+    }
+  }, [propTheme]);
 
   const isDark = theme === "dark";
   const c = useMemo(() => ({
-    bg: isDark ? "#080710" : "#f0f4ff",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-    border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-    borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    bg: isDark ? "#080710" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
+    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
+    border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
+    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#cbd5e1",
     text: isDark ? "#ffffff" : "#0f172a",
-    textSec: isDark ? "rgba(255,255,255,0.65)" : "#475569",
-    textMuted: isDark ? "rgba(255,255,255,0.35)" : "#94a3b8",
+    textSec: isDark ? "rgba(255,255,255,0.65)" : "#334155",
+    textMuted: isDark ? "rgba(255,255,255,0.35)" : "#64748b",
     primary: "#06b6d4",
     primaryDark: "#0891b2",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
@@ -211,8 +215,14 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
     purple: "#8b5cf6",
     cyan: "#06b6d4",
     blue: "#3b82f6",
-    greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
-    amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)",
+    greenBg: isDark ? "rgba(16,185,129,0.1)" : "#ecfdf5",
+    amberBg: isDark ? "rgba(245,158,11,0.07)" : "#fffbeb",
+    candidateBubble: isDark ? "rgba(59,130,246,0.12)" : "#eff6ff",
+    candidateBorder: isDark ? "rgba(59,130,246,0.2)" : "#bfdbfe",
+    candidateText: isDark ? "#ffffff" : "#1e40af",
+    interviewerBubble: isDark ? "rgba(6,182,212,0.1)" : "#ecfeff",
+    interviewerBorder: isDark ? "rgba(6,182,212,0.15)" : "#a5f3fc",
+    interviewerText: isDark ? "#ffffff" : "#0e7490",
   }), [isDark]);
 
   const handleStart = useCallback(async (startConfig: TechnicalConfig) => {
@@ -815,6 +825,18 @@ function ActiveInterview({
     window.speechSynthesis.speak(utterance);
   }, [voiceEnabled, config]);
 
+  // Speak initial question on load
+  const hasSpokenFirstRef = useRef(false);
+  useEffect(() => {
+    if (!hasSpokenFirstRef.current && currentQuestion?.question && voiceEnabled) {
+      hasSpokenFirstRef.current = true;
+      const timer = setTimeout(() => {
+        speak(currentQuestion.question);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion?.question, voiceEnabled, speak]);
+
   const toggleMic = useCallback(async () => {
     if (micEnabled) {
       setMicEnabled(false);
@@ -933,7 +955,7 @@ function ActiveInterview({
   return (
     <div className="flex flex-col overflow-hidden" style={{ fontFamily: "'Outfit', sans-serif", background: c.bg, minHeight: "100vh" }}>
       {/* Top Bar */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 h-14 border-b" style={{ background: isDark ? "rgba(8,7,16,0.95)" : "rgba(240,244,255,0.95)", borderBottomColor: c.border, backdropFilter: "blur(20px)" }}>
+      <header className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 h-14 border-b" style={{ background: isDark ? "rgba(8,7,16,0.95)" : "rgba(255,255,255,0.95)", borderBottomColor: c.border, backdropFilter: "blur(20px)" }}>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <motion.div className="w-2.5 h-2.5 rounded-full" style={{ background: c.green }} animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
@@ -947,13 +969,30 @@ function ActiveInterview({
             {config.company && <><span style={{ color: c.textMuted }}>@</span><span className="text-sm font-medium" style={{ color: c.cyan }}>{config.company}</span></>}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-sm font-bold" style={{ background: isTimeCritical ? "rgba(239,68,68,0.15)" : isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", color: isTimeCritical ? c.red : c.text, border: `1px solid ${isTimeCritical ? "rgba(239,68,68,0.3)" : c.border}` }}>
             <Clock className="w-3.5 h-3.5" /> {formatTime(timeRemaining)}
           </div>
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm" style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", color: c.textSec, border: `1px solid ${c.border}` }}>
             <MessageSquare className="w-3.5 h-3.5" /> Q {questionNumber}/{totalQuestions}
           </div>
+          <button
+            onClick={() => {
+              if (!showCoding && !code) {
+                setCode(currentQuestion?.codingProblem?.starterCode || DEFAULT_CODE[config.codingLanguage]);
+              }
+              setShowCoding(v => !v);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            style={{
+              background: showCoding ? "rgba(139,92,246,0.2)" : isDark ? "rgba(255,255,255,0.06)" : "#f1f5f9",
+              color: showCoding ? c.purple : c.textSec,
+              border: `1px solid ${showCoding ? "rgba(139,92,246,0.4)" : c.border}`,
+            }}
+          >
+            <Terminal className="w-3.5 h-3.5" style={{ color: c.purple }} />
+            <span className="hidden sm:inline">{showCoding ? "Close Editor" : "Code Editor"}</span>
+          </button>
           <button onClick={() => setVoiceEnabled(v => !v)} className="p-2 rounded-lg transition-colors" style={{ background: voiceEnabled ? "rgba(6,182,212,0.15)" : "transparent", color: voiceEnabled ? c.cyan : c.textMuted }}>
             {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
@@ -966,7 +1005,7 @@ function ActiveInterview({
       {/* Main Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel: Conversation */}
-        <div className={`flex-1 flex flex-col min-w-0 ${showCoding && currentQuestion?.isCodingChallenge ? "max-w-[50%]" : ""}`}>
+        <div className={`flex-1 flex flex-col min-w-0 ${showCoding ? "max-w-[50%]" : ""}`}>
           {/* Current Question */}
           <div className="flex-shrink-0 px-4 md:px-8 pt-6 pb-4">
             <div className="flex items-start gap-4">
@@ -1013,7 +1052,7 @@ function ActiveInterview({
                         </div>
                       )}
                       <div>
-                        <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed" style={{ background: msg.role === "candidate" ? "rgba(59,130,246,0.12)" : "rgba(6,182,212,0.1)", color: c.text, border: `1px solid ${msg.role === "candidate" ? "rgba(59,130,246,0.2)" : "rgba(6,182,212,0.15)"}`, borderTopRightRadius: msg.role === "candidate" ? "6px" : undefined, borderTopLeftRadius: msg.role === "interviewer" ? "6px" : undefined }}>
+                        <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed" style={{ background: msg.role === "candidate" ? c.candidateBubble : c.interviewerBubble, color: msg.role === "candidate" ? c.candidateText : c.interviewerText, border: `1px solid ${msg.role === "candidate" ? c.candidateBorder : c.interviewerBorder}`, borderTopRightRadius: msg.role === "candidate" ? "6px" : undefined, borderTopLeftRadius: msg.role === "interviewer" ? "6px" : undefined }}>
                           {msg.content}
                         </div>
                         <div className={`flex items-center gap-2 mt-1 ${msg.role === "candidate" ? "justify-end" : ""}`}>
@@ -1071,14 +1110,18 @@ function ActiveInterview({
         </div>
 
         {/* Right Panel: Coding (when active) */}
-        {showCoding && currentQuestion?.isCodingChallenge && currentQuestion?.codingProblem && (
-          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: "50%", opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="border-l flex flex-col" style={{ borderColor: c.border, background: isDark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.5)" }}>
+        {showCoding && (
+          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: "50%", opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="border-l flex flex-col" style={{ borderColor: c.border, background: isDark ? "rgba(0,0,0,0.3)" : "#ffffff" }}>
             {/* Problem Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-2">
                 <Terminal size={14} style={{ color: c.purple }} />
-                <span className="text-xs font-bold" style={{ color: c.text }}>{currentQuestion.codingProblem.title}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: `${DIFFICULTY_OPTIONS.find(d => d.value === currentQuestion.difficulty)?.color}15`, color: DIFFICULTY_OPTIONS.find(d => d.value === currentQuestion.difficulty)?.color }}>{currentQuestion.difficulty}</span>
+                <span className="text-xs font-bold" style={{ color: c.text }}>
+                  {currentQuestion?.codingProblem?.title || `${TOPICS.find(t => t.id === config.topic)?.label || "Technical"} Code Workspace`}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: `${DIFFICULTY_OPTIONS.find(d => d.value === (currentQuestion?.difficulty || config.difficulty))?.color}15`, color: DIFFICULTY_OPTIONS.find(d => d.value === (currentQuestion?.difficulty || config.difficulty))?.color }}>
+                  {currentQuestion?.difficulty || config.difficulty}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <motion.button onClick={handleRunCode} disabled={isRunning} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold" style={{ background: "rgba(16,185,129,0.12)", color: c.green, border: "1px solid rgba(16,185,129,0.2)" }}>
@@ -1092,8 +1135,10 @@ function ActiveInterview({
 
             {/* Problem Description */}
             <div className="px-4 py-3 border-b max-h-32 overflow-y-auto" style={{ borderColor: c.border }}>
-              <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>{currentQuestion.codingProblem.description}</p>
-              {currentQuestion.codingProblem.examples.length > 0 && (
+              <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>
+                {currentQuestion?.codingProblem?.description || `Write and execute your ${config.codingLanguage} solution for the current technical question. Use the AI Review button to evaluate time/space complexity.`}
+              </p>
+              {currentQuestion?.codingProblem?.examples && currentQuestion.codingProblem.examples.length > 0 && (
                 <div className="mt-2 space-y-1">
                   {currentQuestion.codingProblem.examples.map((ex, i) => (
                     <div key={i} className="text-[10px] p-2 rounded-lg" style={{ background: c.surface, color: c.textMuted }}>
@@ -1109,7 +1154,7 @@ function ActiveInterview({
               <Editor
                 height="100%"
                 language={LANG_MAP[config.codingLanguage] || "javascript"}
-                value={code}
+                value={code || DEFAULT_CODE[config.codingLanguage]}
                 onChange={v => setCode(v || "")}
                 theme={isDark ? "vs-dark" : "light"}
                 options={{ minimap: { enabled: false }, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", padding: { top: 12 }, scrollBeyondLastLine: false }}

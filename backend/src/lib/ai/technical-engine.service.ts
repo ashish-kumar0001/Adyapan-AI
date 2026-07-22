@@ -222,9 +222,13 @@ ${shouldIncludeCoding ? `Generate a coding challenge for this question. Frequenc
 - Include 2-3 test cases
 - The coding challenge should test the topic: ${topic}` : "Do NOT generate coding challenges — this is a voice-only interview."}
 
+INTERVIEWER BEHAVIOR & INTERACTIVE EVALUATION:
+- If there is previous candidate response in conversation history, start the "question" field with 1-2 brief conversational sentences evaluating their answer (e.g., acknowledging what was correct, pointing out missing trade-offs, or highlighting key strengths), then seamlessly transition to the next question or follow-up probe.
+- Make the interview feel dynamic, interactive, and responsive to what the candidate actually said rather than blindly moving forward.
+
 Return the question as JSON with this exact structure:
 {
-  "question": "The interview question text",
+  "question": "Brief evaluation of previous answer (if applicable) + The next interview question text",
   "category": "specific category within ${topic}",
   "difficulty": "easy|medium|hard",
   "isCodingChallenge": ${shouldIncludeCoding ? "true or false based on frequency rule" : "false"},
@@ -237,11 +241,11 @@ Return the question as JSON with this exact structure:
 
   const userPrompt = `Question ${questionNumber} of ${totalQuestions} | Topic: ${topic} | Difficulty: ${dynamicDifficulty}
 
-${conversationHistory ? `Previous conversation:\n${conversationHistory}` : "This is the first question."}
+${conversationHistory ? `Previous conversation history:\n${conversationHistory}` : "This is the first question."}
 
 ${resumeSection}
 
-Generate the next technical interview question.`;
+${conversationHistory ? "Evaluate the candidate's latest answer in history, then ask the next question or follow-up." : "Generate the first technical interview question."}`;
 
   try {
     const result = await generateJSON<TechnicalQuestion>(

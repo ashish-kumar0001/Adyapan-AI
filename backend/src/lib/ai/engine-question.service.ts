@@ -237,7 +237,7 @@ ${companyFocus}
 DYNAMIC DIFFICULTY: ${dynamicDifficulty}
 ${difficultyInstructions}
 ${resumeSection}
-QUESTION GENERATION RULES:
+QUESTION GENERATION & INTERACTIVE EVALUATION RULES:
 1. Generate exactly ONE question appropriate for question ${questionNumber} of ${totalQuestions}
 2. ${isEarlyStage ? "Start with foundational/ice-breaker questions to assess baseline." : ""}
 3. ${isLateStage ? "This is near the end — ask a capstone question that tests holistic understanding." : ""}
@@ -247,12 +247,13 @@ QUESTION GENERATION RULES:
 7. ${config.company ? `Include company-specific elements for ${config.company}` : ""}
 8. Vary question types: scenario-based, hypothetical, knowledge-check, problem-solving, reflection
 9. Each question should be natural and conversational
+10. IMPORTANT: If there is previous candidate response in conversation history, begin the "question" string with 1-2 brief, encouraging conversational sentences evaluating their answer (what they got right, missing points, or key takeaway), before seamlessly moving to the next question.
 
 ${config.customInstructions ? `Additional Instructions: ${config.customInstructions}` : ""}
 
 Return the question as JSON with this exact structure:
 {
-  "question": "The interview question text",
+  "question": "Brief evaluation of previous answer (if applicable) + The next interview question text",
   "category": "question category",
   "difficulty": "easy|medium|hard|expert",
   "expectedTopics": ["topic1", "topic2"],
@@ -263,9 +264,9 @@ Return the question as JSON with this exact structure:
 
   const userPrompt = `Question ${questionNumber} of ${totalQuestions} | Type: ${config.type} | Role: ${config.role} | Difficulty: ${dynamicDifficulty}
 
-${conversationHistory ? `Previous conversation:\n${conversationHistory}` : "This is the first question of the interview."}
+${conversationHistory ? `Previous conversation history:\n${conversationHistory}` : "This is the first question of the interview."}
 
-Generate the next interview question.`;
+${conversationHistory ? "First evaluate the candidate's last response, then present the next interview question." : "Generate the first interview question."}`;
 
   try {
     const result = await generateJSON<EngineQuestion>(
