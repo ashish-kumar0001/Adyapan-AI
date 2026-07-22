@@ -10,7 +10,6 @@ import { ResearchDashboard } from "./ResearchDashboard";
 import { ResearchWizard } from "./ResearchWizard";
 import { PaperEditorWorkspace } from "./PaperEditorWorkspace";
 import { TemplateGalleryModal } from "./TemplateGalleryModal";
-import { PlagiarismCheckerView } from "./PlagiarismCheckerView";
 
 interface ResearchHubViewProps {
   setView: (v: string) => void;
@@ -18,7 +17,7 @@ interface ResearchHubViewProps {
   theme?: string;
 }
 
-type ViewState = "dashboard" | "wizard" | "workspace" | "plagiarism";
+type ViewState = "dashboard" | "wizard" | "workspace";
 
 export function ResearchHubView({ setView, activeModule, theme: propTheme }: ResearchHubViewProps) {
   const currentTheme = useTheme();
@@ -107,16 +106,6 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
           >
             9-Step Paper Wizard
           </button>
-          <button
-            onClick={() => setViewState("plagiarism")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-              viewState === "plagiarism"
-                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
-          >
-            Plagiarism Checker
-          </button>
         </div>
 
         <button
@@ -176,12 +165,6 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
               onOpenTemplates={() => setIsTemplateModalOpen(true)}
               c={c}
             />
-          </motion.div>
-        )}
-
-        {viewState === "plagiarism" && (
-          <motion.div key="plagiarism" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <PlagiarismCheckerView setView={setView} activeModule={activeModule} theme={propTheme} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -11,6 +11,10 @@ import { api } from "@/services/api";
 import { toast } from "sonner";
 import { ACADEMIC_TEMPLATES_LIST } from "./TemplateGalleryModal";
 
+function extractErrorMessage(err: any, fallback: string): string {
+  return err?.response?.data?.message || err?.response?.data?.error || err?.message || fallback;
+}
+
 interface ResearchWizardProps {
   onCancel: () => void;
   onFinish: (paper: any) => void;
@@ -89,8 +93,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         setSearchedSources(res.data.sources);
         toast.success(`Found ${res.data.sources.length} scholarly sources!`);
       }
-    } catch {
-      toast.error("Failed to fetch literature");
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, "Failed to fetch literature"));
     } finally {
       setSearchingSources(false);
     }
@@ -107,12 +111,17 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         setUploadedPDFs(prev => [...prev, { filename: file.name, meta: res.data.parsed }]);
         toast.success(`Uploaded and parsed ${file.name}`);
       }
-    } catch {
-      toast.error("PDF upload failed");
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, "PDF upload failed"));
     }
   };
 
   const handleStartGeneration = async () => {
+    if (!title.trim()) {
+      toast.error("Please enter a research paper title before generating.");
+      setCurrentStep(1);
+      return;
+    }
     setIsGenerating(true);
     setCurrentStep(5);
     setGeneratingProgress(10);
@@ -144,7 +153,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         setTimeout(() => setCurrentStep(6), 800);
       }
     } catch (err: any) {
-      toast.error(err.message || "Generation failed");
+      toast.error(extractErrorMessage(err, "Generation failed"));
+      setCurrentStep(4);
     } finally {
       setIsGenerating(false);
     }
@@ -161,8 +171,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
       a.download = `${title.replace(/[^a-zA-Z0-9]/g, "-").slice(0, 40)}.${ext}`;
       a.click();
       toast.success(`Exported as ${format.toUpperCase()}!`);
-    } catch {
-      toast.error(`Export to ${format} failed`);
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, `Export to ${format} failed`));
     }
   };
 
@@ -261,7 +271,13 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="flex justify-between pt-4">
               <button onClick={onCancel} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Cancel</button>
-              <button onClick={() => setCurrentStep(2)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
+              <button onClick={() => {
+                if (!title.trim()) {
+                  toast.error("Please enter a research paper title.");
+                  return;
+                }
+                setCurrentStep(2);
+              }} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Config <ChevronRight size={14} />
               </button>
             </div>

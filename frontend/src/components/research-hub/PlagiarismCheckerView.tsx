@@ -19,6 +19,10 @@ import { useTheme } from "@/hooks/useTheme";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
+function extractErrorMessage(err: any, fallback: string): string {
+  return err?.response?.data?.message || err?.response?.data?.error || err?.message || fallback;
+}
+
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
@@ -263,7 +267,14 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
         }),
       });
 
-      if (!res.ok) throw new Error("Analysis request failed");
+      if (!res.ok) {
+        let errorMsg = "Analysis request failed";
+        try {
+          const errorBody = await res.clone().json();
+          errorMsg = errorBody.message || errorBody.error || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
+      }
 
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response stream");
@@ -332,7 +343,7 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
       }
     } catch (err: any) {
       addLog(`Error: ${err.message || "Analysis failed"}`);
-      toast.error("Failed to analyze document. Please try again.");
+      toast.error(extractErrorMessage(err, "Failed to analyze document. Please try again."));
       setTimeout(() => setStep("upload"), 2000);
     } finally {
       setAnalyzing(false);
@@ -364,8 +375,8 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
       toast.success("Text humanized successfully!");
       setReport(null);
       setStep("upload");
-    } catch {
-      toast.error("Humanization failed. Please try again.");
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, "Humanization failed. Please try again."));
     } finally {
       setHumanizing(false);
     }
@@ -388,8 +399,8 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
       const after = documentText.slice(section.endIndex);
       setDocumentText(before + rewritten + after);
       toast.success("Section rewritten!");
-    } catch {
-      toast.error("Failed to rewrite section.");
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, "Failed to rewrite section."));
     } finally {
       setRewritingSection(null);
     }

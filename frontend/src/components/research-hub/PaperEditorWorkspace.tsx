@@ -11,6 +11,10 @@ import {
 import { api } from "@/services/api";
 import { toast } from "sonner";
 
+function extractErrorMessage(err: any, fallback: string): string {
+  return err?.response?.data?.message || err?.response?.data?.error || err?.message || fallback;
+}
+
 interface PaperEditorWorkspaceProps {
   paper: any;
   onBack: () => void;
@@ -67,7 +71,7 @@ export function PaperEditorWorkspace({
         toast.success(`Enhanced with ${mode.replace("_", " ")} mode!`);
       }
     } catch (err: any) {
-      toast.error(err.message || "Enhancement failed");
+      toast.error(extractErrorMessage(err, "Enhancement failed"));
     } finally {
       setEnhancing(false);
     }
@@ -86,7 +90,7 @@ export function PaperEditorWorkspace({
         toast.success("Generated visual content!");
       }
     } catch (err: any) {
-      toast.error("Visual generation failed");
+      toast.error(extractErrorMessage(err, "Visual generation failed"));
     } finally {
       setGeneratingVisual(false);
     }
@@ -105,7 +109,7 @@ export function PaperEditorWorkspace({
       a.click();
       toast.success(`Exported as ${format.toUpperCase()}!`);
     } catch (err: any) {
-      toast.error(`Export to ${format} failed`);
+      toast.error(extractErrorMessage(err, `Export to ${format} failed`));
     } finally {
       setExportingFormat(null);
     }
@@ -127,8 +131,8 @@ export function PaperEditorWorkspace({
       if (res.data?.success && res.data?.reply) {
         setChatMessages(prev => [...prev, { role: "assistant", text: res.data.reply }]);
       }
-    } catch {
-      setChatMessages(prev => [...prev, { role: "assistant", text: "Sorry, I had trouble processing your query." }]);
+    } catch (err: any) {
+      setChatMessages(prev => [...prev, { role: "assistant", text: extractErrorMessage(err, "Sorry, I had trouble processing your query.") }]);
     } finally {
       setChatLoading(false);
     }
