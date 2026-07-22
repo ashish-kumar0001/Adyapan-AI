@@ -322,6 +322,7 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
               questionNumber={questionNumber}
               setQuestionNumber={setQuestionNumber}
               totalQuestions={totalQuestions}
+              setTotalQuestions={setTotalQuestions}
               currentQuestion={currentQuestion}
               setCurrentQuestion={setCurrentQuestion}
               onComplete={handleComplete}
@@ -707,7 +708,7 @@ function ActiveInterview({
   questionNumber: number;
   setQuestionNumber: (n: number) => void;
   totalQuestions: number;
-  setTotalQuestions?: (n: number) => void;
+  setTotalQuestions: (n: number) => void;
   currentQuestion: TechnicalQuestionData | null;
   setCurrentQuestion: (q: TechnicalQuestionData | null) => void;
   onComplete: (sessionId: string) => void;

@@ -102,7 +102,7 @@ export default function TechnicalInterviewPage() {
         setSidebarOpen={setSidebarOpen}
       />
       <main className="dash-main relative z-10">
-        <TechnicalInterviewView theme={theme} />
+        <TechnicalInterviewView />
       </main>
     </div>
   );
