@@ -113,16 +113,15 @@ export default function EngineView({ theme }: EngineViewProps) {
 
   return (
     <div
-      className="relative overflow-hidden"
+      className="relative"
       style={{
-        minHeight: "100vh",
         background: "var(--bg-dark)",
         color: "var(--text-primary)",
         fontFamily: "'Outfit', sans-serif",
       }}
     >
-      {/* Header */}
-      {screen !== "landing" && (
+      {/* Header — hidden during active interview (EngineInterview has its own) */}
+      {screen !== "landing" && screen !== "active" && (
         <div className="sticky top-0 z-50 border-b border-white/8 bg-[#080710]/90 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">

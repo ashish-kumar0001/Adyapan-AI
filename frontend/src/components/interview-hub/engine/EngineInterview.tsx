@@ -710,8 +710,8 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
 
   return (
     <div
-      className="fixed inset-0 flex flex-col overflow-hidden"
-      style={{ fontFamily: "'Outfit', sans-serif", background: c.bg }}
+      className="flex flex-col overflow-hidden"
+      style={{ fontFamily: "'Outfit', sans-serif", background: c.bg, minHeight: "calc(100vh - 70px - 2.5rem)" }}
     >
       {/* ════════════════ TOP BAR ════════════════ */}
       <motion.header
