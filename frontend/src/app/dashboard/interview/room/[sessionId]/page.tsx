@@ -311,7 +311,16 @@ export default function InterviewRoomPage() {
         if (final) setInput(prev => prev + " " + final);
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
+        const err = event.error;
+        if (err === "no-speech" || err === "aborted") return;
+        if (err === "network") {
+          // Chrome fires "network" errors randomly — auto-restart silently
+          setTimeout(() => {
+            try { recognition.start(); } catch {}
+          }, 1500);
+          return;
+        }
         setIsRecording(false);
         toast.error("Speech recognition error. Please type your answer.");
       };

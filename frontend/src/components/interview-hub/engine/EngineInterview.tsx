@@ -144,6 +144,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
   const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
   const [speechEnergy, setSpeechEnergy] = useState(0);
   const speechEnergyRef = useRef<NodeJS.Timeout | null>(null);
+  const networkRetryCount = useRef(0);
   const [inputText, setInputText] = useState("");
   const [micEnabled, setMicEnabled] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(config.aiVoiceEnabled);
@@ -256,6 +257,17 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
     };
     loadSession();
   }, [sessionId]);
+
+  // ── Speak the first question after session loads ──
+  useEffect(() => {
+    if (!sessionLoaded || !currentQuestionText) return;
+    // Small delay to let UI render and SpeechSynthesis voices load
+    const timer = setTimeout(() => {
+      speak(currentQuestionText);
+    }, 800);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionLoaded]);
 
   // ── Mic level monitoring ──
   useEffect(() => {
@@ -374,7 +386,10 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
         else interim += transcript;
       }
       setLiveTranscript(final || interim);
-      if (final) setInputText((prev) => prev + " " + final);
+      if (final) {
+        setInputText((prev) => prev + " " + final);
+        networkRetryCount.current = 0; // Speech is working — reset counter
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -386,7 +401,23 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
         toast.error("Microphone access denied. Please allow permissions.");
         setMicEnabled(false);
       } else if (err === "network") {
-        toast.error("Network error during speech recognition.");
+        // Chrome fires "network" errors randomly — auto-restart silently
+        networkRetryCount.current++;
+        if (networkRetryCount.current < 5) {
+          // Silently retry with increasing delay (1s, 2s, 3s, 4s)
+          const delay = Math.min(networkRetryCount.current * 1000, 4000);
+          setTimeout(() => {
+            if (isActiveRef.current && micEnabled) {
+              try { recognition.start(); } catch {}
+            }
+          }, delay);
+          return; // Don't show toast for recoverable network errors
+        }
+        // 5+ consecutive failures — give up and notify
+        toast.error("Speech recognition lost connection. Mic disabled.");
+        setMicEnabled(false);
+        setIsListening(false);
+        networkRetryCount.current = 0;
       } else {
         toast.error(`Speech error: ${err}`);
       }
@@ -394,11 +425,13 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
 
     recognition.onend = () => {
       if (isActiveRef.current && micEnabled) {
+        // Reset retry count when recognition ends normally (speech worked)
+        networkRetryCount.current = 0;
         setTimeout(() => {
           if (isActiveRef.current && micEnabled) {
             try { recognition.start(); } catch {}
           }
-        }, 100);
+        }, 300);
       }
     };
 
