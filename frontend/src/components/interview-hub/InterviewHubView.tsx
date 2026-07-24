@@ -149,9 +149,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
   }, []);
 
   useEffect(() => {
-    if (activeModule === "interview-hr") {
-      setConfig(p => ({ ...p, type: "behavioral" }));
-    } else if (activeModule === "interview-technical") {
+    if (activeModule === "interview-technical") {
       setConfig(p => ({ ...p, type: "technical" }));
     } else if (activeModule === "interview-mock") {
       setConfig(p => ({ ...p, type: "general" }));
@@ -174,8 +172,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     try {
       // For HR / Tech quick-start, we merge module info
       let type = config.type;
-      if (activeModule === "interview-hr") type = "behavioral";
-      else if (activeModule === "interview-technical") type = "technical";
+      if (activeModule === "interview-technical") type = "technical";
 
       const res = await api.post("/interview/start", {
         role: config.role,
@@ -635,7 +632,6 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                   <Flame size={12} className="animate-pulse" /> AI Interview Coach
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                  {activeModule === "interview-hr" && "AI HR Interview"}
                   {activeModule === "interview-technical" && "AI Technical Interview"}
                   {activeModule === "interview-mock" && "Mock Interview Simulator"}
                   {activeModule === "interview-hub" && "AI Interview Simulator"}
@@ -654,7 +650,6 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
             {activeModule === "interview-hub" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                  { title: "AI HR Interview", desc: "Behavioral questions, STAR method, leadership, and cultural fit assessment.", icon: <User size={24} className="text-amber-500" />, type: "behavioral" as const },
                   { title: "AI Technical Interview", desc: "Coding, system design, architecture, and deep technical discussions.", icon: <Code size={24} className="text-cyan-500" />, type: "technical" as const },
                   { title: "Mock Interview", desc: "Custom interview simulation with configurable role, company, and difficulty.", icon: <Briefcase size={24} className="text-emerald-500" />, type: "general" as const },
                 ].map((card) => (
@@ -686,7 +681,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                 className="w-full p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-all text-center"
               >
                 <Sparkles size={24} className="mx-auto mb-2 text-amber-500" />
-                <p className="text-sm font-bold">Start {activeModule === "interview-hr" ? "HR" : activeModule === "interview-technical" ? "Technical" : "Mock"} Interview</p>
+                <p className="text-sm font-bold">Start {activeModule === "interview-technical" ? "Technical" : "Mock"} Interview</p>
                 <p className="text-[10px] mt-1" style={{ color: c.textMuted }}>Customize your interview settings</p>
               </button>
             )}
@@ -745,7 +740,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
               </button>
               <div>
                 <h1 className="text-xl font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                  {config.type === "behavioral" ? "AI HR Interview" : config.type === "technical" ? "AI Technical Interview" : "Mock Interview"}
+                  {config.type === "technical" ? "AI Technical Interview" : "Mock Interview"}
                 </h1>
               </div>
             </div>

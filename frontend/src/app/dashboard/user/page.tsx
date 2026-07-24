@@ -233,7 +233,6 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "Cover Letter Generator", viewId: "cover-letter", category: "Resume Hub" },
   { label: "LinkedIn Optimizer", viewId: "linkedin-optimizer", category: "Resume Hub" },
   { label: "Career Roadmap", viewId: "career-roadmap", category: "Resume Hub" },
-  { label: "AI HR Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "AI Technical Interview", viewId: "interview-hub", category: "Interview Hub" },
   { label: "Mock Interviews", viewId: "interview-hub", category: "Interview Hub" },
   { label: "Interview Engine", viewId: "interview-engine", category: "Interview Hub" },
@@ -310,7 +309,7 @@ export const sidebarItems: SidebarItem[] = [
     id: "interview", label: "Interview Hub", icon: <Mic size={18} />,
     submenu: [
       { label: "Interview Engine", href: "/dashboard/interview/engine" },
-      { label: "AI HR Interview", href: "/dashboard/interview/hr" },       { label: "AI Technical Interview", href: "/dashboard/interview/technical" },
+      { label: "AI Technical Interview", href: "/dashboard/interview/technical" },
       { label: "Mock Interviews", href: "#" },
     ],
   },
@@ -533,7 +532,6 @@ export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, side
                       else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
                       else if (sub.label === "AI Chat Assistant") onViewTool("ady-chat");
                       else if (sub.label === "Interview Engine") onViewTool("interview-engine");
-                      else if (sub.label === "AI HR Interview") onViewTool("interview-hr");
                       else if (sub.label === "AI Technical Interview") onViewTool("interview-technical");
                       else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
                       else if (sub.label === "Research Paper AI") onViewTool("research-paper-ai");

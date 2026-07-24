@@ -99,9 +99,7 @@ const cardVariants = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  hr: "#f59e0b",
   "system-design": "#3b82f6",
-  behavioral: "#10b981",
   managerial: "#ef4444",
   "fresh-graduate": "#14b8a6",
   "campus-placement": "#f97316",
@@ -110,9 +108,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  hr: Users,
   "system-design": LayoutGrid,
-  behavioral: Briefcase,
   managerial: Crown,
   "fresh-graduate": GraduationCap,
   "campus-placement": School,
