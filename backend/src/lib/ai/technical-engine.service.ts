@@ -186,7 +186,8 @@ export async function generateTechnicalQuestion(config: {
   const isEarlyStage = questionNumber <= 2;
   const isLateStage = questionNumber >= totalQuestions - 2;
   const shouldIncludeCoding = mode === "coding" || mode === "voice+coding";
-  const codingFrequency = mode === "coding" ? "every question" : mode === "voice+coding" ? "every 2nd-3rd question" : "never";
+  // Deterministic coding challenge schedule: coding mode = always, voice+coding = every even question (2,4,6,...)
+  const isCodingQuestion = mode === "coding" || (mode === "voice+coding" && questionNumber % 2 === 0);
 
   const conversationHistory = history
     .filter((m) => m.role === "interviewer" || m.role === "candidate")
@@ -215,52 +216,84 @@ ${isEarlyStage ? "Start with foundational questions to assess baseline." : ""}
 ${isLateStage ? "Ask a capstone question that tests holistic understanding." : ""}
 ${shouldChallenge ? "The candidate is performing well — present a CHALLENGE question." : ""}
 
-CODING CHALLENGE RULES:
-${shouldIncludeCoding ? `Generate a coding challenge for this question. Frequency: ${codingFrequency}.
-- Include a clear problem statement with examples and constraints
-- Provide starter code in ${codingLanguage}
-- Include 2-3 test cases
-- The coding challenge should test the topic: ${topic}` : "Do NOT generate coding challenges — this is a voice-only interview."}
+CODING CHALLENGE INSTRUCTION:
+${isCodingQuestion
+  ? `THIS QUESTION MUST BE A CODING CHALLENGE. You MUST:
+1. Set "isCodingChallenge" to true
+2. Generate a complete coding problem in "codingProblem" with:
+   - title: A short descriptive title
+   - description: Clear problem statement (2-4 sentences)
+   - examples: 2-3 input/output examples with explanation
+   - constraints: 2-4 constraints (e.g., array size, value ranges)
+   - starterCode: Working starter code skeleton in ${codingLanguage} (function signature + comments)
+   - testCases: 2-3 test cases with input and expectedOutput
+3. The "question" field should introduce the coding problem to the candidate (e.g., "Here is your coding challenge: ...")
+The coding problem MUST test the topic: ${topic}
+The problem difficulty should match: ${dynamicDifficulty}
+DO NOT return null for codingProblem. This is REQUIRED.`
+  : mode === "voice"
+  ? `Do NOT generate coding challenges — this is a voice-only interview. Set "isCodingChallenge" to false and "codingProblem" to null.`
+  : `This question should be a conceptual/theoretical question (not a coding challenge). Set "isCodingChallenge" to false and "codingProblem" to null. The next question will be a coding challenge.`
+}
 
 INTERVIEWER BEHAVIOR & INTERACTIVE EVALUATION:
 - If there is previous candidate response in conversation history, start the "question" field with 1-2 brief conversational sentences evaluating their answer (e.g., acknowledging what was correct, pointing out missing trade-offs, or highlighting key strengths), then seamlessly transition to the next question or follow-up probe.
 - Make the interview feel dynamic, interactive, and responsive to what the candidate actually said rather than blindly moving forward.
 
-Return the question as JSON with this exact structure:
+Return the question as JSON with EXACTLY this structure (no extra fields, no markdown):
 {
-  "question": "Brief evaluation of previous answer (if applicable) + The next interview question text",
+  "question": "Brief evaluation of previous answer (if applicable) + The next interview question text (or intro to coding challenge)",
   "category": "specific category within ${topic}",
-  "difficulty": "easy|medium|hard",
-  "isCodingChallenge": ${shouldIncludeCoding ? "true or false based on frequency rule" : "false"},
-  "codingProblem": ${shouldIncludeCoding ? `{ "title": "...", "description": "...", "examples": [{ "input": "...", "output": "...", "explanation": "..." }], "constraints": ["..."], "starterCode": "...", "testCases": [{ "input": "...", "expectedOutput": "..." }] }` : "null"},
+  "difficulty": "${dynamicDifficulty}",
+  "isCodingChallenge": ${isCodingQuestion ? "true" : "false"},
+  "codingProblem": ${isCodingQuestion ? `{
+    "title": "Problem title here",
+    "description": "Full problem description here",
+    "examples": [
+      { "input": "example input", "output": "expected output", "explanation": "why" }
+    ],
+    "constraints": ["constraint 1", "constraint 2"],
+    "starterCode": "starter code in ${codingLanguage}",
+    "testCases": [
+      { "input": "test input", "expectedOutput": "test output" }
+    ]
+  }` : "null"},
   "expectedTopics": ["topic1", "topic2"],
   "followUpHint": "What to probe if answer is surface-level",
   "timeEstimate": "expected answer time",
   "tips": ["tip for evaluating this answer"]
 }`;
 
-  const userPrompt = `Question ${questionNumber} of ${totalQuestions} | Topic: ${topic} | Difficulty: ${dynamicDifficulty}
+  const userPrompt = `Question ${questionNumber} of ${totalQuestions} | Topic: ${topic} | Difficulty: ${dynamicDifficulty} | ${isCodingQuestion ? "CODING CHALLENGE REQUIRED" : "Conceptual Question"}
 
 ${conversationHistory ? `Previous conversation history:\n${conversationHistory}` : "This is the first question."}
 
 ${resumeSection}
 
-${conversationHistory ? "Evaluate the candidate's latest answer in history, then ask the next question or follow-up." : "Generate the first technical interview question."}`;
+${conversationHistory ? "Evaluate the candidate's latest answer in history, then ask the next question or follow-up." : "Generate the first technical interview question."}
+${isCodingQuestion ? `\nREMINDER: You MUST generate a complete coding problem with starter code in ${codingLanguage}. isCodingChallenge MUST be true. codingProblem MUST NOT be null.` : ""}`;
 
   try {
     const result = await generateJSON<TechnicalQuestion>(
       systemPrompt,
       userPrompt,
-      { model: MODELS.BALANCED, temperature: 0.8, maxTokens: 3000 },
+      { model: MODELS.BALANCED, temperature: 0.8, maxTokens: 4000 },
       FALLBACK_QUESTION
     );
-    console.log(`[TechnicalEngine] Generated Q${questionNumber} for ${topic} (${result.category})`);
+
+    // Post-process: if this was supposed to be a coding challenge but AI failed to set it, fix it
+    if (isCodingQuestion && !result.isCodingChallenge) {
+      result.isCodingChallenge = true;
+    }
+
+    console.log(`[TechnicalEngine] Generated Q${questionNumber} for ${topic} (${result.category}) | coding=${result.isCodingChallenge}`);
     return result;
   } catch (error) {
     console.error(`[TechnicalEngine] Question generation failed:`, error);
     return FALLBACK_QUESTION;
   }
 }
+
 
 // ─── Follow-up Question Generation ──────────────────────────────────────────
 

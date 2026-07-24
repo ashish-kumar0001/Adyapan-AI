@@ -45,6 +45,7 @@ interface EngineInterviewProps {
   config: EngineConfig;
   onComplete: (sessionId: string) => void;
   onEnd: () => void;
+  theme?: string;
 }
 
 type AIStatus = "listening" | "thinking" | "speaking" | "idle";
@@ -107,6 +108,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
   config,
   onComplete,
   onEnd,
+  theme: propTheme,
 }) => {
   const store = useEngineStore();
   const {
@@ -129,7 +131,8 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
     setConnectionStatus,
   } = store;
 
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
+  const isDark = theme === "dark";
   const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
   const [speechEnergy, setSpeechEnergy] = useState(0);
   const speechEnergyRef = useRef<NodeJS.Timeout | null>(null);
@@ -145,7 +148,6 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
 
-  const isDark = theme === "dark";
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -167,15 +169,6 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
 
   const tips = useMemo(() => getPhaseTips(config.interviewType), [config.interviewType]);
   const phase = getInterviewPhase(questionNumber, totalQuestions);
-
-  // ── Theme ──
-  useEffect(() => {
-    const saved = localStorage.getItem("adyapan-theme") as
-      | "dark"
-      | "light"
-      | null;
-    setTheme(saved || "dark");
-  }, []);
 
   useEffect(() => {
     setIsMounted(true);

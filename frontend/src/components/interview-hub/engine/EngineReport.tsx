@@ -114,15 +114,11 @@ export default function EngineReport({
   onRetry,
   onViewAnalytics,
   onNewInterview,
-}: EngineReportProps) {
-  const [theme, setTheme] = useState("dark");
+  theme: propTheme,
+}: EngineReportProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [openBreakdowns, setOpenBreakdowns] = useState<Set<number>>(new Set());
   const [showAllBreakdowns, setShowAllBreakdowns] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(saved);
-  }, []);
 
   const isDark = theme === "dark";
   const c = useMemo(

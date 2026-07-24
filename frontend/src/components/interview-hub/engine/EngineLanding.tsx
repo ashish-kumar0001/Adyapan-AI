@@ -80,8 +80,8 @@ const pageVariants = {
 const cardTap = { scale: 0.97 };
 const cardHover = { scale: 1.015, y: -2 };
 
-export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics }: EngineLandingProps) {
-  const [theme, setTheme] = useState("dark");
+export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics, theme: propTheme }: EngineLandingProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [step, setStep] = useState(0);
   const [stepDir, setStepDir] = useState(1);
   const [launching, setLaunching] = useState(false);
@@ -118,13 +118,6 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
   });
 
   const formValues = watch();
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("adyapan-theme") || "dark";
-      setTheme(saved);
-    }
-  }, []);
 
   const isDark = theme === "dark";
   const c = {

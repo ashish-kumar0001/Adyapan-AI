@@ -176,6 +176,7 @@ export default function EngineView({ theme }: EngineViewProps) {
               onStart={handleStart}
               onViewHistory={() => setScreen("analytics")}
               onViewAnalytics={() => setScreen("analytics")}
+              theme={theme}
             />
           </motion.div>
         )}
@@ -188,7 +189,7 @@ export default function EngineView({ theme }: EngineViewProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <EngineLoading config={config} onComplete={handleLoadingComplete} />
+            <EngineLoading config={config} onComplete={handleLoadingComplete} theme={theme} />
           </motion.div>
         )}
 
@@ -205,6 +206,7 @@ export default function EngineView({ theme }: EngineViewProps) {
               config={config}
               onComplete={handleInterviewComplete}
               onEnd={handleInterviewEnd}
+              theme={theme}
             />
           </motion.div>
         )}
@@ -226,6 +228,7 @@ export default function EngineView({ theme }: EngineViewProps) {
                 onRetry={handleReset}
                 onViewAnalytics={() => setScreen("analytics")}
                 onNewInterview={handleReset}
+                theme={theme}
               />
             ) : (
               <div className="max-w-5xl mx-auto px-4 py-20 text-center space-y-4">
@@ -238,6 +241,7 @@ export default function EngineView({ theme }: EngineViewProps) {
               <EngineTranscript
                 messages={messages}
                 sessionId={sessionId}
+                theme={theme}
                 config={{
                   interviewType: config.interviewType,
                   targetRole: config.targetRole,
@@ -259,6 +263,7 @@ export default function EngineView({ theme }: EngineViewProps) {
             <EngineAnalytics
               onBack={handleReset}
               onStartInterview={handleReset}
+              theme={theme}
             />
           </motion.div>
         )}

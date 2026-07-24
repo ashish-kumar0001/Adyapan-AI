@@ -154,27 +154,27 @@ export default function HRView({ theme }: HRViewProps) {
       <AnimatePresence mode="wait">
         {screen === "landing" && (
           <motion.div key="landing" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
-            <HRLanding onStart={handleStart} onViewHistory={() => setScreen("analytics")} onViewAnalytics={() => setScreen("analytics")} />
+            <HRLanding onStart={handleStart} onViewHistory={() => setScreen("analytics")} onViewAnalytics={() => setScreen("analytics")} theme={theme} />
           </motion.div>
         )}
         {screen === "loading" && config && (
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-            <HRLoading config={config} onComplete={handleLoadingComplete} />
+            <HRLoading config={config} onComplete={handleLoadingComplete} theme={theme} />
           </motion.div>
         )}
         {screen === "active" && sessionId && config && (
           <motion.div key="active" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4 }}>
-            <HRInterviewActive sessionId={sessionId} config={config} initialMessages={messages} onComplete={handleInterviewComplete} onEnd={handleInterviewEnd} />
+            <HRInterviewActive sessionId={sessionId} config={config} initialMessages={messages} onComplete={handleInterviewComplete} onEnd={handleInterviewEnd} theme={theme} />
           </motion.div>
         )}
         {screen === "report" && sessionId && evaluation && config && (
           <motion.div key="report" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <HRReport sessionId={sessionId} evaluation={evaluation} messages={messages} config={config} onRetry={handleReset} onViewAnalytics={() => setScreen("analytics")} />
+            <HRReport sessionId={sessionId} evaluation={evaluation} messages={messages} config={config} onRetry={handleReset} onViewAnalytics={() => setScreen("analytics")} theme={theme} />
           </motion.div>
         )}
         {screen === "analytics" && (
           <motion.div key="analytics" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
-            <HRAnalytics onBack={handleReset} onStartInterview={handleReset} />
+            <HRAnalytics onBack={handleReset} onStartInterview={handleReset} theme={theme} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -120,14 +120,8 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?
   custom: Zap,
 };
 
-export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnalyticsProps) {
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setTheme(localStorage.getItem("adyapan-theme") || "dark");
-    }
-  }, []);
+export default function EngineAnalytics({ onBack, onStartInterview, theme: propTheme }: EngineAnalyticsProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
 
   const isDark = theme === "dark";
 

@@ -29,7 +29,7 @@ type TechnicalTopic =
 
 type CodingLanguage = "javascript" | "python" | "java" | "cpp" | "typescript";
 type InterviewMode = "voice" | "coding" | "voice+coding";
-type ViewScreen = "landing" | "loading" | "active" | "report";
+type ViewScreen = "landing" | "loading" | "active" | "report" | "analytics";
 
 interface TechnicalConfig {
   topic: TechnicalTopic;
@@ -353,6 +353,7 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
               messages={messages}
               onRetry={handleReset}
               onNewInterview={handleReset}
+              onViewAnalytics={() => setScreen("analytics")}
               theme={theme}
               colors={c}
             />
@@ -943,13 +944,19 @@ function ActiveInterview({
     onEnd();
   }, [onEnd]);
 
-  // Initialize code when coding challenge appears
+  // Initialize code editor when a coding challenge appears
   useEffect(() => {
-    if (currentQuestion?.isCodingChallenge && currentQuestion?.codingProblem) {
-      setCode(currentQuestion.codingProblem.starterCode || DEFAULT_CODE[config.codingLanguage]);
+    if (currentQuestion?.isCodingChallenge) {
+      const starterCode = currentQuestion.codingProblem?.starterCode || DEFAULT_CODE[config.codingLanguage];
+      setCode(starterCode);
       setShowCoding(true);
+      setCodeOutput("");
+      setReviewResult(null);
+    } else if (currentQuestion && !currentQuestion.isCodingChallenge && code === "") {
+      setShowCoding(false);
     }
-  }, [currentQuestion, config.codingLanguage]);
+  }, [currentQuestion?.question, config.codingLanguage]);
+
 
   const completionPct = totalQuestions > 0 ? Math.min((questionNumber / totalQuestions) * 100, 100) : 0;
 
@@ -1228,13 +1235,14 @@ function ActiveInterview({
 
 // ─── Report View ────────────────────────────────────────────────────────────
 
-function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInterview, theme, colors: c }: {
+function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInterview, onViewAnalytics, theme, colors: c }: {
   sessionId: string;
   evaluation: TechnicalEvaluation | null;
   config: TechnicalConfig;
   messages: EngineMessage[];
   onRetry: () => void;
   onNewInterview: () => void;
+  onViewAnalytics: () => void;
   theme: string;
   colors: any;
 }) {
@@ -1422,31 +1430,99 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
             </div>
           </motion.div>
         )}
+      </div>
+    </div>
+  );
+}
 
-        {/* Recommended Topics */}
-        {(evaluation.recommendedTopics || []).length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="p-6 rounded-3xl border" style={{ background: c.cardBg, borderColor: c.border }}>
-            <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-4 h-4" style={{ color: c.blue }} />
-              <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.blue }}>Recommended Topics</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(evaluation.recommendedTopics || []).map((topic, i) => (
-                <span key={i} className="text-xs px-3 py-1.5 rounded-xl font-bold" style={{ background: "rgba(59,130,246,0.08)", color: c.blue, border: "1px solid rgba(59,130,246,0.15)" }}>{topic}</span>
+// ─── Technical Analytics ─────────────────────────────────────────────────────
+
+function TechnicalAnalytics({ onBack, onStartInterview, theme, colors: c }: {
+  onBack: () => void;
+  onStartInterview: () => void;
+  theme: string;
+  colors: any;
+}) {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/technical-engine/analytics/overview");
+        if (res.data?.success) setAnalytics(res.data.analytics);
+      } catch { /* ignore */ } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center" style={{ background: c.bg }}>
+        <Loader2 size={28} className="animate-spin" style={{ color: c.cyan }} />
+      </div>
+    );
+  }
+
+  const stats = [
+    { label: "Total Sessions", value: analytics?.totalSessions ?? 0, icon: Layers, color: c.cyan },
+    { label: "Completed", value: analytics?.completedSessions ?? 0, icon: CheckCircle2, color: c.green },
+    { label: "Average Score", value: `${analytics?.avgScore ?? 0}%`, icon: TrendingUp, color: c.amber },
+    { label: "Best Score", value: `${analytics?.bestScore ?? 0}%`, icon: Trophy, color: c.blue },
+  ];
+
+  return (
+    <div className="min-h-full" style={{ fontFamily: "'Outfit', sans-serif", background: c.bg }}>
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 space-y-8">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 rounded-xl border" style={{ borderColor: c.border, color: c.textMuted }}>
+            <ChevronLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-xl font-extrabold" style={{ color: c.text }}>Technical Interview Analytics</h2>
+            <p className="text-xs" style={{ color: c.textMuted }}>Your coding and technical performance over time.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {stats.map(s => (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="p-5 rounded-2xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+              <s.icon size={20} style={{ color: s.color }} className="mb-2" />
+              <div className="text-2xl font-extrabold" style={{ color: c.text }}>{s.value}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: c.textMuted }}>{s.label}</div>
+            </motion.div>
+          ))}
+        </div>
+
+        {(analytics?.topicBreakdown || []).length > 0 && (
+          <div className="p-6 rounded-3xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+            <h3 className="text-sm font-extrabold mb-4 flex items-center gap-2" style={{ color: c.text }}>
+              <Target size={16} style={{ color: c.cyan }} /> Topic Breakdown
+            </h3>
+            <div className="space-y-3">
+              {analytics.topicBreakdown.map((t: any, i: number) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-xs font-bold capitalize min-w-[100px]" style={{ color: c.text }}>{t.topic}</span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: c.surface }}>
+                    <div className="h-full rounded-full" style={{ width: `${t.avgScore}%`, background: t.avgScore >= 80 ? c.green : t.avgScore >= 60 ? c.amber : c.red }} />
+                  </div>
+                  <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>{t.avgScore}% ({t.count})</span>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Action Buttons */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="flex flex-wrap items-center justify-center gap-3 pt-4 pb-8">
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onRetry} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold" style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6)", color: "white", boxShadow: "0 4px 20px rgba(6,182,212,0.3)" }}>
-            <RotateCcw className="w-4 h-4" /> Practice Again
-          </motion.button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onNewInterview} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border" style={{ borderColor: c.border, color: c.textSec, background: c.cardBg }}>
-            <Zap className="w-4 h-4" /> New Interview
-          </motion.button>
-        </motion.div>
+        <div className="flex justify-center gap-3 pt-4">
+          <button onClick={onStartInterview} className="px-6 py-2.5 rounded-xl text-xs font-bold" style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6)", color: "white" }}>
+            Start New Interview
+          </button>
+          <button onClick={onBack} className="px-6 py-2.5 rounded-xl text-xs font-bold border" style={{ borderColor: c.border, color: c.textSec }}>
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

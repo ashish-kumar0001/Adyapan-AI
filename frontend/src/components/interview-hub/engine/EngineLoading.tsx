@@ -25,20 +25,16 @@ interface EngineLoadingProps {
     resumeAware: boolean;
   };
   onComplete: () => void;
+  theme?: string;
 }
 
-const EngineLoading: React.FC<EngineLoadingProps> = ({ config, onComplete }) => {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+const EngineLoading: React.FC<EngineLoadingProps> = ({ config, onComplete, theme: propTheme }) => {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [currentStep, setCurrentStep] = useState(-1);
   const [allComplete, setAllComplete] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const isDark = theme === "dark";
-
-  useEffect(() => {
-    const saved = localStorage.getItem("adyapan-theme") as "dark" | "light" | null;
-    setTheme(saved || "dark");
-  }, []);
 
   const steps = [
     {

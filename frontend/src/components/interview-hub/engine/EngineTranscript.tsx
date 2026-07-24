@@ -77,8 +77,9 @@ export default function EngineTranscript({
   messages,
   sessionId,
   config,
-}: EngineTranscriptProps) {
-  const [theme, setTheme] = useState("dark");
+  theme: propTheme,
+}: EngineTranscriptProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
@@ -89,11 +90,6 @@ export default function EngineTranscript({
   const scrollRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("adyapan-theme") || "dark";
-    setTheme(saved);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

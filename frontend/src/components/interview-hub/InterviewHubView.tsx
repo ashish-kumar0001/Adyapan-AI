@@ -554,10 +554,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
       if (res.data.success) {
         setActiveSession(res.data.session);
         setVerification(null);
-        if (res.data.evaluation) {
-          loadHistory();
-          setScreen("feedback");
-        }
+        loadHistory();
+        setScreen("feedback");
       }
     } catch { /* ignore */ } finally {
       setSending(false);
@@ -697,7 +695,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
             <div className="space-y-4">
               <h3 className="text-base font-extrabold flex items-center justify-between gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
                 <span className="flex items-center gap-2"><History size={16} className="text-amber-500" /> Interview History</span>
-                <button onClick={() => router.push('/dashboard/interview/analytics')} className="text-[10px] font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-lg border" style={{ borderColor: c.border, color: c.primary }}>
+                <button onClick={() => setView("analytics-interview")} className="text-[10px] font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-lg border" style={{ borderColor: c.border, color: c.primary }}>
                   <BarChart3 size={11} /> Analytics
                 </button>
               </h3>
@@ -1338,7 +1336,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                   <Download size={13} /> Download PDF Report
                 </button>
               )}
-              <button onClick={() => router.push('/dashboard/interview/analytics')}
+              <button onClick={() => setView("analytics-interview")}
                 className="py-2.5 px-5 rounded-lg border text-xs font-extrabold flex items-center gap-1.5" style={{ borderColor: c.primary, color: c.primary }}>
                 <BarChart3 size={13} /> View Analytics
               </button>

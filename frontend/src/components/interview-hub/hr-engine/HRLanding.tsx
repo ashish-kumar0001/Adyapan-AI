@@ -49,8 +49,8 @@ const pageVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
 };
 
-export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: HRLandingProps) {
-  const [theme, setTheme] = useState("dark");
+export default function HRLanding({ onStart, onViewHistory, onViewAnalytics, theme: propTheme }: HRLandingProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [step, setStep] = useState(0);
   const [stepDir, setStepDir] = useState(1);
   const [config, setConfig] = useState<HRConfig>({
@@ -71,10 +71,6 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
   const [companySearch, setCompanySearch] = useState("");
   const [isCustomCompany, setIsCustomCompany] = useState(false);
   const [customCompanyName, setCustomCompanyName] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") setTheme(localStorage.getItem("adyapan-theme") || "dark");
-  }, []);
 
   const isDark = theme === "dark";
   const c = {

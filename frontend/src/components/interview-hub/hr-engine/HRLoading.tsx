@@ -10,6 +10,7 @@ import type { HRConfig } from "./HRTypes";
 interface HRLoadingProps {
   config: HRConfig;
   onComplete: () => void;
+  theme?: string;
 }
 
 const LOADING_STEPS = [
@@ -20,16 +21,10 @@ const LOADING_STEPS = [
   { label: "Initializing Interview", icon: Sparkles, detail: "Everything is ready" },
 ];
 
-export default function HRLoading({ config, onComplete }: HRLoadingProps) {
-  const [theme, setTheme] = useState("dark");
+export default function HRLoading({ config, onComplete, theme: propTheme }: HRLoadingProps) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setTheme(localStorage.getItem("adyapan-theme") || "dark");
-    }
-  }, []);
 
   const isDark = theme === "dark";
 
