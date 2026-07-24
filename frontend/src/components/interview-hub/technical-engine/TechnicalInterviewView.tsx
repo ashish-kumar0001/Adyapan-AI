@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { COMPANY_PRESETS, ROLE_PRESETS } from "../engine/EngineTypes";
 import EngineAnalytics from "../engine/EngineAnalytics";
+import CompanyLogo from "../CompanyLogo";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -541,7 +542,7 @@ function TechnicalLanding({ onStart, theme, colors: c }: { onStart: (config: Tec
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
                   {filteredCompanies.slice(0, 12).map(co => (
                     <motion.button key={co.id} whileTap={cardTap} onClick={() => setCompany(co.id)} className="p-2 rounded-xl border text-center transition-all" style={{ background: company === co.id ? `${co.color}10` : c.cardBg, borderColor: company === co.id ? `${co.color}40` : c.border }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-1 text-[11px] font-extrabold" style={{ background: `${co.color}20`, color: co.color }}>{co.logo}</div>
+                      <CompanyLogo companyId={co.id} companyName={co.name} logo={co.logo} color={co.color} size={32} />
                       <div className="text-[10px] font-bold truncate">{co.name}</div>
                     </motion.button>
                   ))}

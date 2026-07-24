@@ -15,6 +15,7 @@ import {
   Brain, Code2, Server, Monitor, Layers, Cpu, FlaskConical,
   Container, Bug, Shield, Package, Globe,
 } from "lucide-react";
+import CompanyLogo from "../CompanyLogo";
 import {
   EngineConfig,
   COMPANY_PRESETS,
@@ -468,16 +469,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics,
                             borderColor: selected ? `${co.color}40` : c.border,
                           }}
                         >
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 text-sm font-extrabold"
-                            style={{
-                              background: `${co.color}20`,
-                              color: co.color,
-                              border: `1px solid ${co.color}30`,
-                            }}
-                          >
-                            {co.logo}
-                          </div>
+                          <CompanyLogo companyId={co.id} companyName={co.name} logo={co.logo} color={co.color} size={40} />
                           <div className="text-[11px] font-bold truncate">{co.name}</div>
                           <div className="text-[9px] capitalize mt-0.5" style={{ color: c.textMuted }}>{co.difficulty}</div>
                           <div className="flex flex-wrap gap-1 mt-1.5">
