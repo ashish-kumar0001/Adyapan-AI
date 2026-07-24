@@ -168,6 +168,26 @@ const HR_FALLBACK_QUESTION: HRQuestion = {
   tips: ["Listen for a clear narrative arc", "Note self-awareness and enthusiasm"],
 };
 
+export function ensureQuestionFormat(text: string, defaultType: string = "behavioral"): string {
+  if (!text) return "Could you walk me through a specific example from your past experience?";
+  
+  let cleanText = text.trim();
+  
+  // Remove incomplete trailing words if truncated
+  cleanText = cleanText.replace(/\s+(with|a|an|the|perhaps|in|to|of|and|or|that|for|about|as)\s*$/i, "");
+  cleanText = cleanText.replace(/[,-\s]+$/, "");
+
+  // Check if text lacks a question mark
+  if (!cleanText.includes("?")) {
+    if (!cleanText.endsWith(".")) {
+      cleanText += ".";
+    }
+    cleanText += " Could you walk me through a specific situation or project where you demonstrated this, and explain what the outcome was?";
+  }
+
+  return cleanText;
+}
+
 export async function generateHRQuestion(
   config: HRInterviewConfig,
   history: Message[],
@@ -219,11 +239,11 @@ QUESTION GENERATION RULES:
 8. The question should be specific and require a thoughtful response — avoid yes/no questions
 9. For experienced candidates, ask about leadership moments, mentoring, and strategic decisions
 10. For fresh graduates, ask about campus projects, learning experiences, and career aspirations
-11. IMPORTANT: Begin the "question" string with 1-2 brief conversational sentences reacting to their last answer (acknowledge what was strong, note what could be deeper), then naturally transition to the next question
+11. CRITICAL MANDATE FOR 'question' FIELD: The 'question' string MUST ALWAYS end with a clear, specific interview question ending with a question mark ('?'). You may begin with 1 short conversational sentence reacting to their last answer, BUT you MUST follow it with an explicit question ending in '?'. NEVER output a reaction or compliment alone without a question ending in '?'.
 
 Return the question as JSON with this exact structure:
 {
-  "question": "Brief reaction to previous answer (if applicable) + The next HR interview question",
+  "question": "Brief reaction to previous answer (if applicable) + The next HR interview question ending with '?'",
   "category": "one of: tell_me_about_yourself, strengths_weaknesses, leadership, conflict_resolution, teamwork, time_management, communication, failure_recovery, achievements, career_goals, adaptability, ethical_decisions, pressure_handling, learning_mindset",
   "competency": "one of: communication, leadership, teamwork, ownership, problem_solving, adaptability, emotional_intelligence, professionalism, cultural_fit, motivation",
   "difficulty": "easy|medium|hard",
@@ -237,7 +257,7 @@ Return the question as JSON with this exact structure:
 
 ${conversationHistory ? `Previous conversation:\n${conversationHistory}` : "This is the first question of the interview."}
 
-${conversationHistory ? "First acknowledge their last response, then ask the next question." : "Generate the opening question."}`;
+${conversationHistory ? "First acknowledge their last response with 1 short sentence, then ask the next specific question ending with '?'." : "Generate the opening question."}`;
 
   try {
     const result = await generateJSON<HRQuestion>(
@@ -246,6 +266,7 @@ ${conversationHistory ? "First acknowledge their last response, then ask the nex
       { model: MODELS.BALANCED, temperature: 0.8, maxTokens: 2048 },
       HR_FALLBACK_QUESTION
     );
+    result.question = ensureQuestionFormat(result.question, config.interviewType);
     console.log(`[HR Interview] Generated question ${questionNumber} — category: ${result.category}, competency: ${result.competency}`);
     return result;
   } catch (error) {
@@ -374,9 +395,10 @@ export async function generateHRFollowUp(
   config: HRInterviewConfig,
   starAnalysis: STARAnalysis
 ): Promise<string> {
-  const systemPrompt = `You are an experienced HR interviewer. The candidate just answered a question but their response needs deeper exploration.
+  const systemPrompt = `You are an experienced HR interviewer conducting a behavioral interview.
+The candidate just answered a question, but their response requires a follow-up to explore deeper details or missing STAR elements.
 
-STAR ANALYSIS:
+STAR ANALYSIS OF CANDIDATE'S RESPONSE:
 - Situation: ${starAnalysis.hasSituation ? "Present" : "Missing"}
 - Task: ${starAnalysis.hasTask ? "Present" : "Missing"}
 - Action: ${starAnalysis.hasAction ? "Present" : "Missing"}
@@ -384,27 +406,28 @@ STAR ANALYSIS:
 - STAR Score: ${starAnalysis.score}/100
 - Missing: ${starAnalysis.missingElements.join(", ") || "None"}
 
-Generate a natural, conversational follow-up question that probes deeper into their response. The follow-up should:
-1. Ask for specific examples or outcomes they didn't mention
-2. Fill gaps in their STAR structure
-3. Challenge them to think more deeply
-4. Feel natural, not interrogative
+CRITICAL OUTPUT RULES:
+1. You MUST include a clear, complete follow-up question that ends with a question mark ('?').
+2. Structure: You may start with a brief 1-sentence reaction/compliment acknowledging their answer, BUT you MUST ALWAYS follow it immediately with a specific follow-up question asking for examples, actions, or measurable outcomes.
+3. NEVER return only a compliment or reaction without asking a question ending in '?'.
+4. Do NOT leave any sentence incomplete or truncated.
 
-Return ONLY the follow-up question text, no JSON needed.`;
+Return ONLY the complete text (1-2 sentences max), ending with a question mark ('?').`;
 
   const fallback = starAnalysis.hasResult
-    ? "Can you share a specific metric or outcome that resulted from your actions?"
+    ? "Thanks for sharing that! Can you tell me about a specific metric or outcome that resulted from your actions?"
     : starAnalysis.hasAction
-      ? "What was the measurable result of your actions?"
-      : "Can you walk me through a specific example of this?";
+      ? "That sounds interesting! What was the measurable result or key takeaway from your actions?"
+      : "Thank you for explaining! Could you walk me through a specific example or scenario where you applied this?";
 
   try {
     const result = await generateText(
       systemPrompt,
-      `Original question: ${question}\nCandidate answer: ${answer}\n\nGenerate a natural follow-up question.`,
-      { model: MODELS.FAST, temperature: 0.7, maxTokens: 256 }
+      `Original question: ${question}\nCandidate answer: ${answer}\n\nGenerate a natural follow-up question that acknowledges their response and asks for deeper STAR details ending with '?'.`,
+      { model: MODELS.FAST, temperature: 0.7, maxTokens: 512 }
     );
-    return result.trim();
+    const cleanFollowUp = ensureQuestionFormat(result.trim(), config.interviewType);
+    return cleanFollowUp;
   } catch {
     return fallback;
   }
