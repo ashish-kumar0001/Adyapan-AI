@@ -2231,8 +2231,17 @@ function UserDashboardContent() {
           <HubErrorBoundary><ProfileView /></HubErrorBoundary>
         ) : activeView === "career-dashboard" ? (
           <HubErrorBoundary><CareerDashboardView setView={setActiveView} /></HubErrorBoundary>
+        ) : activeView === "community-profile" && communityProfileUserId ? (
+          <HubErrorBoundary>
+            <CommunityProfileView
+              userId={communityProfileUserId}
+              onViewUser={(id) => setCommunityProfileUserId(id)}
+            />
+          </HubErrorBoundary>
         ) : activeView === "community-profile" ? (
-          <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
+          <HubErrorBoundary>
+            <CommunityProfileView onViewUser={(id) => setCommunityProfileUserId(id)} />
+          </HubErrorBoundary>
         ) : activeView === "community-browse" && communityProfileUserId ? (
           <HubErrorBoundary>
             <UserProfileView

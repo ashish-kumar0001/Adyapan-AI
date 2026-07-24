@@ -8,7 +8,7 @@ import {
   TrendingUp, Calendar, Clock, ArrowUpRight,
   Zap, GraduationCap, Lightbulb,
   Quote, BadgeCheck, Medal,
-  BarChart3, Activity, Folder, Plus, MapPin, Award, Send
+  BarChart3, Activity, Folder, Plus, MapPin, Award, Send, ChevronRight
 } from "lucide-react";
 import CountUp from "react-countup";
 import { toast } from "sonner";
@@ -106,10 +106,10 @@ interface ProfileData {
 const SECTION_TABS = [
   { id: "overview", label: "Overview", icon: User },
   { id: "projects", label: "Projects", icon: Folder },
-  { id: "research", label: "Research", icon: BookOpen },
   { id: "skills", label: "Skills", icon: Zap },
   { id: "activity", label: "Activity", icon: Activity },
   { id: "achievements", label: "Achievements", icon: Trophy },
+  { id: "community", label: "Community", icon: Users },
 ] as const;
 
 type TabId = (typeof SECTION_TABS)[number]["id"];
@@ -163,7 +163,7 @@ function SectionHeader({ icon: Icon, title, subtitle, gradient = false }: {
   );
 }
 
-export function CommunityProfileView() {
+export function CommunityProfileView({ userId, onViewUser }: { userId?: string; onViewUser?: (userId: string) => void }) {
   const theme = useTheme();
   const isDark = theme === "dark";
 
@@ -180,12 +180,26 @@ export function CommunityProfileView() {
   const [projects, setProjects] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [communityUsers, setCommunityUsers] = useState<any[]>([]);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communitySearch, setCommunitySearch] = useState("");
+
+  const isOwnProfile = !userId;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get("/profile/me");
-        setProfile(res.data.profile);
+        if (userId) {
+          const res = await api.get(`/community/users/${userId}`);
+          if (res.data.success) {
+            setProfile(res.data.profile || res.data.user);
+            setIsFollowing(res.data.isFollowing);
+            setFollowStats({ followers: res.data.followers || 0, following: res.data.following || 0 });
+          }
+        } else {
+          const res = await api.get("/profile/me");
+          setProfile(res.data.profile);
+        }
       } catch (err) {
         console.error("Failed to load profile", err);
         setError("Failed to load profile");
@@ -194,34 +208,33 @@ export function CommunityProfileView() {
       }
     };
     fetchProfile();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    if (!profile?.userId) return;
+    const targetId = userId || profile?.userId;
+    if (!targetId) return;
     const fetchCommunityData = async () => {
       try {
         const [statsRes, actRes, projRes, achRes, recRes] = await Promise.allSettled([
-          api.get(`/community/stats/${profile.userId}`),
-          api.get("/community/activity"),
-          api.get("/community/projects"),
-          api.get("/community/achievements"),
-          api.get("/community/recommendations"),
+          api.get(`/community/stats/${targetId}`),
+          isOwnProfile ? api.get("/community/activity") : Promise.resolve({ status: "fulfilled" as const, value: { data: { success: false } } }),
+          isOwnProfile ? api.get("/community/projects") : Promise.resolve({ status: "fulfilled" as const, value: { data: { success: false } } }),
+          isOwnProfile ? api.get("/community/achievements") : Promise.resolve({ status: "fulfilled" as const, value: { data: { success: false } } }),
+          isOwnProfile ? api.get("/community/recommendations") : Promise.resolve({ status: "fulfilled" as const, value: { data: { success: false } } }),
         ]);
         if (statsRes.status === "fulfilled" && statsRes.value.data.success) {
           const s = statsRes.value.data;
           setFollowStats({ followers: s.followers, following: s.following });
-          setIsFollowing(s.isFollowing);
+          if (isOwnProfile) setIsFollowing(s.isFollowing);
         }
-        if (actRes.status === "fulfilled" && actRes.value.data.success) setActivities(actRes.value.data.activities);
-        if (projRes.status === "fulfilled" && projRes.value.data.success) setProjects(projRes.value.data.projects);
-        if (achRes.status === "fulfilled" && achRes.value.data.success) setAchievements(achRes.value.data.achievements);
-        if (recRes.status === "fulfilled" && recRes.value.data.success) setRecommendations(recRes.value.data.recommendations);
-      } catch {
-        // silent — individual tab fallback
-      }
+        if (actRes.status === "fulfilled" && (actRes.value as any).data.success) setActivities((actRes.value as any).data.activities);
+        if (projRes.status === "fulfilled" && (projRes.value as any).data.success) setProjects((projRes.value as any).data.projects);
+        if (achRes.status === "fulfilled" && (achRes.value as any).data.success) setAchievements((achRes.value as any).data.achievements);
+        if (recRes.status === "fulfilled" && (recRes.value as any).data.success) setRecommendations((recRes.value as any).data.recommendations);
+      } catch { /* ignore */ }
     };
     fetchCommunityData();
-  }, [profile?.userId]);
+  }, [profile?.userId, userId, isOwnProfile]);
 
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
@@ -229,9 +242,10 @@ export function CommunityProfileView() {
   }, []);
 
   const handleFollow = useCallback(async () => {
-    if (!profile?.userId) return;
+    const targetId = userId || profile?.userId;
+    if (!targetId) return;
     try {
-      const res = await api.post(`/community/follow/${profile.userId}`);
+      const res = await api.post(`/community/follow/${targetId}`);
       if (res.data.success) {
         setIsFollowing(res.data.isFollowing);
         setFollowStats(prev => ({
@@ -243,7 +257,23 @@ export function CommunityProfileView() {
     } catch {
       toast.error("Failed to update follow status");
     }
-  }, [profile?.userId]);
+  }, [userId, profile?.userId]);
+
+  // Fetch community users when Community tab is selected
+  useEffect(() => {
+    if (activeTab !== "community") return;
+    let cancelled = false;
+    (async () => {
+      setCommunityLoading(true);
+      try {
+        const q = communitySearch ? `?q=${encodeURIComponent(communitySearch)}&limit=20` : "?limit=20";
+        const res = await api.get(`/community/users${q}`);
+        if (!cancelled && res.data.success) setCommunityUsers(res.data.users || []);
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setCommunityLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [activeTab, communitySearch]);
 
   const displayName = profile?.user?.name ?? "";
   const username = profile?.username ? `@${profile.username}` : "";
@@ -379,34 +409,38 @@ export function CommunityProfileView() {
             </div>
 
             <div className="flex gap-2.5 shrink-0">
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: isFollowing ? "none" : "0 0 20px rgba(245,158,11,0.3)" }}
-                whileTap={{ scale: 0.96 }}
-                onClick={handleFollow}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
-                style={{
-                  background: isFollowing
-                    ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
-                    : "linear-gradient(135deg, #f59e0b, #ea580c)",
-                  color: isFollowing ? (isDark ? "rgba(255,255,255,0.7)" : "#334155") : "#000",
-                  border: isFollowing ? `1px solid ${customBorder}` : "none",
-                }}
-              >
-                {isFollowing ? <><User size={13} /> Following</> : <><Plus size={13} /> Follow</>}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setShowMessageInput(prev => !prev)}
-                className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-colors"
-                style={{
-                  borderColor: customBorder,
-                  color: isDark ? "rgba(255,255,255,0.7)" : "#334155",
-                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
-                }}
-              >
-                <MessageSquare size={13} /> Message
-              </motion.button>
+              {!isOwnProfile && (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.04, boxShadow: isFollowing ? "none" : "0 0 20px rgba(245,158,11,0.3)" }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={handleFollow}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
+                    style={{
+                      background: isFollowing
+                        ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
+                        : "linear-gradient(135deg, #f59e0b, #ea580c)",
+                      color: isFollowing ? (isDark ? "rgba(255,255,255,0.7)" : "#334155") : "#000",
+                      border: isFollowing ? `1px solid ${customBorder}` : "none",
+                    }}
+                  >
+                    {isFollowing ? <><User size={13} /> Following</> : <><Plus size={13} /> Follow</>}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setShowMessageInput(prev => !prev)}
+                    className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-colors"
+                    style={{
+                      borderColor: customBorder,
+                      color: isDark ? "rgba(255,255,255,0.7)" : "#334155",
+                      background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
+                    }}
+                  >
+                    <MessageSquare size={13} /> Message
+                  </motion.button>
+                </>
+              )}
               <motion.button
                 whileHover={{ scale: 1.08, rotate: 15 }}
                 whileTap={{ scale: 0.92 }}
@@ -437,9 +471,10 @@ export function CommunityProfileView() {
                     value={messageInput}
                     onChange={e => setMessageInput(e.target.value)}
                     onKeyDown={async e => {
-                      if (e.key === "Enter" && messageInput.trim() && profile?.userId) {
+                      const targetId = userId || profile?.userId;
+                      if (e.key === "Enter" && messageInput.trim() && targetId) {
                         try {
-                          const res = await api.post("/community/messages", { receiverId: profile.userId, content: messageInput.trim() });
+                          const res = await api.post("/community/messages", { receiverId: targetId, content: messageInput.trim() });
                           if (res.data.success) {
                             setChatMessages(prev => [...prev, res.data.message]);
                             setMessageInput("");
@@ -623,13 +658,100 @@ export function CommunityProfileView() {
         >
           {activeTab === "overview" && <OverviewTab profile={profile} activities={activities} recommendations={recommendations} />}
           {activeTab === "projects" && <ProjectsTab projects={projects} />}
-          {activeTab === "research" && <ResearchTab />}
           {activeTab === "skills" && <SkillsTab skills={skills} />}
           {activeTab === "activity" && <ActivityTab activities={activities} />}
           {activeTab === "achievements" && <AchievementsTab achievements={achievements} />}
+          {activeTab === "community" && (
+            <CommunityTab
+              users={communityUsers}
+              loading={communityLoading}
+              search={communitySearch}
+              onSearchChange={setCommunitySearch}
+              onSelectUser={(id) => onViewUser?.(id)}
+              currentUserId={profile?.userId}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
     </motion.div>
+  );
+}
+
+function CommunityTab({ users, loading, search, onSearchChange, onSelectUser, currentUserId }: {
+  users: any[];
+  loading: boolean;
+  search: string;
+  onSearchChange: (v: string) => void;
+  onSelectUser: (userId: string) => void;
+  currentUserId?: string;
+}) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+  const primaryText = isDark ? "text-white" : "text-slate-900";
+  const subText = isDark ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.5)";
+  const cardBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)";
+  const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+
+  const filtered = users.filter(u => u.id !== currentUserId);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Users size={16} className="text-amber-500 shrink-0" />
+        <h3 className={`text-sm font-bold ${primaryText}`}>Community Members</h3>
+      </div>
+
+      <input
+        value={search}
+        onChange={e => onSearchChange(e.target.value)}
+        placeholder="Search members by name, username, or college..."
+        className="w-full px-4 py-2.5 rounded-xl text-xs font-medium outline-none border transition-colors focus:border-amber-500/50"
+        style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", borderColor, color: isDark ? "#fff" : "#0f172a" }}
+      />
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: cardBg }} />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-8 text-center text-xs" style={{ color: subText }}>
+          {search ? "No members found matching your search." : "No other community members yet."}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map((user: any) => (
+            <motion.button
+              key={user.id}
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onSelectUser(user.id)}
+              className="p-4 rounded-2xl border text-left transition-all hover:shadow-lg cursor-pointer"
+              style={{ background: cardBg, borderColor }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                  <img src={getDiceBearUrl(user.name || user.username || "user")} alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-xs font-bold truncate ${primaryText}`}>{user.name || "Anonymous"}</p>
+                  {user.username && <p className="text-[10px] truncate" style={{ color: subText }}>@{user.username}</p>}
+                  {user.aboutMe && <p className="text-[10px] mt-1 line-clamp-2" style={{ color: subText }}>{user.aboutMe}</p>}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {user.college && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b" }}>{user.college}</span>}
+                    {user.skills?.slice(0, 2).map((s: string) => (
+                      <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <ChevronRight size={14} style={{ color: subText }} className="shrink-0 mt-1" />
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

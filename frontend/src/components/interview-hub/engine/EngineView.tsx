@@ -127,7 +127,7 @@ export default function EngineView({ theme }: EngineViewProps) {
     >
       {/* Header — hidden during active interview (EngineInterview has its own) */}
       {screen !== "landing" && screen !== "active" && (
-        <div className="sticky top-0 z-50 border-b backdrop-blur-xl" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb", background: isDark ? "rgba(8,7,16,0.9)" : "rgba(255,255,255,0.95)" }}>
+        <div className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", background: "transparent" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button

@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { COMPANY_PRESETS, ROLE_PRESETS } from "../engine/EngineTypes";
+import EngineAnalytics from "../engine/EngineAnalytics";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -310,6 +311,41 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
 
   return (
     <div className="relative min-h-full" style={{ background: c.bg, color: c.text, fontFamily: "'Outfit', sans-serif" }}>
+      {/* Header */}
+      {screen !== "landing" && screen !== "active" && (
+        <div className="sticky top-0 z-50 border-b backdrop-blur-md"
+          style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", background: "transparent" }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button onClick={handleReset}
+                className="w-8 h-8 rounded-xl border flex items-center justify-center transition-colors"
+                style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb", color: isDark ? "#ffffff" : "#111827" }}>
+                <ArrowLeft size={14} />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <Sparkles size={13} className="text-white" />
+                </div>
+                <span className="text-sm font-bold hidden sm:inline">AI Technical Interview</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {sessionId && (
+                <span className="text-[9px] px-2 py-1 rounded-lg border font-bold"
+                  style={{ background: isDark ? "rgba(16,185,129,0.1)" : "#ecfdf5", borderColor: isDark ? "rgba(16,185,129,0.2)" : "rgba(16,185,129,0.25)", color: isDark ? "#34d399" : "#059669" }}>
+                  SESSION ACTIVE
+                </span>
+              )}
+              <button onClick={() => setScreen("analytics")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all"
+                style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb", color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280" }}>
+                <BarChart3 size={12} /> Analytics
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {screen === "landing" && (
           <motion.div key="landing" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
