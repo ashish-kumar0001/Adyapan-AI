@@ -69,6 +69,8 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
     customInstructions: "",
   });
   const [companySearch, setCompanySearch] = useState("");
+  const [isCustomCompany, setIsCustomCompany] = useState(false);
+  const [customCompanyName, setCustomCompanyName] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") setTheme(localStorage.getItem("adyapan-theme") || "dark");
@@ -97,7 +99,7 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
   );
 
   const selectedType = HR_INTERVIEW_TYPES[config.interviewType];
-  const selectedCompany = HR_COMPANY_PRESETS.find((co) => co.id === config.targetCompany);
+  const selectedCompany = HR_COMPANY_PRESETS.find((co) => co.id === config.targetCompany || co.name.toLowerCase() === config.targetCompany?.toLowerCase());
 
   const STEP_TITLES = ["Interview Type", "Company & Role", "Configure", "Review"];
   const STEP_ICONS = [Zap, Target, Settings2, Play];
@@ -243,10 +245,13 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                   {filteredCompanies.map((co) => {
-                    const selected = config.targetCompany === co.id;
+                    const selected = !isCustomCompany && (config.targetCompany === co.id || config.targetCompany === co.name);
                     return (
                       <motion.button key={co.id} type="button" whileHover={{ scale: 1.015, y: -2 }} whileTap={{ scale: 0.97 }}
-                        onClick={() => updateConfig({ targetCompany: co.id })}
+                        onClick={() => {
+                          setIsCustomCompany(false);
+                          updateConfig({ targetCompany: co.name });
+                        }}
                         className="p-3 rounded-2xl border text-left transition-all"
                         style={{ background: selected ? `${co.color}10` : c.cardBg, borderColor: selected ? `${co.color}40` : c.border }}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 text-sm font-extrabold"
@@ -259,15 +264,66 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
                     );
                   })}
                   <motion.button type="button" whileHover={{ scale: 1.015, y: -2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => updateConfig({ targetCompany: "" })}
+                    onClick={() => {
+                      setIsCustomCompany(true);
+                      const initialCustom = customCompanyName || config.targetCompany || "";
+                      updateConfig({ targetCompany: initialCustom });
+                    }}
                     className="p-3 rounded-2xl border text-left transition-all border-dashed"
-                    style={{ background: !config.targetCompany ? "rgba(245,158,11,0.05)" : c.cardBg, borderColor: !config.targetCompany ? "rgba(245,158,11,0.3)" : c.border }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 border border-dashed" style={{ borderColor: c.border }}>
-                      <span className="text-lg" style={{ color: c.textMuted }}>+</span>
+                    style={{ background: isCustomCompany ? "rgba(245,158,11,0.08)" : c.cardBg, borderColor: isCustomCompany ? "rgba(245,158,11,0.4)" : c.border }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 border border-dashed" style={{ borderColor: isCustomCompany ? "rgba(245,158,11,0.5)" : c.border }}>
+                      <span className="text-lg font-bold" style={{ color: isCustomCompany ? c.primary : c.textMuted }}>+</span>
                     </div>
-                    <div className="text-[11px] font-bold" style={{ color: c.textMuted }}>Any Company</div>
+                    <div className="text-[11px] font-bold" style={{ color: isCustomCompany ? c.primary : c.textSec }}>Custom Company</div>
                   </motion.button>
                 </div>
+
+                {/* Custom Company Input */}
+                {isCustomCompany && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-2xl border space-y-2"
+                    style={{ background: c.cardBg, borderColor: "rgba(245,158,11,0.2)" }}>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold flex items-center gap-2" style={{ color: c.primary }}>
+                        <Building2 size={14} /> Enter Custom Company Name
+                      </label>
+                      {config.targetCompany && (
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: "rgba(245,158,11,0.1)", color: c.primary }}>
+                          Selected: {config.targetCompany}
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={customCompanyName || config.targetCompany}
+                      onChange={(e) => {
+                        setCustomCompanyName(e.target.value);
+                        updateConfig({ targetCompany: e.target.value });
+                      }}
+                      placeholder="e.g. Stripe, Netflix, Uber, Tesla, OpenAI, My Startup..."
+                      className="w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500/50 transition-colors"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      autoFocus
+                    />
+                  </motion.div>
+                )}
+
+                {/* Search fallback for custom company */}
+                {filteredCompanies.length === 0 && companySearch.trim() && (
+                  <div className="p-4 rounded-2xl border text-center space-y-2" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <p className="text-xs" style={{ color: c.textMuted }}>No preset company matching &quot;{companySearch}&quot;</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomCompany(true);
+                        setCustomCompanyName(companySearch.trim());
+                        updateConfig({ targetCompany: companySearch.trim() });
+                      }}
+                      className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold hover:bg-amber-500/20 transition-colors"
+                    >
+                      + Set &quot;{companySearch.trim()}&quot; as Target Company
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Role */}
@@ -461,7 +517,7 @@ export default function HRLanding({ onStart, onViewHistory, onViewAnalytics }: H
                     {[
                       { label: "Type", value: selectedType?.label, color: selectedType?.color },
                       { label: "Role", value: config.targetRole },
-                      { label: "Company", value: selectedCompany?.name || "Any" },
+                      { label: "Company", value: selectedCompany?.name || config.targetCompany || "General / Any Company" },
                       { label: "Difficulty", value: config.difficulty, color: DIFFICULTY_OPTIONS.find((d) => d.value === config.difficulty)?.color },
                       { label: "Experience", value: config.experienceLevel },
                       { label: "Duration", value: `${config.durationMinutes} minutes` },

@@ -15,6 +15,7 @@ import { useHRStore } from "./HRStore";
 interface HRInterviewActiveProps {
   sessionId: string;
   config: HRConfig;
+  initialMessages?: HRMessage[];
   onComplete: (sessionId: string) => void;
   onEnd: () => void;
 }
@@ -28,7 +29,7 @@ function formatTime(seconds: number): string {
 }
 
 const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
-  sessionId, config, onComplete, onEnd,
+  sessionId, config, initialMessages, onComplete, onEnd,
 }) => {
   const store = useHRStore();
   const {
@@ -102,19 +103,6 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (!sessionLoaded) {
-      setSessionLoaded(true);
-      const initialMsgs: HRMessage[] = [];
-      setMessages(initialMsgs);
-      setTotalQuestions(Math.ceil((config.durationMinutes || 30) / 4));
-    }
-  }, [sessionLoaded, config, setMessages, setTotalQuestions]);
-
   const speakText = useCallback((text: string) => {
     if (!voiceEnabled || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
@@ -129,6 +117,29 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
     speechSynthRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   }, [voiceEnabled, config.voiceSpeed, config.voicePitch, config.voiceGender]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    if (!sessionLoaded) {
+      setSessionLoaded(true);
+      const msgsToUse = initialMessages && initialMessages.length > 0 ? initialMessages : messages;
+      if (msgsToUse && msgsToUse.length > 0) {
+        setMessages(msgsToUse);
+        const lastMsg = msgsToUse[msgsToUse.length - 1];
+        if (lastMsg) setCurrentQuestionText(lastMsg.content);
+        const firstInterviewerMsg = msgsToUse.find((m) => m.role === "interviewer");
+        if (firstInterviewerMsg && voiceEnabled) {
+          setTimeout(() => {
+            speakText(firstInterviewerMsg.content);
+          }, 500);
+        }
+      }
+      setTotalQuestions(Math.ceil((config.durationMinutes || 30) / 4));
+    }
+  }, [sessionLoaded, config, initialMessages, setMessages, setTotalQuestions, speakText, voiceEnabled, messages]);
 
   const startListening = useCallback(() => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -270,9 +281,10 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
 
   return (
     <div
-      className="fixed inset-0 flex flex-col"
+      className="relative w-full h-[calc(100vh-70px)] -m-5 flex flex-col overflow-hidden rounded-2xl border"
       style={{
         background: isDark ? "#080710" : "#f9fafb",
+        borderColor: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb",
         color: isDark ? "#ffffff" : "#111827",
         fontFamily: "'Outfit', sans-serif",
       }}
@@ -380,7 +392,7 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
                   {msg.role === "interviewer" ? <Bot size={14} className="text-black" /> : <User size={14} className="text-white" />}
                 </div>
                 <div
-                  className={`max-w-[75%] p-3 rounded-2xl text-xs leading-relaxed ${
+                  className={`max-w-[75%] p-3 rounded-2xl text-xs leading-relaxed relative group ${
                     msg.role === "candidate" ? "rounded-tr-md" : "rounded-tl-md"
                   }`}
                   style={{
@@ -394,7 +406,18 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
                     }`,
                   }}
                 >
-                  {msg.content}
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex-1">{msg.content}</span>
+                    {msg.role === "interviewer" && (
+                      <button
+                        onClick={() => speakText(msg.content)}
+                        title="Read question aloud"
+                        className="shrink-0 p-1 rounded-lg hover:bg-amber-500/10 text-amber-500 transition-colors"
+                      >
+                        <Volume2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
