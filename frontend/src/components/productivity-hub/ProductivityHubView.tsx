@@ -157,19 +157,20 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: emailCat, tone: emailTone, length: emailLength, recipient: emailRecipient, details: emailDetails }),
+      const res = await api.post("/productivity/generate-email", {
+        category: emailCat,
+        tone: emailTone,
+        length: emailLength,
+        recipient: emailRecipient,
+        details: emailDetails
       });
-      if (!res.ok) throw new Error("Email generation failed");
-      const data = await res.json();
+      const data = res.data;
       setSubjectLine(data.subject || "");
       setGeneratedOutput(data.content || "");
       setEditingContent(data.content || "");
       setIsPreview(false);
-    } catch (err) {
-      toast.error("Email generation failed. Please try again.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || "Email generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -179,19 +180,20 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-sop`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: sopCat, background: sopBackground, goals: sopGoals, targetUniversity: sopTargetUni, course: sopCourse }),
+      const res = await api.post("/productivity/generate-sop", {
+        category: sopCat,
+        background: sopBackground,
+        goals: sopGoals,
+        targetUniversity: sopTargetUni,
+        course: sopCourse
       });
-      if (!res.ok) throw new Error("SOP generation failed");
-      const data = await res.json();
+      const data = res.data;
       setSubjectLine("");
       setGeneratedOutput(data.content || "");
       setEditingContent(data.content || "");
       setIsPreview(false);
-    } catch (err) {
-      toast.error("SOP generation failed. Please try again.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || "SOP generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -201,19 +203,20 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-linkedin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: liCat, format: liFormat, topic: liTopic, includeEmojis: liIncludeEmojis, includeHashtags: liIncludeHashtags }),
+      const res = await api.post("/productivity/generate-linkedin", {
+        category: liCat,
+        format: liFormat,
+        topic: liTopic,
+        includeEmojis: liIncludeEmojis,
+        includeHashtags: liIncludeHashtags
       });
-      if (!res.ok) throw new Error("LinkedIn post generation failed");
-      const data = await res.json();
+      const data = res.data;
       setSubjectLine("");
       setGeneratedOutput(data.content || "");
       setEditingContent(data.content || "");
       setIsPreview(false);
-    } catch (err) {
-      toast.error("LinkedIn post generation failed. Please try again.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || "LinkedIn post generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -223,19 +226,19 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch(`${api.defaults.baseURL}/productivity/generate-content`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: contentCat, style: contentStyle, keywords: contentKeywords, outline: contentOutline }),
+      const res = await api.post("/productivity/generate-content", {
+        category: contentCat,
+        style: contentStyle,
+        keywords: contentKeywords,
+        outline: contentOutline
       });
-      if (!res.ok) throw new Error("Content generation failed");
-      const data = await res.json();
+      const data = res.data;
       setSubjectLine("");
       setGeneratedOutput(data.content || "");
       setEditingContent(data.content || "");
       setIsPreview(false);
-    } catch (err) {
-      toast.error("Content generation failed. Please try again.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || "Content generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -249,16 +252,14 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
     setChatLoading(true);
 
     try {
-      const res = await fetch(`${api.defaults.baseURL}/productivity/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: promptText, context: { tab } }),
+      const res = await api.post("/productivity/chat", {
+        message: promptText,
+        context: { tab }
       });
-      if (!res.ok) throw new Error("Chat request failed");
-      const data = await res.json();
+      const data = res.data;
       setChatMessages(prev => [...prev, { role: "assistant", content: data.response || "No response received." }]);
     } catch (err) {
-      toast.error("AI Assistant is unavailable. Please try again later.");
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I ran into an error. Please try again." }]);
     } finally {
       setChatLoading(false);
     }
