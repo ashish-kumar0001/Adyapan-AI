@@ -46,6 +46,7 @@ import { placementRouter } from "./placement.routes";
 import { engineRouter } from "./engine.routes";
 import { technicalEngineRouter } from "./technical-engine.routes";
 import { hrInterviewRouter } from "./hr-interview.routes";
+import { productivityRouter } from "./productivity.routes";
 
 export const apiRouter = Router();
 
@@ -119,6 +120,9 @@ apiRouter.use("/interview/hr", hrInterviewRouter);
 
 // Placement Hub Routes
 apiRouter.use("/placement", placementRouter);
+
+// Productivity Hub Routes
+apiRouter.use("/productivity", productivityRouter);
 
 // Platform Configuration Routes
 apiRouter.use("/config", configRouter);
