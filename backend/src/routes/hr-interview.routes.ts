@@ -7,6 +7,7 @@ import {
   generateHRFollowUp,
   analyzeSTAR,
   analyzeCommunication,
+  ensureQuestionFormat,
 } from "../lib/ai/hr-interview.service";
 import { handleRouteError } from "../utils/routeError";
 
@@ -234,6 +235,8 @@ hrInterviewRouter.post("/:sessionId/answer", async (req, res) => {
         expectedSTAR: nextQ.expectedSTAR,
       };
     }
+
+    nextContent = ensureQuestionFormat(nextContent, hrConfig.interviewType);
 
     await p.interviewMessage.create({
       data: { sessionId, role: "interviewer", content: nextContent },
