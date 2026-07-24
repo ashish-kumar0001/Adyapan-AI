@@ -44,7 +44,7 @@ export function AssignmentGeneratorView() {
   const [result, setResult] = useState<{ introduction: string; body: string; conclusion: string; references: string[] } | null>(null);
   const [topic, setTopic] = useState("Quantum Computing & Cryptography");
   const [level, setLevel] = useState("Undergraduate");
-  const [wordCount, setWordCount] = useState("1000 words");
+  const [wordCount, setWordCount] = useState("4500 words (15-20 pages)");
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
   const [activeSection, setActiveSection] = useState("");
@@ -306,10 +306,14 @@ export function AssignmentGeneratorView() {
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Word Count</label>
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Target Length / Pages</label>
                         <select value={wordCount} onChange={e => setWordCount(e.target.value)}
                           className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
-                          <option>500 words</option><option>1000 words</option><option>2000 words</option>
+                          <option>4500 words (15-20 pages)</option>
+                          <option>5500 words (18-22 pages)</option>
+                          <option>3000 words (10-12 pages)</option>
+                          <option>1500 words (5-6 pages)</option>
+                          <option>500 words (1-2 pages)</option>
                         </select>
                       </div>
                     </div>

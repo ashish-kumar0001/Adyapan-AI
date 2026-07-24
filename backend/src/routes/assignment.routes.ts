@@ -13,12 +13,13 @@ assignmentRouter.post("/generate", async (req, res) => {
     const result = await generateAssignment(topic, academicLevel, wordCount);
     const userPrisma = await getUserPrismaFromRequest(req);
     
+    const parsedWordCount = parseInt(String(wordCount)) || 4500;
     const assignment = await userPrisma.assignment.create({
       data: {
         userId: req.user!.userId,
         topic,
-        academicLevel,
-        wordCount: parseInt(wordCount),
+        academicLevel: academicLevel || "Undergraduate",
+        wordCount: parsedWordCount,
         content: result as any,
       },
     });

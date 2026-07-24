@@ -259,8 +259,8 @@ export function initSocketServer(server: HttpServer) {
           }
 
           case "assignment": {
-            emitProgress("Analyzing topic requirements...");
-            const wordCount = parseInt(payload.wordCount) || 1000;
+            emitProgress("Analyzing 15-20 page academic topic requirements...");
+            const wordCount = parseInt(String(payload.wordCount)) || 4500;
             const result: AssignmentResult = await generateAssignment(
               payload.topic || "General",
               payload.level || "Undergraduate",
