@@ -341,7 +341,7 @@ export function PptGeneratorView() {
               <motion.div variants={fadeUp} custom={3} initial="hidden" animate="visible" className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Star size={14} style={{ color: c.amber }} /> Features</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                  {["Slide Preview", "Speaker Notes", "Bullet Points", "Multiple Counts", "Copy Slide", "Export PPTX"].map((feat, i) => (
+                  {["Slide Preview", "Speaker Notes", "Bullet Points", "Multiple Counts", "Copy Slides", "Export Markdown"].map((feat, i) => (
                     <motion.div key={feat} custom={i} variants={scaleIn} initial="hidden" animate="visible" className="flex items-center gap-2 text-sm" style={{ color: c.textSec }}>
                       <CheckCircle2 size={14} style={{ color: c.amber }} className="shrink-0" />
                       <span>{feat}</span>

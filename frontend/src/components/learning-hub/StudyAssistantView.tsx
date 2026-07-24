@@ -434,7 +434,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
         .sa-scroll::-webkit-scrollbar { display: none; }
       `}</style>
       <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
-        <button onClick={() => onViewLesson?.(null as unknown as { topic: string; lesson: UnifiedLesson; duration: string; level: string })}
+        <button onClick={() => (onViewLesson as any)?.({ back: true })}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer"
           style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
           <ChevronRight size={14} className="rotate-180" /> Back to Study Assistant

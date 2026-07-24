@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api } from "@/services/api";
 import { useTheme } from "@/hooks/useTheme";
+import { toast } from "sonner";
 
 const mkColors = (theme: string) => {
   const isDark = theme === "dark";
@@ -276,7 +277,7 @@ export function FlashcardsView() {
       if (allRated) {
         setPhase("results");
       } else {
-        setPhase("results");
+        toast.info("Please rate all cards before viewing results.");
       }
     }
   };

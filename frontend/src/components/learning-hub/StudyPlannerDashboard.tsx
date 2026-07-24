@@ -127,6 +127,7 @@ export function StudyPlannerDashboard() {
       }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to load today's schedule.");
     }
   };
 
@@ -145,6 +146,7 @@ export function StudyPlannerDashboard() {
       }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to load recommendations.");
     }
   };
 
@@ -156,6 +158,7 @@ export function StudyPlannerDashboard() {
       }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to load calendar events.");
     }
   };
 
@@ -223,7 +226,7 @@ export function StudyPlannerDashboard() {
         setTodayTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
         const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t);
         const completed = updatedTasks.filter(t => t.status === "Completed").length;
-        const compPct = Math.round((completed / updatedTasks.length) * 100);
+        const compPct = updatedTasks.length > 0 ? Math.round((completed / updatedTasks.length) * 100) : 0;
         if (activePlan) {
           setActivePlan({ ...activePlan, completionPercentage: compPct, successProbability: `${Math.min(98, 70 + Math.round(compPct * 0.28))}%` });
         }
@@ -267,6 +270,10 @@ export function StudyPlannerDashboard() {
           await fetchActivePlan();
           setGenerating(false);
         }, 1200);
+      } else {
+        clearInterval(timer);
+        toast.error(res.data.error || "AI Plan generation failed. Please try again.");
+        setGenerating(false);
       }
     } catch (error) {
       clearInterval(timer);
@@ -277,8 +284,17 @@ export function StudyPlannerDashboard() {
   };
 
   const handleExport = (type: string) => {
-    toast.success(`Exporting ${type}...`);
-    window.print();
+    if (!activePlan) return toast.error("No study plan to export.");
+    const lines: string[] = [`# ${activePlan.title}`, `Exam: ${activePlan.examDate ? new Date(activePlan.examDate).toLocaleDateString() : "N/A"}`, `Target: ${activePlan.targetScore}`, `Progress: ${activePlan.completionPercentage}%`, "", "## Tasks", ""];
+    tasks.forEach((t, i) => {
+      lines.push(`${t.status === "Completed" ? "✅" : "⬜"} **${i + 1}. ${t.topicName}** — ${t.priority} (${t.estimatedTime}min)`);
+    });
+    if (todayRevisions.length) { lines.push("", "## Today's Revisions", ""); todayRevisions.forEach((r: any) => lines.push(`🔄 ${r.title || r.topicName} — due ${r.scheduledDate}`)); }
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${activePlan.title.replace(/\s+/g, "_")}_study_plan.md`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Study plan exported!");
   };
 
   const handleMonthChange = (direction: "prev" | "next") => {

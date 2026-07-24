@@ -839,7 +839,7 @@ export function QuizGeneratorView() {
                         { label: "Questions", value: quizData.questions.length },
                         { label: "Answered", value: `${currentIndex + (isSubmitted ? 1 : 0)}/${quizData.questions.length}` },
                         { label: "Duration", value: DURATIONS.find(d => d.key === duration)?.label },
-                        { label: "Score", value: <CountUp start={0} end={Object.values(userAnswers).filter((a, i) => submittedQuestions[i] && a === quizData.questions[i]?.correct_answer).length} duration={0.5} /> }
+                        { label: "Score", value: <CountUp start={0} end={quizData.questions.filter((q, i) => submittedQuestions[i] && userAnswers[i] === q.correct_answer).length} duration={0.5} /> }
                       ].map(stat => (
                         <div key={stat.label} className="p-2 rounded-lg text-center" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}` }}>
                           <span className="text-[10px] block" style={{ color: c.textMuted }}>{stat.label}</span>
@@ -899,7 +899,7 @@ export function QuizGeneratorView() {
                       </span>
                       <span className="text-sm font-extrabold flex items-center gap-1.5" style={{ color: accent.text }}>
                         <Trophy size={14} /> Score:{' '}
-                        <CountUp start={0} end={Object.values(userAnswers).filter((a, i) => submittedQuestions[i] && a === quizData.questions[i]?.correct_answer).length} duration={0.5} />
+                        <CountUp start={0} end={quizData.questions.filter((q, i) => submittedQuestions[i] && userAnswers[i] === q.correct_answer).length} duration={0.5} />
                       </span>
                     </div>
 

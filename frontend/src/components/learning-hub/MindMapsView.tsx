@@ -626,9 +626,8 @@ export function MindMapsView() {
       const existingLabels = nodes.map(n => n.data.label as string);
 
       const res = await api.post("/mindmap/expand", {
-        nodeId: selectedNodeId,
-        conceptLabel: (targetNode.data as MindMapNodeData).label,
-        conceptType: (targetNode.data as MindMapNodeData).type,
+        topic: topic.trim() || "Cellular Respiration",
+        nodeLabel: (targetNode.data as MindMapNodeData).label,
         mode: selectedMode,
         existingLabels,
       });
@@ -702,15 +701,28 @@ export function MindMapsView() {
     setError(null);
   };
 
-  const handleExportPNG = () => {
-    toast.success("Exporting canvas as PNG image...");
+  const handleExportPNG = async () => {
+    const container = document.querySelector(".react-flow")?.closest("div");
+    if (!container) return toast.error("No mind map to export.");
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(container, { backgroundColor: c.isDark ? "#09090b" : "#fafafa", useCORS: true, scale: 2 });
+      const link = document.createElement("a");
+      link.download = `${(topic.trim() || "mindmap").replace(/\s+/g, "_")}_mindmap.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Mind map exported as PNG!");
+    } catch {
+      toast.error("Failed to export mind map.");
+    }
   };
 
   const handleShare = () => {
+    const shareText = `Check out this mind map on "${topic.trim() || "mindmap"}" — ${nodes.length} concepts mapped`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareText);
     }
-    toast.success("Link copied to clipboard!");
+    toast.success("Mind map description copied to clipboard!");
   };
 
   return (
