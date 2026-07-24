@@ -444,7 +444,14 @@ export const ORCHESTRATED_MODELS = {
   ui_responses: "mistralai/mistral-large-2-instruct",
   quick_recommendations: "mistralai/mistral-large-2-instruct",
   general_assistant: "z-ai/glm-5.1",
-  fallback: "z-ai/glm-5.1"
+  fallback: "z-ai/glm-5.1",
+  hr_behavioral: "nvidia/llama-3.3-70b-instruct",
+  hr_star_analysis: "nvidia/llama-3.3-70b-instruct",
+  hr_communication: "deepseek-ai/deepseek-r1",
+  hr_resume_analysis: "moonshotai/kimi-k2",
+  hr_followup: "mistralai/mistral-large-2-instruct",
+  hr_evaluation: "nvidia/llama-3.3-70b-instruct",
+  hr_fallback: "z-ai/glm-5.1",
 } as const;
 
 export type OrchestratedTaskType = keyof typeof ORCHESTRATED_MODELS;
