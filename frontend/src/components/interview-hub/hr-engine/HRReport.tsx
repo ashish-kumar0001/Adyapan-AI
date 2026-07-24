@@ -67,14 +67,10 @@ function ScoreRing({ score, size = 120, strokeWidth = 8, label }: { score: numbe
   );
 }
 
-export default function HRReport({ sessionId, evaluation, messages, config, onRetry, onViewAnalytics }: HRReportProps) {
-  const [theme, setTheme] = useState("dark");
+export default function HRReport({ sessionId, evaluation, messages, config, onRetry, onViewAnalytics, theme: propTheme }: HRReportProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [expandedBreakdown, setExpandedBreakdown] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "breakdown" | "competencies" | "recruiter">("overview");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") setTheme(localStorage.getItem("adyapan-theme") || "dark");
-  }, []);
 
   const isDark = theme === "dark";
   const c = {

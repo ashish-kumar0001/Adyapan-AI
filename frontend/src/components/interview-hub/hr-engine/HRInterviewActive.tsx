@@ -18,6 +18,7 @@ interface HRInterviewActiveProps {
   initialMessages?: HRMessage[];
   onComplete: (sessionId: string) => void;
   onEnd: () => void;
+  theme?: string;
 }
 
 type AIStatus = "listening" | "thinking" | "speaking" | "idle";
@@ -29,7 +30,7 @@ function formatTime(seconds: number): string {
 }
 
 const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
-  sessionId, config, initialMessages, onComplete, onEnd,
+  sessionId, config, initialMessages, onComplete, onEnd, theme: propTheme,
 }) => {
   const store = useHRStore();
   const {
@@ -40,7 +41,7 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
     setLiveSTAR, setLiveCommunication,
   } = store;
 
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
   const [inputText, setInputText] = useState("");
   const [micEnabled, setMicEnabled] = useState(false);
@@ -76,9 +77,6 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
   ];
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setTheme((localStorage.getItem("adyapan-theme") || "dark") as "dark" | "light");
-    }
     setIsMounted(true);
   }, []);
 
@@ -87,14 +85,6 @@ const HRInterviewActive: React.FC<HRInterviewActiveProps> = ({
     timerRef.current = setInterval(() => setElapsedSeconds((p) => p + 1), 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isMounted]);
-
-  useEffect(() => {
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") as "dark" | "light" || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -24,14 +24,10 @@ interface HRAnalyticsProps {
   onStartInterview: () => void;
 }
 
-export default function HRAnalytics({ onBack, onStartInterview }: HRAnalyticsProps) {
-  const [theme, setTheme] = useState("dark");
+export default function HRAnalytics({ onBack, onStartInterview, theme: propTheme }: HRAnalyticsProps & { theme?: string }) {
+  const theme = propTheme || (typeof window !== "undefined" ? (localStorage.getItem("adyapan-theme") || "dark") : "dark");
   const [analytics, setAnalytics] = useState<HRAnalyticsType | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") setTheme(localStorage.getItem("adyapan-theme") || "dark");
-  }, []);
 
   const isDark = theme === "dark";
   const c = {
