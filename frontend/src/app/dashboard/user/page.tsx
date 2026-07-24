@@ -2300,7 +2300,7 @@ function UserDashboardContent() {
           <HubErrorBoundary><EngineView theme={theme} /></HubErrorBoundary>
         ) : activeView === "interview-technical" || activeView === "technical-interview" ? (
           <HubErrorBoundary><TechnicalInterviewView theme={theme} /></HubErrorBoundary>
-        ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-mock" ? (
+        ) : activeView === "interview-hub" || activeView === "interview-mock" ? (
           <HubErrorBoundary><InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
         ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" || activeView === "internship-saved" ? (
           <HubErrorBoundary><InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} /></HubErrorBoundary>
