@@ -644,7 +644,7 @@ export function QuizGeneratorView() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased" style={{ color: c.text }}>
-      <style>{`.qz-scroll { scrollbar-width: none; -ms-overflow-style: none; } .qz-scroll::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`.qz-scroll::-webkit-scrollbar { width: 5px; } .qz-scroll::-webkit-scrollbar-track { background: transparent; } .qz-scroll::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.4); border-radius: 4px; } .qz-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.7); } .qz-scroll { scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.4) transparent; }`}</style>
 
       {/* HEADER */}
       <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
@@ -821,7 +821,7 @@ export function QuizGeneratorView() {
 
                 {/* LEFT PANEL 30% */}
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-                  className="qz-scroll flex flex-col gap-3 overflow-y-auto pr-3" style={{ width: "30%", minWidth: "200px", maxHeight: "80vh", position: "sticky", top: 0 }}>
+                  className="flex flex-col gap-3 shrink-0" style={{ width: "30%", minWidth: "220px", position: "sticky", top: 0 }}>
 
                   {/* Quiz info */}
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-2xl shrink-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -850,11 +850,12 @@ export function QuizGeneratorView() {
                   </motion.div>
 
                   {/* Question Navigation */}
-                  <div className="flex-1 rounded-2xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                    <div className="p-3 border-b sticky top-0 z-10" style={{ borderColor: c.divider, background: c.stickyBg, backdropFilter: "blur(12px)" }}>
+                  <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                    <div className="p-3 border-b shrink-0 flex items-center justify-between" style={{ borderColor: c.divider, background: c.stickyBg, backdropFilter: "blur(12px)" }}>
                       <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: accent.text }}>Questions List</span>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: accent.bg, color: accent.text }}>{quizData.questions.length} Items</span>
                     </div>
-                    <div className="p-2 space-y-0.5 overflow-y-auto qz-scroll" style={{ maxHeight: "calc(80vh - 120px)" }}>
+                    <div className="p-2 space-y-1 overflow-y-auto qz-scroll" style={{ maxHeight: "250px" }}>
                       {quizData.questions.map((q, idx) => {
                         const isCorrect = submittedQuestions[idx] && userAnswers[idx] === q.correct_answer;
                         const isWrong = submittedQuestions[idx] && userAnswers[idx] !== q.correct_answer;
