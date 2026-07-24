@@ -79,14 +79,11 @@ export function DsaPracticeView() {
       .catch(() => toast.error("Failed to load problems."));
   }, []);
 
-  const stats = [
-    { label: "Problems Solved", value: 42, icon: CheckCircle2, color: "text-emerald-500", desc: "completed exercises" },
-    { label: "Accuracy", value: 85, suffix: "%", icon: Target, color: "text-blue-500", desc: "success rate" },
-    { label: "Current Streak", value: 7, suffix: " days", icon: Flame, color: "text-orange-500", desc: "coding momentum" },
-    { label: "Global Rank", value: "#1,234", icon: Trophy, color: "text-amber-500", desc: "worldwide" }
-  ];
+  const categories = [...new Set(problems.map(p => p.category).filter(Boolean))];
 
-  const categories = ["Arrays", "Strings", "Linked List", "Stack", "Queue", "Trees", "Graphs", "DP", "Greedy"];
+  const stats = [
+    { label: "Problems Loaded", value: problems.length, icon: Code2, color: "text-emerald-500", desc: "available problems" },
+  ];
 
   const filteredProblems = problems.filter(p =>
     p.title?.toLowerCase().includes(searchQuery.toLowerCase())

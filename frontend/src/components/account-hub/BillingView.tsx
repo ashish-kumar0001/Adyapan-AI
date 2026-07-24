@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CreditCard, Sparkles, Calendar, Award, FileText, Download, Check
+  CreditCard, Sparkles, Calendar, Award, FileText, Download, Check, Loader2
 } from "lucide-react";
 
 const fadeUp = {
@@ -12,10 +12,24 @@ const fadeUp = {
 };
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
+import { api } from "@/services/api";
 
 export function BillingView() {
   const theme = useTheme();
   const isDark = theme === "dark";
+  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/payment/status");
+        if (res.data?.success) setSubscription(res.data.subscription);
+      } catch { /* ignore */ } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const c = {
     text: isDark ? "#ffffff" : "#0f172a",
@@ -35,13 +49,17 @@ export function BillingView() {
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     if (couponCode.toUpperCase() === "ADYAPAN20") {
-      setBillingOfferMsg("🎉 Coupon Applied! You get 20% discount on your next renewal.");
+      setBillingOfferMsg("Coupon Applied! You get 20% discount on your next renewal.");
       toast.success("Coupon code applied successfully!");
     } else {
-      setBillingOfferMsg("❌ Invalid coupon code.");
+      setBillingOfferMsg("Invalid coupon code.");
       toast.error("Invalid coupon code.");
     }
   };
+
+  const planLabel = subscription?.plan === "pro_monthly" ? "Pro Monthly" : subscription?.plan === "pro_yearly" ? "Pro Yearly" : "Free";
+  const isActive = subscription?.status === "active";
+  const renewalDate = subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "N/A";
 
   return (
     <motion.div
@@ -70,10 +88,10 @@ export function BillingView() {
         className="grid grid-cols-2 sm:grid-cols-4 gap-4"
       >
         {[
-          { label: "Current Plan", val: "Premium", icon: <Sparkles className="text-amber-500 animate-pulse" /> },
-          { label: "Next Renewal", val: "Aug 1, 2026", icon: <Calendar className="text-cyan-500" /> },
-          { label: "AI Credits Left", val: "36 / 100", icon: <Award className="text-emerald-500" /> },
-          { label: "Recent Invoice", val: "#INV-928", icon: <FileText className="text-purple-500" /> }
+          { label: "Current Plan", val: loading ? "..." : planLabel, icon: <Sparkles className="text-amber-500 animate-pulse" /> },
+          { label: "Next Renewal", val: loading ? "..." : renewalDate, icon: <Calendar className="text-cyan-500" /> },
+          { label: "Status", val: loading ? "..." : isActive ? "Active" : "Inactive", icon: <Award className="text-emerald-500" /> },
+          { label: "Subscription ID", val: loading ? "..." : subscription?.razorpaySubscriptionId ? subscription.razorpaySubscriptionId.slice(-8) : "None", icon: <FileText className="text-purple-500" /> }
         ].map((card, idx) => (
           <motion.div
             key={idx}
@@ -118,26 +136,30 @@ export function BillingView() {
           style={{ background: c.cardBg, borderColor: c.border }}
         >
           <h3 className="text-sm font-bold" style={{ color: c.primary }}>Plan Details</h3>
+          {loading ? (
+            <div className="flex items-center gap-2 py-4"><Loader2 size={16} className="animate-spin" style={{ color: c.textMuted }} /> <span className="text-xs" style={{ color: c.textMuted }}>Loading subscription data...</span></div>
+          ) : (
           <div className="space-y-3 text-sm">
             <div className="flex justify-between border-b pb-2.5" style={{ borderColor: c.border }}>
               <span style={{ color: c.textSec }}>Active Subscription</span>
-              <span className="font-bold text-amber-500">Premium Tier</span>
+              <span className="font-bold text-amber-500">{planLabel}</span>
             </div>
             <div className="flex justify-between border-b pb-2.5" style={{ borderColor: c.border }}>
               <span style={{ color: c.textSec }}>Billing Interval</span>
-              <span className="font-bold">Monthly</span>
+              <span className="font-bold">{subscription?.plan?.includes("yearly") ? "Yearly" : subscription?.plan ? "Monthly" : "N/A"}</span>
             </div>
             <div className="flex justify-between border-b pb-2.5" style={{ borderColor: c.border }}>
               <span style={{ color: c.textSec }}>Next Renewal Date</span>
-              <span className="font-bold">August 1, 2026</span>
+              <span className="font-bold">{renewalDate}</span>
             </div>
             <div className="flex justify-between" style={{ color: c.textSec }}>
-              <span>Benefits Included</span>
-              <span className="font-bold text-emerald-500 flex items-center gap-1">
-                <Check size={14} /> Unlimited AI Generations
+              <span>Status</span>
+              <span className={`font-bold flex items-center gap-1 ${isActive ? "text-emerald-500" : "text-red-500"}`}>
+                {isActive ? <><Check size={14} /> Active</> : "Inactive"}
               </span>
             </div>
           </div>
+          )}
         </motion.div>
 
         {/* Coupons & payment details */}
@@ -181,7 +203,7 @@ export function BillingView() {
             )}
           </AnimatePresence>
 
-          <h3 className="text-sm font-bold pt-2" style={{ color: c.primary }}>Saved Payment Method</h3>
+          <h3 className="text-sm font-bold pt-2" style={{ color: c.primary }}>Subscription</h3>
           <motion.div
             whileHover={{ y: -2, scale: 1.005 }}
             className="p-3 border rounded-xl flex items-center justify-between text-xs"
@@ -189,9 +211,9 @@ export function BillingView() {
           >
             <div className="flex items-center gap-2">
               <CreditCard size={16} className="text-amber-500" />
-              <span className="font-semibold">Visa Ending in •••• 4242</span>
+              <span className="font-semibold">{planLabel}</span>
             </div>
-            <span className="text-[10px] text-gray-400">Default card</span>
+            <span className={`text-[10px] font-bold ${isActive ? "text-emerald-500" : "text-gray-400"}`}>{isActive ? "Active" : "Inactive"}</span>
           </motion.div>
         </motion.div>
 
@@ -209,34 +231,13 @@ export function BillingView() {
       >
         <h3 className="text-sm font-bold" style={{ color: c.primary }}>Invoice History</h3>
         <div className="space-y-2 text-sm leading-relaxed">
-          {[
-            { id: "INV-928", date: "July 1, 2026", amt: "$15.00", status: "Paid" },
-            { id: "INV-815", date: "June 1, 2026", amt: "$15.00", status: "Paid" }
-          ].map((inv, i) => (
-            <motion.div
-              key={inv.id}
-              custom={i}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              className="flex justify-between items-center p-3 border rounded-xl"
-              style={{ borderColor: c.border }}
-            >
-              <div>
-                <span className="font-bold block text-xs">{inv.id} · {inv.date}</span>
-                <span className="text-[10px] text-emerald-500">{inv.status}</span>
-              </div>
-              <motion.button
-                onClick={() => toast.success(`Downloaded PDF Invoice ${inv.id}`)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                className="py-1 px-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold flex items-center gap-1 transition-all"
-                style={{ borderColor: c.border, color: c.textSec }}
-              >
-                <Download size={12} /> Download
-              </motion.button>
-            </motion.div>
-          ))}
+          {loading ? (
+            <div className="flex items-center gap-2 py-4"><Loader2 size={16} className="animate-spin" style={{ color: c.textMuted }} /> <span className="text-xs" style={{ color: c.textMuted }}>Loading invoices...</span></div>
+          ) : !subscription?.razorpaySubscriptionId ? (
+            <div className="py-4 text-center text-xs" style={{ color: c.textMuted }}>No invoices yet. Subscribe to see your billing history.</div>
+          ) : (
+            <div className="py-4 text-center text-xs" style={{ color: c.textMuted }}>Invoices are managed through your payment provider.</div>
+          )}
         </div>
       </motion.div>
     </motion.div>

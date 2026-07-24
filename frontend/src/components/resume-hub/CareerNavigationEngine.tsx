@@ -571,11 +571,11 @@ export function CareerNavigationEngine({ setView }: Props) {
 
 
   const stats = (roadmapData?.roadmap as any)?.platformStats || {
-    coding: { dsaSolved: 12, dsaAccuracy: 0.65, totalSubmissions: 24, weakTopics: [] },
-    learning: { conceptsLearned: 8, learningScore: 65, studySessions: 10, quizAttempts: 4 },
-    ats: { score: scores.resume || 60, reportsCount: 1 },
-    linkedin: { score: 70, headline: "Aspiring Engineer" },
-    resume: { hasResume: true }
+    coding: { dsaSolved: 0, dsaAccuracy: 0, totalSubmissions: 0, weakTopics: [] },
+    learning: { conceptsLearned: 0, learningScore: 0, studySessions: 0, quizAttempts: 0 },
+    ats: { score: scores.resume || 0, reportsCount: 0 },
+    linkedin: { score: 0, headline: "" },
+    resume: { hasResume: false }
   };
 
   const trendData = (() => {
@@ -586,14 +586,8 @@ export function CareerNavigationEngine({ setView }: Props) {
       };
     }
     return {
-      labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Current"],
-      data: [
-        Math.max(15, scores.overall - 30),
-        Math.max(25, scores.overall - 20),
-        Math.max(35, scores.overall - 10),
-        Math.max(40, scores.overall - 5),
-        scores.overall
-      ],
+      labels: [],
+      data: [],
     };
   })();
 
@@ -606,7 +600,7 @@ export function CareerNavigationEngine({ setView }: Props) {
     if (tasks.length === 0) {
       return {
         labels: ["Completed", "In Progress", "Not Started", "Skipped"],
-        data: [4, 2, 3, 1],
+        data: [0, 0, 0, 0],
       };
     }
     return {

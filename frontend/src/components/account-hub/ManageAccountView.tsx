@@ -196,12 +196,17 @@ export function ManageAccountView() {
   }, [searchQuery]);
 
   // ── Handlers ──
-  const handleSave = () => {
-    localStorage.setItem("adyapan-full-name", fullName);
-    localStorage.setItem("adyapan-email", email);
-    localStorage.setItem("adyapan-phone", phone);
-    setHasChanges(false);
-    toast.success("Settings saved successfully!");
+  const handleSave = async () => {
+    try {
+      await api.put("/profile/me", { phone, college, degree, graduationYear: gradYear, username });
+      localStorage.setItem("adyapan-full-name", fullName);
+      localStorage.setItem("adyapan-email", email);
+      localStorage.setItem("adyapan-phone", phone);
+      setHasChanges(false);
+      toast.success("Settings saved successfully!");
+    } catch {
+      toast.error("Failed to save settings. Please try again.");
+    }
   };
 
   const handleReset = () => {
@@ -439,23 +444,15 @@ export function ManageAccountView() {
             </div>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span style={{ color: c.textMuted }}>Current Plan</span>
-                <PremiumBadge variant="amber" pulse>Premium</PremiumBadge>
+                <span style={{ color: c.textMuted }}>Profile</span>
+                <span className="font-bold">{profileCompletion}%</span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span style={{ color: c.textMuted }}>Learning Streak</span>
-                <span className="font-bold flex items-center gap-1"><Trophy size={12} className="text-amber-500" /> 14 days</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span style={{ color: c.textMuted }}>AI Usage Today</span>
-                <span className="font-bold">24 / 100</span>
-              </div>
+              <PremiumProgressBar value={profileCompletion} color="amber" height={4} />
               <div className="flex items-center justify-between text-xs">
                 <span style={{ color: c.textMuted }}>Storage Used</span>
                 <span className="font-bold">{storageUsed} GB</span>
               </div>
             </div>
-            <PremiumProgressBar value={storagePercent} color="amber" height={4} />
           </motion.div>
 
           {/* Quick Actions */}
@@ -1376,64 +1373,12 @@ function BillingSection({ c }: { c: Record<string, string> }) {
         className="rounded-2xl border p-6 space-y-4"
         style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-            <CreditCard size={16} /> Current Plan
-          </h3>
-          <PremiumBadge variant="amber" pulse>Premium</PremiumBadge>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Plan", value: "Premium", icon: <Star size={14} className="text-amber-500" /> },
-            { label: "Renewal", value: "Aug 1, 2026", icon: <Calendar size={14} className="text-cyan-500" /> },
-            { label: "AI Credits", value: "64 / 100", icon: <Zap size={14} className="text-emerald-500" /> },
-            { label: "Invoice", value: "#INV-928", icon: <FileText size={14} className="text-purple-500" /> },
-          ].map((item, i) => (
-            <motion.div key={i} variants={fadeUp} initial="hidden" animate="visible" custom={i}
-              className="p-3 rounded-xl border text-center" style={{ borderColor: c.border }}>
-              <div className="flex justify-center mb-1.5">{item.icon}</div>
-              <span className="text-[10px] font-bold uppercase block" style={{ color: c.textMuted }}>{item.label}</span>
-              <span className="text-sm font-extrabold block">{item.value}</span>
-            </motion.div>
-          ))}
-        </div>
-        <PremiumProgressBar value={64} color="amber" height={5} />
-        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-extrabold shadow-lg shadow-amber-500/20">
-          Upgrade Plan
-        </motion.button>
-      </motion.div>
-
-      {/* Invoices */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
-        className="rounded-2xl border p-6 space-y-4"
-        style={{ background: c.cardBg, borderColor: c.border, backdropFilter: "blur(16px)" }}
-      >
         <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
-          <FileText size={16} /> Recent Invoices
+          <CreditCard size={16} /> Billing & Subscription
         </h3>
-        <div className="space-y-2">
-          {[
-            { id: "INV-928", date: "Jul 1, 2026", amount: "$15.00", status: "Paid" },
-            { id: "INV-815", date: "Jun 1, 2026", amount: "$15.00", status: "Paid" },
-            { id: "INV-702", date: "May 1, 2026", amount: "$15.00", status: "Paid" },
-          ].map((inv, i) => (
-            <motion.div key={inv.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}
-              className="flex items-center justify-between p-3 rounded-xl border" style={{ borderColor: c.border }}>
-              <div>
-                <span className="text-xs font-bold block">{inv.id}</span>
-                <span className="text-[10px]" style={{ color: c.textMuted }}>{inv.date} · {inv.amount}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <PremiumBadge variant="green">{inv.status}</PremiumBadge>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  className="p-1.5 rounded-lg hover:bg-white/5 border" style={{ borderColor: c.border }}>
-                  <Download size={12} style={{ color: c.textSec }} />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <p className="text-xs" style={{ color: c.textMuted }}>
+          Manage your subscription, view invoices, and update payment methods from the dedicated Billing page.
+        </p>
       </motion.div>
     </div>
   );

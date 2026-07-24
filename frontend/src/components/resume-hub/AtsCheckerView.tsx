@@ -426,11 +426,11 @@ export function AtsCheckerView({ setView }: Props) {
     labels: ["Summary", "Skills", "Experience", "Projects", "Education"],
     datasets: [{
       data: [
-        (analysis.sectionScores?.summary?.score ?? 7) * 10,
-        (analysis.sectionScores?.skills?.score ?? 8) * 10,
-        (analysis.sectionScores?.experience?.score ?? 7) * 10,
-        (analysis.sectionScores?.projects?.score ?? 7) * 10,
-        (analysis.sectionScores?.education?.score ?? 8) * 10,
+        (analysis.sectionScores?.summary?.score ?? 0) * 10,
+        (analysis.sectionScores?.skills?.score ?? 0) * 10,
+        (analysis.sectionScores?.experience?.score ?? 0) * 10,
+        (analysis.sectionScores?.projects?.score ?? 0) * 10,
+        (analysis.sectionScores?.education?.score ?? 0) * 10,
       ],
       backgroundColor: "rgba(245,158,11,0.12)",
       borderColor: "#f59e0b",
@@ -457,10 +457,10 @@ export function AtsCheckerView({ setView }: Props) {
   const categoryScores = analysis ? [
     { label: "Formatting Score", score: analysis.formattingScore ?? (analysis.formatting === "Excellent" ? 95 : analysis.formatting === "Good" ? 80 : analysis.formatting === "Fair" ? 60 : 40), color: "#8b5cf6" },
     { label: "Keyword Score", score: analysis.keywordScore ?? Math.round((analysis.keywordsFound.length / Math.max(1, analysis.keywordsFound.length + (analysis.keywordsMissing || []).length)) * 100), color: "#3b82f6" },
-    { label: "Project Score", score: analysis.projectScore ?? (analysis.sectionScores.projects?.score ? analysis.sectionScores.projects.score * 10 : 70), color: "#10b981" },
-    { label: "Skills Score", score: analysis.skillsScore ?? (analysis.sectionScores.skills?.score ? analysis.sectionScores.skills.score * 10 : 85), color: "#f59e0b" },
-    { label: "Experience Score", score: analysis.experienceScore ?? (analysis.sectionScores.experience?.score ? analysis.sectionScores.experience.score * 10 : 70), color: "#ef4444" },
-    { label: "Education Score", score: analysis.educationScore ?? (analysis.sectionScores.education?.score ? analysis.sectionScores.education.score * 10 : 80), color: "#ec4899" },
+    { label: "Project Score", score: analysis.projectScore ?? (analysis.sectionScores.projects?.score ? analysis.sectionScores.projects.score * 10 : 0), color: "#10b981" },
+    { label: "Skills Score", score: analysis.skillsScore ?? (analysis.sectionScores.skills?.score ? analysis.sectionScores.skills.score * 10 : 0), color: "#f59e0b" },
+    { label: "Experience Score", score: analysis.experienceScore ?? (analysis.sectionScores.experience?.score ? analysis.sectionScores.experience.score * 10 : 0), color: "#ef4444" },
+    { label: "Education Score", score: analysis.educationScore ?? (analysis.sectionScores.education?.score ? analysis.sectionScores.education.score * 10 : 0), color: "#ec4899" },
     { label: "Readability Score", score: analysis.readabilityScore ?? (analysis.readability === "Excellent" ? 95 : analysis.readability === "Good" ? 80 : analysis.readability === "Fair" ? 60 : 40), color: "#06b6d4" },
   ] : [];
 
@@ -1211,11 +1211,11 @@ export function AtsCheckerView({ setView }: Props) {
                   {/* Section Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {([
-                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores?.summary || { score: 7, suggestions: [] }],
-                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores?.skills || { score: 8, suggestions: [] }],
-                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores?.experience || { score: 7, suggestions: [] }],
-                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores?.projects || { score: 7, suggestions: [] }],
-                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores?.education || { score: 8, suggestions: [] }],
+                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores?.summary || { score: 0, suggestions: ["Run an ATS analysis to get section scores."] }],
+                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores?.skills || { score: 0, suggestions: ["Run an ATS analysis to get section scores."] }],
+                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores?.experience || { score: 0, suggestions: ["Run an ATS analysis to get section scores."] }],
+                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores?.projects || { score: 0, suggestions: ["Run an ATS analysis to get section scores."] }],
+                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores?.education || { score: 0, suggestions: ["Run an ATS analysis to get section scores."] }],
                     ] as const).map(([k, lbl, ic, data], i) => (
                       <motion.div key={k} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.06 }}
                         whileHover={hov} className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>

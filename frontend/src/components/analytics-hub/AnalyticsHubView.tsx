@@ -80,6 +80,10 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Interview analytics data
+  const [interviewStats, setInterviewStats] = useState<any>(null);
+  const [resumeStats, setResumeStats] = useState<any>(null);
+
   // Sync tab with activeModule from props
   useEffect(() => {
     if (activeModule === "analytics-learning") setTab("learning");
@@ -87,6 +91,26 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
     else if (activeModule === "analytics-resume") setTab("resume");
     else if (activeModule === "analytics-skills") setTab("skills");
   }, [activeModule]);
+
+  // Fetch interview analytics when tab is selected
+  useEffect(() => {
+    if (tab === "interview") {
+      (async () => {
+        try {
+          const res = await api.get("/technical-engine/analytics/overview");
+          if (res.data?.success) setInterviewStats(res.data.analytics);
+        } catch { /* ignore */ }
+      })();
+    }
+    if (tab === "resume") {
+      (async () => {
+        try {
+          const res = await api.get("/ats/latest");
+          if (res.data?.success && res.data.report) setResumeStats(res.data.report);
+        } catch { /* ignore */ }
+      })();
+    }
+  }, [tab]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -170,10 +194,10 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 {/* Scoring cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: "Mocks Completed", val: "0" },
-                    { label: "Avg Interview Score", val: "--" },
-                    { label: "Communication Flow", val: "--" },
-                    { label: "Technical Core", val: "--" }
+                    { label: "Mocks Completed", val: String(interviewStats?.completedSessions ?? 0) },
+                    { label: "Avg Interview Score", val: interviewStats?.avgScore != null ? `${interviewStats.avgScore}%` : "--" },
+                    { label: "Total Sessions", val: String(interviewStats?.totalSessions ?? 0) },
+                    { label: "Best Score", val: interviewStats?.bestScore != null ? `${interviewStats.bestScore}%` : "--" }
                   ].map((s, idx) => (
                     <motion.div
                       key={idx}
@@ -273,10 +297,10 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                   >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Resume Quality Metrics</h4>
                     {[
-                      { label: "Professional Summary Quality", score: 0, color: "#10b981" },
-                      { label: "Project Descriptions Weight", score: 0, color: "#06b6d4" },
-                      { label: "Core Skills Coverage", score: 0, color: "#8b5cf6" },
-                      { label: "Education & Details alignment", score: 0, color: "#ec4899" }
+                      { label: "Overall ATS Score", score: resumeStats?.overallScore ?? 0, color: "#10b981" },
+                      { label: "Summary Quality", score: resumeStats?.sectionScores?.summary ?? 0, color: "#06b6d4" },
+                      { label: "Skills Coverage", score: resumeStats?.sectionScores?.skills ?? 0, color: "#8b5cf6" },
+                      { label: "Experience Alignment", score: resumeStats?.sectionScores?.experience ?? 0, color: "#ec4899" }
                     ].map((m, i) => (
                       <motion.div
                         key={m.label}
