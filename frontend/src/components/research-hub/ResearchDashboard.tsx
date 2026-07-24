@@ -10,6 +10,7 @@ import {
 interface ResearchDashboardProps {
   onStartNewPaper: () => void;
   onOpenTemplateGallery: () => void;
+  onOpenPlagiarismChecker?: () => void;
   onSelectPaper: (paper: any) => void;
   stats: any;
   recentPapers: any[];
@@ -21,6 +22,7 @@ interface ResearchDashboardProps {
 export function ResearchDashboard({
   onStartNewPaper,
   onOpenTemplateGallery,
+  onOpenPlagiarismChecker,
   onSelectPaper,
   stats,
   recentPapers,
@@ -62,6 +64,19 @@ export function ResearchDashboard({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {onOpenPlagiarismChecker && (
+              <button
+                onClick={onOpenPlagiarismChecker}
+                className="px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                style={{
+                  background: c.isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)",
+                  color: "#f59e0b",
+                  border: `1px solid ${c.isDark ? "rgba(245,158,11,0.3)" : "rgba(245,158,11,0.25)"}`,
+                }}
+              >
+                <Sparkles size={16} /> Plagiarism & AI Checker
+              </button>
+            )}
             <button
               onClick={onOpenTemplateGallery}
               className="px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2"

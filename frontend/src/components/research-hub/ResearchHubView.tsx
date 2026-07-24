@@ -10,6 +10,7 @@ import { ResearchDashboard } from "./ResearchDashboard";
 import { ResearchWizard } from "./ResearchWizard";
 import { PaperEditorWorkspace } from "./PaperEditorWorkspace";
 import { TemplateGalleryModal } from "./TemplateGalleryModal";
+import { PlagiarismCheckerView } from "./PlagiarismCheckerView";
 
 interface ResearchHubViewProps {
   setView: (v: string) => void;
@@ -17,7 +18,7 @@ interface ResearchHubViewProps {
   theme?: string;
 }
 
-type ViewState = "dashboard" | "wizard" | "workspace";
+type ViewState = "dashboard" | "wizard" | "workspace" | "plagiarism";
 
 export function ResearchHubView({ setView, activeModule, theme: propTheme }: ResearchHubViewProps) {
   const currentTheme = useTheme();
@@ -100,6 +101,7 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
             <ResearchDashboard
               onStartNewPaper={() => setViewState("wizard")}
               onOpenTemplateGallery={() => setIsTemplateModalOpen(true)}
+              onOpenPlagiarismChecker={() => setViewState("plagiarism")}
               onSelectPaper={handleSelectPaper}
               stats={dashboardStats}
               recentPapers={recentPapers}
@@ -142,6 +144,15 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
               onOpenTemplates={() => setIsTemplateModalOpen(true)}
               c={c}
             />
+          </motion.div>
+        )}
+
+        {viewState === "plagiarism" && (
+          <motion.div key="plagiarism" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            <PlagiarismCheckerView setView={(v) => {
+              if (v === "research-hub" || v === "dashboard") setViewState("dashboard");
+              else setView(v);
+            }} />
           </motion.div>
         )}
       </AnimatePresence>
