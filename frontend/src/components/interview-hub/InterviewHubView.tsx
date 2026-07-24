@@ -174,8 +174,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     try {
       // For HR / Tech quick-start, we merge module info
       let type = config.type;
-      if (activeModule === "interview-hr") type = "behavioral";
-      else if (activeModule === "interview-technical") type = "technical";
+      if (activeModule === "interview-technical") type = "technical";
 
       const res = await api.post("/interview/start", {
         role: config.role,
@@ -654,7 +653,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
             {activeModule === "interview-hub" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                  { title: "AI HR Interview", desc: "Behavioral questions, STAR method, leadership, and cultural fit assessment.", icon: <User size={24} className="text-amber-500" />, type: "behavioral" as const },
+                  { title: "AI HR Interview", desc: "Behavioral, situational, and HR-focused interview practice.", icon: <User size={24} className="text-pink-500" />, type: "behavioral" as const },
                   { title: "AI Technical Interview", desc: "Coding, system design, architecture, and deep technical discussions.", icon: <Code size={24} className="text-cyan-500" />, type: "technical" as const },
                   { title: "Mock Interview", desc: "Custom interview simulation with configurable role, company, and difficulty.", icon: <Briefcase size={24} className="text-emerald-500" />, type: "general" as const },
                 ].map((card) => (

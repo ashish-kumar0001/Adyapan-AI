@@ -100,7 +100,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics,
 
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
     defaultValues: {
-      interviewType: "hr",
+      interviewType: "system-design",
       targetRole: "Software Engineer",
       targetCompany: "",
       difficulty: "medium",
@@ -280,7 +280,6 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics,
         >
           {[
             { label: "Resume Last", icon: RotateCcw, color: c.textSec, onClick: () => toast.info("Resuming last interview...") },
-            { label: "Practice HR", icon: User, color: "#f59e0b", onClick: () => { setValue("interviewType", "hr"); goToStep(2); } },
             { label: "View Reports", icon: BarChart3, color: "#8b5cf6", onClick: onViewAnalytics },
           ].map(q => (
             <motion.button

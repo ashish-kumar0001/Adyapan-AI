@@ -60,18 +60,6 @@ const PHASE_LABELS: Record<InterviewPhase, string> = {
 };
 
 const PHASE_TIPS: Record<string, string[]> = {
-  hr: [
-    "Use the STAR method for behavioral questions",
-    "Be specific with examples from your experience",
-    "Show enthusiasm for the role",
-    "Ask thoughtful questions at the end",
-  ],
-  behavioral: [
-    "Structure answers with Situation, Task, Action, Result",
-    "Highlight leadership and teamwork",
-    "Be honest about challenges and learnings",
-    "Connect your experience to the role",
-  ],
   default: [
     "Take a moment to think before answering",
     "Be concise but thorough",

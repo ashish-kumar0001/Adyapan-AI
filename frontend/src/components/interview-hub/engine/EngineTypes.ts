@@ -1,7 +1,5 @@
 export type InterviewType =
-  | "hr"
   | "system-design"
-  | "behavioral"
   | "managerial"
   | "fresh-graduate"
   | "campus-placement"
@@ -165,14 +163,6 @@ export const INTERVIEW_TYPE_CONFIG: Record<InterviewType, {
   suggestedDuration: number;
   difficultyRange: DifficultyLevel[];
 }> = {
-  hr: {
-    label: "HR Interview",
-    description: "Behavioral questions, culture fit, career goals",
-    color: "#f59e0b",
-    icon: "User",
-    suggestedDuration: 30,
-    difficultyRange: ["easy", "medium"],
-  },
   "system-design": {
     label: "System Design",
     description: "Architecture, scalability, distributed systems",
@@ -180,14 +170,6 @@ export const INTERVIEW_TYPE_CONFIG: Record<InterviewType, {
     icon: "LayoutGrid",
     suggestedDuration: 60,
     difficultyRange: ["medium", "hard"],
-  },
-  behavioral: {
-    label: "Behavioral Interview",
-    description: "STAR method, leadership, teamwork scenarios",
-    color: "#10b981",
-    icon: "Users",
-    suggestedDuration: 30,
-    difficultyRange: ["easy", "medium", "hard"],
   },
   managerial: {
     label: "Managerial Interview",
