@@ -146,6 +146,9 @@ const CommunityProfileView = dynamic(() => import("@/components/account-hub/Comm
 const CommunityProfilesView = dynamic(() => import("@/components/account-hub/CommunityProfilesView").then(m => m.CommunityProfilesView), {
   loading: () => <DashboardWidgetSkeleton title="Community" />
 });
+const UserProfileView = dynamic(() => import("@/components/account-hub/CommunityProfilesView").then(m => m.UserProfileView), {
+  loading: () => <DashboardWidgetSkeleton title="Profile" />
+});
 const CommunityMessagesView = dynamic(() => import("@/components/account-hub/CommunityMessagesView").then(m => m.CommunityMessagesView), {
   loading: () => <DashboardWidgetSkeleton title="Messages" />
 });
@@ -1929,6 +1932,8 @@ function UserDashboardContent() {
   // The saved view is restored client-side in the first useEffect below.
   const [activeView, setActiveView] = useState<string>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [communityProfileUserId, setCommunityProfileUserId] = useState<string | null>(null);
+  const [openChatWith, setOpenChatWith] = useState<string | null>(null);
   const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: UnifiedLesson; duration: string; level: string } | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("ATS Modern");
   const { socket, isConnected } = useSocket();
@@ -2202,17 +2207,22 @@ function UserDashboardContent() {
   };
 
   const router = useRouter();
-  const handleViewProfile = () => setActiveView("profile");
+  const navigateTo = useCallback((view: string) => {
+    if (view !== "community-messages") setOpenChatWith(null);
+    if (view !== "community-browse") setCommunityProfileUserId(null);
+    setActiveView(view);
+  }, []);
+  const handleViewProfile = () => navigateTo("profile");
   const handlePremium = () => router.push("/premium");
-  const handleViewDashboard = () => setActiveView("dashboard");
-  const handleAdyChat = () => setActiveView("ady-chat");
+  const handleViewDashboard = () => navigateTo("dashboard");
+  const handleAdyChat = () => navigateTo("ady-chat");
 
   return (
     <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       {showOnboarding && <OnboardingFlow onComplete={() => setShowOnboarding(false)} />}
       <FloatingOrbs />
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
-      <DashboardSidebar activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={navigateTo} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => navigateTo("settings")} />
+      <DashboardSidebar activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={navigateTo} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main relative z-10 resume-hub-theme">
 
@@ -2223,10 +2233,23 @@ function UserDashboardContent() {
           <HubErrorBoundary><CareerDashboardView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "community-profile" ? (
           <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
+        ) : activeView === "community-browse" && communityProfileUserId ? (
+          <HubErrorBoundary>
+            <UserProfileView
+              userId={communityProfileUserId}
+              onBack={() => setCommunityProfileUserId(null)}
+              onMessage={(userId) => { setCommunityProfileUserId(null); setOpenChatWith(userId); setActiveView("community-messages"); }}
+            />
+          </HubErrorBoundary>
         ) : activeView === "community-browse" ? (
-          <HubErrorBoundary><CommunityProfilesView /></HubErrorBoundary>
+          <HubErrorBoundary>
+            <CommunityProfilesView
+              onViewProfile={(userId) => setCommunityProfileUserId(userId)}
+              onMessage={(userId) => { setOpenChatWith(userId); setActiveView("community-messages"); }}
+            />
+          </HubErrorBoundary>
         ) : activeView === "community-messages" ? (
-          <HubErrorBoundary><CommunityMessagesView /></HubErrorBoundary>
+          <HubErrorBoundary><CommunityMessagesView openChatWith={openChatWith} /></HubErrorBoundary>
         ) : activeView === "community-blog" ? (
           <HubErrorBoundary><BlogView /></HubErrorBoundary>
         ) : activeView === "settings" ? (
