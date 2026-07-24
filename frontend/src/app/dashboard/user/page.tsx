@@ -2099,6 +2099,95 @@ function UserDashboardContent() {
     return () => observer.disconnect();
   }, []);
 
+  const fetchDashboardStats = useCallback(async (silent = false) => {
+    if (!silent) setStatsLoading(true);
+    try {
+      const [
+        profileRes,
+        resumesRes,
+        atsRes,
+        linkedinRes,
+        lettersRes,
+        notesRes,
+        quizRes,
+        assignRes,
+        pptRes,
+        mindmapRes,
+        studyRes,
+        codingRes,
+        dsaRes,
+        challengesRes
+      ] = await Promise.allSettled([
+        api.get("/profile/me"),
+        api.get("/resume/list"),
+        api.get("/ats/history"),
+        api.get("/linkedin/history"),
+        api.get("/cover-letter/history"),
+        api.get("/notes/history"),
+        api.get("/quiz/history"),
+        api.get("/assignment/history"),
+        api.get("/ppt/history"),
+        api.get("/mindmap/history"),
+        api.get("/study/history"),
+        api.get("/coding/history"),
+        api.get("/dsa/progress"),
+        api.get("/challenges/")
+      ]);
+
+      const profileData = profileRes.status === "fulfilled" ? profileRes.value.data.profile : null;
+      const completion = profileData ? calcCompletion(profileData) : 0;
+      const targetRole = profileData?.targetRole || "";
+
+      const resumes = resumesRes.status === "fulfilled" ? (resumesRes.value.data.resumes || []) : [];
+      const atsReports = atsRes.status === "fulfilled" ? (atsRes.value.data.reports || []) : [];
+      const linkedinReports = linkedinRes.status === "fulfilled" ? (linkedinRes.value.data.reports || []) : [];
+      const coverLetters = lettersRes.status === "fulfilled" ? (lettersRes.value.data.coverLetters || []) : [];
+
+      const notes = notesRes.status === "fulfilled" ? (notesRes.value.data.notes || []) : [];
+      const quizzes = quizRes.status === "fulfilled" ? (quizRes.value.data.quizzes || []) : [];
+      const assignments = assignRes.status === "fulfilled" ? (assignRes.value.data.assignments || []) : [];
+      const ppts = pptRes.status === "fulfilled" ? (pptRes.value.data.presentations || []) : [];
+      const mindmaps = mindmapRes.status === "fulfilled" ? (mindmapRes.value.data.mindmaps || []) : [];
+      const studySessions = studyRes.status === "fulfilled" ? (studyRes.value.data.sessions || []) : [];
+
+      const codingSessions = codingRes.status === "fulfilled" ? (codingRes.value.data.sessions || []) : [];
+      const dsaProgress = dsaRes.status === "fulfilled" ? (dsaRes.value.data.progress || null) : null;
+      const challenges = challengesRes.status === "fulfilled" ? (challengesRes.value.data || []) : [];
+
+      const avgAtsScore = atsReports.length
+        ? Math.round(atsReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / atsReports.length)
+        : 0;
+
+      const avgLinkedinScore = linkedinReports.length
+        ? Math.round(linkedinReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / linkedinReports.length)
+        : 0;
+
+      setDashboardStats({
+        resumesCount: resumes.length,
+        avgAtsScore,
+        avgLinkedinScore,
+        coverLettersCount: coverLetters.length,
+        notesCount: notes.length,
+        quizzesCount: quizzes.length,
+        assignmentsCount: assignments.length,
+        pptsCount: ppts.length,
+        mindmapsCount: mindmaps.length,
+        studySessionsCount: studySessions.length,
+        codingSessionsCount: codingSessions.length,
+        dsaSolved: dsaProgress?.solved || 0,
+        dsaAccuracy: dsaProgress?.accuracy || 0,
+        dsaStreak: dsaProgress?.streak || 0,
+        challengesCount: challenges.length,
+        profileCompletion: completion,
+        targetRole
+      });
+    } catch (err) {
+      console.error("Error fetching dashboard statistics:", err);
+    } finally {
+      if (!silent) setStatsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Persist view selection so it survives page refreshes
     try {
@@ -2107,98 +2196,43 @@ function UserDashboardContent() {
 
     if (activeView !== "dashboard") return;
 
-    async function fetchDashboardStats() {
-      setStatsLoading(true);
-      try {
-        const [
-          profileRes,
-          resumesRes,
-          atsRes,
-          linkedinRes,
-          lettersRes,
-          notesRes,
-          quizRes,
-          assignRes,
-          pptRes,
-          mindmapRes,
-          studyRes,
-          codingRes,
-          dsaRes,
-          challengesRes
-        ] = await Promise.allSettled([
-          api.get("/profile/me"),
-          api.get("/resume/list"),
-          api.get("/ats/history"),
-          api.get("/linkedin/history"),
-          api.get("/cover-letter/history"),
-          api.get("/notes/history"),
-          api.get("/quiz/history"),
-          api.get("/assignment/history"),
-          api.get("/ppt/history"),
-          api.get("/mindmap/history"),
-          api.get("/study/history"),
-          api.get("/coding/history"),
-          api.get("/dsa/progress"),
-          api.get("/challenges/")
-        ]);
-
-        const profileData = profileRes.status === "fulfilled" ? profileRes.value.data.profile : null;
-        const completion = profileData ? calcCompletion(profileData) : 0;
-        const targetRole = profileData?.targetRole || "";
-
-        const resumes = resumesRes.status === "fulfilled" ? (resumesRes.value.data.resumes || []) : [];
-        const atsReports = atsRes.status === "fulfilled" ? (atsRes.value.data.reports || []) : [];
-        const linkedinReports = linkedinRes.status === "fulfilled" ? (linkedinRes.value.data.reports || []) : [];
-        const coverLetters = lettersRes.status === "fulfilled" ? (lettersRes.value.data.coverLetters || []) : [];
-
-        const notes = notesRes.status === "fulfilled" ? (notesRes.value.data.notes || []) : [];
-        const quizzes = quizRes.status === "fulfilled" ? (quizRes.value.data.quizzes || []) : [];
-        const assignments = assignRes.status === "fulfilled" ? (assignRes.value.data.assignments || []) : [];
-        const ppts = pptRes.status === "fulfilled" ? (pptRes.value.data.presentations || []) : [];
-        const mindmaps = mindmapRes.status === "fulfilled" ? (mindmapRes.value.data.mindmaps || []) : [];
-        const studySessions = studyRes.status === "fulfilled" ? (studyRes.value.data.sessions || []) : [];
-
-        const codingSessions = codingRes.status === "fulfilled" ? (codingRes.value.data.sessions || []) : [];
-        const dsaProgress = dsaRes.status === "fulfilled" ? (dsaRes.value.data.progress || null) : null;
-        const challenges = challengesRes.status === "fulfilled" ? (challengesRes.value.data || []) : [];
-
-        const avgAtsScore = atsReports.length
-          ? Math.round(atsReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / atsReports.length)
-          : 0;
-
-        const avgLinkedinScore = linkedinReports.length
-          ? Math.round(linkedinReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / linkedinReports.length)
-          : 0;
-
-        setDashboardStats({
-          resumesCount: resumes.length,
-          avgAtsScore,
-          avgLinkedinScore,
-          coverLettersCount: coverLetters.length,
-          notesCount: notes.length,
-          quizzesCount: quizzes.length,
-          assignmentsCount: assignments.length,
-          pptsCount: ppts.length,
-          mindmapsCount: mindmaps.length,
-          studySessionsCount: studySessions.length,
-          codingSessionsCount: codingSessions.length,
-          dsaSolved: dsaProgress?.solved || 0,
-          dsaAccuracy: dsaProgress?.accuracy || 0,
-          dsaStreak: dsaProgress?.streak || 0,
-          challengesCount: challenges.length,
-          profileCompletion: completion,
-          targetRole
-        });
-      } catch (err) {
-        console.error("Error fetching dashboard statistics:", err);
-      } finally {
-        setStatsLoading(false);
-      }
-    }
-
-    fetchDashboardStats();
+    fetchDashboardStats(false);
     fetchRecommendations();
-  }, [activeView]);
+
+    // 10-second periodic background polling for realtime sync across all hubs
+    const interval = setInterval(() => {
+      fetchDashboardStats(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [activeView, fetchDashboardStats, fetchRecommendations]);
+
+  // Realtime Socket listeners for all hubs
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRealtimeSync = () => {
+      fetchDashboardStats(true);
+    };
+
+    socket.on("dashboard:update", handleRealtimeSync);
+    socket.on("generate:complete", handleRealtimeSync);
+    socket.on("lesson:complete", handleRealtimeSync);
+    socket.on("study:complete", handleRealtimeSync);
+    socket.on("interview:complete", handleRealtimeSync);
+    socket.on("interview:started", handleRealtimeSync);
+    socket.on("proctor:update", handleRealtimeSync);
+
+    return () => {
+      socket.off("dashboard:update", handleRealtimeSync);
+      socket.off("generate:complete", handleRealtimeSync);
+      socket.off("lesson:complete", handleRealtimeSync);
+      socket.off("study:complete", handleRealtimeSync);
+      socket.off("interview:complete", handleRealtimeSync);
+      socket.off("interview:started", handleRealtimeSync);
+      socket.off("proctor:update", handleRealtimeSync);
+    };
+  }, [socket, fetchDashboardStats]);
 
   const handleThemeToggle = () => {
     const next = theme === "dark" ? "light" : "dark";
